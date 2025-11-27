@@ -62,6 +62,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
         const combattantMap = new Map(allCombattants.map(c => [c.id, c]))
         const creatureMap = new Map(allCombattants.map(c => [c.creature.id, c]))
 
+  
         const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count], index) => {
             // Try to find by combatant ID first
             let targetCombattant = combattantMap.get(targetId)
