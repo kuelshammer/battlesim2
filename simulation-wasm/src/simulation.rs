@@ -689,7 +689,7 @@ fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: 
             for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(EnemyTarget::EnemyWithLeastHP, enemies, &targets) {
+                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
