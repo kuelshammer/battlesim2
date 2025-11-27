@@ -57,23 +57,25 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
         if (combattantAction.action.target === 'self') return 'itself'
 
         const allCombattants = [...round.team1, ...round.team2]
-        const debugInfo = {
-            targetEntries: Array.from(combattantAction.targets.entries()),
-            allCombattantIds: allCombattants.map(c => ({ id: c.id, name: c.creature.name })),
-            allCombattantCreatureIds: allCombattants.map(c => ({ id: c.creature.id, name: c.creature.name }))
-        }
+        const targetEntries = Array.from(combattantAction.targets.entries())
+        console.log('DEBUG: Processing targets for action:', combattantAction.action.name, 'Target entries:', targetEntries)
+        console.log('DEBUG: Available combatants:', allCombattants.map(c => ({ combatantId: c.id, creatureId: c.creature.id, name: c.creature.name })))
 
-        const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count]) => {
+        const targetNames = targetEntries.map(([targetId, count]) => {
+            console.log('DEBUG: Looking for target ID:', targetId, 'with count:', count)
+
             // Try to find by combatant ID first
             let targetCombattant = allCombattants.find(combattant => combattant.id === targetId)
+            console.log('DEBUG: Search by combatant ID:', targetCombattant ? 'FOUND' : 'NOT FOUND')
 
             // If not found, try by creature ID as fallback
             if (!targetCombattant) {
                 targetCombattant = allCombattants.find(combattant => combattant.creature.id === targetId)
+                console.log('DEBUG: Search by creature ID:', targetCombattant ? 'FOUND' : 'NOT FOUND')
             }
 
             if (!targetCombattant) {
-                console.log('DEBUG: Target not found for ID:', targetId, 'Available combatant IDs:', allCombattants.map(c => c.id), 'Available creature IDs:', allCombattants.map(c => c.creature.id), 'Debug info:', debugInfo)
+                console.log('DEBUG: Target not found for ID:', targetId, 'Available combatant IDs:', allCombattants.map(c => c.id), 'Available creature IDs:', allCombattants.map(c => c.creature.id))
                 return null
             }
 
