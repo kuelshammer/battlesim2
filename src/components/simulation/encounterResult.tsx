@@ -81,33 +81,33 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                 if (similarCombattants.length === 1) {
                     targetCombattant = similarCombattants[0]
                 } else if (similarCombattants.length > 1) {
-                    // Multiple matches - try to be more specific by action type context
-                    const isEnemyAction = combattantAction.action.type === 'atk' || combattantAction.action.type === 'debuff'
-                    const likelyTargets = similarCombattants.filter(c => {
-                        // Team context: enemy actions should target opposite team
-                        const isFromTeam1 = round.team1.some(t => t.id === c.id)
-                        const isFromTeam2 = round.team2.some(t => t.id === c.id)
-                        return isEnemyAction ? (isFromTeam1 && isFromTeam2) : true
-                    })
-                    if (likelyTargets.length === 1) {
-                        targetCombattant = likelyTargets[0]
-                    }
+                    // Multiple matches - use first one for now, but add debug info
+                    console.warn(`Multiple matching targets found for ID ${targetId}, using first match`)
+                    targetCombattant = similarCombattants[0]
                 }
             }
 
             if (!targetCombattant) {
+                // Debug: show what IDs we're looking for vs what's available
+                console.warn(`Target ID ${targetId} not found. Available combatant IDs:`,
+                    allCombattants.map(c => c.id))
+                console.warn(`Available creature IDs:`,
+                    allCombattants.map(c => c.creature.id))
+
                 // Last resort: provide informative fallback
                 const actionType = combattantAction.action.type
                 const isEnemyAction = actionType === 'atk' || actionType === 'debuff'
 
                 // Try to infer target from action context
                 if (isEnemyAction && round.team1.length > 0 && round.team2.length > 0) {
-                    // This is an enemy action, so targets should be on the opposing team
-                    const sourceTeam = round.team1.find(t =>
-                        t.actions.some(a => a.action.id === combattantAction.action.id)
+                    // Find the source combatant that performed this action
+                    const sourceCombattant = allCombattants.find(c =>
+                        c.actions.some(a => a.action.id === combattantAction.action.id)
                     )
-                    if (sourceTeam) {
-                        const targetTeam = round.team2
+                    if (sourceCombattant) {
+                        // Determine target team based on source team
+                        const isSourceFromTeam1 = round.team1.some(t => t.id === sourceCombattant.id)
+                        const targetTeam = isSourceFromTeam1 ? round.team2 : round.team1
                         if (targetTeam.length > 0) {
                             return `${targetTeam[0].creature.name}${count > 1 ? ` x${count}` : ''} (inferred)`
                         }
