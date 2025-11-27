@@ -1,3 +1,6 @@
 .next
 node_modules
 src/data/scrapper
+target
+simulation-wasm/target
+simulation-wasm/pkg
