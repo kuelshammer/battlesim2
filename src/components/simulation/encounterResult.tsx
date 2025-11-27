@@ -58,7 +58,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
 
         const allCombattants = [...round.team1, ...round.team2]
 
-        const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count]) => {
+        const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count], index) => {
             // Try to find by combatant ID first
             let targetCombattant = allCombattants.find(combattant => combattant.id === targetId)
 
@@ -68,7 +68,8 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
             }
 
             if (!targetCombattant) {
-                return null
+                // Final fallback: show position-based target info
+                return `Target ${index + 1}`
             }
 
             const creatureName = targetCombattant.creature.name
