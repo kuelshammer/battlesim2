@@ -12,14 +12,68 @@ type TeamPropType = {
     onHighlight?: (targetIds: string[]) => void,
 }
 
+// Enhanced action label function that provides complete action descriptions
+function getActionLabel(combattantAction: { action: FinalAction, targets: Map<string, number> }): string {
+    const { action } = combattantAction
+
+    switch (action.type) {
+        case 'atk':
+            return `Attack ${action.name}`
+        case 'heal':
+            return action.name
+        case 'buff':
+            return action.name
+        case 'debuff':
+            return action.name
+        case 'template':
+            return action.name
+        default:
+            return action.name
+    }
+}
+
+// Enhanced target prefix function that provides appropriate "on" prefix based on action type
+function getTargetPrefix(combattantAction: { action: FinalAction, targets: Map<string, number> }): string {
+    const { action } = combattantAction
+
+    switch (action.type) {
+        case 'atk':
+            return 'on'
+        case 'heal':
+            return 'on'
+        case 'buff':
+            return 'on'
+        case 'debuff':
+            return 'on'
+        case 'template':
+            return 'on'
+        default:
+            return 'on'
+    }
+}
+
 const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHighlight }) => {
     function getTarget(combattantAction: { action: FinalAction, targets: Map<string, number> }) {
         if (combattantAction.action.target === 'self') return 'itself'
 
-        const allCombattants = [...round.team1, ...round.team2].map(combattant => combattant)
+        const allCombattants = [...round.team1, ...round.team2]
+        const debugInfo = {
+            targetEntries: Array.from(combattantAction.targets.entries()),
+            allCombattantIds: allCombattants.map(c => ({ id: c.id, name: c.creature.name })),
+            allCombattantCreatureIds: allCombattants.map(c => ({ id: c.creature.id, name: c.creature.name }))
+        }
+
         const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count]) => {
-            const targetCombattant = allCombattants.find(combattant => (combattant.id === targetId))
+            // Try to find by combatant ID first
+            let targetCombattant = allCombattants.find(combattant => combattant.id === targetId)
+
+            // If not found, try by creature ID as fallback
             if (!targetCombattant) {
+                targetCombattant = allCombattants.find(combattant => combattant.creature.id === targetId)
+            }
+
+            if (!targetCombattant) {
+                console.log('DEBUG: Target not found for ID:', targetId, 'Available combatant IDs:', allCombattants.map(c => c.id), 'Available creature IDs:', allCombattants.map(c => c.creature.id), 'Debug info:', debugInfo)
                 return null
             }
 
@@ -115,7 +169,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                                                 key={index}
                                                 onMouseEnter={() => onHighlight?.(Array.from(action.targets.keys()))}
                                                 onMouseLeave={() => onHighlight?.(combattant.actions.flatMap(a => Array.from(a.targets.keys())))}>
-                                                <b>{action.action.name}</b> on {getTarget(action)}
+                                                <b>{getActionLabel(action, action.targets)}</b> {getTargetPrefix(action)} {getTarget(action)}
                                             </li>
                                         ))
 
