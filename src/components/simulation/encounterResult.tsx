@@ -58,6 +58,11 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
 
         const allCombattants = [...round.team1, ...round.team2]
 
+        // Debug: Log target IDs and available combatant/creature IDs
+        console.log('getTarget() called with target IDs:', Array.from(combattantAction.targets.keys()));
+        console.log('Available combatant IDs:', allCombattants.map(c => c.id));
+        console.log('Available creature IDs:', allCombattants.map(c => c.creature.id));
+
         // Create lookup maps for efficient searching
         const combattantMap = new Map(allCombattants.map(c => [c.id, c]))
         const creatureMap = new Map(allCombattants.map(c => [c.creature.id, c]))
