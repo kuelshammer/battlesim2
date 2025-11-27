@@ -26,25 +26,20 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
     
     // Assuming all results have the same number of encounters (usually 1 for now)
     // We aggregate the first encounter's rounds.
-    // If we support multiple encounters, we'd need to aggregate each.
-    // For now, let's just do the first encounter.
     
     let max_rounds = results.iter().map(|r| r.first().map(|e| e.rounds.len()).unwrap_or(0)).max().unwrap_or(0);
     let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
     
-    // We need a template for combatants to clone structure from.
-    // We'll use the first result's first encounter's first round (or initial state).
-    // Actually, we can just look at the first result.
     let template_encounter = results.first().and_then(|r| r.first());
     if template_encounter.is_none() { return Vec::new(); }
     let template_encounter = template_encounter.unwrap();
     
-    // Map of ID -> Creature (to reconstruct combatants)
-    let mut creature_map: HashMap<String, Creature> = HashMap::new();
-    // We can get creatures from the first round of the first result
+    // Get template IDs for mapping
+    let mut template_ids_t1: Vec<String> = Vec::new();
+    let mut template_ids_t2: Vec<String> = Vec::new();
     if let Some(first_round) = template_encounter.rounds.first() {
-        for c in &first_round.team1 { creature_map.insert(c.id.clone(), c.creature.clone()); }
-        for c in &first_round.team2 { creature_map.insert(c.id.clone(), c.creature.clone()); }
+        for c in &first_round.team1 { template_ids_t1.push(c.id.clone()); }
+        for c in &first_round.team2 { template_ids_t2.push(c.id.clone()); }
     }
     
     for round_idx in 0..max_rounds {
@@ -54,6 +49,21 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         
         for res in results {
             if let Some(encounter) = res.first() {
+                // Build UUID map for this run
+                let mut uuid_map: HashMap<String, String> = HashMap::new();
+                if let Some(first_round) = encounter.rounds.first() {
+                    for (i, c) in first_round.team1.iter().enumerate() {
+                        if i < template_ids_t1.len() {
+                            uuid_map.insert(c.id.clone(), template_ids_t1[i].clone());
+                        }
+                    }
+                    for (i, c) in first_round.team2.iter().enumerate() {
+                        if i < template_ids_t2.len() {
+                            uuid_map.insert(c.id.clone(), template_ids_t2[i].clone());
+                        }
+                    }
+                }
+
                 if round_idx < encounter.rounds.len() {
                     let round = &encounter.rounds[round_idx];
                     count += 1;
@@ -61,14 +71,44 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     for c in &round.team1 {
                         let entry = team1_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
                         entry.0 += c.final_state.current_hp;
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
+                        
+                        // Remap targets in actions
+                        let mut actions = c.actions.clone();
+                        for action in &mut actions {
+                            let mut new_targets = HashMap::new();
+                            for (target_id, count) in &action.targets {
+                                if let Some(mapped_id) = uuid_map.get(target_id) {
+                                    new_targets.insert(mapped_id.clone(), *count);
+                                } else {
+                                    new_targets.insert(target_id.clone(), *count);
+                                }
+                            }
+                            action.targets = new_targets;
+                        }
+                        
+                        let action_key = serde_json::to_string(&actions).unwrap_or_default();
                         *entry.1.entry(action_key).or_insert(0) += 1;
                     }
                     
                     for c in &round.team2 {
                         let entry = team2_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
                         entry.0 += c.final_state.current_hp;
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
+                        
+                        // Remap targets in actions
+                        let mut actions = c.actions.clone();
+                        for action in &mut actions {
+                            let mut new_targets = HashMap::new();
+                            for (target_id, count) in &action.targets {
+                                if let Some(mapped_id) = uuid_map.get(target_id) {
+                                    new_targets.insert(mapped_id.clone(), *count);
+                                } else {
+                                    new_targets.insert(target_id.clone(), *count);
+                                }
+                            }
+                            action.targets = new_targets;
+                        }
+
+                        let action_key = serde_json::to_string(&actions).unwrap_or_default();
                         *entry.1.entry(action_key).or_insert(0) += 1;
                     }
                 } else {
