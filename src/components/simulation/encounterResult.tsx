@@ -16,19 +16,46 @@ type TeamPropType = {
 function getActionLabel(combattantAction: { action: FinalAction, targets: Map<string, number> }): string {
     const { action } = combattantAction
 
+    // Handle empty or whitespace-only action names
+    const actionName = action.name?.trim() || ''
+
     switch (action.type) {
         case 'atk':
-            return `Attack ${action.name}`
+            if (actionName) {
+                return `Attack ${actionName}`
+            }
+            // Fallback: infer from damage properties if available
+            if ('dpr' in action && action.dpr) {
+                return `Attack ${action.dpr} damage`
+            }
+            return 'Attack'
         case 'heal':
-            return action.name
+            if (actionName) {
+                return actionName
+            }
+            // Fallback: infer from healing properties if available
+            if ('amount' in action && action.amount) {
+                return `Heal ${action.amount} HP`
+            }
+            return 'Heal'
         case 'buff':
-            return action.name
+            if (actionName) {
+                return actionName
+            }
+            // Fallback: infer from buff properties if available
+            if ('buff' in action && action.buff && action.buff.displayName) {
+                return `Buff ${action.buff.displayName}`
+            }
+            return 'Buff'
         case 'debuff':
-            return action.name
-        case 'template':
-            return action.name
-        default:
-            return action.name
+            if (actionName) {
+                return actionName
+            }
+            // Fallback: infer from debuff properties if available
+            if ('buff' in action && action.buff && action.buff.displayName) {
+                return `Debuff ${action.buff.displayName}`
+            }
+            return 'Debuff'
     }
 }
 
@@ -45,12 +72,9 @@ function getTargetPrefix(combattantAction: { action: FinalAction, targets: Map<s
             return 'on'
         case 'debuff':
             return 'on'
-        case 'template':
-            return 'on'
-        default:
-            return 'on'
     }
 }
+
 
 const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHighlight }) => {
     function getTarget(combattantAction: { action: FinalAction, targets: Map<string, number> }) {
@@ -245,7 +269,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                                                 key={index}
                                                 onMouseEnter={() => onHighlight?.(Array.from(action.targets.keys()))}
                                                 onMouseLeave={() => onHighlight?.(combattant.actions.flatMap(a => Array.from(a.targets.keys())))}>
-                                                <b>{getActionLabel({ action, targets: action.targets })}</b> {getTargetPrefix(action)} {getTarget({ action, targets: action.targets })}
+                                                <b>{getActionLabel(action)}</b> {getTargetPrefix(action)} {getTarget(action)}
                                             </li>
                                         ))
 

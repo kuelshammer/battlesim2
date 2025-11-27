@@ -58,3 +58,4 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
 ### Manual Verification
 - **Regression Testing**: Compare a simple "1 Goblin vs 1 Fighter" scenario in the old vs. new system to ensure basic mechanics (AC, HP, Damage) are consistent.
 - **Monte Carlo Check**: Run a simulation and verify that "Bad Luck" results actually show missed attacks/failed saves, and "Good Luck" results show crits/successful saves.
+- **Aggregation Verification**: Verify that aggregated action labels correctly display target names (e.g., "Attack on Goblin 1") instead of just "Attack on".
