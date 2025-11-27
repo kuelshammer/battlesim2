@@ -67,9 +67,8 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
         const combattantMap = new Map(allCombattants.map(c => [c.id, c]))
         const creatureMap = new Map(allCombattants.map(c => [c.creature.id, c]))
 
-  
         const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count], index) => {
-            // Try to find by combatant ID first
+            // Try to find by combatant ID first (this is what Rust stores)
             let targetCombattant = combattantMap.get(targetId)
 
             // If not found, try by creature ID as fallback
@@ -78,18 +77,50 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
             }
 
             if (!targetCombattant) {
-                // Enhanced fallback: try partial ID matching and display useful info
-                const similarCombattants = allCombattants.filter(c =>
-                    c.id.includes(targetId) || targetId.includes(c.id) ||
-                    c.creature.id.includes(targetId) || targetId.includes(c.creature.id)
-                )
+                // Enhanced fallback: try partial ID matching for UUID-style IDs
+                const similarCombattants = allCombattants.filter(c => {
+                    // For UUIDs, try matching the first 8 characters
+                    if (targetId.length >= 8 && c.id.length >= 8) {
+                        return targetId.substring(0, 8) === c.id.substring(0, 8) ||
+                               targetId.substring(0, 8) === c.creature.id.substring(0, 8)
+                    }
+                    // Fallback to contains matching
+                    return c.id.includes(targetId) || targetId.includes(c.id) ||
+                           c.creature.id.includes(targetId) || targetId.includes(c.creature.id)
+                })
 
                 if (similarCombattants.length === 1) {
                     targetCombattant = similarCombattants[0]
                 } else if (similarCombattants.length > 1) {
-                    // Multiple matches - use first one for now, but add debug info
-                    console.warn(`Multiple matching targets found for ID ${targetId}, using first match`)
-                    targetCombattant = similarCombattants[0]
+                    // Multiple matches - try to find the best one by checking action context
+                    const actionType = combattantAction.action.type
+                    const isEnemyAction = actionType === 'atk' || actionType === 'debuff'
+
+                    // Find the source combatant that performed this action
+                    const sourceCombattant = allCombattants.find(c =>
+                        c.actions.some(a => a.action.id === combattantAction.action.id)
+                    )
+
+                    if (sourceCombattant) {
+                        // Determine target team based on source team
+                        const isSourceFromTeam1 = round.team1.some(t => t.id === sourceCombattant.id)
+                        const expectedTargetTeam = isSourceFromTeam1 ? round.team2 : round.team1
+
+                        // Filter matches to only those on the expected target team
+                        const teamMatches = similarCombattants.filter(c =>
+                            expectedTargetTeam.some(t => t.id === c.id)
+                        )
+
+                        if (teamMatches.length === 1) {
+                            targetCombattant = teamMatches[0]
+                        } else {
+                            console.warn(`Multiple matching targets found for ID ${targetId} on expected team, using first match`)
+                            targetCombattant = teamMatches[0] || similarCombattants[0]
+                        }
+                    } else {
+                        console.warn(`Multiple matching targets found for ID ${targetId}, using first match`)
+                        targetCombattant = similarCombattants[0]
+                    }
                 }
             }
 
@@ -100,7 +131,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                 console.warn(`Available creature IDs:`,
                     allCombattants.map(c => c.creature.id))
 
-                // Last resort: provide informative fallback
+                // Last resort: provide informative fallback based on action context
                 const actionType = combattantAction.action.type
                 const isEnemyAction = actionType === 'atk' || actionType === 'debuff'
 
