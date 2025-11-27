@@ -1,0 +1,14 @@
+/Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/deps/libserde-81e9c56584f7261b.rmeta: /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/build/serde-8903343e35addde2/out/private.rs
+
+/Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/deps/libserde-81e9c56584f7261b.rlib: /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/build/serde-8903343e35addde2/out/private.rs
+
+/Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/deps/serde-81e9c56584f7261b.d: /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/build/serde-8903343e35addde2/out/private.rs
+
+/Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/max/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/build/serde-8903343e35addde2/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/max/Rust/Battlesim2/simulation-wasm/target/wasm32-unknown-unknown/debug/build/serde-8903343e35addde2/out

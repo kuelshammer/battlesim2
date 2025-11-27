@@ -6,6 +6,7 @@ import styles from './customForm.module.scss'
 import { clone } from "../../model/utils"
 import ActionForm from "./actionForm"
 import DecimalInput from "../utils/DecimalInput"
+import Checkbox from "../utils/checkbox"
 import { v4 as uuid } from 'uuid'
 import LoadCreatureForm, { saveCreature } from "./loadCreatureForm"
 
@@ -14,7 +15,7 @@ type PropType = {
     onChange: (newvalue: Creature) => void,
 }
 
-const CustomForm:FC<PropType> = ({ value, onChange }) => {
+const CustomForm: FC<PropType> = ({ value, onChange }) => {
     const [isLoading, setIsLoading] = useState(false)
 
     function update(callback: (valueClone: Creature) => void) {
@@ -24,18 +25,20 @@ const CustomForm:FC<PropType> = ({ value, onChange }) => {
     }
 
     function createAction() {
-        update(v => { v.actions.push({
-            id: uuid(),
-            actionSlot: 0,
-            name: '',
-            freq: 'at will',
-            condition: 'default',
-            targets: 1,
-            type: 'atk',
-            dpr: 0,
-            toHit: 0,
-            target: 'enemy with least HP',
-        }) })
+        update(v => {
+            v.actions.push({
+                id: uuid(),
+                actionSlot: 0,
+                name: '',
+                freq: 'at will',
+                condition: 'default',
+                targets: 1,
+                type: 'atk',
+                dpr: 0,
+                toHit: 0,
+                target: 'enemy with least HP',
+            })
+        })
     }
 
     function updateAction(index: number, newValue: Action) {
@@ -54,7 +57,7 @@ const CustomForm:FC<PropType> = ({ value, onChange }) => {
                 <h3>Name</h3>
                 <div className={styles.nameContainer}>
                     <input type='text' value={value.name} onChange={e => update(v => { v.name = e.target.value })} />
-                    { canSaveTemplate ? (
+                    {canSaveTemplate ? (
                         <>
                             <button onClick={() => saveCreature(value)}>
                                 <FontAwesomeIcon icon={faSave} />
@@ -65,7 +68,7 @@ const CustomForm:FC<PropType> = ({ value, onChange }) => {
                                 <span className={styles.btnText}>Load</span>
                             </button>
                         </>
-                    ) : null }
+                    ) : null}
                 </div>
             </section>
             <section>
@@ -81,23 +84,31 @@ const CustomForm:FC<PropType> = ({ value, onChange }) => {
                 <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} />
                 <div className="tooltip">Average of all saves' bonuses. For player characters, you can use the Proficiency Bonus. For monsters, either calculate it, or just use half of the monster's CR.</div>
             </section>
-            
+            <section>
+                <h3>Initiative Bonus</h3>
+                <DecimalInput value={value.initiativeBonus || 0} onChange={init => update(v => { v.initiativeBonus = init || 0 })} />
+            </section>
+            <section>
+                <h3>Initiative Advantage</h3>
+                <Checkbox value={!!value.initiativeAdvantage} onToggle={() => update(v => { v.initiativeAdvantage = !v.initiativeAdvantage })} />
+            </section>
+
             <h3 className={styles.actionsHeader}>
                 <span className={styles.label}>Actions</span>
                 <button
                     onClick={createAction}
                     className={styles.createActionBtn}>
-                        <FontAwesomeIcon icon={faPlus} />
+                    <FontAwesomeIcon icon={faPlus} />
                 </button>
             </h3>
             <div className={styles.actions}>
-                { value.actions.map((action, index) => (
+                {value.actions.map((action, index) => (
                     <ActionForm
                         key={action.id}
                         value={action}
                         onChange={(a) => updateAction(index, a)}
                         onDelete={() => deleteAction(index)}
-                        onMoveUp={(index <= 0) ? undefined : () => update(v => {                            
+                        onMoveUp={(index <= 0) ? undefined : () => update(v => {
                             v.actions[index] = v.actions[index - 1]
                             v.actions[index - 1] = action
                         })}
@@ -109,9 +120,9 @@ const CustomForm:FC<PropType> = ({ value, onChange }) => {
                 ))}
             </div>
 
-            { isLoading ? (
-                <LoadCreatureForm 
-                    onLoad={(creature) => { onChange(creature); setIsLoading(false) }} 
+            {isLoading ? (
+                <LoadCreatureForm
+                    onLoad={(creature) => { onChange(creature); setIsLoading(false) }}
                     onCancel={() => setIsLoading(false)} />
             ) : null}
         </div>

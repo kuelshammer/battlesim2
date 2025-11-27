@@ -1,0 +1,1 @@
+/Users/max/Rust/Battlesim2/simulation-wasm/target/debug/libsimulation_wasm.rlib: /Users/max/Rust/Battlesim2/simulation-wasm/src/dice.rs /Users/max/Rust/Battlesim2/simulation-wasm/src/enums.rs /Users/max/Rust/Battlesim2/simulation-wasm/src/lib.rs /Users/max/Rust/Battlesim2/simulation-wasm/src/model.rs /Users/max/Rust/Battlesim2/simulation-wasm/src/simulation.rs

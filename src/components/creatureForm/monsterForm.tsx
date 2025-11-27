@@ -103,6 +103,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
                             <span className={styles.name}>{monster.name}</span>
                             <span className={styles.stats}>{monster.type}, {monster.src}</span>
                             <span className={styles.stats}>CR {monster.cr}</span>
+                            {monster.speed_fly && <span className={styles.stats}>Speed Fly {monster.speed_fly}</span>}
                         </div>
                     )}
             </SortTable>

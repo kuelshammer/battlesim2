@@ -95,7 +95,7 @@ const TemplateActionSchema = z.object({
     id: z.string(),
     freq: FrequencySchema,
     condition: ActionConditionSchema,
-    
+
     templateOptions: z.object({
         target: AllyTargetSchema.or(EnemyTargetSchema).optional(),
         templateName: z.custom<ActionTemplateName>(data => (typeof data === 'string')),
@@ -110,7 +110,7 @@ const TemplateActionSchema = z.object({
             if (data.toHit === undefined) return false
             if (template.riderEffect && (data.saveDC === undefined)) return false
         }
-    
+
         if ((template.type === 'debuff') && (data.saveDC === undefined)) return false
 
         // Check that this has right kind of target
@@ -129,17 +129,17 @@ const TemplateActionSchema = z.object({
 
 // Like a regular Action, but without the possibility of it being a TemplateAction
 export const FinalActionSchema = z.discriminatedUnion('type', [
-    HealActionSchema, 
-    AtkActionSchema, 
-    BuffActionSchema, 
-    DebuffActionSchema, 
+    HealActionSchema,
+    AtkActionSchema,
+    BuffActionSchema,
+    DebuffActionSchema,
 ])
 
 const ActionSchema = z.discriminatedUnion('type', [
-    HealActionSchema, 
-    AtkActionSchema, 
-    BuffActionSchema, 
-    DebuffActionSchema, 
+    HealActionSchema,
+    AtkActionSchema,
+    BuffActionSchema,
+    DebuffActionSchema,
     TemplateActionSchema,
 ])
 
@@ -151,12 +151,12 @@ export const CreatureSchema = z.object({
     arrival: z.number().optional(), // Which round is the creature added (optional, default: round 0)
 
     mode: z.enum(['player', 'monster', 'custom']), // This determines which UI is opened when the user clicks on "modify creature"
-    
+
     // Properties for monsters. Not used by the simulator, but by the monster search UI.
     type: CreatureTypeSchema.optional(),
     cr: ChallengeRatingSchema.optional(),
     src: z.string().optional(),
-    
+
     // Properties for player characters. Not used by the simulator, but used by the PC template UI.
     class: z.object({
         type: ClassesSchema,
@@ -169,7 +169,10 @@ export const CreatureSchema = z.object({
     count: z.number(),
     hp: z.number(),
     AC: z.number(),
+    speed_fly: z.number().optional(),
     saveBonus: z.number(), // Average save bonus. Using this to simplify the input, even if it makes the result slightly less accurate.
+    initiativeBonus: z.number().optional(),
+    initiativeAdvantage: z.boolean().optional(),
     actions: z.array(ActionSchema),
 })
 
@@ -186,10 +189,11 @@ const CreatureStateSchema = z.object({
 
 const CombattantSchema = z.object({
     id: z.string(),
+    initiative: z.number().optional(),
     creature: CreatureSchema,
     initialState: CreatureStateSchema,
     finalState: CreatureStateSchema,
-    
+
     // Actions taken by the creature on that round. Initially empty, will be filled by the simulator
     actions: z.array(z.object({
         action: FinalActionSchema,
@@ -212,13 +216,13 @@ export const EncounterSchema = z.object({
 const EncounterStatsSchema = z.object({
     damageDealt: z.number(),
     damageTaken: z.number(),
-    
+
     healGiven: z.number(),
     healReceived: z.number(),
 
     charactersBuffed: z.number(),
     buffsReceived: z.number(),
-    
+
     charactersDebuffed: z.number(),
     debuffsReceived: z.number(),
 

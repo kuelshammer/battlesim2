@@ -1,0 +1,59 @@
+    Checking simulation-wasm v0.1.0 (/Users/max/Rust/Battlesim2/simulation-wasm)
+warning: unused import: `SimulationResult`
+ --> src/lib.rs:8:41
+  |
+8 | use crate::model::{Creature, Encounter, SimulationResult};
+  |                                         ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0599]: no method named `serialize_sets_as_arrays` found for struct `serde_wasm_bindgen::Serializer` in the current scope
+  --> src/lib.rs:19:10
+   |
+17 |       let serializer = serde_wasm_bindgen::Serializer::new()
+   |  ______________________-
+18 | |         .serialize_maps_as_objects(false)
+19 | |         .serialize_sets_as_arrays(false);
+   | |_________-^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: there is a method `serialize_str` with a similar name
+   |
+19 -         .serialize_sets_as_arrays(false);
+19 +         .serialize_str(false);
+   |
+
+warning: unused variable: `allies`
+   --> src/simulation.rs:275:32
+    |
+275 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_allies`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `enemies`
+   --> src/simulation.rs:275:55
+    |
+275 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enemies`
+
+warning: unused variable: `a`
+   --> src/simulation.rs:371:21
+    |
+371 |         Action::Atk(a) => {
+    |                     ^ help: if this is intentional, prefix it with an underscore: `_a`
+
+warning: unused variable: `a`
+   --> src/simulation.rs:393:22
+    |
+393 |         Action::Heal(a) => {
+    |                      ^ help: if this is intentional, prefix it with an underscore: `_a`
+
+warning: unused variable: `c`
+   --> src/simulation.rs:366:16
+    |
+366 | fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: &[Combattant]) -> Vec<(bool, usize)> {
+    |                ^ help: if this is intentional, prefix it with an underscore: `_c`
+
+For more information about this error, try `rustc --explain E0599`.
+warning: `simulation-wasm` (lib) generated 6 warnings
+error: could not compile `simulation-wasm` (lib) due to 1 previous error; 6 warnings emitted

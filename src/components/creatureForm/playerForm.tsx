@@ -62,6 +62,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
             options: chosenClass.options,
         }
         creature.count = value?.count || 1
+        creature.speed_fly = value?.speed_fly
         onChange(creature)
     }, [chosenClass, level])
 

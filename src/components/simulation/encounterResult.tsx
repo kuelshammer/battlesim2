@@ -12,7 +12,7 @@ type TeamPropType = {
     onHighlight?: (targetIds: string[]) => void,
 }
 
-const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHighlight }) => {
+const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHighlight }) => {
     function getTarget(combattantAction: { action: FinalAction, targets: Map<string, number> }) {
         if (combattantAction.action.target === 'self') return 'itself'
 
@@ -46,7 +46,7 @@ const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHi
         if (buff.ac != undefined) buffEffects.push(getNumberWithSign(buff.ac) + ' AC')
         if (buff.condition != undefined) buffEffects.push(' ' + buff.condition)
         if (buff.damageMultiplier != undefined) buffEffects.push(' x' + buff.damageMultiplier + ' damage')
-        if (buff.damageTakenMultiplier != undefined) buffEffects.push( ' x' + buff.damageTakenMultiplier + ' damage taken')
+        if (buff.damageTakenMultiplier != undefined) buffEffects.push(' x' + buff.damageTakenMultiplier + ' damage taken')
         if (buff.toHit != undefined) buffEffects.push(getNumberWithSign(buff.toHit) + ' to hit')
         if (buff.save != undefined) buffEffects.push(getNumberWithSign(buff.save) + ' to save')
         if (buff.damage != undefined) buffEffects.push(getNumberWithSign(buff.damage) + ' extra damage')
@@ -57,40 +57,40 @@ const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHi
 
     return (
         <div className={styles.team}>
-            { team.map(combattant => (
-                <div 
-                    key={combattant.id} 
+            {team.map(combattant => (
+                <div
+                    key={combattant.id}
                     onMouseEnter={() => onHighlight?.(combattant.actions.flatMap(action => Array.from(action.targets.keys())))}
                     onMouseLeave={() => onHighlight?.([])}
                     className={`${styles.lifebar} tooltipContainer`}>
                     <div className={`${styles.lifebarBackground} ${highlightedIds?.includes(combattant.id) ? styles.highlighted : ''}`}>
-                        <div 
-                            className={styles.lifebarForeground} 
-                            style={{ 
-                                width: `${100*combattant.initialState.currentHP/(combattant.creature.hp + (combattant.initialState.tempHP || 0))}%` 
-                            }}
-                            />
-                        { combattant.initialState.tempHP ? (
-                            <div 
-                            className={styles.lifebarTHP}
+                        <div
+                            className={styles.lifebarForeground}
                             style={{
-                                    width: `${100*combattant.initialState.tempHP/(combattant.creature.hp + combattant.initialState.tempHP)}%`,
+                                width: `${100 * combattant.initialState.currentHP / (combattant.creature.hp + (combattant.initialState.tempHP || 0))}%`
+                            }}
+                        />
+                        {combattant.initialState.tempHP ? (
+                            <div
+                                className={styles.lifebarTHP}
+                                style={{
+                                    width: `${100 * combattant.initialState.tempHP / (combattant.creature.hp + combattant.initialState.tempHP)}%`,
                                 }}
                             />
-                        ) : null }
+                        ) : null}
                         <div className={styles.lifebarLabel}>
-                            {Math.round(combattant.initialState.currentHP)}/{combattant.creature.hp}
-                            { combattant.initialState.tempHP ? `+${Math.round(combattant.initialState.tempHP)}` : null }
+                            {combattant.initialState.currentHP.toFixed(1)}/{combattant.creature.hp}
+                            {combattant.initialState.tempHP ? `+${combattant.initialState.tempHP.toFixed(1)}` : null}
                         </div>
                     </div>
                     <div className={styles.creatureName}>
                         {combattant.creature.name}
                     </div>
 
-                    { (!stats && (combattant.actions.length === 0) && (combattant.finalState.buffs.size)) ? null : (
+                    {(!stats && (combattant.actions.length === 0) && (combattant.finalState.buffs.size)) ? null : (
                         <div className="tooltip">
                             <ul>
-                                { stats ? (() => {
+                                {stats ? (() => {
                                     const creatureStats = stats.get(combattant.id)
                                     if (!creatureStats) return <>No Stats</>
 
@@ -109,15 +109,15 @@ const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHi
                                     )
                                 })() : (() => {
                                     const li = combattant.actions
-                                    .filter(({ targets }) => !!targets.size)
-                                    .map((action, index) => (
-                                        <li 
-                                            key={index}
-                                            onMouseEnter={() => onHighlight?.(Array.from(action.targets.keys()))}
-                                            onMouseLeave={() => onHighlight?.(combattant.actions.flatMap(a => Array.from(a.targets.keys())))}>
-                                            <b>{action.action.name}</b> on {getTarget(action)}
-                                        </li>
-                                    ))
+                                        .filter(({ targets }) => !!targets.size)
+                                        .map((action, index) => (
+                                            <li
+                                                key={index}
+                                                onMouseEnter={() => onHighlight?.(Array.from(action.targets.keys()))}
+                                                onMouseLeave={() => onHighlight?.(combattant.actions.flatMap(a => Array.from(a.targets.keys())))}>
+                                                <b>{action.action.name}</b> on {getTarget(action)}
+                                            </li>
+                                        ))
 
                                     //todo effects that disappear in the same round are not shown, which can be misleading
                                     const buffCount = combattant.finalState.buffs.size
@@ -133,7 +133,7 @@ const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHi
                                                 <>
                                                     <b>{buff.displayName}</b>{(index < buffCount - 1) ? ', ' : null}
                                                 </>
-                                    ))
+                                        ))
 
                                     return (
                                         <>
@@ -149,7 +149,7 @@ const TeamResults:FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHi
                         </div>
                     )}
                 </div>
-            )) }
+            ))}
         </div>
     )
 }
@@ -158,18 +158,19 @@ type PropType = {
     value: EncounterResultType,
 }
 
-const EncounterResult:FC<PropType> = ({ value }) => {
+const EncounterResult: FC<PropType> = ({ value }) => {
+    if (!value.rounds.length) return <></>
     const lastRound = clone(value.rounds[value.rounds.length - 1])
     const [highlightedIds, setHighlightedIds] = useState<string[]>([])
     const [highlightedRound, setHighlightedRound] = useState(0)
-    
-    ;([...lastRound.team1, ...lastRound.team2]).forEach(combattant => {
-        combattant.initialState = combattant.finalState
-        combattant.actions = []
-    })
+
+        ; ([...lastRound.team1, ...lastRound.team2]).forEach(combattant => {
+            combattant.initialState = combattant.finalState
+            combattant.actions = []
+        })
 
     if (value.rounds.length === 1 && (!value.rounds[0].team1.length || !value.rounds[0].team2.length)) return <></>
-    
+
     return (
         <div className={styles.encounterResult}>
             {value.rounds.map((round, roundIndex) => (
@@ -178,16 +179,16 @@ const EncounterResult:FC<PropType> = ({ value }) => {
 
                     <div className={styles.lifebars}>
                         <TeamResults
-                            round={round} 
-                            team={round.team1} 
-                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined} 
-                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex)}} />
+                            round={round}
+                            team={round.team1}
+                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
                         <hr />
                         <TeamResults
-                            round={round} 
-                            team={round.team2} 
-                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined} 
-                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex)}} />
+                            round={round}
+                            team={round.team2}
+                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
                     </div>
                 </div>
             ))}

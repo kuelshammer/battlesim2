@@ -9,7 +9,7 @@ import Checkbox from "../utils/checkbox"
 import Range from "../utils/range"
 
 type PropType = {
-    mode: 'player'|'monster',
+    mode: 'player' | 'monster',
     encounter: Encounter,
     onUpdate: (newValue: Encounter) => void,
     onDelete?: () => void,
@@ -20,7 +20,7 @@ type PropType = {
     setLuck: (newValue: number) => void,
 }
 
-const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, children, onMoveUp, onMoveDown, luck, setLuck }) => {
+const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, children, onMoveUp, onMoveDown, luck, setLuck }) => {
     const [updating, setUpdating] = useState<number | null>(null)
     const [creating, setCreating] = useState(false)
 
@@ -55,17 +55,17 @@ const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, child
         <>
             <div className={styles.encounterForm}>
                 <div className={styles.encounterActions}>
-                    { !!onDelete && (
+                    {!!onDelete && (
                         <button onClick={onDelete}>
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     )}
-                    { (onMoveUp || onMoveDown) && (
+                    {(onMoveUp || onMoveDown) && (
                         <button onClick={onMoveUp} disabled={!onMoveUp}>
                             <FontAwesomeIcon icon={faChevronUp} />
                         </button>
                     )}
-                    { (onMoveUp || onMoveDown) && (
+                    {(onMoveUp || onMoveDown) && (
                         <button onClick={onMoveDown} disabled={!onMoveDown}>
                             <FontAwesomeIcon icon={faChevronDown} />
                         </button>
@@ -73,40 +73,40 @@ const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, child
                 </div>
 
                 <h2 className={`${styles.header} ${(mode === "player") ? styles.player : styles.monster}`}>
-                    { (mode === 'player') ? 'Player Characters' : 'Encounter' }
+                    {(mode === 'player') ? 'Player Characters' : 'Encounter'}
                 </h2>
 
                 <div className={styles.formBody}>
                     <div className={styles.creatures}>
-                        { encounter.monsters.map((creature, index) => (
+                        {encounter.monsters.map((creature, index) => (
                             <div key={creature.id} className={styles.creature}>
                                 <span className={styles.name}>{creature.name}</span>
                                 <span className={styles.inlineInput}>
                                     <span className={styles.countLabel} >Count:</span>
-                                    <input 
-                                        type='number' 
-                                        min={1} max={20} step={1} 
-                                        value={creature.count} 
-                                        onChange={e => updateCreature(index, {...creature, count: Math.max(0, Math.min(20, Math.round(Number(e.target.value))))})}
+                                    <input
+                                        type='number'
+                                        min={1} max={20} step={1}
+                                        value={creature.count}
+                                        onChange={e => updateCreature(index, { ...creature, count: Math.max(0, Math.min(20, Math.round(Number(e.target.value)))) })}
                                     />
                                 </span>
-                                { !children && <span className={styles.inlineInput}>
+                                {!children && <span className={styles.inlineInput}>
                                     <span className={styles.countLabel}>Arrives on round:</span>
-                                    <input 
+                                    <input
                                         type='number'
                                         min={1} max={19} step={1}
                                         value={creature.arrival || 1}
-                                        onChange={e => updateCreature(index, {...creature, arrival: Math.max(0, Math.min(20, Math.round(Number(e.target.value))))})} />
-                                </span> }
-                                <button  onClick={() => setUpdating(index)}>
+                                        onChange={e => updateCreature(index, { ...creature, arrival: Math.max(0, Math.min(20, Math.round(Number(e.target.value)))) })} />
+                                </span>}
+                                <button onClick={() => setUpdating(index)}>
                                     <FontAwesomeIcon icon={faPen} />
                                     <label>Edit</label>
                                 </button>
                             </div>
-                        )) }
+                        ))}
                     </div>
                     <div className={styles.encounterSettings}>
-                        { children || (encounter.monsters.length ? (
+                        {children || (encounter.monsters.length ? (
                             <>
                                 <Checkbox value={!!encounter.playersSurprised} onToggle={() => update(e => { e.playersSurprised = !e.playersSurprised })}>
                                     The players are surprised
@@ -114,7 +114,7 @@ const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, child
                                 <Checkbox value={!!encounter.monstersSurprised} onToggle={() => update(e => { e.monstersSurprised = !e.monstersSurprised })}>
                                     The enemies are surprised
                                 </Checkbox>
-                                { !onDelete ? null : (
+                                {!onDelete ? null : (
                                     <Checkbox value={!!encounter.shortRest} onToggle={() => update(e => { e.shortRest = !e.shortRest })}>
                                         The players get a short rest
                                     </Checkbox>
@@ -126,18 +126,18 @@ const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, child
 
                 <button className={styles.addCreatureBtn} onClick={() => setCreating(true)}>
                     <FontAwesomeIcon icon={faPlus} />
-                    Add { (mode === 'player') ? 'Player Character' : 'Enemy' }
+                    Add {(mode === 'player') ? 'Player Character' : 'Enemy'}
                 </button>
 
-                { (mode === "player") && (
+                {(mode === "player") && (
                     <div className={`${styles.luckSlider} tooltipContainer`}>
                         <label>
                             Luck:
                         </label>
-                        
+
                         <div className="tooltip">
                             <p>
-                                Changing this setting allows you to quickly visualize how <b>swingy</b> your encounter is, 
+                                Changing this setting allows you to quickly visualize how <b>swingy</b> your encounter is,
                                 by simulating what happens if your players are slightly luckier or slightly more unlucky than average.
                             </p>
                             <p>
@@ -147,30 +147,32 @@ const EncounterForm:FC<PropType> = ({ mode, encounter, onUpdate, onDelete, child
 
                         <Range
                             value={luck * 100}
-                            onChange={v => setLuck(v/100)}
-                            min={35}
-                            max={65}
-                            step={5}
+                            onChange={v => setLuck(v / 100)}
+                            min={0}
+                            max={100}
+                            step={25}
                             label={
-                                (luck === 0.5) ? "even"
-                              : (luck > 0.5)   ? `+${Math.round(luck * 20 - 10)}`
-                                               : String(Math.round(luck * 20 - 10))
+                                (luck < 0.2) ? "Bad Luck"
+                                    : (luck < 0.4) ? "Poor Luck"
+                                        : (luck < 0.6) ? "Average"
+                                            : (luck < 0.8) ? "Good Luck"
+                                                : "Great Luck"
                             } />
                     </div>
                 )}
             </div>
 
-            { (updating === null) ? null : (
+            {(updating === null) ? null : (
                 <CreatureForm
                     initialMode={mode}
-                    initialValue={encounter.monsters[updating]} 
+                    initialValue={encounter.monsters[updating]}
                     onCancel={() => setUpdating(null)}
                     onSubmit={(newValue) => updateCreature(updating, newValue)}
                     onDelete={() => deleteCreature(updating)}
                 />
             )}
 
-            { !creating ? null : (
+            {!creating ? null : (
                 <CreatureForm
                     initialMode={mode}
                     onCancel={() => setCreating(false)}
