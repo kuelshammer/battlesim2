@@ -208,7 +208,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                                                 key={index}
                                                 onMouseEnter={() => onHighlight?.(Array.from(action.targets.keys()))}
                                                 onMouseLeave={() => onHighlight?.(combattant.actions.flatMap(a => Array.from(a.targets.keys())))}>
-                                                <b>{getActionLabel(action, action.targets)}</b> {getTargetPrefix(action)} {getTarget(action)}
+                                                <b>{getActionLabel({ action, targets: action.targets })}</b> {getTargetPrefix(action)} {getTarget({ action, targets: action.targets })}
                                             </li>
                                         ))
 
