@@ -151,7 +151,15 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         // Aggregate Buffs
                         for (buff_id, buff) in &c.final_state.buffs {
                             *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| {
+                                let mut b = buff.clone();
+                                if let Some(sid) = &b.source {
+                                    if let Some(mapped_sid) = uuid_map.get(sid) {
+                                        b.source = Some(mapped_sid.clone());
+                                    }
+                                }
+                                b
+                            });
                         }
 
                         // Aggregate Concentration
@@ -184,7 +192,15 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
 
                         for (buff_id, buff) in &c.final_state.buffs {
                             *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| {
+                                let mut b = buff.clone();
+                                if let Some(sid) = &b.source {
+                                    if let Some(mapped_sid) = uuid_map.get(sid) {
+                                        b.source = Some(mapped_sid.clone());
+                                    }
+                                }
+                                b
+                            });
                         }
 
                         if let Some(conc_id) = &c.final_state.concentrating_on {
