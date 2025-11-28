@@ -773,7 +773,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
                 // So we pass an empty excluded list.
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[]) {
+                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[], None) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -788,7 +788,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
                  #[cfg(debug_assertions)]
                  eprintln!("          Heal {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                  let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
-                 if let Some(idx) = select_ally_target(AllyTarget::AllyWithLeastHP, allies, self_idx, &targets) {
+                 if let Some(idx) = select_ally_target(AllyTarget::AllyWithLeastHP, allies, self_idx, &targets, None) {
                      #[cfg(debug_assertions)]
                      eprintln!("            Target selected for {}: Ally {}", c.creature.name, allies[idx].creature.name);
                      targets.push((false, idx));
@@ -803,7 +803,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
                 #[cfg(debug_assertions)]
                 eprintln!("          Buff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
-                if let Some(idx) = select_ally_target(a.target.clone(), allies, self_idx, &targets) {
+                if let Some(idx) = select_ally_target(a.target.clone(), allies, self_idx, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Ally {}", c.creature.name, allies[idx].creature.name);
                     targets.push((false, idx));
@@ -817,7 +817,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
             for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Debuff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets) {
+                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -835,7 +835,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
     targets
 }
 
-fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)]) -> Option<usize> {
+fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
     #[cfg(debug_assertions)]
     eprintln!("            Selecting enemy target (Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
     let mut best_target = None;
@@ -845,6 +845,13 @@ fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: 
         // Check exclusion (true = enemy)
         if excluded.contains(&(true, i)) {
             continue;
+        }
+
+        // Check buff
+        if let Some(bid) = buff_check {
+            if e.final_state.buffs.contains_key(bid) {
+                continue;
+            }
         }
 
         #[cfg(debug_assertions)]
@@ -874,7 +881,7 @@ fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: 
     best_target
 }
 
-fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usize, excluded: &[(bool, usize)]) -> Option<usize> {
+fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usize, excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
     #[cfg(debug_assertions)]
     eprintln!("            Selecting ally target (Strategy: {:?}). Allies available: {}. Excluded: {:?}", strategy, allies.len(), excluded);
     let mut best_target = None;
@@ -901,6 +908,13 @@ fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usi
         // Check exclusion (false = ally)
         if excluded.contains(&(false, i)) {
             continue;
+        }
+
+        // Check buff
+        if let Some(bid) = buff_check {
+            if a.final_state.buffs.contains_key(bid) {
+                continue;
+            }
         }
 
         #[cfg(debug_assertions)]
