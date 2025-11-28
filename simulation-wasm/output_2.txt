@@ -1,0 +1,72 @@
+   Compiling simulation-wasm v0.1.0 (/Users/max/Rust/Battlesim2/simulation-wasm)
+warning: unused import: `serde::Serialize`
+ --> src/lib.rs:7:5
+  |
+7 | use serde::Serialize;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused variable: `allies`
+   --> src/simulation.rs:517:32
+    |
+517 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_allies`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `enemies`
+   --> src/simulation.rs:517:55
+    |
+517 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enemies`
+
+warning: unreachable pattern
+   --> src/simulation.rs:788:9
+    |
+788 |         _ => {}
+    |         ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> src/simulation.rs:788:9
+    |
+728 |         Action::Atk(a) => {
+    |         -------------- matches some of the same values
+...
+744 |         Action::Heal(a) => {
+    |         --------------- matches some of the same values
+...
+759 |         Action::Buff(a) => {
+    |         --------------- matches some of the same values
+...
+774 |         Action::Debuff(a) => {
+    |         ----------------- matches some of the same values
+...
+788 |         _ => {}
+    |         ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: unused variable: `a`
+   --> src/simulation.rs:744:22
+    |
+744 |         Action::Heal(a) => {
+    |                      ^ help: if this is intentional, prefix it with an underscore: `_a`
+
+warning: function `average` is never used
+  --> src/dice.rs:11:8
+   |
+11 | pub fn average(formula: &DiceFormula) -> f64 {
+   |        ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `simulation-wasm` (lib test) generated 6 warnings (run `cargo fix --lib -p simulation-wasm --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.80s
+     Running unittests src/lib.rs (target/debug/deps/simulation_wasm-45ce06a76eb6d2cc)
+
+running 2 tests
+test simulation::simulation_test::tests::test_atk_targets_can_repeat ... ok
+test simulation::simulation_test::tests::test_buff_targets_distinct_allies ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+

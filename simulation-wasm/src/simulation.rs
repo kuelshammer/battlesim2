@@ -711,14 +711,14 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                         }
                     }
                 },
-                _ => {}
+
             }
         }
     }
 }
 
 
-fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: &[Combattant]) -> Vec<(bool, usize)> {
+pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: &[Combattant]) -> Vec<(bool, usize)> {
     #[cfg(debug_assertions)]
     eprintln!("        Getting targets for {}'s action: {}. Allies: {}, Enemies: {}", c.creature.name, action.base().name, allies.len(), enemies.len());
     let mut targets = Vec::new();
@@ -729,7 +729,9 @@ fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: 
             for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets) {
+                // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
+                // So we pass an empty excluded list.
+                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[]) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -798,6 +800,11 @@ fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: 
     let mut best_val = f64::MAX; 
     
     for (i, e) in enemies.iter().enumerate() {
+        // Check exclusion (true = enemy)
+        if excluded.contains(&(true, i)) {
+            continue;
+        }
+
         #[cfg(debug_assertions)]
         eprintln!("              Considering enemy {}. HP: {:.1}", e.creature.name, e.final_state.current_hp);
         if e.final_state.current_hp <= 0.0 {
@@ -849,6 +856,11 @@ fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usi
     }
 
     for (i, a) in allies.iter().enumerate() {
+        // Check exclusion (false = ally)
+        if excluded.contains(&(false, i)) {
+            continue;
+        }
+
         #[cfg(debug_assertions)]
         eprintln!("              Considering ally {}. HP: {:.1}", a.creature.name, a.final_state.current_hp);
         if a.final_state.current_hp <= 0.0 {
@@ -927,3 +939,7 @@ fn update_stats_buff(stats: &mut HashMap<String, EncounterStats>, attacker_id: &
     });
     if is_buff { target_stats.buffs_received += 1.0; } else { target_stats.debuffs_received += 1.0; }
 }
+
+#[cfg(test)]
+#[path = "./simulation_test.rs"]
+mod simulation_test;

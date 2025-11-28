@@ -1,0 +1,132 @@
+   Compiling simulation-wasm v0.1.0 (/Users/max/Rust/Battlesim2/simulation-wasm)
+error[E0425]: cannot find value `res` in this scope
+   --> src/dice.rs:120:20
+    |
+120 |         assert_eq!(res, 6.0);
+    |                    ^^^ not found in this scope
+
+error[E0425]: cannot find function `get_targets` in this scope
+  --> src/./simulation_test.rs:80:23
+   |
+80 |         let targets = get_targets(attacker, &buff_action, &allies, &enemies);
+   |                       ^^^^^^^^^^^ not found in this scope
+   |
+help: consider importing this function
+   |
+3  +     use crate::simulation::get_targets;
+   |
+
+error[E0425]: cannot find function `get_targets` in this scope
+   --> src/./simulation_test.rs:110:23
+    |
+110 |         let targets = get_targets(attacker, &atk_action, &allies, &enemies);
+    |                       ^^^^^^^^^^^ not found in this scope
+    |
+help: consider importing this function
+    |
+3   +     use crate::simulation::get_targets;
+    |
+
+warning: unused import: `super::*`
+ --> src/./simulation_test.rs:3:9
+  |
+3 |     use super::*;
+  |         ^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `serde::Serialize`
+ --> src/lib.rs:7:5
+  |
+7 | use serde::Serialize;
+  |     ^^^^^^^^^^^^^^^^
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+   --> src/dice.rs:122:19
+    |
+122 |         let res = parse_and_roll("10");
+    |                   ^^^^^^^^^^^^^^------ argument #2 of type `u32` is missing
+    |
+note: function defined here
+   --> src/dice.rs:58:4
+    |
+58  | fn parse_and_roll(expr: &str, dice_multiplier: u32) -> f64 {
+    |    ^^^^^^^^^^^^^^             --------------------
+help: provide the argument
+    |
+122 |         let res = parse_and_roll("10", /* u32 */);
+    |                                      +++++++++++
+
+warning: unused variable: `allies`
+   --> src/simulation.rs:517:32
+    |
+517 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_allies`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unused variable: `enemies`
+   --> src/simulation.rs:517:55
+    |
+517 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enemies`
+
+warning: unreachable pattern
+   --> src/simulation.rs:714:17
+    |
+714 |                 _ => {}
+    |                 ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> src/simulation.rs:714:17
+    |
+635 |                 Action::Atk(a) => {
+    |                 -------------- matches some of the same values
+...
+673 |                 Action::Heal(a) => {
+    |                 --------------- matches some of the same values
+...
+684 |                 Action::Buff(a) => {
+    |                 --------------- matches some of the same values
+...
+695 |                 Action::Debuff(a) => {
+    |                 ----------------- matches some of the same values
+...
+714 |                 _ => {}
+    |                 ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: unreachable pattern
+   --> src/simulation.rs:788:9
+    |
+788 |         _ => {}
+    |         ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> src/simulation.rs:788:9
+    |
+728 |         Action::Atk(a) => {
+    |         -------------- matches some of the same values
+...
+744 |         Action::Heal(a) => {
+    |         --------------- matches some of the same values
+...
+759 |         Action::Buff(a) => {
+    |         --------------- matches some of the same values
+...
+774 |         Action::Debuff(a) => {
+    |         ----------------- matches some of the same values
+...
+788 |         _ => {}
+    |         ^ collectively making this unreachable
+
+warning: unused variable: `a`
+   --> src/simulation.rs:744:22
+    |
+744 |         Action::Heal(a) => {
+    |                      ^ help: if this is intentional, prefix it with an underscore: `_a`
+
+Some errors have detailed explanations: E0061, E0425.
+For more information about an error, try `rustc --explain E0061`.
+warning: `simulation-wasm` (lib test) generated 7 warnings
+error: could not compile `simulation-wasm` (lib test) due to 4 previous errors; 7 warnings emitted

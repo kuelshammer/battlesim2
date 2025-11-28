@@ -1,0 +1,15 @@
+{
+  "name": "simulation-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "simulation_wasm_bg.wasm",
+    "simulation_wasm.js",
+    "simulation_wasm.d.ts"
+  ],
+  "main": "simulation_wasm.js",
+  "types": "simulation_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -116,10 +116,10 @@ mod tests {
     #[test]
     fn test_dice_parsing() {
         // Since it's random, we can't assert exact values easily, but we can check ranges or run multiple times
-        let res = parse_and_roll("1d1+5");
+        let res = parse_and_roll("1d1+5", 1);
         assert_eq!(res, 6.0);
         
-        let res = parse_and_roll("10");
+        let res = parse_and_roll("10", 1);
         assert_eq!(res, 10.0);
     }
 }
