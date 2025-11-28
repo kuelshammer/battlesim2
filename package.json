@@ -2,11 +2,41 @@
   "name": "battlesim",
   "version": "0.1.0",
   "private": true,
+  "main": "electron.js",
+  "homepage": ".",
+  "build": {
+    "appId": "com.battlesim.app",
+    "productName": "Battlesim",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": {
+        "target": "default",
+        "arch": [
+          "arm64",
+          "x64"
+        ]
+      }
+    },
+    "files": [
+      "electron.js",
+      "out/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron": "electron .",
+    "electron:pack": "electron-builder",
+    "electron:dev": "electron .",
+    "build:electron": "next build && npx electron-builder --mac",
+    "dist": "npx electron-builder --mac",
+    "electron:start": "electron ."
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.2.0",
@@ -31,6 +61,8 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@types/uuid": "^9.0.1"
+    "@types/uuid": "^9.0.1",
+    "electron": "^39.2.4",
+    "electron-builder": "^26.0.12"
   }
 }

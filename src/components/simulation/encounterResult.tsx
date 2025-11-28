@@ -3,6 +3,8 @@ import { Combattant, EncounterResult as EncounterResultType, EncounterStats, Fin
 import styles from './encounterResult.module.scss'
 import { Round } from "../../model/model"
 import { clone } from "../../model/utils"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faBrain } from "@fortawesome/free-solid-svg-icons"
 
 type TeamPropType = {
     round: Round,
@@ -239,6 +241,11 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                     </div>
                     <div className={styles.creatureName}>
                         {combattant.creature.name}
+                        {combattant.initialState.concentratingOn ? (
+                            <span className={styles.concentrationIcon} title="Concentrating">
+                                <FontAwesomeIcon icon={faBrain} />
+                            </span>
+                        ) : null}
                     </div>
 
                     {(!stats && (combattant.actions.length === 0) && (combattant.finalState.buffs.size)) ? null : (

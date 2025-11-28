@@ -9,16 +9,16 @@ const Footer:FC<{}> = ({}) => {
             </span>
             <span className={styles.socials}>
                 <a href="https://youtube.com/@trekiros" target="_blank">
-                    <img src="/socials/youtube.svg" alt="Youtube" />
+                    <img src="./socials/youtube.svg" alt="Youtube" />
                 </a>
                 <a href="https://discord.gg/9AJtv5DJ6f" target="_blank">
-                    <img src="/socials/discord.svg" alt="Discord" />
+                    <img src="./socials/discord.svg" alt="Discord" />
                 </a>
                 <a href="https://twitter.com/trekiros" target="_blank">
-                    <img src="/socials/twitter.svg" alt="Twitter" />
+                    <img src="./socials/twitter.svg" alt="Twitter" />
                 </a>
                 <a href="https://github.com/Trekiros/battleSim" target="_blank">
-                    <img src="/socials/github.svg" alt="Github" />
+                    <img src="./socials/github.svg" alt="Github" />
                 </a>
             </span>
         </div>

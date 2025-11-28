@@ -89,7 +89,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         className={`${styles.class} ${(chosenClass?.type === className) ? styles.active : ''}`}
                         onClick={() => { setClass(className) }}
                     >
-                        <img src={`/classes/${className}.jpeg`} />
+                        <img src={`./classes/${className}.jpeg`} />
                         {capitalize(className)}
                     </button>
                 )) }

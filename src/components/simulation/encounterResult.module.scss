@@ -68,6 +68,12 @@
                 .creatureName {
                     width: 100%;
                     text-align: center;
+
+                    .concentrationIcon {
+                        color: #aaf;
+                        margin-left: 0.5em;
+                        font-size: 0.8em;
+                    }
                 }
             }
         }

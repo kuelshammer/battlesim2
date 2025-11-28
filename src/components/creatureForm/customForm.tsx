@@ -84,6 +84,11 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                 <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} />
                 <div className="tooltip">Average of all saves' bonuses. For player characters, you can use the Proficiency Bonus. For monsters, either calculate it, or just use half of the monster's CR.</div>
             </section>
+            <section className="tooltipContainer">
+                <h3>Constitution Save</h3>
+                <DecimalInput value={value.conSaveBonus ?? value.saveBonus} onChange={save => update(v => { v.conSaveBonus = save })} />
+                <div className="tooltip">Specific bonus for Constitution saves (used for Concentration). Defaults to Average Save if not set.</div>
+            </section>
             <section>
                 <h3>Initiative Bonus</h3>
                 <DecimalInput value={value.initiativeBonus || 0} onChange={init => update(v => { v.initiativeBonus = init || 0 })} />

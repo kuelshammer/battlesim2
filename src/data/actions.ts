@@ -11,6 +11,7 @@ export const ActionTemplates = {
             duration: 'entire encounter',
             toHit: '-1d4',
             save: '-1d4',
+            concentration: true,
         },
 
         saveDC: 0, // Replaced later
@@ -23,6 +24,7 @@ export const ActionTemplates = {
             duration: 'entire encounter',
             toHit: '1d4',
             save: '1d4',
+            concentration: true,
         },
     }),
     'Fireball': createTemplate({
@@ -50,6 +52,7 @@ export const ActionTemplates = {
         buff: {
             duration: '1 round',
             condition: 'Incapacitated',
+            concentration: true,
         },
     }),
     'Meteor Swarm': createTemplate({

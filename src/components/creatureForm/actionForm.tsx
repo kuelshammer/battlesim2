@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons"
 import DecimalInput from "../utils/DecimalInput"
 import DiceFormulaInput from "../utils/diceFormulaInput"
+import Checkbox from "../utils/checkbox"
 import { ActionTemplates, getFinalAction } from "../../data/actions"
 
 type PropType = {
@@ -18,7 +19,7 @@ type PropType = {
     onMoveDown?: () => void,
 }
 
-type Options<T> = { value: T, label: string}[]
+type Options<T> = { value: T, label: string }[]
 
 const srFreq: Frequency = { reset: "sr", uses: 1 }
 const lrFreq: Frequency = { reset: "lr", uses: 1 }
@@ -26,22 +27,22 @@ const rechargeFreq: Frequency = { reset: "recharge", cooldownRounds: 2 }
 const FreqOptions: Options<Frequency> = [
     { value: 'at will', label: 'At will' },
     { value: '1/fight', label: '1/short rest' },
-    { value:  srFreq, label: 'X/short rest' },
+    { value: srFreq, label: 'X/short rest' },
     { value: '1/day', label: '1/day' },
-    { value:  lrFreq, label: 'X/long rest' },
-    { value:  rechargeFreq, label: 'Every X rounds' },
+    { value: lrFreq, label: 'X/long rest' },
+    { value: rechargeFreq, label: 'Every X rounds' },
 ]
 
 const ConditionOptions: Options<ActionCondition> = [
-    { value:'default', label: 'Default' },
-    { value:'ally at 0 HP', label: 'There is an ally at 0 HP' },
-    { value:'ally under half HP', label: 'An ally has less than half their maximum HP' },
-    { value:'is available', label: 'A use of this action is available' },
-    { value:'is under half HP', label: 'This creature is under half its maximum HP' },
-    { value:'has no THP', label: 'This creature has no temporary HP' },
-    { value:'not used yet', label: 'This action has not been used yet this encounter' },
-    { value:'enemy count one', label: 'There is only one enemy' },
-    { value:'enemy count multiple', label: 'There are at least two enemies' },
+    { value: 'default', label: 'Default' },
+    { value: 'ally at 0 HP', label: 'There is an ally at 0 HP' },
+    { value: 'ally under half HP', label: 'An ally has less than half their maximum HP' },
+    { value: 'is available', label: 'A use of this action is available' },
+    { value: 'is under half HP', label: 'This creature is under half its maximum HP' },
+    { value: 'has no THP', label: 'This creature has no temporary HP' },
+    { value: 'not used yet', label: 'This action has not been used yet this encounter' },
+    { value: 'enemy count one', label: 'There is only one enemy' },
+    { value: 'enemy count multiple', label: 'There are at least two enemies' },
 ]
 
 const TypeOptions: Options<ActionType> = [
@@ -52,7 +53,7 @@ const TypeOptions: Options<ActionType> = [
     { value: 'debuff', label: 'Debuff' },
 ]
 
-const ActionOptions: Options<number> = Object.entries(ActionSlots).map(([label, value]) => ({label, value}))
+const ActionOptions: Options<number> = Object.entries(ActionSlots).map(([label, value]) => ({ label, value }))
 
 const TargetCountOptions: Options<number> = [
     { value: 1, label: 'Single target' },
@@ -111,7 +112,7 @@ const BuffDurationOptions: Options<BuffDuration> = [
     { value: 'until next attack made', label: 'Until the next attack made' }
 ]
 
-const BuffStatOptions: Options<keyof Omit<Buff, 'duration'>> = [
+const BuffStatOptions: Options<keyof Omit<Buff, 'duration' | 'concentration'>> = [
     { value: 'condition', label: 'Condition' },
     { value: 'ac', label: 'Armor Class' },
     { value: 'save', label: 'Bonus to Saves' },
@@ -128,11 +129,11 @@ const AtkOptions: Options<boolean> = [
     { value: false, label: 'To Hit:' },
 ]
 
-const BuffForm:FC<{value: Buff, onUpdate: (newValue: Buff) => void}> = ({ value, onUpdate }) => {
-    const [modifiers, setModifiers] = useState<(keyof Omit<Buff, 'duration'>)[]>(Object.keys(value).filter(key => (key !== 'duration')) as any)
+const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ value, onUpdate }) => {
+    const [modifiers, setModifiers] = useState<(keyof Omit<Buff, 'duration' | 'concentration'>)[]>(Object.keys(value).filter(key => (key !== 'duration') && (key !== 'concentration')) as any)
 
 
-    function setModifier(index: number, newValue: keyof Omit<Buff, 'duration'> | null) {
+    function setModifier(index: number, newValue: keyof Omit<Buff, 'duration' | 'concentration'> | null) {
         const oldModifier = modifiers[index]
         if (oldModifier === newValue) return
 
@@ -146,7 +147,7 @@ const BuffForm:FC<{value: Buff, onUpdate: (newValue: Buff) => void}> = ({ value,
         setModifiers(modifiersClone)
     }
 
-    function updateValue(modifier: keyof Omit<Buff, 'duration'|'condition'|'displayName'>, newValue: number) {
+    function updateValue(modifier: keyof Omit<Buff, 'duration' | 'condition' | 'displayName' | 'concentration'>, newValue: number) {
         const buffClone = clone(value)
         buffClone[modifier] = newValue
         onUpdate(buffClone)
@@ -158,29 +159,34 @@ const BuffForm:FC<{value: Buff, onUpdate: (newValue: Buff) => void}> = ({ value,
         onUpdate(buffClone)
     }
 
-    function updateCondition(newValue: CreatureCondition|undefined) {
+    function updateCondition(newValue: CreatureCondition | undefined) {
         const buffClone = clone(value)
         buffClone.condition = newValue
         onUpdate(buffClone)
     }
 
     function addModifier() {
-        const newModifier = BuffStatOptions.find(({value}) => !modifiers.includes(value))
+        const newModifier = BuffStatOptions.find(({ value }) => !modifiers.includes(value))
         if (!newModifier) return;
         setModifiers([...modifiers, newModifier.value])
     }
 
+    // ... (inside BuffForm)
     return (
         <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <Checkbox value={!!value.concentration} onToggle={() => onUpdate({ ...value, concentration: !value.concentration })} />
+                Requires Concentration
+            </div>
             Effects:
             {modifiers.map((modifier, index) => (
                 <div key={modifier} className={styles.modifier}>
-                    <Select 
-                        value={modifier} 
-                        onChange={newValue => setModifier(index, newValue)} 
+                    <Select
+                        value={modifier}
+                        onChange={newValue => setModifier(index, newValue)}
                         options={BuffStatOptions.filter(option => (modifier === option.value) || !modifiers.includes(option.value))}
                     />
-                    { ((modifier === 'damageMultiplier') || (modifier === 'damageTakenMultiplier')) ? (
+                    {((modifier === 'damageMultiplier') || (modifier === 'damageTakenMultiplier')) ? (
                         <DecimalInput
                             value={value[modifier]}
                             onChange={v => updateValue(modifier, v || 0)}
@@ -192,8 +198,8 @@ const BuffForm:FC<{value: Buff, onUpdate: (newValue: Buff) => void}> = ({ value,
                             onChange={(newCondition) => updateCondition(newCondition)}
                         />
                     ) : (
-                        <DiceFormulaInput 
-                            value={value[modifier]} 
+                        <DiceFormulaInput
+                            value={value[modifier]}
                             onChange={v => updateDiceFormula(modifier, v || 0)}
                         />
                     )}
@@ -203,18 +209,18 @@ const BuffForm:FC<{value: Buff, onUpdate: (newValue: Buff) => void}> = ({ value,
                 </div>
             ))}
 
-            <button 
-                className="tooltipContainer" 
+            <button
+                className="tooltipContainer"
                 disabled={modifiers.length === BuffStatOptions.length}
                 onClick={addModifier}>
-                    <FontAwesomeIcon icon={faPlus} />
-                    <div className="tooltip">Add effect to the buff/debuff</div>
+                <FontAwesomeIcon icon={faPlus} />
+                <div className="tooltip">Add effect to the buff/debuff</div>
             </button>
         </>
     )
 }
 
-const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDown }) => {
+const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDown }) => {
     function update(callback: (valueClone: Action) => void) {
         const valueClone = clone(value)
         callback(valueClone)
@@ -239,12 +245,12 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
 
     function updateFrequency(freq: Frequency) {
         const v = clone(value)
-        
+
         v.freq = (freq === v.freq) ? v.freq
             : (typeof freq === 'string') ? freq
-            : (typeof v.freq === 'string') ? clone(freq)
-            : (v.freq.reset !== freq.reset) ? clone(freq)
-            : v.freq
+                : (typeof v.freq === 'string') ? clone(freq)
+                    : (v.freq.reset !== freq.reset) ? clone(freq)
+                        : v.freq
 
         onChange(v)
         console.log(v)
@@ -282,10 +288,10 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
 
         switch (type) {
             case "template": return onChange(templateAction)
-            case "atk": return onChange({...common, type, target: "enemy with most HP", dpr: 0, toHit: 0 })
-            case "heal": return onChange({...common, type, amount: 0, target: "ally with the least HP" })
-            case "buff": return onChange({...common, type, target: "ally with the highest DPR", buff: { duration: '1 round' } })
-            case "debuff": return onChange({...common, type, target: "enemy with highest DPR", saveDC: 10, buff: { duration: '1 round' } })
+            case "atk": return onChange({ ...common, type, target: "enemy with most HP", dpr: 0, toHit: 0 })
+            case "heal": return onChange({ ...common, type, amount: 0, target: "ally with the least HP" })
+            case "buff": return onChange({ ...common, type, target: "ally with the highest DPR", buff: { duration: '1 round' } })
+            case "debuff": return onChange({ ...common, type, target: "enemy with highest DPR", saveDC: 10, buff: { duration: '1 round' } })
         }
     }
 
@@ -295,7 +301,7 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
         const template = ActionTemplates[templateName]
         const enemyTarget: EnemyTarget = 'enemy with least HP'
         const allyTarget: AllyTarget = 'ally with the least HP'
-        const defaultTarget: EnemyTarget|AllyTarget = ((template.type === 'atk') || (template.type === 'debuff')) ? enemyTarget : allyTarget
+        const defaultTarget: EnemyTarget | AllyTarget = ((template.type === 'atk') || (template.type === 'debuff')) ? enemyTarget : allyTarget
 
         onChange({
             ...value,
@@ -314,12 +320,12 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                 <button
                     onClick={onMoveUp}
                     disabled={!onMoveUp}>
-                        <FontAwesomeIcon icon={faChevronUp} />
+                    <FontAwesomeIcon icon={faChevronUp} />
                 </button>
                 <button
                     onClick={onMoveDown}
                     disabled={!onMoveDown}>
-                        <FontAwesomeIcon icon={faChevronDown} />
+                    <FontAwesomeIcon icon={faChevronDown} />
                 </button>
             </div>
 
@@ -327,109 +333,109 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                 <FontAwesomeIcon icon={faTrash} />
             </button>
 
-            { value.type !== 'template' ? (
+            {value.type !== 'template' ? (
                 <>
-                    <input 
-                        type='text' 
-                        value={value.name} 
-                        onChange={(e) => updateFinalAction(v => { v.name = e.target.value.length < 100 ? e.target.value : v.name })} 
-                        placeholder="Action name..." 
+                    <input
+                        type='text'
+                        value={value.name}
+                        onChange={(e) => updateFinalAction(v => { v.name = e.target.value.length < 100 ? e.target.value : v.name })}
+                        placeholder="Action name..."
                         style={{ minWidth: `${value.name.length}ch` }}
                     />
                     <Select value={value.actionSlot} options={ActionOptions} onChange={actionSlot => updateFinalAction(v => { v.actionSlot = actionSlot })} />
                 </>
-            ) : null }
+            ) : null}
 
             <Select value={value.type} options={TypeOptions} onChange={updateType} />
 
-            { value.type === 'template' ? (
+            {value.type === 'template' ? (
                 <Select
                     value={value.templateOptions.templateName}
                     options={Object.keys(ActionTemplates).map(key => ({ value: key as keyof typeof ActionTemplates, label: key }))}
-                    onChange={onTemplateChange}/>
-            ) : null }
+                    onChange={onTemplateChange} />
+            ) : null}
 
-            <Select 
+            <Select
                 value={
                     typeof value.freq === 'string' ? value.freq
-                  : value.freq.reset === 'sr' ? srFreq
-                  : value.freq.reset === 'lr' ? lrFreq
-                  : value.freq.reset === 'recharge' ? rechargeFreq
-                  : 'at will'
+                        : value.freq.reset === 'sr' ? srFreq
+                            : value.freq.reset === 'lr' ? lrFreq
+                                : value.freq.reset === 'recharge' ? rechargeFreq
+                                    : 'at will'
                 }
                 options={FreqOptions}
                 onChange={freq => updateFrequency(freq)} />
 
-            { typeof value.freq !== 'string' ? (
+            {typeof value.freq !== 'string' ? (
                 value.freq.reset === 'recharge' ? (
                     <>
                         Cooldown in rounds:
-                        <input 
+                        <input
                             type='number'
                             min={2}
                             step={1}
                             className={value.freq.cooldownRounds < 2 ? styles.invalid : ''}
                             value={value.freq.cooldownRounds}
-                            onChange={e => update(v => { (v.freq as any).cooldownRounds = Number(e.target.value || 0) })}/>
+                            onChange={e => update(v => { (v.freq as any).cooldownRounds = Number(e.target.value || 0) })} />
                     </>
                 ) : (
                     <>
                         Uses:
-                        <input 
+                        <input
                             type='number'
                             min={1}
                             step={1}
                             className={value.freq.uses < 1 ? styles.invalid : ''}
                             value={value.freq.uses}
-                            onChange={e => update(v => { (v.freq as any).uses = Number(e.target.value || 0) })}/>
+                            onChange={e => update(v => { (v.freq as any).uses = Number(e.target.value || 0) })} />
                     </>
                 )
-            ) : null }
-            
-            { ((value.type === 'atk') && (!value.useSaves)) ? (
+            ) : null}
+
+            {((value.type === 'atk') && (!value.useSaves)) ? (
                 <Select value={value.targets} options={HitCountOptions} onChange={targets => updateFinalAction(v => v.targets = targets)} />
             ) : (value.type !== 'template') ? (
                 <Select value={value.targets} options={TargetCountOptions} onChange={targets => updateFinalAction(v => { v.targets = targets })} />
-            ) : null }
+            ) : null}
             Use this action if:
             <Select value={value.condition} options={ConditionOptions} onChange={condition => update(v => { v.condition = condition })} />
 
-            { (value.type === "atk") ? (
+            {(value.type === "atk") ? (
                 <>
-                    <Select 
-                        value={!!value.useSaves} 
-                        options={AtkOptions} 
+                    <Select
+                        value={!!value.useSaves}
+                        options={AtkOptions}
                         onChange={useSaves => update(v => {
                             const atk = (v as AtkAction);
                             if (atk.useSaves !== useSaves) atk.targets = 1
-                            atk.useSaves = useSaves 
+                            atk.useSaves = useSaves
                         })} />
                     <DiceFormulaInput value={value.toHit} onChange={toHit => update(v => { (v as AtkAction).toHit = toHit || 0 })} />
-                    Damage: 
+                    Damage:
                     <DiceFormulaInput value={value.dpr} onChange={dpr => update(v => { (v as AtkAction).dpr = dpr || 0 })} canCrit={!value.useSaves} />
-                    
-                    { !!value.useSaves ? (
+
+                    {!!value.useSaves ? (
                         <>
                             Save for half?
-                            <Select 
+                            <Select
                                 value={!!value.halfOnSave}
-                                options={[ { value: true, label: 'Yes' }, { value: false, label: 'No' } ]}
+                                options={[{ value: true, label: 'Yes' }, { value: false, label: 'No' }]}
                                 onChange={halfOnSave => update(v => { (v as AtkAction).halfOnSave = halfOnSave })} />
                         </>
-                    ) : null }
-                    
+                    ) : null}
+
                     Target:
                     <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                     On Hit Effect:
-                    <Select 
-                        value={value.riderEffect !== undefined} 
-                        options={[{ value: true, label: 'Yes'},{ value: false, label: 'No'}]}
-                        onChange={b => { 
-                            if(b) update(v => { (v as AtkAction).riderEffect ||= {dc: 0, buff: {duration: "1 round"}} }) 
+                    <Select
+                        value={value.riderEffect !== undefined}
+                        options={[{ value: true, label: 'Yes' }, { value: false, label: 'No' }]}
+                        onChange={b => {
+                            if (b) update(v => { (v as AtkAction).riderEffect ||= { dc: 0, buff: { duration: "1 round" } } })
                             else update(v => { delete (v as AtkAction).riderEffect })
-                        }}/>
+                        }} />
 
-                    { (!!value.riderEffect) ? (
+                    {(!!value.riderEffect) ? (
                         <>
                             Save DC:
                             <DecimalInput value={value.riderEffect.dc} onChange={dc => updateRiderEffect(e => { e.dc = dc || 0 })} />
@@ -437,21 +443,21 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                             <Select value={value.riderEffect.buff.duration} options={BuffDurationOptions} onChange={duration => updateRiderEffect(e => { e.buff.duration = duration })} />
                             <BuffForm value={value.riderEffect.buff} onUpdate={newValue => updateRiderEffect(e => { e.buff = newValue })} />
                         </>
-                    ) : null }
+                    ) : null}
                 </>
-            ) : null }
-            { (value.type === "heal") ? (
+            ) : null}
+            {(value.type === "heal") ? (
                 <>
                     <Select
                         value={!!value.tempHP}
-                        options={[ {value: true, label: 'Temp HP:'}, {value: false, label: 'Heal Amount:'} ]}
-                        onChange={tempHP => update(v => { (v as HealAction).tempHP = tempHP })}/>
+                        options={[{ value: true, label: 'Temp HP:' }, { value: false, label: 'Heal Amount:' }]}
+                        onChange={tempHP => update(v => { (v as HealAction).tempHP = tempHP })} />
                     <DiceFormulaInput value={value.amount} onChange={heal => update(v => { (v as HealAction).amount = heal || 0 })} />
                     Target:
                     <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                 </>
-            ) : null }
-            { (value.type === "buff") ? (
+            ) : null}
+            {(value.type === "buff") ? (
                 <>
                     Target:
                     <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
@@ -459,8 +465,8 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                     <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as BuffAction).buff.duration = duration })} />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as BuffAction).buff = newValue })} />
                 </>
-            ) : null }
-            { (value.type === "debuff") ? (
+            ) : null}
+            {(value.type === "debuff") ? (
                 <>
                     Target:
                     <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
@@ -470,25 +476,25 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                     <input type='number' value={value.saveDC} onChange={e => update(v => { (v as DebuffAction).saveDC = Number(e.target.value) })} />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as DebuffAction).buff = newValue })} />
                 </>
-            ) : null }
-            { (value.type === "template") ? (() => {
+            ) : null}
+            {(value.type === "template") ? (() => {
                 const template = ActionTemplates[value.templateOptions.templateName]
 
                 const targetForm = template.target ? null : (
                     <>
                         Target:
-                        <Select 
-                            value={value.templateOptions.target} 
+                        <Select
+                            value={value.templateOptions.target}
                             options={((template.type === 'atk') || (template.type === 'debuff')) ? EnemyTargetOptions : AllyTargetOptions}
-                            onChange={target => updateTemplateAction(v => { v.templateOptions.target = target })}/>
+                            onChange={target => updateTemplateAction(v => { v.templateOptions.target = target })} />
                     </>
                 )
 
                 if (template.type === 'atk') return (
                     <>
-                        { template.useSaves ? 'Save DC:' : 'To hit:' }
+                        {template.useSaves ? 'Save DC:' : 'To hit:'}
                         <DiceFormulaInput value={value.templateOptions.toHit} onChange={toHit => updateTemplateAction(v => { v.templateOptions.toHit = toHit || 0 })} />
-                        { template.riderEffect ? (
+                        {template.riderEffect ? (
                             <>
                                 Save DC for the additional effects:
                                 <input type='number' value={value.templateOptions.saveDC} onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })} />
@@ -500,16 +506,16 @@ const ActionForm:FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveDo
                 if (template.type === 'debuff') return (
                     <>
                         Save DC:
-                        <input 
-                            type='number' 
-                            value={value.templateOptions.saveDC} 
+                        <input
+                            type='number'
+                            value={value.templateOptions.saveDC}
                             onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })} />
                         {targetForm}
                     </>
                 )
 
                 return targetForm
-            })() : null }
+            })() : null}
         </div>
     )
 }
