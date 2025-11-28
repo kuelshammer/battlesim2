@@ -289,6 +289,34 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
              }
         }
         
+        // Consistency Cleanup: Enforce "Dead = No Concentration" on the aggregated result
+        // This handles edge cases where statistical aggregation might result in inconsistent states (e.g. HP < 0.5 but Concentration > 50% due to some anomaly, or just to align visual state).
+        let mut dead_source_ids = HashSet::new();
+        
+        // 1. Identify effectively dead combatants and clear their concentration
+        for c in t1.iter_mut().chain(t2.iter_mut()) {
+            if c.final_state.current_hp < 0.5 {
+                // Consider effectively dead for visualization
+                if c.final_state.concentrating_on.is_some() {
+                    c.final_state.concentrating_on = None;
+                }
+                dead_source_ids.insert(c.id.clone());
+            }
+        }
+        
+        // 2. Remove buffs sourced by these dead combatants
+        if !dead_source_ids.is_empty() {
+            for c in t1.iter_mut().chain(t2.iter_mut()) {
+                c.final_state.buffs.retain(|_, buff| {
+                    if let Some(source) = &buff.source {
+                        !dead_source_ids.contains(source)
+                    } else {
+                        true
+                    }
+                });
+            }
+        }
+
         aggregated_rounds.push(Round { team1: t1, team2: t2 });
     }
     
