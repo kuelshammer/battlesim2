@@ -21,6 +21,27 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
     results.into_iter().map(|(_, r)| r).collect()
 }
 
+
+struct AggregationData {
+    total_hp: f64,
+    action_counts: HashMap<String, usize>,
+    buff_counts: HashMap<String, usize>,
+    buff_definitions: HashMap<String, Buff>, // ID -> Buff
+    concentration_counts: HashMap<String, usize>, // ID -> Count
+}
+
+impl AggregationData {
+    fn new() -> Self {
+        Self {
+            total_hp: 0.0,
+            action_counts: HashMap::new(),
+            buff_counts: HashMap::new(),
+            buff_definitions: HashMap::new(),
+            concentration_counts: HashMap::new(),
+        }
+    }
+}
+
 pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
     if results.is_empty() { return Vec::new(); }
     
@@ -43,8 +64,8 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
     }
     
     for round_idx in 0..max_rounds {
-        let mut team1_map: HashMap<String, (f64, HashMap<String, usize>)> = HashMap::new(); // Creature ID -> (Total HP, Action Frequency)
-        let mut team2_map: HashMap<String, (f64, HashMap<String, usize>)> = HashMap::new();
+        let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
+        let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
         let mut count = 0;
         
         for res in results {
@@ -64,21 +85,59 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     }
                 }
 
-                if round_idx < encounter.rounds.len() {
-                    let round = &encounter.rounds[round_idx];
+                // Determine which round to use (actual or last padding)
+                let round_opt = if round_idx < encounter.rounds.len() {
+                    encounter.rounds.get(round_idx)
+                } else {
+                    encounter.rounds.last()
+                };
+
+                if let Some(round) = round_opt {
                     count += 1;
                     
                     for c in &round.team1 {
-                        let entry = team1_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
-                        entry.0 += c.final_state.current_hp;
+                        let mapped_id = uuid_map.get(&c.id).unwrap_or(&c.creature.id).clone();
+                        // Fallback to creature ID if not in map, but ideally we use the template UUID map
+                        // Actually team1_map keys should be the TEMPLATE IDs (from template_ids_t1)
+                        // But here `c.creature.id` might be same as `c.id`? No.
+                        // `c.creature.id` is the definition ID. `c.id` is the instance ID.
+                        // The aggregation map is keyed by `c.creature.id` in the previous code, which is wrong if multiple same creatures exist.
+                        // It should be keyed by the Template Instance ID.
+                        // In previous code: `team1_map.entry(c.creature.id.clone())` -> This merges all Goblins into one bucket!
+                        // Wait, `c.creature.id` comes from `uuid::Uuid::new_v4()` in `create_combattant`? No.
+                        // `create_combattant` takes `Creature` which has an ID.
+                        // In `run_single_simulation`: `p.name = name; create_combattant(p)`.
+                        // `create_combattant` generates a NEW `id` for the `Combattant`.
+                        // `Combattant.creature.id` preserves the original definition ID.
+                        
+                        // The `uuid_map` maps `current_run_combattant_id` -> `template_run_combattant_id`.
+                        // So we should use `mapped_id` as key for `team1_map`.
+                        // Previous code used `c.creature.id`. This is BUGGY for multiple monsters of same type!
+                        // It aggregates all "Goblin" stats together if `creature.id` is shared.
+                        // But `c.creature` is cloned from input `players`. If players input has unique IDs for each line, it's fine.
+                        // But if `count: 5`, we generate 5 combattants. They share `creature.id`?
+                        // In `run_single_simulation`: `players.iter().flat_map(...)`.
+                        // `p` is a clone of `player`. `player` comes from `players`.
+                        // The `id` in `Creature` struct is usually the template ID (e.g. from library).
+                        // So yes, `c.creature.id` is likely shared.
+                        // WE MUST USE THE MAPPED INSTANCE ID.
+                        
+                        // Let's fix the key to use `mapped_id` (which maps to template instance ID).
+                        
+                        // Find the template ID corresponding to this creature
+                        // We rely on the order. `uuid_map` is built by index.
+                        // So `mapped_id` is correct.
+                        
+                        let entry = team1_map.entry(mapped_id.clone()).or_insert_with(AggregationData::new);
+                        entry.total_hp += c.final_state.current_hp;
                         
                         // Remap targets in actions
                         let mut actions = c.actions.clone();
                         for action in &mut actions {
                             let mut new_targets = HashMap::new();
                             for (target_id, count) in &action.targets {
-                                if let Some(mapped_id) = uuid_map.get(target_id) {
-                                    new_targets.insert(mapped_id.clone(), *count);
+                                if let Some(m_id) = uuid_map.get(target_id) {
+                                    new_targets.insert(m_id.clone(), *count);
                                 } else {
                                     new_targets.insert(target_id.clone(), *count);
                                 }
@@ -87,20 +146,32 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         }
                         
                         let action_key = serde_json::to_string(&actions).unwrap_or_default();
-                        *entry.1.entry(action_key).or_insert(0) += 1;
+                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
+
+                        // Aggregate Buffs
+                        for (buff_id, buff) in &c.final_state.buffs {
+                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                        }
+
+                        // Aggregate Concentration
+                        if let Some(conc_id) = &c.final_state.concentrating_on {
+                            *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
+                        }
                     }
                     
+                    // Team 2
                     for c in &round.team2 {
-                        let entry = team2_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
-                        entry.0 += c.final_state.current_hp;
+                        let mapped_id = uuid_map.get(&c.id).unwrap_or(&c.creature.id).clone();
+                        let entry = team2_map.entry(mapped_id.clone()).or_insert_with(AggregationData::new);
+                        entry.total_hp += c.final_state.current_hp;
                         
-                        // Remap targets in actions
                         let mut actions = c.actions.clone();
                         for action in &mut actions {
                             let mut new_targets = HashMap::new();
                             for (target_id, count) in &action.targets {
-                                if let Some(mapped_id) = uuid_map.get(target_id) {
-                                    new_targets.insert(mapped_id.clone(), *count);
+                                if let Some(m_id) = uuid_map.get(target_id) {
+                                    new_targets.insert(m_id.clone(), *count);
                                 } else {
                                     new_targets.insert(target_id.clone(), *count);
                                 }
@@ -109,49 +180,59 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         }
 
                         let action_key = serde_json::to_string(&actions).unwrap_or_default();
-                        *entry.1.entry(action_key).or_insert(0) += 1;
-                    }
-                } else {
-                    if let Some(last_round) = encounter.rounds.last() {
-                         count += 1;
-                         for c in &last_round.team1 {
-                            let entry = team1_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
-                            entry.0 += c.final_state.current_hp;
-                            let action_key = "[]".to_string();
-                            *entry.1.entry(action_key).or_insert(0) += 1;
-                         }
-                         for c in &last_round.team2 {
-                            let entry = team2_map.entry(c.creature.id.clone()).or_insert((0.0, HashMap::new()));
-                            entry.0 += c.final_state.current_hp;
-                            let action_key = "[]".to_string();
-                            *entry.1.entry(action_key).or_insert(0) += 1;
-                         }
+                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
+
+                        for (buff_id, buff) in &c.final_state.buffs {
+                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                        }
+
+                        if let Some(conc_id) = &c.final_state.concentrating_on {
+                            *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
+                        }
                     }
                 }
             }
         }
         
         if count == 0 { continue; }
+        let threshold = count / 2;
         
         // Reconstruct Team 1
         let mut t1 = Vec::new();
-        // We need to preserve order. Use template.
         if let Some(template_round) = template_encounter.rounds.get(round_idx) {
              for c_template in &template_round.team1 {
-                 if let Some((total_hp, action_freq)) = team1_map.get(&c_template.creature.id) {
-                     let avg_hp = total_hp / count as f64;
-                     // Find most frequent action
-                     let best_action_json = action_freq.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
+                 // We use `c_template.id` as the key because we mapped everything to it.
+                 if let Some(data) = team1_map.get(&c_template.id) {
+                     let avg_hp = data.total_hp / count as f64;
+                     let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
                      let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
                      
                      let mut c = c_template.clone();
                      c.final_state.current_hp = avg_hp;
                      c.actions = actions;
                      
+                     // Reconstruct Buffs
+                     c.final_state.buffs.clear();
+                     for (buff_id, buff_count) in &data.buff_counts {
+                         if *buff_count > threshold {
+                             if let Some(buff_def) = data.buff_definitions.get(buff_id) {
+                                 c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
+                             }
+                         }
+                     }
+
+                     // Reconstruct Concentration
+                     c.final_state.concentrating_on = None;
+                     // Find the concentration ID with max count
+                     if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
+                         if *conc_count > threshold {
+                             c.final_state.concentrating_on = Some(conc_id.clone());
+                         }
+                     }
+                     
                      // Fix initial_state: It should be the final_state of the previous round.
-                     // For the first round, it's the template's initial_state.
                      if round_idx > 0 {
-                         // Find previous round's final state for this combatant
                          if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
                              if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.creature.id == c.creature.id) {
                                  c.initial_state = prev_c.final_state.clone();
@@ -168,14 +249,32 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t2 = Vec::new();
         if let Some(template_round) = template_encounter.rounds.get(round_idx) {
              for c_template in &template_round.team2 {
-                 if let Some((total_hp, action_freq)) = team2_map.get(&c_template.creature.id) {
-                     let avg_hp = total_hp / count as f64;
-                     let best_action_json = action_freq.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
+                 if let Some(data) = team2_map.get(&c_template.id) {
+                     let avg_hp = data.total_hp / count as f64;
+                     let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
                      let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
                      
                      let mut c = c_template.clone();
                      c.final_state.current_hp = avg_hp;
                      c.actions = actions;
+
+                     // Reconstruct Buffs
+                     c.final_state.buffs.clear();
+                     for (buff_id, buff_count) in &data.buff_counts {
+                         if *buff_count > threshold {
+                             if let Some(buff_def) = data.buff_definitions.get(buff_id) {
+                                 c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
+                             }
+                         }
+                     }
+
+                     // Reconstruct Concentration
+                     c.final_state.concentrating_on = None;
+                     if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
+                         if *conc_count > threshold {
+                             c.final_state.concentrating_on = Some(conc_id.clone());
+                         }
+                     }
                      
                      if round_idx > 0 {
                          if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
