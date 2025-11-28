@@ -136,7 +136,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         // Reconstruct Team 1
         let mut t1 = Vec::new();
         // We need to preserve order. Use template.
-        if let Some(template_round) = template_encounter.rounds.first() {
+        if let Some(template_round) = template_encounter.rounds.get(round_idx) {
              for c_template in &template_round.team1 {
                  if let Some((total_hp, action_freq)) = team1_map.get(&c_template.creature.id) {
                      let avg_hp = total_hp / count as f64;
@@ -166,7 +166,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         
         // Reconstruct Team 2
         let mut t2 = Vec::new();
-        if let Some(template_round) = template_encounter.rounds.first() {
+        if let Some(template_round) = template_encounter.rounds.get(round_idx) {
              for c_template in &template_round.team2 {
                  if let Some((total_hp, action_freq)) = team2_map.get(&c_template.creature.id) {
                      let avg_hp = total_hp / count as f64;
