@@ -654,17 +654,45 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                         let dmg = dice::evaluate(&a.dpr, dice_multiplier);
                         #[cfg(debug_assertions)]
                         eprintln!("              HIT! {} hits {} for {:.1} damage (Multiplier: {}).", attacker.creature.name, target_name, dmg, dice_multiplier);
-                        if is_enemy {
-                            enemies[target_idx].final_state.current_hp = (enemies[target_idx].final_state.current_hp - dmg).max(0.0);
-                            #[cfg(debug_assertions)]
-                            eprintln!("                {} new HP: {:.1}", target_name, enemies[target_idx].final_state.current_hp);
-                            update_stats(stats, &attacker.id, &enemies[target_idx].id, dmg, 0.0);
-                        } else {
-                            allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp - dmg).max(0.0);
-                            #[cfg(debug_assertions)]
-                            eprintln!("                {} new HP: {:.1}", target_name, allies[target_idx].final_state.current_hp);
-                            update_stats(stats, &attacker.id, &allies[target_idx].id, dmg, 0.0);
-                        }
+                            if is_enemy {
+                                enemies[target_idx].final_state.current_hp = (enemies[target_idx].final_state.current_hp - dmg).max(0.0);
+                                #[cfg(debug_assertions)]
+                                eprintln!("                {} new HP: {:.1}", target_name, enemies[target_idx].final_state.current_hp);
+                                update_stats(stats, &attacker.id, &enemies[target_idx].id, dmg, 0.0);
+
+                                // Concentration Check
+                                if let Some(buff_id) = enemies[target_idx].final_state.concentrating_on.clone() {
+                                    if enemies[target_idx].final_state.current_hp <= 0.0 {
+                                        break_concentration(&enemies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                    } else {
+                                        let con_save_bonus = enemies[target_idx].creature.con_save_bonus.unwrap_or(enemies[target_idx].creature.save_bonus);
+                                        let dc = (dmg / 2.0).max(10.0);
+                                        let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                                        if roll + con_save_bonus < dc {
+                                            break_concentration(&enemies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                        }
+                                    }
+                                }
+                            } else {
+                                allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp - dmg).max(0.0);
+                                #[cfg(debug_assertions)]
+                                eprintln!("                {} new HP: {:.1}", target_name, allies[target_idx].final_state.current_hp);
+                                update_stats(stats, &attacker.id, &allies[target_idx].id, dmg, 0.0);
+
+                                // Concentration Check
+                                if let Some(buff_id) = allies[target_idx].final_state.concentrating_on.clone() {
+                                    if allies[target_idx].final_state.current_hp <= 0.0 {
+                                        break_concentration(&allies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                    } else {
+                                        let con_save_bonus = allies[target_idx].creature.con_save_bonus.unwrap_or(allies[target_idx].creature.save_bonus);
+                                        let dc = (dmg / 2.0).max(10.0);
+                                        let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                                        if roll + con_save_bonus < dc {
+                                            break_concentration(&allies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                        }
+                                    }
+                                }
+                            }
                     } else {
                         #[cfg(debug_assertions)]
                         eprintln!("              MISS! {} misses {}.", attacker.creature.name, target_name);
@@ -682,6 +710,13 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                     }
                 },
                 Action::Buff(a) => {
+                    if a.buff.concentration {
+                        let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
+                        if let Some(old_buff) = current_concentration {
+                             break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+                        }
+                        allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
+                    }
                     let mut buff = a.buff.clone();
                     buff.source = Some(attacker.id.clone());
                     if is_enemy {
@@ -693,6 +728,13 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                     }
                 },
                 Action::Debuff(a) => {
+                    if a.buff.concentration {
+                        let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
+                        if let Some(old_buff) = current_concentration {
+                             break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+                        }
+                        allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
+                    }
                     let mut buff = a.buff.clone();
                     buff.source = Some(attacker.id.clone());
                     
@@ -938,6 +980,35 @@ fn update_stats_buff(stats: &mut HashMap<String, EncounterStats>, attacker_id: &
         characters_buffed: 0.0, buffs_received: 0.0, characters_debuffed: 0.0, debuffs_received: 0.0, times_unconscious: 0.0
     });
     if is_buff { target_stats.buffs_received += 1.0; } else { target_stats.debuffs_received += 1.0; }
+}
+
+fn break_concentration(caster_id: &str, buff_id: &str, allies: &mut [Combattant], enemies: &mut [Combattant]) {
+    #[cfg(debug_assertions)]
+    eprintln!("        Break Concentration! {} loses concentration on {}.", caster_id, buff_id);
+
+    // Clear concentration on caster
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        if c.id == caster_id {
+            c.final_state.concentrating_on = None;
+        }
+    }
+
+    // Remove buffs from all combatants
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        // We need to check if the buff exists and if it's from this source
+        // Since we can't easily iterate and remove, we'll check if it exists first
+        let should_remove = if let Some(buff) = c.final_state.buffs.get(buff_id) {
+            buff.source.as_ref() == Some(&caster_id.to_string())
+        } else {
+            false
+        };
+
+        if should_remove {
+            c.final_state.buffs.remove(buff_id);
+            #[cfg(debug_assertions)]
+            eprintln!("          Removed {} from {}.", buff_id, c.creature.name);
+        }
+    }
 }
 
 #[cfg(test)]

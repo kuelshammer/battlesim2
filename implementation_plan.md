@@ -68,28 +68,28 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
 - [x] **`CreatureState` Schema**: Add `concentratingOn: string | null` (stores the ID of the active concentration effect).
 
 ### 2. Simulation Logic Updates (`simulation.rs`)
-- **Helper Function: `break_concentration(caster_id: &str)`**:
+- [x] **Helper Function: `break_concentration(caster_id: &str)`**:
     - Identify the effect the caster is concentrating on.
     - Iterate through all combatants (allies & enemies).
     - Remove any buff where `source == caster_id` AND `buff_id == concentrating_on`.
     - Clear `concentratingOn` state on the caster.
     - Log the event.
 
-- **Casting Logic (`Action::Buff` / `Action::Debuff`)**:
+- [x] **Casting Logic (`Action::Buff` / `Action::Debuff`)**:
     - Check if the new spell requires concentration.
     - If yes:
         - Check if caster is already concentrating.
         - If so, call `break_concentration` (old spell ends).
         - Set `concentratingOn` to the new spell's ID.
 
-- **Damage Logic (`Action::Atk`)**:
+- [x] **Damage Logic (`Action::Atk`)**:
     - When a creature takes damage:
         - Check if they are concentrating (`concentratingOn.is_some()`).
         - Calculate DC: `max(10, damage / 2)`.
         - Roll Save: `d20 + con_save_bonus`.
         - If fail: Call `break_concentration`.
 
-- **Incapacitation Logic**:
+- [x] **Incapacitation Logic**:
     - If a creature drops to 0 HP, call `break_concentration`.
 
 ### 3. Frontend Updates
