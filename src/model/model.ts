@@ -39,6 +39,7 @@ const BuffSchema = z.object({
 
     // Odds that the buff was applied. All of the effects are multiplied by this value. Default 1.
     magnitude: z.number().optional(),
+    concentration: z.boolean().optional(),
 })
 
 // Not to be used directly. See ActionSchema
@@ -171,6 +172,7 @@ export const CreatureSchema = z.object({
     AC: z.number(),
     speed_fly: z.number().optional(),
     saveBonus: z.number(), // Average save bonus. Using this to simplify the input, even if it makes the result slightly less accurate.
+    conSaveBonus: z.number().optional(),
     initiativeBonus: z.number().optional(),
     initiativeAdvantage: z.boolean().optional(),
     actions: z.array(ActionSchema),
@@ -185,6 +187,7 @@ const CreatureStateSchema = z.object({
     remainingUses: z.map(z.string(), z.number()),
     upcomingBuffs: z.map(z.string(), BuffSchema),
     usedActions: z.set(z.string()),
+    concentratingOn: z.string().nullable().optional(),
 })
 
 const CombattantSchema = z.object({

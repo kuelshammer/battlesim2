@@ -37,6 +37,7 @@ pub struct Buff {
     #[serde(rename = "damageReduction")]
     pub damage_reduction: Option<DiceFormula>,
     #[serde(rename = "damageMultiplier")]
+    #[serde(rename = "damageMultiplier")]
     pub damage_multiplier: Option<f64>,
     #[serde(rename = "damageTakenMultiplier")]
     pub damage_taken_multiplier: Option<f64>,
@@ -47,6 +48,8 @@ pub struct Buff {
     pub magnitude: Option<f64>,
     #[serde(default)]
     pub source: Option<String>,
+    #[serde(default)]
+    pub concentration: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -246,6 +249,9 @@ pub struct Creature {
     #[serde(default)]
     #[serde(rename = "initiativeAdvantage")]
     pub initiative_advantage: bool,
+    #[serde(default)]
+    #[serde(rename = "conSaveBonus")]
+    pub con_save_bonus: Option<f64>,
     pub actions: Vec<Action>, // This might need to be flexible if templates are involved
 }
 
@@ -262,6 +268,8 @@ pub struct CreatureState {
     pub upcoming_buffs: HashMap<String, Buff>,
     #[serde(rename = "usedActions")]
     pub used_actions: HashSet<String>,
+    #[serde(rename = "concentratingOn")]
+    pub concentrating_on: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

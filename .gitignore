@@ -4,3 +4,7 @@ src/data/scrapper
 target
 simulation-wasm/target
 simulation-wasm/pkg
+out
+public/main.js
+dist
+.DS_Store

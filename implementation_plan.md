@@ -63,9 +63,9 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
 ## Concentration Implementation Plan
 
 ### 1. Data Model Updates
-- **`Buff` Schema**: Add `concentration: boolean` (default `false`).
-- **`Creature` Schema**: Add `conSaveBonus: number` (optional, fallback to generic `saveBonus`).
-- **`CreatureState` Schema**: Add `concentratingOn: string | null` (stores the ID of the active concentration effect).
+- [x] **`Buff` Schema**: Add `concentration: boolean` (default `false`).
+- [x] **`Creature` Schema**: Add `conSaveBonus: number` (optional, fallback to generic `saveBonus`).
+- [x] **`CreatureState` Schema**: Add `concentratingOn: string | null` (stores the ID of the active concentration effect).
 
 ### 2. Simulation Logic Updates (`simulation.rs`)
 - **Helper Function: `break_concentration(caster_id: &str)`**:
