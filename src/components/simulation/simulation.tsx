@@ -98,7 +98,7 @@ const Simulation: FC<PropType> = ({ }) => {
                     }))
                 }))
 
-                const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1000) as SimulationResult[]
+                const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
                 setAllResults(results)
 
                 // Aggregate results based on luck slice
@@ -112,8 +112,8 @@ const Simulation: FC<PropType> = ({ }) => {
 
                 // Calculate slice indices
                 const total = results.length
-                const sliceSize = Math.floor(total * 0.2) // 20% slice
-                const start = Math.floor(luck * (total - sliceSize))
+                const sliceSize = Math.floor(total / 5) // 20% slice
+                const start = Math.min(total - sliceSize, Math.floor(luck * (total - sliceSize))) // Ensure start index is valid
                 const end = start + sliceSize
 
                 const slice = results.slice(start, end)
@@ -141,8 +141,8 @@ const Simulation: FC<PropType> = ({ }) => {
             // Update aggregation based on new luck
             try {
                 const total = allResults.length
-                const sliceSize = Math.floor(total * 0.2)
-                const start = Math.floor(luck * (total - sliceSize))
+                const sliceSize = Math.floor(total / 5)
+                const start = Math.min(total - sliceSize, Math.floor(luck * (total - sliceSize)))
                 const end = start + sliceSize
 
                 const slice = allResults.slice(start, end)
