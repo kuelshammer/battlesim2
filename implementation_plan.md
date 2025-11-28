@@ -59,3 +59,40 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
 - **Regression Testing**: Compare a simple "1 Goblin vs 1 Fighter" scenario in the old vs. new system to ensure basic mechanics (AC, HP, Damage) are consistent.
 - **Monte Carlo Check**: Run a simulation and verify that "Bad Luck" results actually show missed attacks/failed saves, and "Good Luck" results show crits/successful saves.
 - **Aggregation Verification**: Verify that aggregated action labels correctly display target names (e.g., "Attack on Goblin 1") instead of just "Attack on".
+
+## Concentration Implementation Plan
+
+### 1. Data Model Updates
+- **`Buff` Schema**: Add `concentration: boolean` (default `false`).
+- **`Creature` Schema**: Add `conSaveBonus: number` (optional, fallback to generic `saveBonus`).
+- **`CreatureState` Schema**: Add `concentratingOn: string | null` (stores the ID of the active concentration effect).
+
+### 2. Simulation Logic Updates (`simulation.rs`)
+- **Helper Function: `break_concentration(caster_id: &str)`**:
+    - Identify the effect the caster is concentrating on.
+    - Iterate through all combatants (allies & enemies).
+    - Remove any buff where `source == caster_id` AND `buff_id == concentrating_on`.
+    - Clear `concentratingOn` state on the caster.
+    - Log the event.
+
+- **Casting Logic (`Action::Buff` / `Action::Debuff`)**:
+    - Check if the new spell requires concentration.
+    - If yes:
+        - Check if caster is already concentrating.
+        - If so, call `break_concentration` (old spell ends).
+        - Set `concentratingOn` to the new spell's ID.
+
+- **Damage Logic (`Action::Atk`)**:
+    - When a creature takes damage:
+        - Check if they are concentrating (`concentratingOn.is_some()`).
+        - Calculate DC: `max(10, damage / 2)`.
+        - Roll Save: `d20 + con_save_bonus`.
+        - If fail: Call `break_concentration`.
+
+- **Incapacitation Logic**:
+    - If a creature drops to 0 HP, call `break_concentration`.
+
+### 3. Frontend Updates
+- **Creature Editor**: Add input for `Constitution Save Bonus`.
+- **Action Editor**: Add checkbox for `Concentration` in Buff/Debuff effects.
+- **UI Display**: Show a "Concentrating" indicator on the combatant card.
