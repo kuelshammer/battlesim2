@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
-use uuid::Uuid;
 use rand::Rng;
 use crate::model::*;
 use crate::enums::*;
 use crate::dice;
+#[cfg(not(target_arch = "wasm32"))]
+use std::io::Write;
 
 pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iterations: usize) -> Vec<SimulationResult> {
     let mut results: Vec<(f64, SimulationResult)> = Vec::with_capacity(iterations);
@@ -17,8 +18,87 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
     // Sort by score
     results.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if !results.is_empty() {
+            let median_idx = results.len() / 2;
+            let (_, median_result) = &results[median_idx];
+            let log = generate_combat_log(median_result);
+            
+            // Try to write to GEMINI_REPORTS if it exists
+            // Try to write to GEMINI_REPORTS if it exists
+            // Or absolute path? The user said "./GEMINI_REPORTS".
+            // If running from root, it is "./GEMINI_REPORTS".
+            // If running from simulation-wasm, it is "../GEMINI_REPORTS".
+            // Let's try both or just absolute if possible. 
+            // But I don't know absolute path easily.
+            // Let's try "./GEMINI_REPORTS" first (assuming cargo run from root).
+            let path = std::path::Path::new("./GEMINI_REPORTS");
+            if path.exists() {
+                 let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+                 let filename = path.join(format!("median_run_log_{}.txt", timestamp));
+                 if let Ok(mut file) = std::fs::File::create(filename) {
+                     let _ = file.write_all(log.as_bytes());
+                 }
+            } else {
+                // Try ../GEMINI_REPORTS
+                let path = std::path::Path::new("../GEMINI_REPORTS");
+                if path.exists() {
+                     let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+                     let filename = path.join(format!("median_run_log_{}.txt", timestamp));
+                     if let Ok(mut file) = std::fs::File::create(filename) {
+                         let _ = file.write_all(log.as_bytes());
+                     }
+                }
+            }
+        }
+    }
+
     // Return all results sorted by score
     results.into_iter().map(|(_, r)| r).collect()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn generate_combat_log(result: &SimulationResult) -> String {
+    use std::fmt::Write;
+    let mut log = String::new();
+    
+    if let Some(encounter) = result.first() {
+        // Build ID -> Name map
+        let mut id_to_name = HashMap::new();
+        if let Some(first_round) = encounter.rounds.first() {
+            for c in first_round.team1.iter().chain(first_round.team2.iter()) {
+                id_to_name.insert(c.id.clone(), c.creature.name.clone());
+            }
+        }
+
+        for (i, round) in encounter.rounds.iter().enumerate() {
+            writeln!(&mut log, "--- Round {} ---", i + 1).unwrap();
+            
+            let mut all_combatants: Vec<&Combattant> = round.team1.iter().chain(round.team2.iter()).collect();
+            all_combatants.sort_by(|a, b| b.initiative.partial_cmp(&a.initiative).unwrap_or(std::cmp::Ordering::Equal));
+            
+            for c in all_combatants {
+                if c.final_state.current_hp <= 0.0 && c.initial_state.current_hp <= 0.0 { continue; } // Skip dead
+                
+                writeln!(&mut log, "{}: (HP: {:.1} -> {:.1})", c.creature.name, c.initial_state.current_hp, c.final_state.current_hp).unwrap();
+                
+                if c.actions.is_empty() && c.final_state.current_hp > 0.0 {
+                    writeln!(&mut log, "  - No actions taken.").unwrap();
+                }
+
+                for action in &c.actions {
+                    let target_names: Vec<String> = action.targets.iter().map(|(id, count)| {
+                         let name = id_to_name.get(id).cloned().unwrap_or_else(|| id.clone());
+                         if *count > 1 { format!("{} (x{})", name, count) } else { name }
+                    }).collect();
+                    writeln!(&mut log, "  - Uses {}: Targets {:?}", action.action.base().name, target_names).unwrap();
+                }
+            }
+            writeln!(&mut log, "").unwrap();
+        }
+    }
+    log
 }
 
 
@@ -254,25 +334,8 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> Simu
     let mut results = Vec::new();
     
     // Initialize players with state
-    let mut players_with_state: Vec<Combattant> = players.iter().flat_map(|player| {
-        (0..player.count as i32).map(|i| {
-            let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
-            let mut p = player.clone();
-            p.name = name;
-            // Deterministic ID: {template_id}-{index}
-            // We use the template ID from the player struct and the index
-            // Note: If multiple groups use the same template ID, we might need to differentiate them.
-            // But usually the input `players` list has distinct entries.
-            // To be safe, we can use the index in the `players` array too if needed, but let's stick to simple first.
-            // Actually, `players` is a slice. We should probably use the index in that slice too to be unique across groups.
-            // But `flat_map` loses the outer index.
-            // Let's rewrite the iteration to capture outer index.
-            create_combattant(p, format!("{}-{}", player.id, i))
-        }).collect::<Vec<_>>()
-    }).collect();
-    
-    // Wait, the above flat_map doesn't capture the outer index to differentiate if I have two groups of "Goblin".
-    // Let's fix that.
+    // We iterate to capture group index for deterministic IDs
+    // Note: flat_map approach was removed in favor of explicit loops below
     let mut players_with_state = Vec::new();
     for (group_idx, player) in players.iter().enumerate() {
         for i in 0..player.count as i32 {

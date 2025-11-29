@@ -107,4 +107,10 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
     - With stable IDs, the "dead source cleanup" at the end of aggregation will be reliable.
     - Ensure that if a combatant's aggregated HP < 0.5 (effectively dead), all buffs sourced by them are removed from the aggregated state.
 
-### 5. Frontend Integration
+### 5. Median Run Logging (NEW)
+- [ ] **Save Median Run Log**:
+    - In `run_monte_carlo`, identify the median simulation run (index `iterations / 2`).
+    - Generate a human-readable text log of this specific run (round by round, turn by turn).
+    - Save this log to a file (e.g., `median_run_log.txt`) in the `GEMINI_REPORTS` directory or similar, to allow the user to inspect a "representative" fight in detail.
+
+### 6. Frontend Integration
