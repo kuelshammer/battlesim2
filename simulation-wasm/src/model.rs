@@ -37,7 +37,6 @@ pub struct Buff {
     #[serde(rename = "damageReduction")]
     pub damage_reduction: Option<DiceFormula>,
     #[serde(rename = "damageMultiplier")]
-    #[serde(rename = "damageMultiplier")]
     pub damage_multiplier: Option<f64>,
     #[serde(rename = "damageTakenMultiplier")]
     pub damage_taken_multiplier: Option<f64>,

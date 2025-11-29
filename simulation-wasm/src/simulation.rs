@@ -414,6 +414,7 @@ fn create_combattant(creature: Creature) -> Combattant {
         remaining_uses: get_remaining_uses(&creature, "long rest", None),
         upcoming_buffs: HashMap::new(),
         used_actions: HashSet::new(),
+        concentrating_on: None,
     };
     Combattant {
         id: Uuid::new_v4().to_string(),
@@ -812,9 +813,9 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                                         let dc = (dmg / 2.0).max(10.0);
                                         let roll = rand::thread_rng().gen_range(1..=20) as f64;
                                         if roll + con_save_bonus < dc {
-                                            break_concentration(&enemies[target_idx].id.clone(), &buff_id, allies, enemies);
-                                        }
-                                    }
+                                        let caster_id = enemies[target_idx].id.clone();
+                                        break_concentration(&caster_id, &buff_id, allies, enemies);
+                                    }    }
                                 }
                             } else {
                                 allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp - dmg).max(0.0);
@@ -831,9 +832,9 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                                         let dc = (dmg / 2.0).max(10.0);
                                         let roll = rand::thread_rng().gen_range(1..=20) as f64;
                                         if roll + con_save_bonus < dc {
-                                            break_concentration(&allies[target_idx].id.clone(), &buff_id, allies, enemies);
-                                        }
-                                    }
+                                        let caster_id = allies[target_idx].id.clone();
+                                        break_concentration(&caster_id, &buff_id, allies, enemies);
+                                    }    }
                                 }
                             }
                     } else {
@@ -856,7 +857,8 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                     if a.buff.concentration {
                         let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
                         if let Some(old_buff) = current_concentration {
-                             break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+                             let caster_id = allies[attacker_idx].id.clone();
+                             break_concentration(&caster_id, &old_buff, allies, enemies);
                         }
                         allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
                     }
@@ -874,7 +876,8 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                     if a.buff.concentration {
                         let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
                         if let Some(old_buff) = current_concentration {
-                             break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+                             let caster_id = allies[attacker_idx].id.clone();
+                             break_concentration(&caster_id, &old_buff, allies, enemies);
                         }
                         allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
                     }
@@ -970,7 +973,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
                 }
             }
         },
-        _ => {}
+
     }
     #[cfg(debug_assertions)]
     eprintln!("        {} found {} total targets for action {}.", c.creature.name, targets.len(), action.base().name);

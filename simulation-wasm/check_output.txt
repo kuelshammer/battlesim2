@@ -1,0 +1,77 @@
+    Checking simulation-wasm v0.1.0 (/Users/max/Rust/Battlesim2/simulation-wasm)
+warning: unused import: `serde::Serialize`
+ --> src/lib.rs:7:5
+  |
+7 | use serde::Serialize;
+  |     ^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `allies`
+   --> src/simulation.rs:661:32
+    |
+661 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_allies`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `enemies`
+   --> src/simulation.rs:661:55
+    |
+661 | fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+    |                                                       ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_enemies`
+
+error[E0502]: cannot borrow `*allies` as mutable because it is also borrowed as immutable
+   --> src/simulation.rs:860:30
+    |
+860 | ...                   break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+    |                       -------------------^------------------------^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                       |                   |
+    |                       |                   immutable borrow occurs here
+    |                       mutable borrow occurs here
+    |                       immutable borrow later used by call
+
+error[E0502]: cannot borrow `*allies` as mutable because it is also borrowed as immutable
+   --> src/simulation.rs:878:30
+    |
+878 | ...                   break_concentration(&allies[attacker_idx].id, &old_buff, allies, enemies);
+    |                       -------------------^------------------------^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                       |                   |
+    |                       |                   immutable borrow occurs here
+    |                       mutable borrow occurs here
+    |                       immutable borrow later used by call
+
+warning: unreachable pattern
+   --> src/simulation.rs:974:9
+    |
+974 |         _ => {}
+    |         ^ no value can reach this
+    |
+note: multiple earlier patterns match some of the same values
+   --> src/simulation.rs:974:9
+    |
+914 |         Action::Atk(a) => {
+    |         -------------- matches some of the same values
+...
+930 |         Action::Heal(a) => {
+    |         --------------- matches some of the same values
+...
+945 |         Action::Buff(a) => {
+    |         --------------- matches some of the same values
+...
+960 |         Action::Debuff(a) => {
+    |         ----------------- matches some of the same values
+...
+974 |         _ => {}
+    |         ^ collectively making this unreachable
+    = note: `#[warn(unreachable_patterns)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `a`
+   --> src/simulation.rs:930:22
+    |
+930 |         Action::Heal(a) => {
+    |                      ^ help: if this is intentional, prefix it with an underscore: `_a`
+
+For more information about this error, try `rustc --explain E0502`.
+warning: `simulation-wasm` (lib) generated 5 warnings
+error: could not compile `simulation-wasm` (lib) due to 2 previous errors; 5 warnings emitted

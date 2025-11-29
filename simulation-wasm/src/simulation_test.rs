@@ -21,6 +21,7 @@ mod tests {
                 actions: vec![],
                 arrival: None,
                 speed_fly: None,
+                con_save_bonus: None,
             },
             initial_state: CreatureState {
                 current_hp: 10.0,
@@ -29,6 +30,7 @@ mod tests {
                 remaining_uses: HashMap::new(),
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
+                concentrating_on: None,
             },
             final_state: CreatureState {
                 current_hp: 10.0,
@@ -37,6 +39,7 @@ mod tests {
                 remaining_uses: HashMap::new(),
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
+                concentrating_on: None,
             },
             actions: vec![],
         }
@@ -73,6 +76,7 @@ mod tests {
                 condition: None,
                 magnitude: None,
                 source: None,
+                concentration: false,
             },
         });
 
