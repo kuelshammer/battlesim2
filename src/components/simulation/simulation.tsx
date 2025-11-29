@@ -47,6 +47,8 @@ const Simulation: FC<PropType> = ({ }) => {
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
+    const [medianLog, setMedianLog] = useState<string | null>(null)
+    const [showLog, setShowLog] = useState(false)
 
     useEffect(() => {
         const loadWasmModule = async () => {
@@ -81,24 +83,7 @@ const Simulation: FC<PropType> = ({ }) => {
 
         if (allResults.length === 0) {
             // Run simulation if not cached
-            // We need to resolve templates before sending to WASM?
-            // The WASM expects Creature structs.
-            // Assuming the frontend objects match the WASM structs closely enough (thanks to serde).
-            // But we need to make sure we don't send extra fields that might break serde if strict?
-            // Serde is usually forgiving with extra fields if not configured otherwise.
-
-            // However, we need to handle the fact that `run_simulation_wasm` is synchronous in Rust but might take time.
-            // Ideally we should use a worker, but for now let's try direct call.
-
             try {
-                // We need to pass clean objects.
-                // The `players` and `encounters` might contain Zod parsed objects which are fine.
-                // But we need to ensure `getFinalAction` is applied?
-                // The Rust code expects `Action` enum which matches `ActionSchema`.
-                // If `ActionSchema` includes templates, Rust needs to handle them.
-                // I removed Template support in Rust for now.
-                // So I should resolve templates in JS before sending to Rust.
-
                 // Import getFinalAction
                 const { getFinalAction } = require('../../data/actions')
 
@@ -115,19 +100,15 @@ const Simulation: FC<PropType> = ({ }) => {
                     }))
                 }))
 
-                const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+                // The return type is now { results: SimulationResult[], median_log: string | null }
+                const output = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as any
+                const results = output.results as SimulationResult[]
+                const log = output.median_log as string | null
+
                 setAllResults(results)
+                setMedianLog(log)
 
                 // Aggregate results based on luck slice
-                // Luck 0 -> 0-20% slice
-                // Luck 0.5 -> 40-60% slice
-                // Luck 1 -> 80-100% slice
-
-                // We need to pass the slice to aggregate_simulation_results
-                // But run_simulation_wasm returns sorted results? 
-                // Yes, run_monte_carlo sorts by score.
-
-                // Calculate slice indices
                 const total = results.length
                 const sliceSize = Math.floor(total / 5) // 20% slice
                 const start = Math.min(total - sliceSize, Math.floor(luck * (total - sliceSize))) // Ensure start index is valid
@@ -136,19 +117,10 @@ const Simulation: FC<PropType> = ({ }) => {
                 const slice = results.slice(start, end)
 
                 // Aggregate
-                const aggregated = wasm.aggregate_simulation_results(slice) as any // Returns Vec<Round> which is SimulationResult[0] (EncounterResult) rounds?
-                // Wait, aggregate_results returns Vec<Round>.
-                // SimulationResult is Vec<EncounterResult>.
-                // EncounterResult has rounds: Vec<Round>.
-                // So we need to wrap it in EncounterResult structure.
+                const aggregated = wasm.aggregate_simulation_results(slice) as any
 
                 // Construct synthetic EncounterResult
-                const syntheticResult = [{
-                    rounds: aggregated,
-                    stats: new Map(),
-                    team1: [], // Not used by EncounterResult component? It uses rounds.
-                    team2: []
-                }]
+                const syntheticResult = [aggregated]
 
                 setSimulationResults(syntheticResult)
             } catch (e) {
@@ -165,12 +137,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 const slice = allResults.slice(start, end)
                 const aggregated = wasm.aggregate_simulation_results(slice) as any
 
-                const syntheticResult = [{
-                    rounds: aggregated,
-                    stats: new Map(),
-                    team1: [],
-                    team2: []
-                }]
+                const syntheticResult = [aggregated]
 
                 setSimulationResults(syntheticResult)
             } catch (e) {
@@ -182,6 +149,7 @@ const Simulation: FC<PropType> = ({ }) => {
     // Reset results when inputs change
     useEffect(() => {
         setAllResults([])
+        setMedianLog(null)
     }, [players, encounters])
 
 
@@ -242,6 +210,12 @@ const Simulation: FC<PropType> = ({ }) => {
                             <FontAwesomeIcon icon={faFolder} />
                             Load Adventuring Day
                         </button>
+                        {medianLog && (
+                            <button onClick={() => setShowLog(true)}>
+                                <FontAwesomeIcon icon={faFolder} />
+                                View Median Run Log
+                            </button>
+                        )}
                         {!saving ? null : (
                             <AdventuringDayForm
                                 players={players}
@@ -258,6 +232,49 @@ const Simulation: FC<PropType> = ({ }) => {
                                     setEncounters(e)
                                     setLoading(false)
                                 }} />
+                        )}
+                        {showLog && medianLog && (
+                            <div style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                zIndex: 1000,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}>
+                                <div style={{
+                                    backgroundColor: '#222',
+                                    color: '#eee',
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    width: '80%',
+                                    height: '80%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                        <h2>Median Run Log</h2>
+                                        <button onClick={() => setShowLog(false)}>Close</button>
+                                    </div>
+                                    <textarea
+                                        readOnly
+                                        value={medianLog}
+                                        style={{
+                                            flex: 1,
+                                            backgroundColor: '#111',
+                                            color: '#ddd',
+                                            fontFamily: 'monospace',
+                                            padding: '10px',
+                                            border: '1px solid #444',
+                                            resize: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         )}
                     </>
                 </EncounterForm>
