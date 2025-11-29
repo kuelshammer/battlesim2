@@ -45,23 +45,12 @@ impl AggregationData {
 pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
     if results.is_empty() { return Vec::new(); }
     
-    // Assuming all results have the same number of encounters (usually 1 for now)
-    // We aggregate the first encounter's rounds.
-    
     let max_rounds = results.iter().map(|r| r.first().map(|e| e.rounds.len()).unwrap_or(0)).max().unwrap_or(0);
     let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
     
     let template_encounter = results.first().and_then(|r| r.first());
     if template_encounter.is_none() { return Vec::new(); }
     let template_encounter = template_encounter.unwrap();
-    
-    // Get template IDs for mapping
-    let mut template_ids_t1: Vec<String> = Vec::new();
-    let mut template_ids_t2: Vec<String> = Vec::new();
-    if let Some(first_round) = template_encounter.rounds.first() {
-        for c in &first_round.team1 { template_ids_t1.push(c.id.clone()); }
-        for c in &first_round.team2 { template_ids_t2.push(c.id.clone()); }
-    }
     
     for round_idx in 0..max_rounds {
         let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
@@ -70,21 +59,6 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         
         for res in results {
             if let Some(encounter) = res.first() {
-                // Build UUID map for this run
-                let mut uuid_map: HashMap<String, String> = HashMap::new();
-                if let Some(first_round) = encounter.rounds.first() {
-                    for (i, c) in first_round.team1.iter().enumerate() {
-                        if i < template_ids_t1.len() {
-                            uuid_map.insert(c.id.clone(), template_ids_t1[i].clone());
-                        }
-                    }
-                    for (i, c) in first_round.team2.iter().enumerate() {
-                        if i < template_ids_t2.len() {
-                            uuid_map.insert(c.id.clone(), template_ids_t2[i].clone());
-                        }
-                    }
-                }
-
                 // Determine which round to use (actual or last padding)
                 let round_opt = if round_idx < encounter.rounds.len() {
                     encounter.rounds.get(round_idx)
@@ -96,75 +70,17 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     count += 1;
                     
                     for c in &round.team1 {
-                        let mapped_id = uuid_map.get(&c.id).unwrap_or(&c.creature.id).clone();
-                        // Fallback to creature ID if not in map, but ideally we use the template UUID map
-                        // Actually team1_map keys should be the TEMPLATE IDs (from template_ids_t1)
-                        // But here `c.creature.id` might be same as `c.id`? No.
-                        // `c.creature.id` is the definition ID. `c.id` is the instance ID.
-                        // The aggregation map is keyed by `c.creature.id` in the previous code, which is wrong if multiple same creatures exist.
-                        // It should be keyed by the Template Instance ID.
-                        // In previous code: `team1_map.entry(c.creature.id.clone())` -> This merges all Goblins into one bucket!
-                        // Wait, `c.creature.id` comes from `uuid::Uuid::new_v4()` in `create_combattant`? No.
-                        // `create_combattant` takes `Creature` which has an ID.
-                        // In `run_single_simulation`: `p.name = name; create_combattant(p)`.
-                        // `create_combattant` generates a NEW `id` for the `Combattant`.
-                        // `Combattant.creature.id` preserves the original definition ID.
-                        
-                        // The `uuid_map` maps `current_run_combattant_id` -> `template_run_combattant_id`.
-                        // So we should use `mapped_id` as key for `team1_map`.
-                        // Previous code used `c.creature.id`. This is BUGGY for multiple monsters of same type!
-                        // It aggregates all "Goblin" stats together if `creature.id` is shared.
-                        // But `c.creature` is cloned from input `players`. If players input has unique IDs for each line, it's fine.
-                        // But if `count: 5`, we generate 5 combattants. They share `creature.id`?
-                        // In `run_single_simulation`: `players.iter().flat_map(...)`.
-                        // `p` is a clone of `player`. `player` comes from `players`.
-                        // The `id` in `Creature` struct is usually the template ID (e.g. from library).
-                        // So yes, `c.creature.id` is likely shared.
-                        // WE MUST USE THE MAPPED INSTANCE ID.
-                        
-                        // Let's fix the key to use `mapped_id` (which maps to template instance ID).
-                        
-                        // Find the template ID corresponding to this creature
-                        // We rely on the order. `uuid_map` is built by index.
-                        // So `mapped_id` is correct.
-                        
-                        let entry = team1_map.entry(mapped_id.clone()).or_insert_with(AggregationData::new);
+                        // With deterministic IDs, c.id is stable across runs.
+                        let entry = team1_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
                         entry.total_hp += c.final_state.current_hp;
                         
-                        // Remap targets in actions
-                        let mut actions = c.actions.clone();
-                        for action in &mut actions {
-                            let mut new_targets = HashMap::new();
-                            for (target_id, count) in &action.targets {
-                                if let Some(m_id) = uuid_map.get(target_id) {
-                                    new_targets.insert(m_id.clone(), *count);
-                                } else {
-                                    new_targets.insert(target_id.clone(), *count);
-                                }
-                            }
-                            action.targets = new_targets;
-                        }
-                        
-                        let action_key = serde_json::to_string(&actions).unwrap_or_default();
+                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
 
                         // Aggregate Buffs
                         for (buff_id, buff) in &c.final_state.buffs {
                             *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| {
-                                let mut b = buff.clone();
-                                if let Some(sid) = &b.source {
-                                    if let Some(mapped_sid) = uuid_map.get(sid) {
-                                        b.source = Some(mapped_sid.clone());
-                                    } else {
-                                        // If source combatant is not in current run's uuid_map (e.g. died before this round),
-                                        // then its buff should be considered "unsourced" for aggregation purposes
-                                        // so that the cleanup logic can remove it if it originates from a "dead" source.
-                                        b.source = None;
-                                    }
-                                }
-                                b
-                            });
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
                         }
 
                         // Aggregate Concentration
@@ -175,37 +91,15 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     
                     // Team 2
                     for c in &round.team2 {
-                        let mapped_id = uuid_map.get(&c.id).unwrap_or(&c.creature.id).clone();
-                        let entry = team2_map.entry(mapped_id.clone()).or_insert_with(AggregationData::new);
+                        let entry = team2_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
                         entry.total_hp += c.final_state.current_hp;
                         
-                        let mut actions = c.actions.clone();
-                        for action in &mut actions {
-                            let mut new_targets = HashMap::new();
-                            for (target_id, count) in &action.targets {
-                                if let Some(m_id) = uuid_map.get(target_id) {
-                                    new_targets.insert(m_id.clone(), *count);
-                                } else {
-                                    new_targets.insert(target_id.clone(), *count);
-                                }
-                            }
-                            action.targets = new_targets;
-                        }
-
-                        let action_key = serde_json::to_string(&actions).unwrap_or_default();
+                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
 
                         for (buff_id, buff) in &c.final_state.buffs {
                             *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| {
-                                let mut b = buff.clone();
-                                if let Some(sid) = &b.source {
-                                    if let Some(mapped_sid) = uuid_map.get(sid) {
-                                        b.source = Some(mapped_sid.clone());
-                                    }
-                                }
-                                b
-                            });
+                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
                         }
 
                         if let Some(conc_id) = &c.final_state.concentrating_on {
@@ -223,7 +117,6 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t1 = Vec::new();
         if let Some(template_round) = template_encounter.rounds.get(round_idx) {
              for c_template in &template_round.team1 {
-                 // We use `c_template.id` as the key because we mapped everything to it.
                  if let Some(data) = team1_map.get(&c_template.id) {
                      let avg_hp = data.total_hp / count as f64;
                      let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
@@ -245,17 +138,16 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
 
                      // Reconstruct Concentration
                      c.final_state.concentrating_on = None;
-                     // Find the concentration ID with max count
                      if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
                          if *conc_count > threshold {
                              c.final_state.concentrating_on = Some(conc_id.clone());
                          }
                      }
                      
-                     // Fix initial_state: It should be the final_state of the previous round.
+                     // Fix initial_state
                      if round_idx > 0 {
                          if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                             if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.creature.id == c.creature.id) {
+                             if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.id == c.id) {
                                  c.initial_state = prev_c.final_state.clone();
                              }
                          }
@@ -299,7 +191,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                      
                      if round_idx > 0 {
                          if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                             if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.creature.id == c.creature.id) {
+                             if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.id == c.id) {
                                  c.initial_state = prev_c.final_state.clone();
                              }
                          }
@@ -311,13 +203,11 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         }
         
         // Consistency Cleanup: Enforce "Dead = No Concentration" on the aggregated result
-        // This handles edge cases where statistical aggregation might result in inconsistent states (e.g. HP < 0.5 but Concentration > 50% due to some anomaly, or just to align visual state).
         let mut dead_source_ids = HashSet::new();
         
         // 1. Identify effectively dead combatants and clear their concentration
         for c in t1.iter_mut().chain(t2.iter_mut()) {
             if c.final_state.current_hp < 0.5 {
-                // Consider effectively dead for visualization
                 if c.final_state.concentrating_on.is_some() {
                     c.final_state.concentrating_on = None;
                 }
@@ -369,10 +259,31 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> Simu
             let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
             let mut p = player.clone();
             p.name = name;
-            
-            create_combattant(p)
+            // Deterministic ID: {template_id}-{index}
+            // We use the template ID from the player struct and the index
+            // Note: If multiple groups use the same template ID, we might need to differentiate them.
+            // But usually the input `players` list has distinct entries.
+            // To be safe, we can use the index in the `players` array too if needed, but let's stick to simple first.
+            // Actually, `players` is a slice. We should probably use the index in that slice too to be unique across groups.
+            // But `flat_map` loses the outer index.
+            // Let's rewrite the iteration to capture outer index.
+            create_combattant(p, format!("{}-{}", player.id, i))
         }).collect::<Vec<_>>()
     }).collect();
+    
+    // Wait, the above flat_map doesn't capture the outer index to differentiate if I have two groups of "Goblin".
+    // Let's fix that.
+    let mut players_with_state = Vec::new();
+    for (group_idx, player) in players.iter().enumerate() {
+        for i in 0..player.count as i32 {
+             let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
+             let mut p = player.clone();
+             p.name = name;
+             // ID format: {template_id}-{group_idx}-{index} to be absolutely sure of uniqueness
+             let id = format!("{}-{}-{}", player.id, group_idx, i);
+             players_with_state.push(create_combattant(p, id));
+        }
+    }
 
     for (index, encounter) in encounters.iter().enumerate() {
         let encounter_result = run_encounter(&players_with_state, encounter);
@@ -411,7 +322,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> Simu
     results
 }
 
-fn create_combattant(creature: Creature) -> Combattant {
+fn create_combattant(creature: Creature, id: String) -> Combattant {
     let state = CreatureState {
         current_hp: creature.hp,
         temp_hp: None,
@@ -422,7 +333,7 @@ fn create_combattant(creature: Creature) -> Combattant {
         concentrating_on: None,
     };
     Combattant {
-        id: Uuid::new_v4().to_string(),
+        id,
         initiative: roll_initiative(&creature),
         creature: creature.clone(),
         initial_state: state.clone(),
@@ -473,14 +384,19 @@ fn get_remaining_uses(creature: &Creature, rest: &str, old_value: Option<&HashMa
 }
 
 fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResult {
-    let mut team2: Vec<Combattant> = encounter.monsters.iter().flat_map(|monster| {
-        (0..monster.count as i32).map(|i| {
+    let mut team2 = Vec::new();
+    for (group_idx, monster) in encounter.monsters.iter().enumerate() {
+        for i in 0..monster.count as i32 {
             let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
             let mut m = monster.clone();
             m.name = name;
-            create_combattant(m)
-        }).collect::<Vec<_>>()
-    }).collect();
+            // ID format: {template_id}-{group_idx}-{index}
+            // We use a prefix "m" to distinguish from players if IDs could collide (unlikely with UUIDs but good practice)
+            // Actually, `monster.id` is likely a UUID from the database.
+            let id = format!("{}-{}-{}", monster.id, group_idx, i);
+            team2.push(create_combattant(m, id));
+        }
+    }
     
     let mut team1 = players.to_vec();
     

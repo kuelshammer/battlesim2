@@ -92,7 +92,19 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
 - [x] **Incapacitation Logic**:
     - If a creature drops to 0 HP, call `break_concentration`.
 
-### 3. Frontend Updates
-- **Creature Editor**: Add input for `Constitution Save Bonus`.
-- **Action Editor**: Add checkbox for `Concentration` in Buff/Debuff effects.
-- **UI Display**: Show a "Concentrating" indicator on the combatant card.
+### 4. Deterministic IDs & Aggregation Fix (NEW)
+- [ ] **Deterministic Combatant IDs**:
+    - Modify `create_combattant` to accept a specific `id` string instead of generating a random UUID.
+    - In `run_single_simulation`, generate stable IDs for each combatant based on their template ID and index (e.g., `"{template_id}-{index}"`).
+    - This ensures "Goblin 1" has the same ID in every simulation run.
+
+- [ ] **Simplify Aggregation**:
+    - Remove the complex `uuid_map` logic in `aggregate_results`.
+    - Aggregate directly using the stable IDs.
+    - This ensures that `buff.source` (which stores the caster's ID) always points to the correct entity across all runs.
+
+- [ ] **Robust Concentration Cleanup**:
+    - With stable IDs, the "dead source cleanup" at the end of aggregation will be reliable.
+    - Ensure that if a combatant's aggregated HP < 0.5 (effectively dead), all buffs sourced by them are removed from the aggregated state.
+
+### 5. Frontend Integration
