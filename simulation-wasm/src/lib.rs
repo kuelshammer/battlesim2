@@ -4,7 +4,6 @@ pub mod model;
 pub mod simulation;
 
 use wasm_bindgen::prelude::*;
-use serde::Serialize;
 use crate::model::{Creature, Encounter, SimulationResult};
 
 #[wasm_bindgen]

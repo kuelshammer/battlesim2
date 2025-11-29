@@ -663,7 +663,7 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
     }
 }
 
-fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
+fn get_actions(c: &Combattant, _allies: &[Combattant], _enemies: &[Combattant]) -> Vec<Action> {
     #[cfg(debug_assertions)]
     eprintln!("      Getting actions for {}. Creature actions: {}", c.creature.name, c.creature.actions.len());
     let mut result = Vec::new();
@@ -934,7 +934,7 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
                 }
             }
         },
-        Action::Heal(a) => {
+        Action::Heal(_a) => {
              for i in 0..count {
                  #[cfg(debug_assertions)]
                  eprintln!("          Heal {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
