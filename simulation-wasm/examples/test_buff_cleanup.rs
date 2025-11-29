@@ -1,0 +1,135 @@
+use simulation_wasm::*;
+
+fn main() {
+    // Simple test: Caster casts Bless on Target, then Caster dies
+    // Expected: Bless should be removed from Target in aggregated results
+    
+    let caster = model::Creature {
+        id: "caster-template".to_string(),
+        name: "Acolyte Buff".to_string(),
+        count: 1.0,
+        hp: 5.0, // Very low HP so it dies quickly
+        ac: 10.0,
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        initiative_bonus: 0.0,
+        initiative_advantage: false,
+        con_save_bonus: Some(2.0),
+        actions: vec![
+            model::Action::Buff(model::BuffAction {
+                id: "bless".to_string(),
+                name: "Bless".to_string(),
+                action_slot: 1,
+                freq: model::Frequency::Static("at will".to_string()),
+                condition: enums::ActionCondition::Default,
+                targets: 3,
+                target: enums::AllyTarget::AllyWithMostHP,
+                buff: model::Buff {
+                    display_name: Some("Bless".to_string()),
+                    duration: enums::BuffDuration::EntireEncounter,
+                    ac: None,
+                    to_hit: Some(model::DiceFormula::Expr("1d4".to_string())),
+                    damage: None,
+                    damage_reduction: None,
+                    damage_multiplier: None,
+                    damage_taken_multiplier: None,
+                    dc: None,
+                    save: Some(model::DiceFormula::Expr("1d4".to_string())),
+                    condition: None,
+                    magnitude: None,
+                    source: None, // Will be set during simulation
+                    concentration: true,
+                },
+            }),
+        ],
+    };
+    
+    let target = model::Creature {
+        id: "target-template".to_string(),
+        name: "Player Fighter".to_string(),
+        count: 1.0,
+        hp: 54.0,
+        ac: 18.0,
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 1.0,
+        initiative_bonus: 0.0,
+        initiative_advantage: false,
+        con_save_bonus: Some(3.0),
+        actions: vec![],
+    };
+    
+    let enemy = model::Creature {
+        id: "enemy-template".to_string(),
+        name: "Goblin".to_string(),
+        count: 1.0,
+        hp: 7.0,
+        ac: 15.0,
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        initiative_bonus: 2.0,
+        initiative_advantage: false,
+        con_save_bonus: Some(0.0),
+        actions: vec![
+            model::Action::Atk(model::AtkAction {
+                id: "shortsword".to_string(),
+                name: "Shortsword".to_string(),
+                action_slot: 1,
+                freq: model::Frequency::Static("at will".to_string()),
+                condition: enums::ActionCondition::Default,
+                targets: 1,
+                dpr: model::DiceFormula::Expr("1d6+2".to_string()),
+                to_hit: model::DiceFormula::Value(4.0),
+                target: enums::EnemyTarget::EnemyWithMostHP,
+                use_saves: None,
+                half_on_save: None,
+                rider_effect: None,
+            }),
+        ],
+    };
+    
+    let players = vec![caster, target];
+    let encounter = model::Encounter {
+        monsters: vec![enemy],
+        players_surprised: None,
+        monsters_surprised: None,
+        short_rest: None,
+    };
+    
+    println!("Running 10 simulations...");
+    let results = simulation::run_monte_carlo(&players, &[encounter], 10);
+    
+    println!("\nAggregating results...");
+    let aggregated = simulation::aggregate_results(&results);
+    
+    println!("\n=== Aggregated Results ===");
+    for (round_idx, round) in aggregated.iter().enumerate() {
+        println!("\n--- Round {} ---", round_idx + 1);
+        
+        println!("Team 1:");
+        for c in &round.team1 {
+            println!("  {}: HP {:.1}/{:.1}, Buffs: {:?}, Concentrating: {:?}",
+                c.creature.name,
+                c.final_state.current_hp,
+                c.creature.hp,
+                c.final_state.buffs.keys().collect::<Vec<_>>(),
+                c.final_state.concentrating_on
+            );
+            
+            for (buff_id, buff) in &c.final_state.buffs {
+                println!("    - Buff {}: source = {:?}", buff_id, buff.source);
+            }
+        }
+        
+        println!("Team 2:");
+        for c in &round.team2 {
+            println!("  {}: HP {:.1}/{:.1}",
+                c.creature.name,
+                c.final_state.current_hp,
+                c.creature.hp
+            );
+        }
+    }
+}

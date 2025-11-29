@@ -49,11 +49,28 @@ const Simulation: FC<PropType> = ({ }) => {
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
 
     useEffect(() => {
-        import('simulation-wasm').then(async (module) => {
-            await module.default('./simulation_wasm_bg.wasm')
-            setWasm(module)
-        })
-    }, [])
+        const loadWasmModule = async () => {
+            if (typeof window !== 'undefined' && window.electronAPI) {
+                try {
+                    const wasmBytes = await window.electronAPI.loadWasm('simulation_wasm_bg.wasm');
+                    const wasmModule = await import('simulation-wasm');
+                    await wasmModule.default(await WebAssembly.compile(wasmBytes));
+                    setWasm(wasmModule);
+                } catch (error) {
+                    console.error('Failed to load WASM in Electron:', error);
+                }
+            } else {
+                // Fallback for web environment or when electronAPI is not available
+                import('simulation-wasm').then(async (module) => {
+                    await module.default('./simulation_wasm_bg.wasm');
+                    setWasm(module);
+                }).catch(error => {
+                    console.error('Failed to load WASM in web environment:', error);
+                });
+            }
+        };
+        loadWasmModule();
+    }, []);
 
 
     useEffect(() => {

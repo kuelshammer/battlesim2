@@ -19,7 +19,8 @@
     },
     "files": [
       "electron.js",
-      "../out/**/*",
+      "preload.js",
+      "out/**/*",
       "package.json"
     ],
     "directories": {

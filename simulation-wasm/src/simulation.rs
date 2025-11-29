@@ -288,6 +288,9 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         // 1. Identify effectively dead combatants and clear their concentration
         for c in t1.iter_mut().chain(t2.iter_mut()) {
             if c.final_state.current_hp < 0.5 {
+                #[cfg(debug_assertions)]
+                eprintln!("AGGREGATION: {} is dead (HP: {:.1}). Clearing concentration.", c.creature.name, c.final_state.current_hp);
+                
                 if c.final_state.concentrating_on.is_some() {
                     c.final_state.concentrating_on = None;
                 }
@@ -295,16 +298,61 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
             }
         }
         
-        // 2. Remove buffs sourced by these dead combatants
-        if !dead_source_ids.is_empty() {
+        // 2. Build a map of who is concentrating on what
+        let mut concentration_map: HashMap<String, Option<String>> = HashMap::new(); // caster_id -> buff_id
+        for c in t1.iter().chain(t2.iter()) {
+            concentration_map.insert(c.id.clone(), c.final_state.concentrating_on.clone());
+        }
+        
+        // 3. Remove buffs if:
+        //    a) Source is dead
+        //    b) Source exists but is not concentrating on this buff (for concentration buffs)
+        if !dead_source_ids.is_empty() || !concentration_map.is_empty() {
+            #[cfg(debug_assertions)]
+            eprintln!("AGGREGATION: Dead source IDs: {:?}", dead_source_ids);
+            
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                c.final_state.buffs.retain(|_, buff| {
+                let before_count = c.final_state.buffs.len();
+                c.final_state.buffs.retain(|buff_id, buff| {
                     if let Some(source) = &buff.source {
-                        !dead_source_ids.contains(source)
+                        // Check if source is dead
+                        if dead_source_ids.contains(source) {
+                            #[cfg(debug_assertions)]
+                            eprintln!("AGGREGATION: Removing buff {} from {} (source {} is dead)", buff_id, c.creature.name, source);
+                            return false;
+                        }
+                        
+                        // If buff requires concentration, check if source is concentrating on it
+                        if buff.concentration {
+                            if let Some(source_concentrating) = concentration_map.get(source) {
+                                let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
+                                if !is_concentrating_on_this {
+                                    #[cfg(debug_assertions)]
+                                    eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})", 
+                                        buff_id, c.creature.name, source, source_concentrating);
+                                    return false;
+                                }
+                            } else {
+                                #[cfg(debug_assertions)]
+                                eprintln!("AGGREGATION: Removing buff {} from {} (source {} not found in concentration map)", 
+                                    buff_id, c.creature.name, source);
+                                return false;
+                            }
+                        }
+                        
+                        true
                     } else {
+                        #[cfg(debug_assertions)]
+                        eprintln!("AGGREGATION: Buff {} on {} has NO SOURCE!", buff_id, c.creature.name);
                         true
                     }
                 });
+                let after_count = c.final_state.buffs.len();
+                
+                #[cfg(debug_assertions)]
+                if before_count != after_count {
+                    eprintln!("AGGREGATION: {} had {} buffs, now has {}", c.creature.name, before_count, after_count);
+                }
             }
         }
 
