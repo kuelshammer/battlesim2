@@ -19,7 +19,7 @@
     },
     "files": [
       "electron.js",
-      "out/**/*",
+      "../out/**/*",
       "package.json"
     ],
     "directories": {
