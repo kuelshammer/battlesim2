@@ -1,6 +1,6 @@
-use crate::model::*;
-use crate::enums::*;
-use crate::simulation;
+use simulation_wasm::model::*;
+use simulation_wasm::enums::*;
+use simulation_wasm::simulation;
 
 fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -> Creature {
     Creature {
@@ -10,6 +10,7 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
         hp: 100.0,
         ac: 10.0,
         save_bonus: 3.0,
+        con_save_bonus: Some(3.0),
         initiative_bonus: init_bonus,
         initiative_advantage: init_advantage,
         speed_fly: None,
@@ -72,12 +73,12 @@ fn main() {
     for (i, round) in encounter_result.rounds.iter().enumerate() {
         println!("Round {}:", i + 1);
         for c in &round.team1 {
-            println!("  Team 1 - {}: HP {{:.1}}", c.creature.name, c.final_state.current_hp);
-            println!("    Actions: {{:?}}", c.actions.iter().map(|ca| ca.action.base().name.clone()).collect::<Vec<_>>());
+            println!("  Team 1 - {}: HP {:.1}", c.creature.name, c.final_state.current_hp);
+            println!("    Actions: {:?}", c.actions.iter().map(|ca| ca.action.base().name.clone()).collect::<Vec<_>>());
         }
         for c in &round.team2 {
-            println!("  Team 2 - {}: HP {{:.1}}", c.creature.name, c.final_state.current_hp);
-            println!("    Actions: {{:?}}", c.actions.iter().map(|ca| ca.action.base().name.clone()).collect::<Vec<_>>());
+            println!("  Team 2 - {}: HP {:.1}", c.creature.name, c.final_state.current_hp);
+            println!("    Actions: {:?}", c.actions.iter().map(|ca| ca.action.base().name.clone()).collect::<Vec<_>>());
         }
     }
 }

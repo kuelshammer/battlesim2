@@ -156,6 +156,11 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                                 if let Some(sid) = &b.source {
                                     if let Some(mapped_sid) = uuid_map.get(sid) {
                                         b.source = Some(mapped_sid.clone());
+                                    } else {
+                                        // If source combatant is not in current run's uuid_map (e.g. died before this round),
+                                        // then its buff should be considered "unsourced" for aggregation purposes
+                                        // so that the cleanup logic can remove it if it originates from a "dead" source.
+                                        b.source = None;
                                     }
                                 }
                                 b
@@ -1144,7 +1149,7 @@ fn update_stats_buff(stats: &mut HashMap<String, EncounterStats>, attacker_id: &
 
 fn break_concentration(caster_id: &str, buff_id: &str, allies: &mut [Combattant], enemies: &mut [Combattant]) {
     #[cfg(debug_assertions)]
-    eprintln!("        Break Concentration! {} loses concentration on {}.", caster_id, buff_id);
+    eprintln!("        [DEBUG] break_concentration called: Caster ID: {}, Buff ID: {}", caster_id, buff_id);
 
     // Clear concentration on caster
     for c in allies.iter_mut().chain(enemies.iter_mut()) {

@@ -1,7 +1,7 @@
-mod dice;
-mod enums;
-mod model;
-mod simulation;
+pub mod dice;
+pub mod enums;
+pub mod model;
+pub mod simulation;
 
 use wasm_bindgen::prelude::*;
 use serde::Serialize;
