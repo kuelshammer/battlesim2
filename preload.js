@@ -1,5 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Polyfill for Web Crypto API is not needed in modern Electron as window.crypto is available
+// const crypto = require('crypto');
+// if (!global.crypto) { ... }
+
 contextBridge.exposeInMainWorld('electronAPI', {
   loadWasm: async (wasmFileName) => {
     try {

@@ -10,7 +10,10 @@ const nextConfig = {
   },
   assetPrefix: './',
   webpack: (config) => {
-    config.experiments = { ...config.experiments, asyncWebAssembly: true }
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+    }
     return config
   },
 }

@@ -10,6 +10,17 @@ import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-i
 import { semiPersistentContext } from "../../model/simulationContext"
 import AdventuringDayForm from "./adventuringDayForm"
 
+// Ensure crypto is available globally for wasm-bindgen BEFORE any WASM imports
+if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
+    if (!globalThis.crypto) {
+        globalThis.crypto = window.crypto;
+    }
+    // Also set on self for compatibility with different bundlers
+    if (typeof self !== 'undefined' && !self.crypto) {
+        (self as any).crypto = window.crypto;
+    }
+}
+
 type PropType = {
     // TODO
 }
@@ -52,24 +63,26 @@ const Simulation: FC<PropType> = ({ }) => {
 
     useEffect(() => {
         const loadWasmModule = async () => {
-            if (typeof window !== 'undefined' && window.electronAPI) {
-                try {
-                    const wasmBytes = await window.electronAPI.loadWasm('simulation_wasm_bg.wasm');
-                    const wasmModule = await import('simulation-wasm');
-                    await wasmModule.default(await WebAssembly.compile(wasmBytes));
-                    setWasm(wasmModule);
-                } catch (error) {
-                    console.error('Failed to load WASM in Electron:', error);
-                }
-            } else {
-                // Fallback for web environment or when electronAPI is not available
-                import('simulation-wasm').then(async (module) => {
-                    await module.default('./simulation_wasm_bg.wasm');
-                    setWasm(module);
-                }).catch(error => {
-                    console.error('Failed to load WASM in web environment:', error);
-                });
-            }
+            // Skip Electron-specific path due to crypto import issues
+            // Always use web fallback which properly handles wasm-bindgen imports
+            // if (typeof window !== 'undefined' && window.electronAPI) {
+            //     try {
+            //         const wasmBytes = await window.electronAPI.loadWasm('simulation_wasm_bg.wasm');
+            //         const wasmModule = await import('simulation-wasm');
+            //         await wasmModule.default(wasmBytes); 
+            //         setWasm(wasmModule);
+            //     } catch (error) {
+            //         console.error('Failed to load WASM in Electron:', error);
+            //     }
+            // } else {
+            // Web environment - this works in both browser and Electron
+            import('simulation-wasm').then(async (module) => {
+                await module.default();
+                setWasm(module);
+            }).catch(error => {
+                console.error('Failed to load WASM:', error);
+            });
+            // }
         };
         loadWasmModule();
     }, []);
@@ -100,13 +113,13 @@ const Simulation: FC<PropType> = ({ }) => {
                     }))
                 }))
 
-                // The return type is now { results: SimulationResult[], median_log: string | null }
-                const output = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as any
-                const results = output.results as SimulationResult[]
-                const log = output.median_log as string | null
+                // The return type is now just SimulationResult[]
+                const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+                console.log('Simulation complete. Results:', results.length, 'runs')
+                console.log('First result:', results[0])
 
                 setAllResults(results)
-                setMedianLog(log)
+                setMedianLog(null) // Median log is now written to file instead
 
                 // Aggregate results based on luck slice
                 const total = results.length
@@ -115,14 +128,20 @@ const Simulation: FC<PropType> = ({ }) => {
                 const end = start + sliceSize
 
                 const slice = results.slice(start, end)
+                console.log('Aggregating slice:', start, 'to', end, '(', slice.length, 'results)')
 
                 // Aggregate
                 const aggregated = wasm.aggregate_simulation_results(slice) as any
+                console.log('Aggregated result:', aggregated)
 
-                // Construct synthetic EncounterResult
-                const syntheticResult = [aggregated]
+                // Construct synthetic EncounterResult with proper structure
+                const syntheticResult = [{
+                    rounds: aggregated,
+                    stats: new Map(),
+                }]
 
                 setSimulationResults(syntheticResult)
+                console.log('Simulation results set!')
             } catch (e) {
                 console.error("Simulation failed", e)
             }
@@ -137,7 +156,10 @@ const Simulation: FC<PropType> = ({ }) => {
                 const slice = allResults.slice(start, end)
                 const aggregated = wasm.aggregate_simulation_results(slice) as any
 
-                const syntheticResult = [aggregated]
+                const syntheticResult = [{
+                    rounds: aggregated,
+                    stats: new Map(),
+                }]
 
                 setSimulationResults(syntheticResult)
             } catch (e) {

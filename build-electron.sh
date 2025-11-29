@@ -2,6 +2,10 @@
 
 echo "🍎 Building Battlesim Native App for M1..."
 
+# Build Rust/WASM for web target
+echo "⚙️ Building Rust/WASM..."
+npm run build:wasm
+
 # Build Next.js for production
 echo "📦 Building Next.js app..."
 npm run build
