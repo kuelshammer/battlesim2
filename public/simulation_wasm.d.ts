@@ -1,7 +1,9 @@
 /* tslint:disable */
 /* eslint-disable */
-export function run_simulation_wasm(players: any, encounters: any, iterations: number): any;
+
 export function aggregate_simulation_results(results: any): any;
+
+export function run_simulation_wasm(players: any, encounters: any, iterations: number): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -19,6 +21,7 @@ export interface InitOutput {
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;
+
 /**
 * Instantiates the given `module`, which can either be bytes or
 * a precompiled `WebAssembly.Module`.
