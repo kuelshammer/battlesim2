@@ -300,7 +300,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         
         // 1. Identify effectively dead combatants and clear their concentration
         for c in t1.iter_mut().chain(t2.iter_mut()) {
-            if c.final_state.current_hp < 0.5 {
+            if c.final_state.current_hp <= 0.0 {
                 #[cfg(debug_assertions)]
                 eprintln!("AGGREGATION: {} is dead (HP: {:.1}). Clearing concentration.", c.creature.name, c.final_state.current_hp);
                 
@@ -317,62 +317,84 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
             concentration_map.insert(c.id.clone(), c.final_state.concentrating_on.clone());
         }
         
-        // 3. Remove buffs if:
-        //    a) Source is dead
-        //    b) Source exists but is not concentrating on this buff (for concentration buffs)
+        // 3. Multi-pass buff cleanup for comprehensive dead source handling
         if !dead_source_ids.is_empty() || !concentration_map.is_empty() {
             #[cfg(debug_assertions)]
-            eprintln!("AGGREGATION: Dead source IDs: {:?}", dead_source_ids);
-            
+            eprintln!("AGGREGATION: Starting comprehensive cleanup. Dead sources: {}, concentration_map: {:?}",
+                dead_source_ids.len(), concentration_map.len());
+
+            // First pass: Remove buffs from clearly dead sources (HP <= 0.0)
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                let _before_count = c.final_state.buffs.len();
+                let before_count = c.final_state.buffs.len();
                 c.final_state.buffs.retain(|buff_id, buff| {
                     if let Some(source) = &buff.source {
-                        // Check if source is dead
                         if dead_source_ids.contains(source) {
                             #[cfg(debug_assertions)]
-                            eprintln!("AGGREGATION: Removing buff {} from {} (source {} is dead)", buff_id, c.creature.name, source);
+                            eprintln!("AGGREGATION: PASS1: Removing buff {} from {} (source {} is dead, HP: {:.1})",
+                                buff_id, c.creature.name, source, c.final_state.current_hp);
                             return false;
                         }
-                        
-                        // If buff requires concentration, check if source is alive AND concentrating on it
-                        if buff.concentration {
-                            if let Some(source_concentrating) = concentration_map.get(source) {
-                                // If source is in dead_source_ids, they're dead (HP < 0.5)
-                                if dead_source_ids.contains(source) {
-                                    #[cfg(debug_assertions)]
-                                    eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} is dead)",
-                                        buff_id, c.creature.name, source);
-                                    return false;
-                                }
-
-                                let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
-                                if !is_concentrating_on_this {
-                                    #[cfg(debug_assertions)]
-                                    eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})",
-                                        buff_id, c.creature.name, source, source_concentrating);
-                                    return false;
-                                }
-                            } else {
-                                #[cfg(debug_assertions)]
-                                eprintln!("AGGREGATION: Removing buff {} from {} (source {} not found in concentration map)",
-                                    buff_id, c.creature.name, source);
-                                return false;
-                            }
-                        }
-                        
                         true
                     } else {
-                        #[cfg(debug_assertions)]
-                        eprintln!("AGGREGATION: Buff {} on {} has NO SOURCE!", buff_id, c.creature.name);
+                        // Buff with no source is always kept (might be innate effects)
                         true
                     }
                 });
-                let _after_count = c.final_state.buffs.len();
-                
+                let after_count = c.final_state.buffs.len();
+
                 #[cfg(debug_assertions)]
-                if _before_count != _after_count {
-                    eprintln!("AGGREGATION: {} had {} buffs, now has {}", c.creature.name, _before_count, _after_count);
+                if before_count != after_count {
+                    eprintln!("AGGREGATION: PASS1: {} had {} buffs, now has {}", c.creature.name, before_count, after_count);
+                }
+            }
+
+            // Second pass: Handle concentration-specific cleanup for remaining alive casters
+            if !concentration_map.is_empty() {
+                #[cfg(debug_assertions)]
+                eprintln!("AGGREGATION: PASS2: Checking concentration mechanics for sources: {:?}", concentration_map);
+
+                for c in t1.iter_mut().chain(t2.iter_mut()) {
+                    let before_count = c.final_state.buffs.len();
+                    c.final_state.buffs.retain(|buff_id, buff| {
+                        if let Some(source) = &buff.source {
+                            // Skip if already handled in first pass
+                            if dead_source_ids.contains(source) {
+                                return false;
+                            }
+                        
+                        // Handle concentration buffs specifically
+                            if buff.concentration {
+                                if let Some(source_concentrating) = concentration_map.get(source) {
+                                    let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
+                                    if !is_concentrating_on_this {
+                                    #[cfg(debug_assertions)]
+                                        eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})",
+                                            buff_id, c.creature.name, source, source_concentrating);
+                                        return false;
+                                    }
+                                    // Concentration buff is valid - keep it
+                                    true
+                                } else {
+                                    #[cfg(debug_assertions)]
+                                    eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} not in concentration map)",
+                                        buff_id, c.creature.name, source);
+                                    return false;
+                                }
+                            } else {
+                                // Non-concentration buff from alive source - keep it
+                                true
+                            }
+                        } else {
+                            // Buff with no source is always kept (innate effects)
+                            true
+                        }
+                });
+                let after_count = c.final_state.buffs.len();
+
+                    #[cfg(debug_assertions)]
+                    if before_count != after_count {
+                        eprintln!("AGGREGATION: PASS2: {} had {} concentration-related buffs, now has {}", c.creature.name, before_count, after_count);
+                    }
                 }
             }
         }
@@ -629,16 +651,38 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
 }
 
 fn remove_dead_buffs(targets: &mut [Combattant], dead_source_ids: &HashSet<String>) {
-    if dead_source_ids.is_empty() { return; }
+    if dead_source_ids.is_empty() {
+        #[cfg(debug_assertions)]
+        eprintln!("CLEANUP: No dead sources to process.");
+        return;
+    }
+
+    #[cfg(debug_assertions)]
+    eprintln!("CLEANUP: Removing buffs from dead sources: {:?}", dead_source_ids);
 
     for target in targets.iter_mut() {
-        target.final_state.buffs.retain(|_, buff| {
+        let before_count = target.final_state.buffs.len();
+        target.final_state.buffs.retain(|buff_id, buff| {
             if let Some(source) = &buff.source {
-                !dead_source_ids.contains(source)
+                let should_keep = !dead_source_ids.contains(source);
+                if !should_keep {
+                    #[cfg(debug_assertions)]
+                    eprintln!("CLEANUP: Removing buff '{}' from {} (source {} is dead)",
+                        buff_id, target.creature.name, source);
+                }
+                should_keep
             } else {
+                // Buff with no source is always kept (might be innate effects)
                 true
             }
         });
+        let after_count = target.final_state.buffs.len();
+
+        #[cfg(debug_assertions)]
+        if before_count != after_count {
+            eprintln!("CLEANUP: {} had {} buffs, now has {} buffs",
+                target.creature.name, before_count, after_count);
+        }
     }
 }
 

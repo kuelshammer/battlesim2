@@ -5,6 +5,51 @@ mod tests {
     use crate::enums::*;
     use std::collections::{HashMap, HashSet};
 
+    #[test]
+    fn test_caster_death_removes_buffs() {
+        println!("Testing: Caster death should remove their buffs...");
+
+        // Create test scenario: Wizard casts Shield on Fighter, then Wizard dies
+        let wizard = create_dummy_combattant("Wizard", "wizard_1");
+        let fighter = create_dummy_combattant("Fighter", "fighter_1");
+
+        // Add a buff from wizard to fighter
+        let shield_buff = Buff {
+            display_name: Some("Shield".to_string()),
+            duration: BuffDuration::Infinite,
+            ac: Some(DiceFormula::Constant(2.0)),
+            concentration: true,
+            source: Some(wizard.id.clone()),
+            ..Default::default()
+        };
+
+        let mut fighter_with_shield = fighter.clone();
+        fighter_with_shield.final_state.buffs.insert("shield".to_string(), shield_buff);
+
+        // Initial state: fighter should have 1 buff
+        assert_eq!(fighter_with_shield.final_state.buffs.len(), 1);
+        println!("✓ Initial state: Fighter has {} buffs", fighter_with_shield.final_state.buffs.len());
+
+        // Simulate wizard death (HP <= 0.0)
+        let mut dead_wizard = wizard.clone();
+        dead_wizard.final_state.current_hp = -5.0;
+
+        let mut team1 = vec![fighter_with_shield];
+        let mut team2 = vec![dead_wizard];
+        let dead_sources = HashSet::from([wizard.id.clone()]);
+
+        // Apply cleanup function
+        crate::simulation::remove_dead_buffs(&mut team1, &dead_sources);
+
+        // After cleanup: fighter should have 0 buffs (wizard died)
+        assert_eq!(team1[0].final_state.buffs.len(), 0);
+        println!("✓ After wizard death: Fighter has {} buffs", team1[0].final_state.buffs.len());
+
+        // Verify specific buff was removed
+        assert!(!team1[0].final_state.buffs.contains_key("shield"));
+        println!("✓ Shield buff successfully removed after wizard death");
+    }
+
     fn create_dummy_combattant(name: &str, id: &str) -> Combattant {
         Combattant {
             id: id.to_string(),
