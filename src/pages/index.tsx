@@ -1,9 +1,14 @@
 import Head from 'next/head'
 import React from 'react'
+import dynamic from 'next/dynamic'
 import RGPD from '../components/utils/rgpd'
 import Logo from '../components/utils/logo'
-import Simulation from '../components/simulation/simulation'
 import Footer from '../components/utils/footer'
+
+const Simulation = dynamic(() => import('../components/simulation/simulation'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse text-center p-8">Loading Simulation Engine...</div>
+})
 
 export default function Home() {
   return (

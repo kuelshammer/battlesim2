@@ -325,7 +325,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
             eprintln!("AGGREGATION: Dead source IDs: {:?}", dead_source_ids);
             
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                let before_count = c.final_state.buffs.len();
+                let _before_count = c.final_state.buffs.len();
                 c.final_state.buffs.retain(|buff_id, buff| {
                     if let Some(source) = &buff.source {
                         // Check if source is dead
@@ -368,11 +368,11 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         true
                     }
                 });
-                let after_count = c.final_state.buffs.len();
+                let _after_count = c.final_state.buffs.len();
                 
                 #[cfg(debug_assertions)]
-                if before_count != after_count {
-                    eprintln!("AGGREGATION: {} had {} buffs, now has {}", c.creature.name, before_count, after_count);
+                if _before_count != _after_count {
+                    eprintln!("AGGREGATION: {} had {} buffs, now has {}", c.creature.name, _before_count, _after_count);
                 }
             }
         }
@@ -577,13 +577,13 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
 
     
     // 3. Iterate through turns
-    for (team_id, idx, initiative_value) in turn_order {
-        let combatant_name = match team_id {
+    for (team_id, idx, _initiative_value) in turn_order {
+        let _combatant_name = match team_id {
             TeamId::Team1 => t1[idx].creature.name.clone(),
             TeamId::Team2 => t2[idx].creature.name.clone(),
         };
         #[cfg(debug_assertions)]
-        eprintln!("  Turn for: {} (Init: {:.1})", combatant_name, initiative_value);
+        eprintln!("  Turn for: {} (Init: {:.1})", _combatant_name, _initiative_value);
 
         // Check if creature is still alive (might have died in previous turn)
         let is_alive = match team_id {
@@ -823,10 +823,10 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
         
         // Execute
         for (is_enemy, target_idx) in targets {
-            let target_name = if is_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
-            let current_target_hp = if is_enemy { enemies[target_idx].final_state.current_hp } else { allies[target_idx].final_state.current_hp };
+            let _target_name = if is_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
+            let _current_target_hp = if is_enemy { enemies[target_idx].final_state.current_hp } else { allies[target_idx].final_state.current_hp };
             #[cfg(debug_assertions)]
-            eprintln!("          Executing action {} by {} on {}. Target HP: {:.1}", action.base().name, attacker.creature.name, target_name, current_target_hp);
+            eprintln!("          Executing action {} by {} on {}. Target HP: {:.1}", action.base().name, attacker.creature.name, _target_name, _current_target_hp);
 
             match &action {
                 Action::Atk(a) => {
@@ -967,9 +967,9 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
     
     match action {
         Action::Atk(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
-                eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
+                eprintln!("          Attack {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
                 // So we pass an empty excluded list.
                 if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[], None) {
@@ -983,9 +983,9 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
             }
         },
         Action::Heal(_a) => {
-             for i in 0..count {
+             for _i in 0..count {
                  #[cfg(debug_assertions)]
-                 eprintln!("          Heal {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
+                 eprintln!("          Heal {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
                  let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
                  if let Some(idx) = select_ally_target(AllyTarget::AllyWithLeastHP, allies, self_idx, &targets, None) {
                      #[cfg(debug_assertions)]
@@ -998,9 +998,9 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
              }
         },
         Action::Buff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
-                eprintln!("          Buff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
+                eprintln!("          Buff {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
                 if let Some(idx) = select_ally_target(a.target.clone(), allies, self_idx, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
@@ -1013,9 +1013,9 @@ pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant]
             }
         },
         Action::Debuff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
-                eprintln!("          Debuff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
+                eprintln!("          Debuff {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
                 if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
