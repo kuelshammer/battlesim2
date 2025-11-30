@@ -335,19 +335,27 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                             return false;
                         }
                         
-                        // If buff requires concentration, check if source is concentrating on it
+                        // If buff requires concentration, check if source is alive AND concentrating on it
                         if buff.concentration {
                             if let Some(source_concentrating) = concentration_map.get(source) {
+                                // If source is in dead_source_ids, they're dead (HP < 0.5)
+                                if dead_source_ids.contains(source) {
+                                    #[cfg(debug_assertions)]
+                                    eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} is dead)",
+                                        buff_id, c.creature.name, source);
+                                    return false;
+                                }
+
                                 let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
                                 if !is_concentrating_on_this {
                                     #[cfg(debug_assertions)]
-                                    eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})", 
+                                    eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})",
                                         buff_id, c.creature.name, source, source_concentrating);
                                     return false;
                                 }
                             } else {
                                 #[cfg(debug_assertions)]
-                                eprintln!("AGGREGATION: Removing buff {} from {} (source {} not found in concentration map)", 
+                                eprintln!("AGGREGATION: Removing buff {} from {} (source {} not found in concentration map)",
                                     buff_id, c.creature.name, source);
                                 return false;
                             }
