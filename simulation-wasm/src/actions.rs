@@ -1,0 +1,141 @@
+use crate::model::*;
+use crate::enums::*;
+use crate::dice;
+use rand::Rng;
+use std::collections::{HashMap, HashSet};
+
+pub fn get_actions(c: &Combattant, _allies: &[Combattant], _enemies: &[Combattant]) -> Vec<Action> {
+    #[cfg(debug_assertions)]
+    eprintln!("      Getting actions for {}. Creature actions: {}", c.creature.name, c.creature.actions.len());
+    let mut result = Vec::new();
+    let mut used_slots = HashSet::new();
+    
+    for action in &c.creature.actions {
+        #[cfg(debug_assertions)]
+        eprintln!("        Considering action: {} (Slot: {}, Freq: {:?})", action.base().name, action.base().action_slot, action.base().freq);
+        if used_slots.contains(&action.base().action_slot) {
+            #[cfg(debug_assertions)]
+            eprintln!("          Slot {} already used.", action.base().action_slot);
+            continue;
+        }
+        if !is_usable(c, action) {
+            #[cfg(debug_assertions)]
+            eprintln!("          Action {} not usable.", action.base().name);
+            continue;
+        }
+        
+        // Match condition
+        // Simplified: Always true for now or implement match_condition
+        #[cfg(debug_assertions)]
+        eprintln!("          Action {} usable. Adding to result.", action.base().name);
+        result.push(action.clone());
+        used_slots.insert(action.base().action_slot);
+    }
+    
+    result
+}
+
+pub fn is_usable(c: &Combattant, action: &Action) -> bool {
+    #[cfg(debug_assertions)]
+    eprintln!("        Checking usability for {}: {}. Remaining uses: {:?}", c.creature.name, action.base().name, c.final_state.remaining_uses.get(&action.base().id));
+    match &action.base().freq {
+        Frequency::Static(s) if s == "at will" => true,
+        _ => {
+            let uses = *c.final_state.remaining_uses.get(&action.base().id).unwrap_or(&0.0);
+            uses >= 1.0
+        }
+    }
+}
+
+// Helper to determine if a combatant has a specific condition
+pub fn has_condition(c: &Combattant, condition: CreatureCondition) -> bool {
+    c.final_state.buffs.iter()
+        .any(|(_, buff)| buff.condition == Some(condition))
+}
+
+// Helper to get effective attack roll considering advantage/disadvantage
+pub fn get_attack_roll_result(attacker: &Combattant) -> (f64, bool, bool) {
+    let mut rng = rand::thread_rng();
+    let roll1 = rng.gen_range(1..=20) as f64;
+    let roll2 = rng.gen_range(1..=20) as f64;
+
+    let has_advantage = has_condition(attacker, CreatureCondition::AttacksWithAdvantage) || has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+    let has_disadvantage = has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) || has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage); // Assuming this also applies to attacks.
+
+    let final_roll: f64;
+    let is_crit_hit: bool;
+    let is_crit_miss: bool;
+
+    if has_advantage && !has_disadvantage { // Pure Advantage
+        final_roll = roll1.max(roll2);
+        is_crit_hit = roll1 == 20.0 || roll2 == 20.0;
+        is_crit_miss = roll1 == 1.0 && roll2 == 1.0;
+    } else if has_disadvantage && !has_advantage { // Pure Disadvantage
+        final_roll = roll1.min(roll2);
+        is_crit_hit = roll1 == 20.0 && roll2 == 20.0;
+        is_crit_miss = roll1 == 1.0 || roll2 == 1.0;
+    } else { // Normal roll, or advantage/disadvantage cancel out
+        final_roll = roll1;
+        is_crit_hit = roll1 == 20.0;
+        is_crit_miss = roll1 == 1.0;
+    }
+
+    (final_roll, is_crit_hit, is_crit_miss)
+}
+
+pub fn break_concentration(caster_id: &str, buff_id: &str, allies: &mut [Combattant], enemies: &mut [Combattant]) {
+    #[cfg(debug_assertions)]
+    eprintln!("        [DEBUG] break_concentration called: Caster ID: {}, Buff ID: {}", caster_id, buff_id);
+
+    // Clear concentration on caster
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        if c.id == caster_id {
+            c.final_state.concentrating_on = None;
+        }
+    }
+
+    // Remove buffs from all combatants
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        // We need to check if the buff exists and if it's from this source
+        // Since we can't easily iterate and remove, we'll check if it exists first
+        let should_remove = if let Some(buff) = c.final_state.buffs.get(buff_id) {
+            buff.source.as_ref() == Some(&caster_id.to_string())
+        } else {
+            false
+        };
+
+        if should_remove {
+            c.final_state.buffs.remove(buff_id);
+            #[cfg(debug_assertions)]
+            eprintln!("          Removed {} from {}.", buff_id, c.creature.name);
+        }
+    }
+}
+
+pub fn get_remaining_uses(creature: &Creature, rest: &str, old_value: Option<&HashMap<String, f64>>) -> HashMap<String, f64> {
+    let mut result = HashMap::new();
+    
+    for action in &creature.actions {
+        let val = match &action.base().freq {
+            Frequency::Static(s) if s == "at will" => continue,
+            Frequency::Static(s) if s == "1/fight" => {
+                if rest == "long rest" || rest == "short rest" { 1.0 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
+            },
+            Frequency::Static(s) if s == "1/day" => {
+                if rest == "long rest" { 1.0 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
+            },
+            Frequency::Recharge { .. } => 1.0,
+            Frequency::Limited { reset, uses } => {
+                if reset == "lr" {
+                    if rest == "long rest" { *uses as f64 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
+                } else { // sr
+                    if rest == "long rest" || rest == "short rest" { *uses as f64 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
+                }
+            },
+            _ => 0.0,
+        };
+        result.insert(action.base().id.clone(), val);
+    }
+    
+    result
+}

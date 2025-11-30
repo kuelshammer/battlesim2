@@ -3,6 +3,11 @@ use rand::Rng;
 use crate::model::*;
 use crate::enums::*;
 use crate::dice;
+use crate::targeting::*;
+use crate::actions::*;
+use crate::aggregation::*;
+use crate::cleanup::*;
+
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
 
@@ -26,13 +31,6 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
             let log = generate_combat_log(median_result);
             
             // Try to write to GEMINI_REPORTS if it exists
-            // Try to write to GEMINI_REPORTS if it exists
-            // Or absolute path? The user said "./GEMINI_REPORTS".
-            // If running from root, it is "./GEMINI_REPORTS".
-            // If running from simulation-wasm, it is "../GEMINI_REPORTS".
-            // Let's try both or just absolute if possible. 
-            // But I don't know absolute path easily.
-            // Let's try "./GEMINI_REPORTS" first (assuming cargo run from root).
             let path = std::path::Path::new("./GEMINI_REPORTS");
             if path.exists() {
                  let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
@@ -58,375 +56,11 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
     results.into_iter().map(|(_, r)| r).collect()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-fn generate_combat_log(result: &SimulationResult) -> String {
-    use std::fmt::Write;
-    let mut log = String::new();
-    
-    if let Some(encounter) = result.first() {
-        // Build ID -> Name map
-        let mut id_to_name = HashMap::new();
-        if let Some(first_round) = encounter.rounds.first() {
-            for c in first_round.team1.iter().chain(first_round.team2.iter()) {
-                id_to_name.insert(c.id.clone(), c.creature.name.clone());
-            }
-        }
-
-        for (i, round) in encounter.rounds.iter().enumerate() {
-            writeln!(&mut log, "--- Round {} ---", i + 1).unwrap();
-            
-            let mut all_combatants: Vec<&Combattant> = round.team1.iter().chain(round.team2.iter()).collect();
-            all_combatants.sort_by(|a, b| b.initiative.partial_cmp(&a.initiative).unwrap_or(std::cmp::Ordering::Equal));
-            
-            for c in all_combatants {
-                if c.final_state.current_hp <= 0.0 && c.initial_state.current_hp <= 0.0 { continue; } // Skip dead
-                
-                writeln!(&mut log, "{}: (HP: {:.1} -> {:.1})", c.creature.name, c.initial_state.current_hp, c.final_state.current_hp).unwrap();
-                
-                if c.actions.is_empty() && c.final_state.current_hp > 0.0 {
-                    writeln!(&mut log, "  - No actions taken.").unwrap();
-                }
-
-                for action in &c.actions {
-                    let target_names: Vec<String> = action.targets.iter().map(|(id, count)| {
-                         let name = id_to_name.get(id).cloned().unwrap_or_else(|| id.clone());
-                         if *count > 1 { format!("{} (x{})", name, count) } else { name }
-                    }).collect();
-                    writeln!(&mut log, "  - Uses {}: Targets {:?}", action.action.base().name, target_names).unwrap();
-                }
-            }
-            writeln!(&mut log, "").unwrap();
-        }
-    }
-    log
-}
-
-
-struct AggregationData {
-    total_hp: f64,
-    action_counts: HashMap<String, usize>,
-    buff_counts: HashMap<String, usize>,
-    buff_definitions: HashMap<String, Buff>, // ID -> Buff
-    concentration_counts: HashMap<String, usize>, // ID -> Count
-}
-
-impl AggregationData {
-    fn new() -> Self {
-        Self {
-            total_hp: 0.0,
-            action_counts: HashMap::new(),
-            buff_counts: HashMap::new(),
-            buff_definitions: HashMap::new(),
-            concentration_counts: HashMap::new(),
-        }
-    }
-}
-
-pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
-    #[cfg(debug_assertions)]
-    eprintln!("AGGREGATION: Starting with {} results", results.len());
-
-    if results.is_empty() { return Vec::new(); }
-    
-    let max_rounds = results.iter().map(|r| r.first().map(|e| e.rounds.len()).unwrap_or(0)).max().unwrap_or(0);
-    
-    #[cfg(debug_assertions)]
-    eprintln!("AGGREGATION: max_rounds = {}", max_rounds);
-
-    let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
-    
-    let template_encounter = results.first().and_then(|r| r.first());
-    if template_encounter.is_none() { 
-        #[cfg(debug_assertions)]
-        eprintln!("AGGREGATION: No template encounter found!");
-        return Vec::new(); 
-    }
-    let template_encounter = template_encounter.unwrap();
-    
-    for round_idx in 0..max_rounds {
-        let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
-        let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
-        let mut count = 0;
-        
-        for res in results {
-            if let Some(encounter) = res.first() {
-                // Determine which round to use (actual or last padding)
-                let round_opt = if round_idx < encounter.rounds.len() {
-                    encounter.rounds.get(round_idx)
-                } else {
-                    encounter.rounds.last()
-                };
-
-                if let Some(round) = round_opt {
-                    count += 1;
-                    
-                    for c in &round.team1 {
-                        // With deterministic IDs, c.id is stable across runs.
-                        let entry = team1_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
-                        
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
-                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
-
-                        // Aggregate Buffs
-                        for (buff_id, buff) in &c.final_state.buffs {
-                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
-                        }
-
-                        // Aggregate Concentration
-                        if let Some(conc_id) = &c.final_state.concentrating_on {
-                            *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
-                        }
-                    }
-                    
-                    // Team 2
-                    for c in &round.team2 {
-                        let entry = team2_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
-                        
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
-                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
-
-                        for (buff_id, buff) in &c.final_state.buffs {
-                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
-                        }
-
-                        if let Some(conc_id) = &c.final_state.concentrating_on {
-                            *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
-                        }
-                    }
-                }
-            }
-        }
-        
-        if count == 0 { continue; }
-        let threshold = count / 2;
-
-        let template_round = if round_idx < template_encounter.rounds.len() {
-            &template_encounter.rounds[round_idx]
-        } else {
-            template_encounter.rounds.last().unwrap()
-        };
-        
-        // Reconstruct Team 1
-        let mut t1 = Vec::new();
-        for c_template in &template_round.team1 {
-             if let Some(data) = team1_map.get(&c_template.id) {
-                 let avg_hp = data.total_hp / count as f64;
-                 let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
-                 let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
-                 
-                 let mut c = c_template.clone();
-                 c.final_state.current_hp = avg_hp;
-                 c.actions = actions;
-                 
-                 // Reconstruct Buffs
-                 c.final_state.buffs.clear();
-                 for (buff_id, buff_count) in &data.buff_counts {
-                     if *buff_count > threshold {
-                         if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                             c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
-                         }
-                     }
-                 }
-
-                 // Reconstruct Concentration
-                 c.final_state.concentrating_on = None;
-                 if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
-                     if *conc_count > threshold {
-                         c.final_state.concentrating_on = Some(conc_id.clone());
-                     }
-                 }
-                 
-                 // Fix initial_state
-                 if round_idx > 0 {
-                     if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                         if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.id == c.id) {
-                             c.initial_state = prev_c.final_state.clone();
-                         }
-                     }
-                 }
-                 
-                 t1.push(c);
-             }
-        }
-        
-        // Reconstruct Team 2
-        let mut t2 = Vec::new();
-        for c_template in &template_round.team2 {
-             if let Some(data) = team2_map.get(&c_template.id) {
-                 let avg_hp = data.total_hp / count as f64;
-                 let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
-                 let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
-                 
-                 let mut c = c_template.clone();
-                 c.final_state.current_hp = avg_hp;
-                 c.actions = actions;
-
-                 // Reconstruct Buffs
-                 c.final_state.buffs.clear();
-                 for (buff_id, buff_count) in &data.buff_counts {
-                     if *buff_count > threshold {
-                         if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                             c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
-                         }
-                     }
-                 }
-
-                 // Reconstruct Concentration
-                 c.final_state.concentrating_on = None;
-                 if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
-                     if *conc_count > threshold {
-                         c.final_state.concentrating_on = Some(conc_id.clone());
-                     }
-                 }
-                 
-                 if round_idx > 0 {
-                     if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                         if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.id == c.id) {
-                             c.initial_state = prev_c.final_state.clone();
-                         }
-                     }
-                 }
-                 
-                 t2.push(c);
-             }
-        }
-        
-        // Consistency Cleanup: Enforce "Dead = No Concentration" on the aggregated result
-        let mut dead_source_ids = HashSet::new();
-        
-        // 1. Identify effectively dead combatants and clear their concentration
-        for c in t1.iter_mut().chain(t2.iter_mut()) {
-            if c.final_state.current_hp <= 0.0 {
-                #[cfg(debug_assertions)]
-                eprintln!("AGGREGATION: {} is dead (HP: {:.1}). Clearing concentration.", c.creature.name, c.final_state.current_hp);
-                
-                if c.final_state.concentrating_on.is_some() {
-                    c.final_state.concentrating_on = None;
-                }
-                dead_source_ids.insert(c.id.clone());
-            }
-        }
-        
-        // 2. Build a map of who is concentrating on what
-        let mut concentration_map: HashMap<String, Option<String>> = HashMap::new(); // caster_id -> buff_id
-        for c in t1.iter().chain(t2.iter()) {
-            concentration_map.insert(c.id.clone(), c.final_state.concentrating_on.clone());
-        }
-        
-        // 3. Multi-pass buff cleanup for comprehensive dead source handling
-        if !dead_source_ids.is_empty() || !concentration_map.is_empty() {
-            #[cfg(debug_assertions)]
-            eprintln!("AGGREGATION: Starting comprehensive cleanup. Dead sources: {}, concentration_map: {:?}",
-                dead_source_ids.len(), concentration_map.len());
-
-            // First pass: Remove buffs from clearly dead sources (HP <= 0.0)
-            for c in t1.iter_mut().chain(t2.iter_mut()) {
-                let before_count = c.final_state.buffs.len();
-                c.final_state.buffs.retain(|buff_id, buff| {
-                    if let Some(source) = &buff.source {
-                        if dead_source_ids.contains(source) {
-                            #[cfg(debug_assertions)]
-                            eprintln!("AGGREGATION: PASS1: Removing buff {} from {} (source {} is dead, HP: {:.1})",
-                                buff_id, c.creature.name, source, c.final_state.current_hp);
-                            return false;
-                        }
-                        true
-                    } else {
-                        // Buff with no source is always kept (might be innate effects)
-                        true
-                    }
-                });
-                let after_count = c.final_state.buffs.len();
-
-                #[cfg(debug_assertions)]
-                if before_count != after_count {
-                    eprintln!("AGGREGATION: PASS1: {} had {} buffs, now has {}", c.creature.name, before_count, after_count);
-                }
-            }
-
-            // Second pass: Handle concentration-specific cleanup for remaining alive casters
-            if !concentration_map.is_empty() {
-                #[cfg(debug_assertions)]
-                eprintln!("AGGREGATION: PASS2: Checking concentration mechanics for sources: {:?}", concentration_map);
-
-                for c in t1.iter_mut().chain(t2.iter_mut()) {
-                    let before_count = c.final_state.buffs.len();
-                    c.final_state.buffs.retain(|buff_id, buff| {
-                        if let Some(source) = &buff.source {
-                            // Skip if already handled in first pass
-                            if dead_source_ids.contains(source) {
-                                return false;
-                            }
-                        
-                        // Handle concentration buffs specifically
-                            if buff.concentration {
-                                if let Some(source_concentrating) = concentration_map.get(source) {
-                                    let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
-                                    if !is_concentrating_on_this {
-                                    #[cfg(debug_assertions)]
-                                        eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})",
-                                            buff_id, c.creature.name, source, source_concentrating);
-                                        return false;
-                                    }
-                                    // Concentration buff is valid - keep it
-                                    true
-                                } else {
-                                    #[cfg(debug_assertions)]
-                                    eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} not in concentration map)",
-                                        buff_id, c.creature.name, source);
-                                    return false;
-                                }
-                            } else {
-                                // Non-concentration buff from alive source - keep it
-                                true
-                            }
-                        } else {
-                            // Buff with no source is always kept (innate effects)
-                            true
-                        }
-                });
-                let after_count = c.final_state.buffs.len();
-
-                    #[cfg(debug_assertions)]
-                    if before_count != after_count {
-                        eprintln!("AGGREGATION: PASS2: {} had {} concentration-related buffs, now has {}", c.creature.name, before_count, after_count);
-                    }
-                }
-            }
-        }
-
-        aggregated_rounds.push(Round { team1: t1, team2: t2 });
-    }
-    
-    aggregated_rounds
-}
-
-fn calculate_score(result: &SimulationResult) -> f64 {
-    if result.is_empty() { return 0.0; }
-    
-    let last_encounter = result.last().unwrap();
-    let last_round = last_encounter.rounds.last();
-    
-    if let Some(round) = last_round {
-        let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp).sum();
-        let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp).sum();
-        
-        return 3.0 * player_hp - monster_hp;
-    }
-    
-    0.0
-}
-
 fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> SimulationResult {
     let mut results = Vec::new();
     
     // Initialize players with state
     // We iterate to capture group index for deterministic IDs
-    // Note: flat_map approach was removed in favor of explicit loops below
     let mut players_with_state = Vec::new();
     for (group_idx, player) in players.iter().enumerate() {
         for i in 0..player.count as i32 {
@@ -505,36 +139,7 @@ fn roll_initiative(c: &Creature) -> f64 {
         rand::thread_rng().gen_range(1..=20)
     } as f64;
     
-    // eprintln!("Rolling init for {}: Roll {} + Bonus {} = {}", c.name, roll, c.initiative_bonus, roll + c.initiative_bonus);
     roll + c.initiative_bonus
-}
-
-fn get_remaining_uses(creature: &Creature, rest: &str, old_value: Option<&HashMap<String, f64>>) -> HashMap<String, f64> {
-    let mut result = HashMap::new();
-    
-    for action in &creature.actions {
-        let val = match &action.base().freq {
-            Frequency::Static(s) if s == "at will" => continue,
-            Frequency::Static(s) if s == "1/fight" => {
-                if rest == "long rest" || rest == "short rest" { 1.0 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
-            },
-            Frequency::Static(s) if s == "1/day" => {
-                if rest == "long rest" { 1.0 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
-            },
-            Frequency::Recharge { .. } => 1.0,
-            Frequency::Limited { reset, uses } => {
-                if reset == "lr" {
-                    if rest == "long rest" { *uses as f64 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
-                } else { // sr
-                    if rest == "long rest" || rest == "short rest" { *uses as f64 } else { *old_value.and_then(|m| m.get(&action.base().id)).unwrap_or(&0.0) }
-                }
-            },
-            _ => 0.0,
-        };
-        result.insert(action.base().id.clone(), val);
-    }
-    
-    result
 }
 
 fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResult {
@@ -545,8 +150,6 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResu
             let mut m = monster.clone();
             m.name = name;
             // ID format: {template_id}-{group_idx}-{index}
-            // We use a prefix "m" to distinguish from players if IDs could collide (unlikely with UUIDs but good practice)
-            // Actually, `monster.id` is likely a UUID from the database.
             let id = format!("{}-{}-{}", monster.id, group_idx, i);
             team2.push(create_combattant(m, id));
         }
@@ -614,7 +217,7 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
         };
         if !is_alive {
             #[cfg(debug_assertions)]
-            eprintln!("    {} is dead, skipping turn.", combatant_name);
+            eprintln!("    {} is dead, skipping turn.", _combatant_name);
             continue;
         }
         
@@ -630,7 +233,7 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
             TeamId::Team2 => execute_turn(idx, &mut t2, &mut t1, stats),
         }
         #[cfg(debug_assertions)]
-        eprintln!("  {} turn END. Current State: P1 HP: {:.1}, P2 HP: {:.1}", combatant_name, t1[0].final_state.current_hp, t2[0].final_state.current_hp);
+        eprintln!("  {} turn END. Current State: P1 HP: {:.1}, P2 HP: {:.1}", _combatant_name, t1[0].final_state.current_hp, t2[0].final_state.current_hp);
     }
     
     // Remove buffs from dead sources (at end of round)
@@ -647,42 +250,6 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
     Round {
         team1: t1,
         team2: t2,
-    }
-}
-
-fn remove_dead_buffs(targets: &mut [Combattant], dead_source_ids: &HashSet<String>) {
-    if dead_source_ids.is_empty() {
-        #[cfg(debug_assertions)]
-        eprintln!("CLEANUP: No dead sources to process.");
-        return;
-    }
-
-    #[cfg(debug_assertions)]
-    eprintln!("CLEANUP: Removing buffs from dead sources: {:?}", dead_source_ids);
-
-    for target in targets.iter_mut() {
-        let before_count = target.final_state.buffs.len();
-        target.final_state.buffs.retain(|buff_id, buff| {
-            if let Some(source) = &buff.source {
-                let should_keep = !dead_source_ids.contains(source);
-                if !should_keep {
-                    #[cfg(debug_assertions)]
-                    eprintln!("CLEANUP: Removing buff '{}' from {} (source {} is dead)",
-                        buff_id, target.creature.name, source);
-                }
-                should_keep
-            } else {
-                // Buff with no source is always kept (might be innate effects)
-                true
-            }
-        });
-        let after_count = target.final_state.buffs.len();
-
-        #[cfg(debug_assertions)]
-        if before_count != after_count {
-            eprintln!("CLEANUP: {} had {} buffs, now has {} buffs",
-                target.creature.name, before_count, after_count);
-        }
     }
 }
 
@@ -755,85 +322,6 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
     }
 }
 
-fn get_actions(c: &Combattant, _allies: &[Combattant], _enemies: &[Combattant]) -> Vec<Action> {
-    #[cfg(debug_assertions)]
-    eprintln!("      Getting actions for {}. Creature actions: {}", c.creature.name, c.creature.actions.len());
-    let mut result = Vec::new();
-    let mut used_slots = HashSet::new();
-    
-    for action in &c.creature.actions {
-        #[cfg(debug_assertions)]
-        eprintln!("        Considering action: {} (Slot: {}, Freq: {:?})", action.base().name, action.base().action_slot, action.base().freq);
-        if used_slots.contains(&action.base().action_slot) {
-            #[cfg(debug_assertions)]
-            eprintln!("          Slot {} already used.", action.base().action_slot);
-            continue;
-        }
-        if !is_usable(c, action) {
-            #[cfg(debug_assertions)]
-            eprintln!("          Action {} not usable.", action.base().name);
-            continue;
-        }
-        
-        // Match condition
-        // Simplified: Always true for now or implement match_condition
-        #[cfg(debug_assertions)]
-        eprintln!("          Action {} usable. Adding to result.", action.base().name);
-        result.push(action.clone());
-        used_slots.insert(action.base().action_slot);
-    }
-    
-    result
-}
-
-fn is_usable(c: &Combattant, action: &Action) -> bool {
-    #[cfg(debug_assertions)]
-    eprintln!("        Checking usability for {}: {}. Remaining uses: {:?}", c.creature.name, action.base().name, c.final_state.remaining_uses.get(&action.base().id));
-    match &action.base().freq {
-        Frequency::Static(s) if s == "at will" => true,
-        _ => {
-            let uses = *c.final_state.remaining_uses.get(&action.base().id).unwrap_or(&0.0);
-            uses >= 1.0
-        }
-    }
-}
-
-// Helper to determine if a combatant has a specific condition
-fn has_condition(c: &Combattant, condition: CreatureCondition) -> bool {
-    c.final_state.buffs.iter()
-        .any(|(_, buff)| buff.condition == Some(condition))
-}
-
-// Helper to get effective attack roll considering advantage/disadvantage
-fn get_attack_roll_result(attacker: &Combattant) -> (f64, bool, bool) {
-    let mut rng = rand::thread_rng();
-    let roll1 = rng.gen_range(1..=20) as f64;
-    let roll2 = rng.gen_range(1..=20) as f64;
-
-    let has_advantage = has_condition(attacker, CreatureCondition::AttacksWithAdvantage) || has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
-    let has_disadvantage = has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) || has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage); // Assuming this also applies to attacks.
-
-    let final_roll: f64;
-    let is_crit_hit: bool;
-    let is_crit_miss: bool;
-
-    if has_advantage && !has_disadvantage { // Pure Advantage
-        final_roll = roll1.max(roll2);
-        is_crit_hit = roll1 == 20.0 || roll2 == 20.0;
-        is_crit_miss = roll1 == 1.0 && roll2 == 1.0;
-    } else if has_disadvantage && !has_advantage { // Pure Disadvantage
-        final_roll = roll1.min(roll2);
-        is_crit_hit = roll1 == 20.0 && roll2 == 20.0;
-        is_crit_miss = roll1 == 1.0 || roll2 == 1.0;
-    } else { // Normal roll, or advantage/disadvantage cancel out
-        final_roll = roll1;
-        is_crit_hit = roll1 == 20.0;
-        is_crit_miss = roll1 == 1.0;
-    }
-
-    (final_roll, is_crit_hit, is_crit_miss)
-}
-
 fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>) {
     let attacker = allies[attacker_idx].clone(); // Clone attacker for logging convenience
     #[cfg(debug_assertions)]
@@ -867,10 +355,10 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
         
         // Execute
         for (is_enemy, target_idx) in targets {
-            let _target_name = if is_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
+            let target_name = if is_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
             let _current_target_hp = if is_enemy { enemies[target_idx].final_state.current_hp } else { allies[target_idx].final_state.current_hp };
             #[cfg(debug_assertions)]
-            eprintln!("          Executing action {} by {} on {}. Target HP: {:.1}", action.base().name, attacker.creature.name, _target_name, _current_target_hp);
+            eprintln!("          Executing action {} by {} on {}. Target HP: {:.1}", action.base().name, attacker.creature.name, target_name, _current_target_hp);
 
             match &action {
                 Action::Atk(a) => {
@@ -1002,213 +490,6 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
     }
 }
 
-
-pub(crate) fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: &[Combattant]) -> Vec<(bool, usize)> {
-    #[cfg(debug_assertions)]
-    eprintln!("        Getting targets for {}'s action: {}. Allies: {}, Enemies: {}", c.creature.name, action.base().name, allies.len(), enemies.len());
-    let mut targets = Vec::new();
-    let count = action.base().targets.max(1) as usize;
-    
-    match action {
-        Action::Atk(a) => {
-            for _i in 0..count {
-                #[cfg(debug_assertions)]
-                eprintln!("          Attack {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
-                // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
-                // So we pass an empty excluded list.
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[], None) {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
-                    targets.push((true, idx));
-                } else {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            No target found for {}'s attack {}.", c.creature.name, i + 1);
-                }
-            }
-        },
-        Action::Heal(_a) => {
-             for _i in 0..count {
-                 #[cfg(debug_assertions)]
-                 eprintln!("          Heal {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
-                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
-                 if let Some(idx) = select_ally_target(AllyTarget::AllyWithLeastHP, allies, self_idx, &targets, None) {
-                     #[cfg(debug_assertions)]
-                     eprintln!("            Target selected for {}: Ally {}", c.creature.name, allies[idx].creature.name);
-                     targets.push((false, idx));
-                 } else {
-                     #[cfg(debug_assertions)]
-                     eprintln!("            No target found for {}'s heal {}.", c.creature.name, i + 1);
-                 }
-             }
-        },
-        Action::Buff(a) => {
-            for _i in 0..count {
-                #[cfg(debug_assertions)]
-                eprintln!("          Buff {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
-                let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
-                if let Some(idx) = select_ally_target(a.target.clone(), allies, self_idx, &targets, Some(&a.base().id)) {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            Target selected for {}: Ally {}", c.creature.name, allies[idx].creature.name);
-                    targets.push((false, idx));
-                } else {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            No target found for {}'s buff {}.", c.creature.name, i + 1);
-                }
-            }
-        },
-        Action::Debuff(a) => {
-            for _i in 0..count {
-                #[cfg(debug_assertions)]
-                eprintln!("          Debuff {}/{} of {}. Attempting to select target.", _i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
-                    targets.push((true, idx));
-                } else {
-                    #[cfg(debug_assertions)]
-                    eprintln!("            No target found for {}'s debuff {}.", c.creature.name, i + 1);
-                }
-            }
-        },
-
-    }
-    #[cfg(debug_assertions)]
-    eprintln!("        {} found {} total targets for action {}.", c.creature.name, targets.len(), action.base().name);
-    
-    targets
-}
-
-fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
-    #[cfg(debug_assertions)]
-    eprintln!("            Selecting enemy target (Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
-    let mut best_target = None;
-    let mut best_val = f64::MAX; 
-    
-    for (i, e) in enemies.iter().enumerate() {
-        // Check exclusion (true = enemy)
-        if excluded.contains(&(true, i)) {
-            continue;
-        }
-
-        // Check buff
-        if let Some(bid) = buff_check {
-            if e.final_state.buffs.contains_key(bid) {
-                continue;
-            }
-        }
-
-        #[cfg(debug_assertions)]
-        eprintln!("              Considering enemy {}. HP: {:.1}", e.creature.name, e.final_state.current_hp);
-        if e.final_state.current_hp <= 0.0 {
-            #[cfg(debug_assertions)]
-            eprintln!("                Enemy {} is dead, skipping.", e.creature.name);
-            continue;
-        }
-        
-        let val = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
-            EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
-            EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
-            EnemyTarget::EnemyWithLowestAC => e.creature.ac,
-            EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
-        };
-        
-        if val < best_val {
-            best_val = val;
-            best_target = Some(i);
-        }
-    }
-    #[cfg(debug_assertions)]
-    eprintln!("            Selected target: {:?}", best_target.map(|idx| enemies[idx].creature.name.clone()));
-    
-    best_target
-}
-
-fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usize, excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
-    #[cfg(debug_assertions)]
-    eprintln!("            Selecting ally target (Strategy: {:?}). Allies available: {}. Excluded: {:?}", strategy, allies.len(), excluded);
-    let mut best_target = None;
-    let mut best_val = f64::MAX;
-    
-    // For single-target heals/buffs in multi-target actions, we allow re-targeting the same ally.
-    // The previous implementation was designed more for abilities that must hit distinct targets.
-    // This removes the `excluded_indices` check.
-
-    if strategy == AllyTarget::Self_ {
-        // Only exclude if the self target is explicitly dead (which shouldn't happen for self-buffs)
-        if allies[self_idx].final_state.current_hp <= 0.0 {
-            #[cfg(debug_assertions)]
-            eprintln!("              Self target is dead, skipping.");
-            return None;
-        } else {
-            #[cfg(debug_assertions)]
-            eprintln!("              Self target selected.");
-            return Some(self_idx);
-        }
-    }
-
-    for (i, a) in allies.iter().enumerate() {
-        // Check exclusion (false = ally)
-        if excluded.contains(&(false, i)) {
-            continue;
-        }
-
-        // Check buff
-        if let Some(bid) = buff_check {
-            if a.final_state.buffs.contains_key(bid) {
-                continue;
-            }
-        }
-
-        #[cfg(debug_assertions)]
-        eprintln!("              Considering ally {}. HP: {:.1}", a.creature.name, a.final_state.current_hp);
-        if a.final_state.current_hp <= 0.0 {
-            #[cfg(debug_assertions)]
-            eprintln!("                Ally {} is dead, skipping.", a.creature.name);
-            continue;
-        }
-        
-        let val = match strategy {
-            AllyTarget::AllyWithLeastHP => a.final_state.current_hp,
-            AllyTarget::AllyWithMostHP => -a.final_state.current_hp,
-            AllyTarget::AllyWithHighestDPR => -estimate_dpr(a),
-            AllyTarget::AllyWithLowestAC => a.creature.ac,
-            AllyTarget::AllyWithHighestAC => -a.creature.ac,
-            AllyTarget::Self_ => f64::MAX, // Should be handled above
-        };
-        
-        if val < best_val {
-            best_val = val;
-            best_target = Some(i);
-        }
-    }
-    #[cfg(debug_assertions)]
-    eprintln!("            Selected target: {:?}", best_target.map(|idx| allies[idx].creature.name.clone()));
-    
-    best_target
-}
-
-fn estimate_dpr(c: &Combattant) -> f64 {
-    let mut max_dpr = 0.0;
-    for action in &c.creature.actions {
-        if let Action::Atk(a) = action {
-            // Simple estimation: (to_hit - 10) * 0.05 * dpr? 
-            // Or just raw DPR.
-            // Let's use raw DPR for simplicity as "Highest DPR" usually refers to potential damage.
-            // But to be more accurate we could consider to_hit.
-            // For now, raw DPR.
-            let dpr = match &a.dpr {
-                DiceFormula::Value(v) => *v,
-                DiceFormula::Expr(e) => dice::parse_average(e),
-            };
-            if dpr > max_dpr {
-                max_dpr = dpr;
-            }
-        }
-    }
-    max_dpr
-}
-
 fn update_stats(stats: &mut HashMap<String, EncounterStats>, attacker_id: &str, target_id: &str, damage: f64, heal: f64) {
     let attacker_stats = stats.entry(attacker_id.to_string()).or_insert(EncounterStats {
         damage_dealt: 0.0, damage_taken: 0.0, heal_given: 0.0, heal_received: 0.0,
@@ -1237,35 +518,6 @@ fn update_stats_buff(stats: &mut HashMap<String, EncounterStats>, attacker_id: &
         characters_buffed: 0.0, buffs_received: 0.0, characters_debuffed: 0.0, debuffs_received: 0.0, times_unconscious: 0.0
     });
     if is_buff { target_stats.buffs_received += 1.0; } else { target_stats.debuffs_received += 1.0; }
-}
-
-fn break_concentration(caster_id: &str, buff_id: &str, allies: &mut [Combattant], enemies: &mut [Combattant]) {
-    #[cfg(debug_assertions)]
-    eprintln!("        [DEBUG] break_concentration called: Caster ID: {}, Buff ID: {}", caster_id, buff_id);
-
-    // Clear concentration on caster
-    for c in allies.iter_mut().chain(enemies.iter_mut()) {
-        if c.id == caster_id {
-            c.final_state.concentrating_on = None;
-        }
-    }
-
-    // Remove buffs from all combatants
-    for c in allies.iter_mut().chain(enemies.iter_mut()) {
-        // We need to check if the buff exists and if it's from this source
-        // Since we can't easily iterate and remove, we'll check if it exists first
-        let should_remove = if let Some(buff) = c.final_state.buffs.get(buff_id) {
-            buff.source.as_ref() == Some(&caster_id.to_string())
-        } else {
-            false
-        };
-
-        if should_remove {
-            c.final_state.buffs.remove(buff_id);
-            #[cfg(debug_assertions)]
-            eprintln!("          Removed {} from {}.", buff_id, c.creature.name);
-        }
-    }
 }
 
 #[cfg(test)]

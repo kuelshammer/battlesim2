@@ -1,0 +1,351 @@
+--- Round 1 ---
+Player Fighter: (HP: 54.0 -> 54.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter", "Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 2 ---
+Player Fighter: (HP: 54.0 -> 54.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 3 ---
+Player Fighter: (HP: 54.0 -> 54.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 4 ---
+Player Fighter: (HP: 54.0 -> 54.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 5 ---
+Player Fighter: (HP: 54.0 -> 50.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 6 ---
+Player Fighter: (HP: 50.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 7 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 8 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 9 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 10 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 11 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 12 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 13 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 14 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 15 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 16 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 17 ---
+Player Fighter: (HP: 47.0 -> 47.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 18 ---
+Player Fighter: (HP: 47.0 -> 39.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 19 ---
+Player Fighter: (HP: 39.0 -> 39.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 20 ---
+Player Fighter: (HP: 39.0 -> 39.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 21 ---
+Player Fighter: (HP: 39.0 -> 35.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 22 ---
+Player Fighter: (HP: 35.0 -> 29.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 23 ---
+Player Fighter: (HP: 29.0 -> 29.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 24 ---
+Player Fighter: (HP: 29.0 -> 24.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 25 ---
+Player Fighter: (HP: 24.0 -> 24.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 26 ---
+Player Fighter: (HP: 24.0 -> 21.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 27 ---
+Player Fighter: (HP: 21.0 -> 21.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 28 ---
+Player Fighter: (HP: 21.0 -> 21.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 29 ---
+Player Fighter: (HP: 21.0 -> 21.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 30 ---
+Player Fighter: (HP: 21.0 -> 13.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 31 ---
+Player Fighter: (HP: 13.0 -> 13.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 32 ---
+Player Fighter: (HP: 13.0 -> 13.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 33 ---
+Player Fighter: (HP: 13.0 -> 13.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 34 ---
+Player Fighter: (HP: 13.0 -> 5.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 5.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 35 ---
+Player Fighter: (HP: 5.0 -> 5.0)
+  - No actions taken.
+Acolyte Buff: (HP: 5.0 -> 2.0)
+  - Uses Bless: Targets ["Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Acolyte Buff"]
+
+--- Round 36 ---
+Player Fighter: (HP: 5.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 2.0)
+  - Uses Bless: Targets ["Player Fighter", "Acolyte Buff"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 37 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Acolyte Buff"]
+
+--- Round 38 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 39 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 40 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 41 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 42 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 43 ---
+Player Fighter: (HP: 2.0 -> 2.0)
+  - No actions taken.
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+
+--- Round 44 ---
+Player Fighter: (HP: 2.0 -> 0.0)
+Acolyte Buff: (HP: 2.0 -> 0.0)
+  - Uses Bless: Targets ["Player Fighter"]
+Goblin: (HP: 7.0 -> 7.0)
+  - Uses Shortsword: Targets ["Player Fighter"]
+

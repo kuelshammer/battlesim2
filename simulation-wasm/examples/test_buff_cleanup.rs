@@ -102,7 +102,7 @@ fn main() {
     let results = simulation::run_monte_carlo(&players, &[encounter], 10);
     
     println!("\nAggregating results...");
-    let aggregated = simulation::aggregate_results(&results);
+    let aggregated = aggregation::aggregate_results(&results);
     
     println!("\n=== Aggregated Results ===");
     for (round_idx, round) in aggregated.iter().enumerate() {

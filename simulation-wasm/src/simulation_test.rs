@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::simulation::get_targets;
+    use crate::targeting::get_targets;
+    use crate::cleanup::remove_dead_buffs;
+    use crate::aggregation::aggregate_results;
     use crate::model::*;
     use crate::enums::*;
     use std::collections::{HashMap, HashSet};
@@ -16,11 +18,19 @@ mod tests {
         // Add a buff from wizard to fighter
         let shield_buff = Buff {
             display_name: Some("Shield".to_string()),
-            duration: BuffDuration::Infinite,
-            ac: Some(DiceFormula::Constant(2.0)),
+            duration: BuffDuration::EntireEncounter,
+            ac: Some(DiceFormula::Value(2.0)),
+            to_hit: None,
+            damage: None,
+            damage_reduction: None,
+            damage_multiplier: None,
+            damage_taken_multiplier: None,
+            dc: None,
+            save: None,
+            condition: None,
+            magnitude: None,
             concentration: true,
             source: Some(wizard.id.clone()),
-            ..Default::default()
         };
 
         let mut fighter_with_shield = fighter.clone();
@@ -39,7 +49,7 @@ mod tests {
         let dead_sources = HashSet::from([wizard.id.clone()]);
 
         // Apply cleanup function
-        crate::simulation::remove_dead_buffs(&mut team1, &dead_sources);
+        remove_dead_buffs(&mut team1, &dead_sources);
 
         // After cleanup: fighter should have 0 buffs (wizard died)
         assert_eq!(team1[0].final_state.buffs.len(), 0);
@@ -165,7 +175,7 @@ mod tests {
     }
     #[test]
     fn test_aggregation_concentration_cleanup() {
-        use crate::simulation::aggregate_results;
+        use crate::aggregation::aggregate_results;
         
         // Setup: 1 Caster, 1 Target.
         // Run 1: Caster is alive, concentrating on Bless. Target has Bless.
@@ -265,7 +275,7 @@ mod tests {
 
     #[test]
     fn test_aggregation_dead_source_cleanup() {
-        use crate::simulation::aggregate_results;
+        use crate::aggregation::aggregate_results;
         
         let caster_id = "caster-dead";
         let target_id = "target-alive";

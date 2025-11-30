@@ -2,6 +2,10 @@ pub mod dice;
 pub mod enums;
 pub mod model;
 pub mod simulation;
+pub mod targeting;
+pub mod actions;
+pub mod aggregation;
+pub mod cleanup;
 
 use wasm_bindgen::prelude::*;
 use crate::model::{Creature, Encounter, SimulationResult};
@@ -27,7 +31,7 @@ pub fn aggregate_simulation_results(results: JsValue) -> Result<JsValue, JsValue
     let results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
         
-    let aggregated = simulation::aggregate_results(&results);
+    let aggregated = aggregation::aggregate_results(&results);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);

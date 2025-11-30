@@ -61,7 +61,7 @@ const Simulation: FC<PropType> = ({ }) => {
 
     useEffect(() => {
         import('simulation-wasm').then(async (module) => {
-            await module.default('./simulation_wasm_bg.wasm')
+            await module.default()
             setWasm(module)
         })
     }, [])
