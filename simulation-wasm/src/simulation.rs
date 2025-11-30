@@ -123,13 +123,24 @@ impl AggregationData {
 }
 
 pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
+    #[cfg(debug_assertions)]
+    eprintln!("AGGREGATION: Starting with {} results", results.len());
+
     if results.is_empty() { return Vec::new(); }
     
     let max_rounds = results.iter().map(|r| r.first().map(|e| e.rounds.len()).unwrap_or(0)).max().unwrap_or(0);
+    
+    #[cfg(debug_assertions)]
+    eprintln!("AGGREGATION: max_rounds = {}", max_rounds);
+
     let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
     
     let template_encounter = results.first().and_then(|r| r.first());
-    if template_encounter.is_none() { return Vec::new(); }
+    if template_encounter.is_none() { 
+        #[cfg(debug_assertions)]
+        eprintln!("AGGREGATION: No template encounter found!");
+        return Vec::new(); 
+    }
     let template_encounter = template_encounter.unwrap();
     
     for round_idx in 0..max_rounds {
@@ -192,93 +203,95 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         
         if count == 0 { continue; }
         let threshold = count / 2;
+
+        let template_round = if round_idx < template_encounter.rounds.len() {
+            &template_encounter.rounds[round_idx]
+        } else {
+            template_encounter.rounds.last().unwrap()
+        };
         
         // Reconstruct Team 1
         let mut t1 = Vec::new();
-        if let Some(template_round) = template_encounter.rounds.get(round_idx) {
-             for c_template in &template_round.team1 {
-                 if let Some(data) = team1_map.get(&c_template.id) {
-                     let avg_hp = data.total_hp / count as f64;
-                     let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
-                     let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
-                     
-                     let mut c = c_template.clone();
-                     c.final_state.current_hp = avg_hp;
-                     c.actions = actions;
-                     
-                     // Reconstruct Buffs
-                     c.final_state.buffs.clear();
-                     for (buff_id, buff_count) in &data.buff_counts {
-                         if *buff_count > threshold {
-                             if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                                 c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
-                             }
+        for c_template in &template_round.team1 {
+             if let Some(data) = team1_map.get(&c_template.id) {
+                 let avg_hp = data.total_hp / count as f64;
+                 let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
+                 let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
+                 
+                 let mut c = c_template.clone();
+                 c.final_state.current_hp = avg_hp;
+                 c.actions = actions;
+                 
+                 // Reconstruct Buffs
+                 c.final_state.buffs.clear();
+                 for (buff_id, buff_count) in &data.buff_counts {
+                     if *buff_count > threshold {
+                         if let Some(buff_def) = data.buff_definitions.get(buff_id) {
+                             c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
                          }
                      }
-
-                     // Reconstruct Concentration
-                     c.final_state.concentrating_on = None;
-                     if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
-                         if *conc_count > threshold {
-                             c.final_state.concentrating_on = Some(conc_id.clone());
-                         }
-                     }
-                     
-                     // Fix initial_state
-                     if round_idx > 0 {
-                         if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                             if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.id == c.id) {
-                                 c.initial_state = prev_c.final_state.clone();
-                             }
-                         }
-                     }
-                     
-                     t1.push(c);
                  }
+
+                 // Reconstruct Concentration
+                 c.final_state.concentrating_on = None;
+                 if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
+                     if *conc_count > threshold {
+                         c.final_state.concentrating_on = Some(conc_id.clone());
+                     }
+                 }
+                 
+                 // Fix initial_state
+                 if round_idx > 0 {
+                     if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
+                         if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.id == c.id) {
+                             c.initial_state = prev_c.final_state.clone();
+                         }
+                     }
+                 }
+                 
+                 t1.push(c);
              }
         }
         
         // Reconstruct Team 2
         let mut t2 = Vec::new();
-        if let Some(template_round) = template_encounter.rounds.get(round_idx) {
-             for c_template in &template_round.team2 {
-                 if let Some(data) = team2_map.get(&c_template.id) {
-                     let avg_hp = data.total_hp / count as f64;
-                     let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
-                     let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
-                     
-                     let mut c = c_template.clone();
-                     c.final_state.current_hp = avg_hp;
-                     c.actions = actions;
+        for c_template in &template_round.team2 {
+             if let Some(data) = team2_map.get(&c_template.id) {
+                 let avg_hp = data.total_hp / count as f64;
+                 let best_action_json = data.action_counts.iter().max_by_key(|entry| entry.1).map(|(k, _)| k).unwrap();
+                 let actions: Vec<CombattantAction> = serde_json::from_str(best_action_json).unwrap_or_default();
+                 
+                 let mut c = c_template.clone();
+                 c.final_state.current_hp = avg_hp;
+                 c.actions = actions;
 
-                     // Reconstruct Buffs
-                     c.final_state.buffs.clear();
-                     for (buff_id, buff_count) in &data.buff_counts {
-                         if *buff_count > threshold {
-                             if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                                 c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
-                             }
+                 // Reconstruct Buffs
+                 c.final_state.buffs.clear();
+                 for (buff_id, buff_count) in &data.buff_counts {
+                     if *buff_count > threshold {
+                         if let Some(buff_def) = data.buff_definitions.get(buff_id) {
+                             c.final_state.buffs.insert(buff_id.clone(), buff_def.clone());
                          }
                      }
-
-                     // Reconstruct Concentration
-                     c.final_state.concentrating_on = None;
-                     if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
-                         if *conc_count > threshold {
-                             c.final_state.concentrating_on = Some(conc_id.clone());
-                         }
-                     }
-                     
-                     if round_idx > 0 {
-                         if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                             if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.id == c.id) {
-                                 c.initial_state = prev_c.final_state.clone();
-                             }
-                         }
-                     }
-                     
-                     t2.push(c);
                  }
+
+                 // Reconstruct Concentration
+                 c.final_state.concentrating_on = None;
+                 if let Some((conc_id, conc_count)) = data.concentration_counts.iter().max_by_key(|e| e.1) {
+                     if *conc_count > threshold {
+                         c.final_state.concentrating_on = Some(conc_id.clone());
+                     }
+                 }
+                 
+                 if round_idx > 0 {
+                     if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
+                         if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.id == c.id) {
+                             c.initial_state = prev_c.final_state.clone();
+                         }
+                     }
+                 }
+                 
+                 t2.push(c);
              }
         }
         

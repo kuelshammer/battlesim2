@@ -4,7 +4,6 @@ const nextConfig = {
   swcMinify: true,
   output: 'export',
   trailingSlash: true,
-  basePath: '',
   images: {
     unoptimized: true,
   },

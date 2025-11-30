@@ -1,103 +1,72 @@
-# Electron Build Guide for Battlesim
+# Building Battlesim Desktop App (Electron + Rust/WASM)
 
-This document explains the build process for the Battlesim Electron application. It is intended to help developers (and AI assistants) understand the specific configuration required to build the Next.js + Rust/WASM + Electron stack, specifically targeting macOS (including M1/Apple Silicon).
+This document outlines the build process and toolchain used to generate the Battlesim Electron application.
 
-## Architecture Overview
+## Prerequisites
 
-The application consists of three main parts:
-1.  **Frontend:** Next.js (React) application.
-2.  **Simulation Core:** Rust code compiled to WebAssembly (WASM).
-3.  **Wrapper:** Electron, which serves the static Next.js export.
+*   **Node.js** (v18+)
+*   **Rust** (installed via `rustup`)
+*   **wasm-pack**: `cargo install wasm-pack`
 
-## Key Configuration Files
+## Project Architecture
 
-### 1. `next.config.js`
-To work within Electron (which serves files via the `file://` protocol), Next.js must be configured for static export with relative paths.
+The project combines three technologies:
+1.  **Rust (`simulation-wasm/`)**: Contains the core combat simulation logic. Compiled to WebAssembly.
+2.  **Next.js (`src/`)**: The React-based frontend user interface.
+3.  **Electron (`electron.js`)**: Wraps the Next.js static export into a native desktop application.
 
-```javascript
-const nextConfig = {
-  output: 'export',        // Exports to /out folder
-  trailingSlash: true,     // Required for proper static routing
-  images: {
-    unoptimized: true,     // Required because Next.js Image Optimization API doesn't work statically
-  },
-  assetPrefix: './',       // Ensures CSS/JS load relative to the HTML file
-  // ... WASM config
-}
-```
+## Build Pipeline
 
-### 2. `electron.js`
-The main process entry point. It handles:
-- Creating the BrowserWindow.
-- Loading `http://localhost:3000` in development.
-- Loading `out/index.html` in production/packaged builds.
+The build process is automated via the `npm run build:electron` script (or `build-electron.sh`).
 
-### 3. `package.json`
-Contains specific build configuration for `electron-builder`.
-- **Main Entry:** `"main": "electron.js"`
-- **Build Configuration:**
-  ```json
-  "build": {
-    "appId": "com.battlesim.app",
-    "files": ["electron.js", "out/**/*", "package.json"],
-    "mac": {
-      "target": {
-        "target": "default",
-        "arch": ["arm64", "x64"] // Supports M1 (arm64) and Intel (x64)
-      }
-    }
-  }
-  ```
-
-## Build Process
-
-### Standard Build Command
-The project includes a helper script `build-electron.sh` which automates the process.
+### 1. Compile Rust to WASM
+We use `wasm-pack` to compile the Rust code into a WebAssembly module compatible with the browser.
 
 ```bash
-./build-electron.sh
+# In simulation-wasm/
+rustup run stable wasm-pack build --target web --out-dir pkg
 ```
+*   **Crucial Step**: We force the `stable` toolchain to ensure the `wasm32-unknown-unknown` target is available and used, avoiding conflicts with system-installed `rustc` versions (e.g., Homebrew).
+*   **Artifacts**: The output (`.wasm`, `.js`) is generated in `simulation-wasm/pkg`.
 
-This script performs the following steps:
-1.  **Next.js Build:** Runs `npm run build`. This compiles the React app and exports static HTML/CSS/JS to the `out/` directory.
-2.  **Electron Packaging:** Runs `npx electron-builder`. This takes the `out/` directory and `electron.js` and packages them into a `.dmg` or `.zip`.
+### 2. Synchronize Assets
+The generated WASM files must be served by the Next.js application.
 
-### Manual Build Steps
+```bash
+cp simulation-wasm/pkg/* public/
+```
+*   This copies the `.wasm` binary and the JavaScript glue code to the `public/` directory, where Next.js serves static assets. This solves issues where the webpack-bundled JS bindings might mismatch the runtime-loaded WASM file.
 
-If you need to run steps individually:
+### 3. Build Next.js Frontend
+We build the React application as a static site.
 
-1.  **Build Next.js:**
-    ```bash
-    npm run build
-    ```
-2.  **Package Electron:**
-    ```bash
-    # For macOS (auto-detects arch)
-    npx electron-builder --mac
-    ```
+```bash
+npm run build
+# Runs: next build
+```
+*   **Config**: `next.config.js` uses `output: 'export'` to generate a static HTML/CSS/JS site in the `out/` directory.
+*   **Pathing**: `assetPrefix: './'` ensures relative paths work within the Electron `file://` protocol.
 
-## Development vs. Production
+### 4. Package with Electron
+Finally, `electron-builder` packages the static site and the main Electron process.
 
-### Development
-When running `npm run electron:dev` or `electron .`:
-- The Electron app expects a dev server running on port 3000.
-- You usually need two terminals:
-  1. `npm run dev` (Starts Next.js server)
-  2. `npm run electron:dev` (Starts Electron window)
+```bash
+npx electron-builder --mac
+```
+*   **Config**: `package.json`'s `"build"` section specifies which files to include.
+    *   **Important**: `files` must include `"out/**/*"` to bundle the React app.
 
-### Production (The Built App)
-The built app uses **Static Files** (`out/index.html`).
-- **Critical Constraint:** Absolute paths (e.g., `/images/icon.png`) **WILL FAIL** in the built app because they resolve to the root of the file system (e.g., `C:/images/icon.png`).
-- **Fix:** Always use relative paths (e.g., `./images/icon.png`) for assets in code.
+## Key Files & Configuration
 
-## WASM Specifics
-The Rust simulation is loaded via `simulation-wasm`.
-- In `src/components/simulation/simulation.tsx`, the WASM file import must use a relative path for the Electron build to find it:
-  ```typescript
-  await module.default('./simulation_wasm_bg.wasm') // Relative path for Electron
-  ```
+*   **`package.json`**:
+    *   `scripts.build:wasm`: Handles the Rust compilation and asset copying.
+    *   `build.files`: Whitelists files for the Electron bundle.
+*   **`next.config.js`**: Configures static export and WASM support (via `asyncWebAssembly` experiment).
+*   **`simulation-wasm/src/simulation.rs`**: Contains the `run_monte_carlo` and `aggregate_results` logic.
+    *   *Note*: Aggregation logic handles edge cases where simulation rounds vary (e.g., Total Party Kill), preventing empty result rendering.
 
-## Output
-Artifacts are generated in the `dist/` folder.
-- `dist/mac-arm64/`: Contains the M1 compatible build.
-- `dist/mac/`: Contains the Intel compatible build.
+## Troubleshooting
+
+*   **"LinkError: function import requires a callable"**: This indicates a version mismatch between the compiled JS bindings and the `.wasm` file. Ensure the `cp pkg/* public/` step ran successfully.
+*   **"wasm32-unknown-unknown target not found"**: Ensure `rustup target add wasm32-unknown-unknown` is run and that the build script uses `rustup run stable`.
+*   **White Screen**: Open DevTools (uncomment in `electron.js`) to check for path errors (`file:///`). relative paths in `next.config.js` are critical.

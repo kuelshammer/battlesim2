@@ -58,34 +58,13 @@ const Simulation: FC<PropType> = ({ }) => {
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
-    const [medianLog, setMedianLog] = useState<string | null>(null)
-    const [showLog, setShowLog] = useState(false)
 
     useEffect(() => {
-        const loadWasmModule = async () => {
-            // Skip Electron-specific path due to crypto import issues
-            // Always use web fallback which properly handles wasm-bindgen imports
-            // if (typeof window !== 'undefined' && window.electronAPI) {
-            //     try {
-            //         const wasmBytes = await window.electronAPI.loadWasm('simulation_wasm_bg.wasm');
-            //         const wasmModule = await import('simulation-wasm');
-            //         await wasmModule.default(wasmBytes); 
-            //         setWasm(wasmModule);
-            //     } catch (error) {
-            //         console.error('Failed to load WASM in Electron:', error);
-            //     }
-            // } else {
-            // Web environment - this works in both browser and Electron
-            import('simulation-wasm').then(async (module) => {
-                await module.default();
-                setWasm(module);
-            }).catch(error => {
-                console.error('Failed to load WASM:', error);
-            });
-            // }
-        };
-        loadWasmModule();
-    }, []);
+        import('simulation-wasm').then(async (module) => {
+            await module.default('./simulation_wasm_bg.wasm')
+            setWasm(module)
+        })
+    }, [])
 
 
     useEffect(() => {
@@ -119,7 +98,6 @@ const Simulation: FC<PropType> = ({ }) => {
                 console.log('First result:', results[0])
 
                 setAllResults(results)
-                setMedianLog(null) // Median log is now written to file instead
 
                 // Aggregate results based on luck slice
                 const total = results.length
@@ -171,7 +149,6 @@ const Simulation: FC<PropType> = ({ }) => {
     // Reset results when inputs change
     useEffect(() => {
         setAllResults([])
-        setMedianLog(null)
     }, [players, encounters])
 
 
@@ -232,72 +209,7 @@ const Simulation: FC<PropType> = ({ }) => {
                             <FontAwesomeIcon icon={faFolder} />
                             Load Adventuring Day
                         </button>
-                        {medianLog && (
-                            <button onClick={() => setShowLog(true)}>
-                                <FontAwesomeIcon icon={faFolder} />
-                                View Median Run Log
-                            </button>
-                        )}
-                        {!saving ? null : (
-                            <AdventuringDayForm
-                                players={players}
-                                encounters={encounters}
-                                onCancel={() => setSaving(false)} />
-                        )}
-                        {!loading ? null : (
-                            <AdventuringDayForm
-                                players={players}
-                                encounters={encounters}
-                                onCancel={() => setLoading(false)}
-                                onLoad={(p, e) => {
-                                    setPlayers(p)
-                                    setEncounters(e)
-                                    setLoading(false)
-                                }} />
-                        )}
-                        {showLog && medianLog && (
-                            <div style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: 'rgba(0,0,0,0.8)',
-                                zIndex: 1000,
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}>
-                                <div style={{
-                                    backgroundColor: '#222',
-                                    color: '#eee',
-                                    padding: '20px',
-                                    borderRadius: '8px',
-                                    width: '80%',
-                                    height: '80%',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                        <h2>Median Run Log</h2>
-                                        <button onClick={() => setShowLog(false)}>Close</button>
-                                    </div>
-                                    <textarea
-                                        readOnly
-                                        value={medianLog}
-                                        style={{
-                                            flex: 1,
-                                            backgroundColor: '#111',
-                                            color: '#ddd',
-                                            fontFamily: 'monospace',
-                                            padding: '10px',
-                                            border: '1px solid #444',
-                                            resize: 'none'
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
+
                     </>
                 </EncounterForm>
 

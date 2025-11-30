@@ -7,8 +7,8 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly run_simulation_wasm: (a: any, b: any, c: number) => [number, number, number];
   readonly aggregate_simulation_results: (a: any) => [number, number, number];
+  readonly run_simulation_wasm: (a: any, b: any, c: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_exn_store: (a: number) => void;

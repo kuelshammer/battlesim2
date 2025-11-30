@@ -10,11 +10,11 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      // preload: path.join(__dirname, 'preload.js')
     }
   })
 
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
   if (app.isPackaged) {
     console.log('Loading static file from out/index.html')

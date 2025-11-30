@@ -19,7 +19,6 @@
     },
     "files": [
       "electron.js",
-      "preload.js",
       "out/**/*",
       "package.json"
     ],
@@ -36,7 +35,7 @@
     "electron:pack": "electron-builder",
     "electron:dev": "electron .",
     "build:electron": "npm run build:wasm && npm run build && npx electron-builder --mac",
-    "build:wasm": "cd simulation-wasm && wasm-pack build --target web --out-dir pkg",
+    "build:wasm": "cd simulation-wasm && rm -rf pkg && export PATH=\"$HOME/.cargo/bin:$PATH\" && wasm-pack build --target web --out-dir pkg && cp pkg/* ../public/",
     "build:wasm:dev": "cd simulation-wasm && wasm-pack build --target web --out-dir pkg --dev",
     "dev:wasm": "npm run build:wasm:dev && next dev",
     "dist": "npm run build:wasm && npx electron-builder --mac",
