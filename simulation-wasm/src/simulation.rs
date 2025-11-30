@@ -389,18 +389,20 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                                 eprintln!("                {} new HP: {:.1}", target_name, enemies[target_idx].final_state.current_hp);
                                 update_stats(stats, &attacker.id, &enemies[target_idx].id, dmg, 0.0);
 
-                                // Concentration Check
-                                if let Some(buff_id) = enemies[target_idx].final_state.concentrating_on.clone() {
-                                    if enemies[target_idx].final_state.current_hp <= 0.0 {
-                                        break_concentration(&enemies[target_idx].id.clone(), &buff_id, allies, enemies);
-                                    } else {
-                                        let con_save_bonus = enemies[target_idx].creature.con_save_bonus.unwrap_or(enemies[target_idx].creature.save_bonus);
-                                        let dc = (dmg / 2.0).max(10.0);
-                                        let roll = rand::thread_rng().gen_range(1..=20) as f64;
-                                        if roll + con_save_bonus < dc {
+                                // Death/Concentration Check
+                                if enemies[target_idx].final_state.current_hp <= 0.0 {
+                                    // Dead: remove ALL buffs from this source
+                                    remove_all_buffs_from_source(&enemies[target_idx].id.clone(), allies, enemies);
+                                } else if let Some(buff_id) = enemies[target_idx].final_state.concentrating_on.clone() {
+                                    // Alive but may lose concentration
+                                    let con_save_bonus = enemies[target_idx].creature.con_save_bonus.unwrap_or(enemies[target_idx].creature.save_bonus);
+                                    let dc = (dmg / 2.0).max(10.0);
+                                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                                    if roll + con_save_bonus < dc {
+                                        // Failed concentration save: remove only the concentrated buff
                                         let caster_id = enemies[target_idx].id.clone();
                                         break_concentration(&caster_id, &buff_id, allies, enemies);
-                                    }    }
+                                    }
                                 }
                             } else {
                                 allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp - dmg).max(0.0);
@@ -408,18 +410,20 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
                                 eprintln!("                {} new HP: {:.1}", target_name, allies[target_idx].final_state.current_hp);
                                 update_stats(stats, &attacker.id, &allies[target_idx].id, dmg, 0.0);
 
-                                // Concentration Check
-                                if let Some(buff_id) = allies[target_idx].final_state.concentrating_on.clone() {
-                                    if allies[target_idx].final_state.current_hp <= 0.0 {
-                                        break_concentration(&allies[target_idx].id.clone(), &buff_id, allies, enemies);
-                                    } else {
-                                        let con_save_bonus = allies[target_idx].creature.con_save_bonus.unwrap_or(allies[target_idx].creature.save_bonus);
-                                        let dc = (dmg / 2.0).max(10.0);
-                                        let roll = rand::thread_rng().gen_range(1..=20) as f64;
-                                        if roll + con_save_bonus < dc {
+                                // Death/Concentration Check
+                                if allies[target_idx].final_state.current_hp <= 0.0 {
+                                    // Dead: remove ALL buffs from this source
+                                    remove_all_buffs_from_source(&allies[target_idx].id.clone(), allies, enemies);
+                                } else if let Some(buff_id) = allies[target_idx].final_state.concentrating_on.clone() {
+                                    // Alive but may lose concentration
+                                    let con_save_bonus = allies[target_idx].creature.con_save_bonus.unwrap_or(allies[target_idx].creature.save_bonus);
+                                    let dc = (dmg / 2.0).max(10.0);
+                                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                                    if roll + con_save_bonus < dc {
+                                        // Failed concentration save: remove only the concentrated buff
                                         let caster_id = allies[target_idx].id.clone();
                                         break_concentration(&caster_id, &buff_id, allies, enemies);
-                                    }    }
+                                    }
                                 }
                             }
                     } else {

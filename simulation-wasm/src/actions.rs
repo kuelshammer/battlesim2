@@ -112,6 +112,41 @@ pub fn break_concentration(caster_id: &str, buff_id: &str, allies: &mut [Combatt
     }
 }
 
+/// Removes ALL buffs from a dead source, not just the one being concentrated on.
+/// Use this when a caster dies (HP <= 0) to ensure all their spells end.
+pub fn remove_all_buffs_from_source(source_id: &str, allies: &mut [Combattant], enemies: &mut [Combattant]) {
+    #[cfg(debug_assertions)]
+    eprintln!("        [DEBUG] remove_all_buffs_from_source called: Source ID: {}", source_id);
+
+    // Clear concentration on the dead caster
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        if c.id == source_id {
+            c.final_state.concentrating_on = None;
+            #[cfg(debug_assertions)]
+            eprintln!("          Cleared concentration on dead caster: {}", c.creature.name);
+        }
+    }
+
+    // Remove ALL buffs from this source across all combatants
+    for c in allies.iter_mut().chain(enemies.iter_mut()) {
+        let before_count = c.final_state.buffs.len();
+        c.final_state.buffs.retain(|buff_id, buff| {
+            let should_keep = buff.source.as_ref() != Some(&source_id.to_string());
+            if !should_keep {
+                #[cfg(debug_assertions)]
+                eprintln!("          Removed buff '{}' from {} (source {} is dead)", buff_id, c.creature.name, source_id);
+            }
+            should_keep
+        });
+        let after_count = c.final_state.buffs.len();
+        
+        #[cfg(debug_assertions)]
+        if before_count != after_count {
+            eprintln!("          {} had {} buffs from dead source, now has {} buffs total", c.creature.name, before_count - after_count, after_count);
+        }
+    }
+}
+
 pub fn get_remaining_uses(creature: &Creature, rest: &str, old_value: Option<&HashMap<String, f64>>) -> HashMap<String, f64> {
     let mut result = HashMap::new();
     
