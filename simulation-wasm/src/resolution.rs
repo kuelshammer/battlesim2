@@ -444,7 +444,7 @@ pub fn resolve_action_execution(
                     if let Some(new_idx) = crate::targeting::select_enemy_target(
                         atk_action.target.clone(),
                         enemies,
-                        &used_enemy_targets,
+                        &[],  // Empty exclusion list for dynamic targeting
                         None
                     ) {
                         target_idx = new_idx;
