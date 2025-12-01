@@ -7,7 +7,9 @@ export const ActionTemplates = {
         actionSlot: ActionSlots.Action,
         type: 'debuff',
         targets: 3,
+        target: 'enemy with least HP',
         buff: {
+            displayName: 'Bane',
             duration: 'entire encounter',
             toHit: '-1d4',
             save: '-1d4',
@@ -21,6 +23,7 @@ export const ActionTemplates = {
         type: 'buff',
         targets: 3,
         buff: {
+            displayName: 'Bless',
             duration: 'entire encounter',
             toHit: '1d4',
             save: '1d4',
@@ -47,9 +50,10 @@ export const ActionTemplates = {
         actionSlot: ActionSlots.Action,
         type: 'debuff',
         targets: 2,
-        
+
         saveDC: 0,
         buff: {
+            displayName: 'Hypnotic Pattern',
             duration: '1 round',
             condition: 'Incapacitated',
             concentration: true,
@@ -71,6 +75,7 @@ export const ActionTemplates = {
         targets: 1,
         target: 'self',
         buff: {
+            displayName: 'Shield',
             duration: '1 round',
             ac: 5,
         },
@@ -78,7 +83,7 @@ export const ActionTemplates = {
 }
 
 type RealOmit<T, K extends keyof T> = { [P in keyof T as P extends K ? never : P]: T[P] };
-type ActionTemplate = RealOmit<FinalAction, 'condition'|'target'|'freq'|'name'|'id'> & { target?: AllyTarget|EnemyTarget }
+type ActionTemplate = RealOmit<FinalAction, 'condition' | 'target' | 'freq' | 'name' | 'id'> & { target?: AllyTarget | EnemyTarget }
 
 // For type safety
 function createTemplate(action: ActionTemplate): ActionTemplate {
@@ -106,7 +111,7 @@ export function getFinalAction(action: Action): FinalAction {
 
     if (result.type === 'atk') {
         if (toHit !== undefined) result.toHit = toHit
-        
+
         if (result.riderEffect && (saveDC !== undefined)) result.riderEffect.dc = saveDC
     }
 

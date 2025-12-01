@@ -441,9 +441,6 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             log_enabled
         );
 
-        // Record action in history
-        allies[index].actions.push(action_record);
-
         // Process returned cleanup instructions
         for instruction in instructions {
             match instruction {

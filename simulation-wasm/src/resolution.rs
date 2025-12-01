@@ -194,6 +194,16 @@ fn apply_single_effect(
     let target_name = if let Some(t) = &target_opt { t.creature.name.clone() } else { attacker.creature.name.clone() };
     let _target_id = if let Some(t) = &target_opt { t.id.clone() } else { attacker.id.clone() };
 
+    // Skip if target is already dead (e.g., from previous attack in multi-attack)
+    if let Some(t) = &target_opt {
+        if t.final_state.current_hp <= 0.0 {
+            if log_enabled {
+                log.push(format!("      -> {} is already unconscious, skipping action", t.creature.name));
+            }
+            return cleanup_instructions;
+        }
+    }
+
     match action {
         Action::Atk(a) => {
             let (roll, is_crit, is_miss) = get_attack_roll_result(attacker);
