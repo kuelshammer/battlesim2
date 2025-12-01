@@ -18,12 +18,24 @@ pub fn check_action_condition(
         ActionCondition::AllyUnderHalfHP => {
             allies.iter().any(|c| c.final_state.current_hp < c.creature.hp / 2.0)
         },
+        ActionCondition::AllyBelow25PercentHP => {
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.25)
+        },
+        ActionCondition::AllyBelow50PercentHP => {
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.5)
+        },
+        ActionCondition::AllyBelow75PercentHP => {
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.75)
+        },
         ActionCondition::AnyAllyInjured => {
             allies.iter().any(|c| c.final_state.current_hp < c.creature.hp)
         },
         ActionCondition::AnyAllyNeedsHealing => {
             // More specific - check if any ally is significantly injured (more than 25% HP lost)
             allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.75)
+        },
+        ActionCondition::AnyAllyBelow50PercentHP => {
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.5)
         },
         ActionCondition::IsAvailable => true, // Always available
         ActionCondition::IsUnderHalfHP => {
