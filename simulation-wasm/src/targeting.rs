@@ -10,7 +10,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
     
     match action {
         Action::Atk(a) => {
-            for _i in 0..count {
+            for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
@@ -37,7 +37,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
                  return targets; // Return empty targets if no healing needed
              }
 
-             for _i in 0..count {
+             for i in 0..count {
                  #[cfg(debug_assertions)]
                  eprintln!("          Heal {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                  let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
@@ -52,7 +52,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
              }
         },
         Action::Buff(a) => {
-            for _i in 0..count {
+            for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Buff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
@@ -67,7 +67,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
             }
         },
         Action::Debuff(a) => {
-            for _i in 0..count {
+            for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Debuff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {

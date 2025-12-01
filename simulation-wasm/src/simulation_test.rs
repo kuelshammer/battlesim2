@@ -42,7 +42,7 @@ mod tests {
 
         // Simulate wizard death (HP <= 0.0)
         let mut dead_wizard = wizard.clone();
-        dead_wizard.final_state.current_hp = -5.0;
+        dead_wizard.final_state.current_hp = 0.0;
 
         let mut team1 = vec![fighter_with_shield];
         let _team2 = vec![dead_wizard];
