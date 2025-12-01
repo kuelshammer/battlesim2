@@ -251,14 +251,46 @@ fn apply_single_effect(
             if log_enabled {
                 let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
-                let buff_str = if buff_details.is_empty() {
-                    String::new()
+
+                // Enhanced Bless/Bane logging
+                let bless_details: Vec<String> = buff_details.iter()
+                    .filter(|d| d.contains("Bless"))
+                    .cloned()
+                    .collect();
+                let bane_details: Vec<String> = buff_details.iter()
+                    .filter(|d| d.contains("Bane"))
+                    .cloned()
+                    .collect();
+
+                let effect_str = if !bless_details.is_empty() || !bane_details.is_empty() {
+                    let mut effects = Vec::new();
+                    if !bless_details.is_empty() {
+                        effects.push(format!("Bless: {}", bless_details.join(", ")));
+                    }
+                    if !bane_details.is_empty() {
+                        effects.push(format!("Bane: {}", bane_details.join(", ")));
+                    }
+                    format!(" (spell effects: {})", effects.join(", "))
                 } else {
-                    format!(" (buffs: {})", buff_details.join(", "))
+                    String::new()
                 };
-                
-                log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (bonus) + {:.0}{} = {:.0} vs AC {:.0} (Base {:.0} + {:.0} buffs){}{}. Result: {}", 
-                    target_name, roll, to_hit_bonus, buff_bonus, buff_str, total_hit, final_ac, target_ac, target_buff_ac, reaction_str, crit_str, if hits { "HIT" } else { "MISS" }));
+
+                log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (base bonus) + {:.0} (buffs){}{} = {:.0} vs AC {:.0} (Base {:.0} + {:.0} target buffs){}{}. Result: {}",
+                    target_name, roll, to_hit_bonus, buff_bonus, effect_str,
+                    if !buff_details.is_empty() && (bless_details.is_empty() && bane_details.is_empty()) {
+                        let other_buffs: Vec<String> = buff_details.iter()
+                            .filter(|d| !d.contains("Bless") && !d.contains("Bane"))
+                            .cloned()
+                            .collect();
+                        if !other_buffs.is_empty() {
+                            format!(" (other: {})", other_buffs.join(", "))
+                        } else {
+                            String::new()
+                        }
+                    } else {
+                        String::new()
+                    },
+                    total_hit, final_ac, target_ac, target_buff_ac, reaction_str, crit_str, if hits { "HIT" } else { "MISS" }));
             }
 
             if hits {
@@ -351,7 +383,33 @@ fn apply_single_effect(
         },
         Action::Buff(a) => {
             if log_enabled {
-                log.push(format!("      -> Casts {} on {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
+                let spell_name = a.buff.display_name.as_deref().unwrap_or("Unknown");
+
+                // Enhanced Bless/Bane logging
+                if let Some(to_hit_bonus) = &a.buff.to_hit {
+                    if let Some(name) = &a.buff.display_name {
+                        if name.contains("Bless") {
+                            let bonus_val = dice::evaluate(to_hit_bonus, 1);
+                            log.push(format!("      -> Casts {} on {} (grants +{:.0} to attack rolls and saving throws){}",
+                                spell_name, target_name, bonus_val,
+                                if a.buff.concentration { " (Concentration)" } else { "" }));
+                        } else if name.contains("Bane") {
+                            let penalty_val = dice::evaluate(to_hit_bonus, 1);
+                            log.push(format!("      -> Casts {} on {} (subtracts -{:.0} from attack rolls and saving throws){}",
+                                spell_name, target_name, penalty_val,
+                                if a.buff.concentration { " (Concentration)" } else { "" }));
+                        } else {
+                            log.push(format!("      -> Casts {} on {}{}", spell_name, target_name,
+                                if a.buff.concentration { " (Concentration)" } else { "" }));
+                        }
+                    } else {
+                        log.push(format!("      -> Casts {} on {}{}", spell_name, target_name,
+                            if a.buff.concentration { " (Concentration)" } else { "" }));
+                    }
+                } else {
+                    log.push(format!("      -> Casts {} on {}{}", spell_name, target_name,
+                        if a.buff.concentration { " (Concentration)" } else { "" }));
+                }
             }
             if a.buff.concentration {
                 if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
@@ -362,7 +420,7 @@ fn apply_single_effect(
             }
             let mut buff = a.buff.clone();
             buff.source = Some(attacker.id.clone());
-            
+
             if let Some(t) = target_opt {
                 t.final_state.buffs.insert(a.base().id.clone(), buff);
                 update_stats_buff(stats, &attacker.id, &t.id, true);
@@ -382,12 +440,56 @@ fn apply_single_effect(
             
             let dc_val = a.save_dc;
             let dc = dice::evaluate(&DiceFormula::Value(dc_val), 1);
-            let save_bonus = if let Some(t) = &target_opt { t.creature.save_bonus } else { attacker.creature.save_bonus };
+            let base_save_bonus = if let Some(t) = &target_opt { t.creature.save_bonus } else { attacker.creature.save_bonus };
+
+            // Calculate Bless bonuses and Bane penalties for saving throws
+            let mut bless_bonus = 0.0;
+            let mut bane_penalty = 0.0;
+            let mut buff_details = Vec::new();
+
+            if let Some(t) = &target_opt {
+                for b in t.final_state.buffs.values() {
+                    if let Some(f) = &b.save {
+                        let val = dice::evaluate(f, 1);
+                        if let Some(name) = &b.display_name {
+                            if name.contains("Bless") {
+                                bless_bonus += val;
+                                buff_details.push(format!("{}={:.0}", name, val));
+                            } else if name.contains("Bane") {
+                                bane_penalty += val;
+                                buff_details.push(format!("{}=-{:.0}", name, val));
+                            }
+                        }
+                    }
+                }
+            } else {
+                for b in attacker.final_state.buffs.values() {
+                    if let Some(f) = &b.save {
+                        let val = dice::evaluate(f, 1);
+                        if let Some(name) = &b.display_name {
+                            if name.contains("Bless") {
+                                bless_bonus += val;
+                                buff_details.push(format!("{}={:.0}", name, val));
+                            } else if name.contains("Bane") {
+                                bane_penalty += val;
+                                buff_details.push(format!("{}=-{:.0}", name, val));
+                            }
+                        }
+                    }
+                }
+            }
+
+            let save_bonus = base_save_bonus + bless_bonus - bane_penalty;
             let roll = rand::thread_rng().gen_range(1..=20) as f64;
             
             if log_enabled {
-                log.push(format!("      -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
-                    a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name, dc, roll + save_bonus, roll, save_bonus));
+                let bonus_breakdown = if buff_details.is_empty() {
+                    format!("{:.0}", base_save_bonus)
+                } else {
+                    format!("{:.0} + {}", base_save_bonus, buff_details.join(" + "))
+                };
+                log.push(format!("      -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {})",
+                    a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name, dc, roll + save_bonus, roll, bonus_breakdown));
             }
 
             if roll + save_bonus < dc {

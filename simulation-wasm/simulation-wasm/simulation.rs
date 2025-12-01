@@ -734,19 +734,27 @@ fn is_usable(c: &Combattant, action: &Action) -> bool {
 }
 
 // Helper to determine if a combatant has a specific condition
-fn has_condition(c: &Combattant, condition: CreatureCondition) -> bool {
+pub fn has_condition(c: &Combattant, condition: CreatureCondition) -> bool {
     c.final_state.buffs.iter()
         .any(|(_, buff)| buff.condition == Some(condition))
 }
 
 // Helper to get effective attack roll considering advantage/disadvantage
-fn get_attack_roll_result(attacker: &Combattant) -> (f64, bool, bool) {
+// Now checks both attacker and target conditions (for Dodge, Bane, etc.)
+pub fn get_attack_roll_result(attacker: &Combattant, target: &Combattant) -> (f64, bool, bool, bool, bool) {
     let mut rng = rand::thread_rng();
     let roll1 = rng.gen_range(1..=20) as f64;
     let roll2 = rng.gen_range(1..=20) as f64;
 
-    let has_advantage = has_condition(attacker, CreatureCondition::AttacksWithAdvantage) || has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
-    let has_disadvantage = has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) || has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage); // Assuming this also applies to attacks.
+    let attacker_has_advantage = has_condition(attacker, CreatureCondition::AttacksWithAdvantage) || has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+    let attacker_has_disadvantage = has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) || has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage); // Assuming this also applies to attacks.
+
+    // Check target conditions for Dodge and other effects
+    let target_causes_advantage = has_condition(target, CreatureCondition::IsAttackedWithAdvantage);
+    let target_causes_disadvantage = has_condition(target, CreatureCondition::IsAttackedWithDisadvantage);
+
+    let has_advantage = attacker_has_advantage || target_causes_advantage;
+    let has_disadvantage = attacker_has_disadvantage || target_causes_disadvantage;
 
     let final_roll: f64;
     let is_crit_hit: bool;
@@ -766,7 +774,7 @@ fn get_attack_roll_result(attacker: &Combattant) -> (f64, bool, bool) {
         is_crit_miss = roll1 == 1.0;
     }
 
-    (final_roll, is_crit_hit, is_crit_miss)
+    (final_roll, is_crit_hit, is_crit_miss, has_advantage, has_disadvantage)
 }
 
 fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>) {
@@ -809,8 +817,9 @@ fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [C
 
             match &action {
                 Action::Atk(a) => {
-                    let target_ac = if is_enemy { enemies[target_idx].creature.ac } else { allies[target_idx].creature.ac };
-                    let (d20_roll, is_crit_hit_roll, is_crit_miss_roll) = get_attack_roll_result(&attacker);
+                    let target = if is_enemy { &enemies[target_idx] } else { &allies[target_idx] };
+                    let target_ac = target.creature.ac;
+                    let (d20_roll, is_crit_hit_roll, is_crit_miss_roll, has_advantage, has_disadvantage) = get_attack_roll_result(&attacker, target);
                     let to_hit = dice::evaluate(&a.to_hit, 1);
 
                     #[cfg(debug_assertions)]
