@@ -377,9 +377,56 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
         return;
     }
     
-    // Choose action (simple logic: random usable)
-    let mut rng = rand::thread_rng();
-    let action = &actions[rng.gen_range(0..actions.len())];
+    // Choose actions according to D&D 5e action economy
+    let _rng = rand::thread_rng();
+
+    // Sort actions: buffs first, then attacks
+    let mut sorted_actions = actions.clone();
+    sorted_actions.sort_by(|a, b| {
+        match (a, b) {
+            (Action::Buff(_), Action::Atk(_)) => std::cmp::Ordering::Less,
+            (Action::Atk(_), Action::Buff(_)) => std::cmp::Ordering::Greater,
+            _ => std::cmp::Ordering::Equal,
+        }
+    });
+
+    // Execute up to 2 actions (1 Action + 1 Bonus Action)
+    let mut actions_executed = 0;
+    let mut used_slots = std::collections::HashSet::new();
+
+    for action in &sorted_actions {
+        if actions_executed >= 2 {
+            break; // Limit to 2 actions per turn
+        }
+
+        // Allow both Action (0) and Bonus Action (1) in same turn
+        let action_slot = action.base().action_slot;
+        if (action_slot == 0 || action_slot == 1) && used_slots.contains(&action_slot) {
+            continue;
+        }
+
+        // Special trigger slots (negative) can be used with regular actions
+        if action_slot < 0 && used_slots.contains(&action_slot) {
+            continue;
+        }
+
+        used_slots.insert(action_slot);
+        break; // Execute this action and loop again for second action
+    }
+
+    let action = if actions_executed == 0 {
+        &sorted_actions[0]
+    } else {
+        // Find first unused action for second execution
+        sorted_actions.iter().find(|a| {
+            let slot = a.base().action_slot;
+            if (slot == 0 || slot == 1) && used_slots.contains(&slot) {
+                false
+            } else {
+                true
+            }
+        }).unwrap_or(&actions[0])
+    };
     
     #[cfg(debug_assertions)]
     eprintln!("      Chose action: {}", action.base().name);
