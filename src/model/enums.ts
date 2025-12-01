@@ -38,15 +38,23 @@ export const AllyTargetSchema = z.enum(AllyTargetList)
 export type AllyTarget = z.infer<typeof AllyTargetSchema>
 
 export const ActionConditionList = [
-    'default', 
-    'ally at 0 HP', 
+    'default',
+    'ally at 0 HP',
     'ally under half HP',
-    'is available', 
-    'is under half HP', 
-    'has no THP', 
+    'ally below 25% HP',
+    'ally below 50% HP',
+    'ally below 75% HP',
+    'any ally injured',
+    'any ally needs healing',
+    'any ally below 50% HP',
+    'is available',
+    'is under half HP',
+    'has no THP',
     'not used yet',
     'enemy count one',
-    'enemy count multiple'
+    'enemy count multiple',
+    'buff not active',
+    'not concentrating',
 ] as const
 export const ActionConditionSchema = z.enum(ActionConditionList)
 export type ActionCondition = z.infer<typeof ActionConditionSchema>
@@ -87,11 +95,11 @@ export const BuffDurationList = ['until next attack made', 'until next attack ta
 export const BuffDurationSchema = z.enum(BuffDurationList)
 export type BuffDuration = z.infer<typeof BuffDurationSchema>
 
-export const ClassesList = [ 'artificer', 'barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard' ] as const
+export const ClassesList = ['artificer', 'barbarian', 'bard', 'cleric', 'druid', 'fighter', 'monk', 'paladin', 'ranger', 'rogue', 'sorcerer', 'warlock', 'wizard'] as const
 export const ClassesSchema = z.enum(ClassesList)
 export type Class = z.infer<typeof ClassesSchema>
 
-export const CreatureTypeList = [ 'aberration', 'beast', 'celestial', 'construct', 'dragon', 'elemental', 'fey', 'fiend', 'giant', 'humanoid', 'monstrosity', 'ooze', 'plant', 'undead' ] as const
+export const CreatureTypeList = ['aberration', 'beast', 'celestial', 'construct', 'dragon', 'elemental', 'fey', 'fiend', 'giant', 'humanoid', 'monstrosity', 'ooze', 'plant', 'undead'] as const
 export const CreatureTypeSchema = z.enum(CreatureTypeList)
 export type CreatureType = z.infer<typeof CreatureTypeSchema>
 
@@ -101,23 +109,22 @@ export type ChallengeRating = z.infer<typeof ChallengeRatingSchema>
 export function numericCR(cr: ChallengeRating) {
     switch (cr) {
         case '—': return 0;
-        case '1/8': return 1/8;
-        case '1/4': return 1/4;
-            case '1/2': return 1/2;
-                default: return Number(cr);
-            }
-        }
-        
-        export const TriggerConditionList = [
-            'on hit',
-            'on being attacked',
-            'on miss',
-            'on being damaged',
-                'on ally attacked',
-                'on enemy death',
-                'on critical hit',
-            ] as const
-            
-        export const TriggerConditionSchema = z.enum(TriggerConditionList)
-        export type TriggerCondition = z.infer<typeof TriggerConditionSchema>
-        
+        case '1/8': return 1 / 8;
+        case '1/4': return 1 / 4;
+        case '1/2': return 1 / 2;
+        default: return Number(cr);
+    }
+}
+
+export const TriggerConditionList = [
+    'on hit',
+    'on being attacked',
+    'on miss',
+    'on being damaged',
+    'on ally attacked',
+    'on enemy death',
+    'on critical hit',
+] as const
+
+export const TriggerConditionSchema = z.enum(TriggerConditionList)
+export type TriggerCondition = z.infer<typeof TriggerConditionSchema>
