@@ -4,7 +4,43 @@ use crate::enums::*;
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
-pub fn get_actions(c: &Combattant, _allies: &[Combattant], _enemies: &[Combattant]) -> Vec<Action> {
+pub fn check_action_condition(
+    condition: &ActionCondition,
+    actor: &Combattant,
+    allies: &[Combattant],
+    enemies: &[Combattant]
+) -> bool {
+    match condition {
+        ActionCondition::Default => true,
+        ActionCondition::AllyAt0HP => {
+            allies.iter().any(|c| c.final_state.current_hp <= 0.0)
+        },
+        ActionCondition::AllyUnderHalfHP => {
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp / 2.0)
+        },
+        ActionCondition::IsAvailable => true, // Always available
+        ActionCondition::IsUnderHalfHP => {
+            actor.final_state.current_hp < actor.creature.hp / 2.0
+        },
+        ActionCondition::HasNoTHP => {
+            actor.final_state.temp_hp.is_none() || actor.final_state.temp_hp == Some(0.0)
+        },
+        ActionCondition::NotUsedYet => {
+            // Check if this action has been used in the current state
+            actor.final_state.used_actions.iter().any(|used_id| {
+                actor.creature.actions.iter().any(|a| &a.base().id == used_id)
+            })
+        },
+        ActionCondition::EnemyCountOne => {
+            enemies.iter().filter(|c| c.final_state.current_hp > 0.0).count() == 1
+        },
+        ActionCondition::EnemyCountMultiple => {
+            enemies.iter().filter(|c| c.final_state.current_hp > 0.0).count() > 1
+        },
+    }
+}
+
+pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]) -> Vec<Action> {
     #[cfg(debug_assertions)]
     eprintln!("      Getting actions for {}. Creature actions: {}", c.creature.name, c.creature.actions.len());
     let mut result = Vec::new();
@@ -24,8 +60,13 @@ pub fn get_actions(c: &Combattant, _allies: &[Combattant], _enemies: &[Combattan
             continue;
         }
         
-        // Match condition
-        // Simplified: Always true for now or implement match_condition
+        // Check action condition
+        if !check_action_condition(&action.base().condition, c, allies, enemies) {
+            #[cfg(debug_assertions)]
+            eprintln!("          Action {} condition not met.", action.base().name);
+            continue;
+        }
+        
         #[cfg(debug_assertions)]
         eprintln!("          Action {} usable. Adding to result.", action.base().name);
         result.push(action.clone());

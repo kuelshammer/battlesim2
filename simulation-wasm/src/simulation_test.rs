@@ -463,4 +463,60 @@ mod tests {
         println!("Victim Final HP: {}", victim.final_state.current_hp);
         assert_eq!(victim.final_state.current_hp, 0.0, "HP should be clamped to 0.0, not negative");
     }
+
+    #[test]
+    fn test_action_condition_ally_at_0hp() {
+        use crate::actions::get_actions;
+        use crate::simulation::create_combattant;
+        
+        println!("Testing: Actions with AllyAt0HP condition should only be available when an ally is at 0 HP");
+
+        // Create a paladin with a healing action that has AllyAt0HP condition
+        let heal_action = Action::Heal(HealAction {
+            id: "lay_on_hands".to_string(),
+            name: "Lay on Hands".to_string(),
+            action_slot: 1,
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::AllyAt0HP,
+            targets: 1,
+            amount: DiceFormula::Value(35.0),
+            temp_hp: None,
+            target: AllyTarget::AllyWithLeastHP,
+        });
+
+        let paladin_creature = Creature {
+            id: "paladin_template".to_string(),
+            name: "Paladin".to_string(),
+            hp: 50.0,
+            ac: 18.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            save_bonus: 3.0,
+            con_save_bonus: Some(3.0),
+            count: 1.0,
+            speed_fly: None,
+            arrival: None,
+            actions: vec![heal_action],
+        };
+
+        let paladin = create_combattant(paladin_creature, "paladin_1".to_string());
+        let healthy_ally = create_dummy_combattant("Healthy Ally", "ally_1");
+        let mut dying_ally = create_dummy_combattant("Dying Ally", "ally_2");
+        dying_ally.final_state.current_hp = 0.0;
+
+        let enemy = create_dummy_combattant("Enemy", "enemy_1");
+
+        // Test 1: No ally at 0 HP - Lay on Hands should NOT be available
+        let actions_no_dying = get_actions(&paladin, &[healthy_ally.clone()], &[enemy.clone()]);
+        println!("Actions when no ally at 0 HP: {}", actions_no_dying.len());
+        assert_eq!(actions_no_dying.len(), 0, "Lay on Hands should not be available when no ally is at 0 HP");
+
+        // Test 2: Ally at 0 HP - Lay on Hands SHOULD be available
+        let actions_with_dying = get_actions(&paladin, &[healthy_ally.clone(), dying_ally.clone()], &[enemy.clone()]);
+        println!("Actions when ally at 0 HP: {}", actions_with_dying.len());
+        assert_eq!(actions_with_dying.len(), 1, "Lay on Hands should be available when an ally is at 0 HP");
+        assert_eq!(actions_with_dying[0].base().name, "Lay on Hands");
+
+        println!("✓ Action condition checking works correctly!");
+    }
 }
