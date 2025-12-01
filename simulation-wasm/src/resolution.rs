@@ -308,16 +308,27 @@ fn apply_single_effect(
         Action::Heal(a) => {
             let amount = dice::evaluate(&a.amount, 1);
             if let Some(t) = target_opt {
-                t.final_state.current_hp += amount;
-                if t.final_state.current_hp > t.creature.hp { t.final_state.current_hp = t.creature.hp; }
-                update_stats(stats, &attacker.id, &t.id, 0.0, amount);
+                // Check if target actually needs healing
+                if t.final_state.current_hp < t.creature.hp {
+                    t.final_state.current_hp += amount;
+                    if t.final_state.current_hp > t.creature.hp { t.final_state.current_hp = t.creature.hp; }
+                    update_stats(stats, &attacker.id, &t.id, 0.0, amount);
+                    if log_enabled {
+                        log.push(format!("      -> Heals {} for {:.0} HP (was at {:.0}/{:.0})", target_name, amount, t.final_state.current_hp - amount, t.creature.hp));
+                    }
+                } else {
+                    // Target doesn't need healing, waste action
+                    if log_enabled {
+                        log.push(format!("      -> Skips healing on {} - already at full HP ({:.0}/{:.0})", target_name, t.final_state.current_hp, t.creature.hp));
+                    }
+                }
             } else {
                 attacker.final_state.current_hp += amount;
                 if attacker.final_state.current_hp > attacker.creature.hp { attacker.final_state.current_hp = attacker.creature.hp; }
                 update_stats(stats, &attacker.id, &attacker.id, 0.0, amount);
-            }
-            if log_enabled {
-                log.push(format!("      -> Heals {} for {:.0} HP", target_name, amount));
+                if log_enabled {
+                    log.push(format!("      -> Heals self for {:.0} HP", amount));
+                }
             }
         },
         Action::Buff(a) => {

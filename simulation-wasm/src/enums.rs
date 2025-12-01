@@ -54,6 +54,10 @@ pub enum ActionCondition {
     AllyAt0HP,
     #[serde(rename = "ally under half HP")]
     AllyUnderHalfHP,
+    #[serde(rename = "any ally injured")]
+    AnyAllyInjured,
+    #[serde(rename = "any ally needs healing")]
+    AnyAllyNeedsHealing,
     #[serde(rename = "is available")]
     IsAvailable,
     #[serde(rename = "is under half HP")]
