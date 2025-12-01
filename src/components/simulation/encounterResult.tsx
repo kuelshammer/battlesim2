@@ -85,9 +85,9 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
         const allCombattants = [...round.team1, ...round.team2]
 
         // Debug: Log target IDs and available combatant/creature IDs
-        console.log('getTarget() called with target IDs:', Array.from(combattantAction.targets.keys()));
-        console.log('Available combatant IDs:', allCombattants.map(c => c.id));
-        console.log('Available creature IDs:', allCombattants.map(c => c.creature.id));
+        // console.log('getTarget() called with target IDs:', Array.from(combattantAction.targets.keys()));
+        // console.log('Available combatant IDs:', allCombattants.map(c => c.id));
+        // console.log('Available creature IDs:', allCombattants.map(c => c.creature.id));
 
         // Create lookup maps for efficient searching
         const combattantMap = new Map(allCombattants.map(c => [c.id, c]))
@@ -108,11 +108,11 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                     // For UUIDs, try matching the first 8 characters
                     if (targetId.length >= 8 && c.id.length >= 8) {
                         return targetId.substring(0, 8) === c.id.substring(0, 8) ||
-                               targetId.substring(0, 8) === c.creature.id.substring(0, 8)
+                            targetId.substring(0, 8) === c.creature.id.substring(0, 8)
                     }
                     // Fallback to contains matching
                     return c.id.includes(targetId) || targetId.includes(c.id) ||
-                           c.creature.id.includes(targetId) || targetId.includes(c.creature.id)
+                        c.creature.id.includes(targetId) || targetId.includes(c.creature.id)
                 })
 
                 if (similarCombattants.length === 1) {
@@ -241,8 +241,8 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                     </div>
                     <div className={styles.creatureName}>
                         {combattant.creature.name}
-                        {combattant.initialState.concentratingOn ? (
-                            <span className={styles.concentrationIcon} title="Concentrating">
+                        {combattant.finalState.concentratingOn ? (
+                            <span className={styles.concentrationIcon} title={`Concentrating on ${combattant.finalState.concentratingOn}`}>
                                 <FontAwesomeIcon icon={faBrain} />
                             </span>
                         ) : null}
@@ -280,20 +280,25 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                                             </li>
                                         ))
 
-                                    //todo effects that disappear in the same round are not shown, which can be misleading
-                                    const buffCount = combattant.finalState.buffs.size
-                                    const bi = Array.from(combattant.finalState.buffs)
-                                        .filter(([_, buff]) => ((buff.magnitude === undefined) || (buff.magnitude > 0.1)))
-                                        .map(([buffId, buff], index) => (
+                                    // Handle buffs (support both Map and Object)
+                                    const buffs = combattant.finalState.buffs
+                                    const buffEntries = (buffs instanceof Map)
+                                        ? Array.from(buffs.entries())
+                                        : Object.entries(buffs || {})
+
+                                    const buffCount = buffEntries.length
+                                    const bi = buffEntries
+                                        .filter(([_, buff]: [string, any]) => ((buff.magnitude === undefined) || (buff.magnitude > 0.1)))
+                                        .map(([buffId, buff]: [string, any], index) => (
                                             (buffCount <= 3) ?
                                                 <li key={buffId}>
                                                     <b>{buff.displayName}</b>{getBuffEffect(buff)} {(buff.magnitude !== undefined && buff.magnitude !== 1) ? (
                                                         `(${Math.round(buff.magnitude * 100)}%)`
                                                     ) : ''}
                                                 </li> :
-                                                <>
+                                                <span key={buffId}>
                                                     <b>{buff.displayName}</b>{(index < buffCount - 1) ? ', ' : null}
-                                                </>
+                                                </span>
                                         ))
 
                                     return (

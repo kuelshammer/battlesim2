@@ -2,7 +2,7 @@
 mod tests {
     use crate::targeting::get_targets;
     use crate::cleanup::remove_dead_buffs;
-    use crate::aggregation::aggregate_results;
+    // use crate::aggregation::aggregate_results;
     use crate::model::*;
     use crate::enums::*;
     use std::collections::{HashMap, HashSet};
@@ -45,7 +45,7 @@ mod tests {
         dead_wizard.final_state.current_hp = -5.0;
 
         let mut team1 = vec![fighter_with_shield];
-        let mut team2 = vec![dead_wizard];
+        let _team2 = vec![dead_wizard];
         let dead_sources = HashSet::from([wizard.id.clone()]);
 
         // Apply cleanup function
@@ -241,7 +241,7 @@ mod tests {
         let aggregated = aggregate_results(&results);
 
         assert_eq!(aggregated.len(), 1);
-        let agg_round = &aggregated[0];
+        let _agg_round = &aggregated[0];
         // let agg_caster = &agg_round.team1[0];
         // let agg_target = &agg_round.team1[1];
 
@@ -316,5 +316,151 @@ mod tests {
         
         // Buff should be removed because source is dead
         assert!(!agg_target.final_state.buffs.contains_key(buff_id), "Buff should be removed if source is dead");
+    }
+    #[test]
+    fn test_logging_generation() {
+        use crate::simulation::run_single_simulation;
+        
+        let player = Creature {
+            id: "p1".to_string(),
+            name: "Player".to_string(),
+            count: 1.0,
+            hp: 20.0,
+            ac: 10.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            actions: vec![Action::Atk(AtkAction {
+                id: "atk".to_string(),
+                name: "Punch".to_string(),
+                action_slot: 0,
+                freq: Frequency::Static("at will".to_string()),
+                condition: ActionCondition::Default,
+                targets: 1,
+                dpr: DiceFormula::Value(5.0),
+                to_hit: DiceFormula::Value(10.0), // High hit chance
+                target: EnemyTarget::EnemyWithLeastHP,
+                use_saves: None,
+                half_on_save: None,
+                rider_effect: None,
+            })],
+            arrival: None,
+            speed_fly: None,
+            con_save_bonus: None,
+        };
+
+        let monster = Creature {
+            id: "m1".to_string(),
+            name: "Goblin".to_string(),
+            count: 1.0,
+            hp: 10.0,
+            ac: 8.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            actions: vec![], // Passive target
+            arrival: None,
+            speed_fly: None,
+            con_save_bonus: None,
+        };
+
+        let encounter = Encounter {
+            monsters: vec![monster],
+            short_rest: Some(false),
+            players_surprised: None,
+            monsters_surprised: None,
+        };
+
+        let players = vec![player];
+        let encounters = vec![encounter];
+
+        // Run with logging enabled
+        let (_result, log) = run_single_simulation(&players, &encounters, true);
+
+        // Verify log content
+        assert!(!log.is_empty(), "Log should not be empty");
+        
+        // Check for key log phrases
+        let log_text = log.join("\n");
+        println!("Generated Log:\n{}", log_text);
+
+        assert!(log_text.contains("=== Round 1 ==="), "Log should contain round start");
+        assert!(log_text.contains("Turn: Player"), "Log should contain player turn");
+        assert!(log_text.contains("Uses Action: Punch"), "Log should contain action usage");
+        assert!(log_text.contains("Attack vs Goblin"), "Log should contain attack details");
+        assert!(log_text.contains("Damage:"), "Log should contain damage details");
+    }
+
+    #[test]
+    fn test_hp_clamping() {
+        use crate::simulation::run_single_simulation;
+        
+        // Player with 10 HP
+        let player = Creature {
+            id: "p1".to_string(),
+            name: "Victim".to_string(),
+            count: 1.0,
+            hp: 10.0,
+            ac: 10.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            actions: vec![], // Passive
+            arrival: None,
+            speed_fly: None,
+            con_save_bonus: None,
+        };
+
+        // Monster deals massive damage (100 dmg)
+        let monster = Creature {
+            id: "m1".to_string(),
+            name: "Overkiller".to_string(),
+            count: 1.0,
+            hp: 100.0,
+            ac: 10.0,
+            save_bonus: 0.0,
+            initiative_bonus: 100.0, // Go first
+            initiative_advantage: false,
+            actions: vec![Action::Atk(AtkAction {
+                id: "kill".to_string(),
+                name: "Nuke".to_string(),
+                action_slot: 0,
+                freq: Frequency::Static("at will".to_string()),
+                condition: ActionCondition::Default,
+                targets: 1,
+                dpr: DiceFormula::Value(100.0),
+                to_hit: DiceFormula::Value(100.0), // Guaranteed hit
+                target: EnemyTarget::EnemyWithLeastHP,
+                use_saves: None,
+                half_on_save: None,
+                rider_effect: None,
+            })],
+            arrival: None,
+            speed_fly: None,
+            con_save_bonus: None,
+        };
+
+        let encounter = Encounter {
+            monsters: vec![monster],
+            short_rest: Some(false),
+            players_surprised: None,
+            monsters_surprised: None,
+        };
+
+        let players = vec![player];
+        let encounters = vec![encounter];
+
+        // Run simulation
+        let (result, _log) = run_single_simulation(&players, &encounters, false);
+
+        // Check player HP in the result
+        // The result contains rounds. We check the last round's final state.
+        let last_round = result[0].rounds.last().expect("Should have at least one round");
+        
+        // Find the player in team1 (players are usually team1)
+        let victim = last_round.team1.iter().find(|c| c.creature.name == "Victim").expect("Victim should be in team1");
+        
+        println!("Victim Final HP: {}", victim.final_state.current_hp);
+        assert_eq!(victim.final_state.current_hp, 0.0, "HP should be clamped to 0.0, not negative");
     }
 }

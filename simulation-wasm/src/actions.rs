@@ -1,6 +1,6 @@
 use crate::model::*;
 use crate::enums::*;
-use crate::dice;
+// use crate::dice;
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
@@ -118,12 +118,19 @@ pub fn remove_all_buffs_from_source(source_id: &str, allies: &mut [Combattant], 
     #[cfg(debug_assertions)]
     eprintln!("        [DEBUG] remove_all_buffs_from_source called: Source ID: {}", source_id);
 
-    // Clear concentration on the dead caster
+    // Clear concentration on the dead caster AND clear their action targets
     for c in allies.iter_mut().chain(enemies.iter_mut()) {
         if c.id == source_id {
             c.final_state.concentrating_on = None;
+            
+            // Clear targets from all actions this caster has taken
+            // This ensures the frontend doesn't show "Bless on X" for a dead caster
+            for action in c.actions.iter_mut() {
+                action.targets.clear();
+            }
+            
             #[cfg(debug_assertions)]
-            eprintln!("          Cleared concentration on dead caster: {}", c.creature.name);
+            eprintln!("          Cleared concentration and action targets on dead caster: {}", c.creature.name);
         }
     }
 

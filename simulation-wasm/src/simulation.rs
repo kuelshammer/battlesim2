@@ -14,10 +14,43 @@ use std::io::Write;
 pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iterations: usize) -> Vec<SimulationResult> {
     let mut results: Vec<(f64, SimulationResult)> = Vec::with_capacity(iterations);
 
-    for _ in 0..iterations {
-        let result = run_single_simulation(players, encounters);
+    for i in 0..iterations {
+        let log_enabled = i == 0;
+        let (result, run_log) = run_single_simulation(players, encounters, log_enabled);
         let score = calculate_score(&result);
         results.push((score, result));
+
+        if log_enabled {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                // Write detailed log to file
+                let path = std::path::Path::new("./GEMINI_REPORTS");
+                if path.exists() {
+                     let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+                     let filename = path.join(format!("detailed_run_log_{}.txt", timestamp));
+                     if let Ok(mut file) = std::fs::File::create(filename) {
+                         for line in run_log {
+                             let _ = writeln!(file, "{}", line);
+                         }
+                     }
+                }
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                // For WASM, we can't write to file easily, but we can log to console
+                if !run_log.is_empty() {
+                    web_sys::console::log_1(&"--- DETAILED SIMULATION LOG (First Run) ---".into());
+                    // Log in chunks to avoid browser limits if needed, or just summary
+                    // For now, let's log the first 100 lines
+                    for line in run_log.iter().take(100) {
+                        web_sys::console::log_1(&line.into());
+                    }
+                    if run_log.len() > 100 {
+                        web_sys::console::log_1(&format!("... and {} more lines", run_log.len() - 100).into());
+                    }
+                }
+            }
+        }
     }
 
     // Sort by score
@@ -34,20 +67,10 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
             let path = std::path::Path::new("./GEMINI_REPORTS");
             if path.exists() {
                  let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-                 let filename = path.join(format!("median_run_log_{}.txt", timestamp));
+                 let filename = path.join(format!("median_run_summary_{}.txt", timestamp));
                  if let Ok(mut file) = std::fs::File::create(filename) {
                      let _ = file.write_all(log.as_bytes());
                  }
-            } else {
-                // Try ../GEMINI_REPORTS
-                let path = std::path::Path::new("../GEMINI_REPORTS");
-                if path.exists() {
-                     let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-                     let filename = path.join(format!("median_run_log_{}.txt", timestamp));
-                     if let Ok(mut file) = std::fs::File::create(filename) {
-                         let _ = file.write_all(log.as_bytes());
-                     }
-                }
             }
         }
     }
@@ -56,8 +79,9 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
     results.into_iter().map(|(_, r)| r).collect()
 }
 
-fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> SimulationResult {
+fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_enabled: bool) -> (SimulationResult, Vec<String>) {
     let mut results = Vec::new();
+    let mut log = Vec::new();
     
     // Initialize players with state
     // We iterate to capture group index for deterministic IDs
@@ -74,7 +98,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> Simu
     }
 
     for (index, encounter) in encounters.iter().enumerate() {
-        let encounter_result = run_encounter(&players_with_state, encounter);
+        let encounter_result = run_encounter(&players_with_state, encounter, &mut log, log_enabled);
         results.push(encounter_result.clone());
         
         // Prepare for next encounter
@@ -107,7 +131,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter]) -> Simu
         }
     }
 
-    results
+    (results, log)
 }
 
 fn create_combattant(creature: Creature, id: String) -> Combattant {
@@ -142,7 +166,7 @@ fn roll_initiative(c: &Creature) -> f64 {
     roll + c.initiative_bonus
 }
 
-fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResult {
+fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<String>, log_enabled: bool) -> EncounterResult {
     let mut team2 = Vec::new();
     for (group_idx, monster) in encounter.monsters.iter().enumerate() {
         for i in 0..monster.count as i32 {
@@ -160,13 +184,17 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResu
     let mut rounds = Vec::new();
     let mut stats = HashMap::new();
     
+    if log_enabled {
+        log.push(format!("--- Encounter Start: Players vs Monsters ---"));
+    }
+
     let max_rounds = 100;
-    for _ in 0..max_rounds {
+    for i in 0..max_rounds {
         if !team1.iter().any(|c| c.final_state.current_hp > 0.0) || !team2.iter().any(|c| c.final_state.current_hp > 0.0) {
             break;
         }
         
-        let round = run_round(&team1, &team2, &mut stats);
+        let round = run_round(&team1, &team2, &mut stats, log, log_enabled, i + 1);
         rounds.push(round.clone());
         
         team1 = round.team1;
@@ -179,7 +207,11 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter) -> EncounterResu
     }
 }
 
-fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<String, EncounterStats>) -> Round {
+fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<String, EncounterStats>, log: &mut Vec<String>, log_enabled: bool, round_num: usize) -> Round {
+    if log_enabled {
+        log.push(format!("\n=== Round {} ===", round_num));
+    }
+
     #[cfg(debug_assertions)]
     eprintln!("\n--- Round START ---");
     // 1. Create mutable copies of teams
@@ -229,8 +261,8 @@ fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<Str
         
         // Execute turn
         match team_id {
-            TeamId::Team1 => execute_turn(idx, &mut t1, &mut t2, stats),
-            TeamId::Team2 => execute_turn(idx, &mut t2, &mut t1, stats),
+            TeamId::Team1 => execute_turn(idx, &mut t1, &mut t2, stats, false, log, log_enabled),
+            TeamId::Team2 => execute_turn(idx, &mut t2, &mut t1, stats, true, log, log_enabled),
         }
         #[cfg(debug_assertions)]
         eprintln!("  {} turn END. Current State: P1 HP: {:.1}, P2 HP: {:.1}", _combatant_name, t1[0].final_state.current_hp, t2[0].final_state.current_hp);
@@ -297,6 +329,7 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
     }
 }
 
+#[allow(dead_code)]
 fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enemies: &[Combattant]) {
     #[cfg(debug_assertions)]
     eprintln!("    Generate actions for {}. Current HP: {:.1}", c.creature.name, c.initial_state.current_hp);
@@ -322,174 +355,235 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
     }
 }
 
-fn execute_turn(attacker_idx: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>) {
-    let attacker = allies[attacker_idx].clone(); // Clone attacker for logging convenience
+
+fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>, _is_enemy: bool, log: &mut Vec<String>, log_enabled: bool) {
+    let attacker = allies[index].clone();
     #[cfg(debug_assertions)]
-    eprintln!("    Executing turn for {}. Current HP: {:.1}", attacker.creature.name, attacker.final_state.current_hp);
+    eprintln!("    Executing turn for {}", attacker.creature.name);
 
-    // 1. Generate actions
-    // We need a read-only view of allies for decision making
-    let allies_clone = allies.to_vec();
-    generate_actions_for_creature(&mut allies[attacker_idx], &allies_clone, enemies);
-
-    // 2. Execute actions
-    // Collect actions to avoid borrow checker
-    let mut pending_actions = Vec::new();
-    for (action_idx, action_entry) in allies[attacker_idx].actions.iter().enumerate() {
-        pending_actions.push((action_idx, action_entry.action.clone()));
+    if log_enabled {
+        log.push(format!("  > Turn: {} (HP: {:.1})", attacker.creature.name, attacker.final_state.current_hp));
     }
-    #[cfg(debug_assertions)]
-    eprintln!("      {} has {} pending actions: {:?}", attacker.creature.name, pending_actions.len(), pending_actions.iter().map(|(_,a)| a.base().name.clone()).collect::<Vec<_>>());
+
+    // Get actions
+    let actions = get_actions(&attacker, allies, enemies);
     
-    for (action_idx, action) in pending_actions {
-        let targets = get_targets(&attacker, &action, allies, enemies);
+    if actions.is_empty() {
         #[cfg(debug_assertions)]
-        eprintln!("        Action {}: {} - Found {} targets.", action.base().name, action.base().id, targets.len());
-        
-        // Update targets
-        for (is_enemy, target_idx) in &targets {
-            let target_id = if *is_enemy { enemies[*target_idx].id.clone() } else { allies[*target_idx].id.clone() };
-            let entry = allies[attacker_idx].actions[action_idx].targets.entry(target_id).or_insert(0);
-            *entry += 1;
+        eprintln!("      No actions available.");
+        if log_enabled {
+            log.push(format!("    - No actions available."));
         }
-        
-        // Execute
-        for (is_enemy, target_idx) in targets {
-            let target_name = if is_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
-            let _current_target_hp = if is_enemy { enemies[target_idx].final_state.current_hp } else { allies[target_idx].final_state.current_hp };
-            #[cfg(debug_assertions)]
-            eprintln!("          Executing action {} by {} on {}. Target HP: {:.1}", action.base().name, attacker.creature.name, target_name, _current_target_hp);
+        return;
+    }
+    
+    // Choose action (simple logic: random usable)
+    let mut rng = rand::thread_rng();
+    let action = &actions[rng.gen_range(0..actions.len())];
+    
+    #[cfg(debug_assertions)]
+    eprintln!("      Chose action: {}", action.base().name);
+    
+    if log_enabled {
+        log.push(format!("    - Uses Action: {}", action.base().name));
+    }
 
-            match &action {
-                Action::Atk(a) => {
-                    let target_ac = if is_enemy { enemies[target_idx].creature.ac } else { allies[target_idx].creature.ac };
-                    let (d20_roll, is_crit_hit_roll, is_crit_miss_roll) = get_attack_roll_result(&attacker);
-                    let to_hit = dice::evaluate(&a.to_hit, 1);
+    // Mark action as used
+    allies[index].final_state.used_actions.insert(action.base().id.clone());
+    
+    // Resolve targets
+    let raw_targets = get_targets(&attacker, action, allies, enemies);
+    
+    #[cfg(debug_assertions)]
+    eprintln!("      Selected {} targets.", raw_targets.len());
+    
+    // Record action in history (Aggregation)
+    let mut action_record = CombattantAction {
+        action: action.clone(),
+        targets: HashMap::new(),
+    };
+    
+    for (is_target_enemy, target_idx) in &raw_targets {
+        let target_id = if *is_target_enemy { &enemies[*target_idx].id } else { &allies[*target_idx].id };
+        *action_record.targets.entry(target_id.clone()).or_insert(0) += 1;
+    }
+    allies[index].actions.push(action_record);
 
-                    #[cfg(debug_assertions)]
-                    eprintln!("            Attack: d20_roll: {:.1}, to_hit: {:.1}, target_ac: {:.1}. Crit: {}, Miss: {}", d20_roll, to_hit, target_ac, is_crit_hit_roll, is_crit_miss_roll);
+    // Apply effects
+    for (is_target_enemy, target_idx) in raw_targets {
+        match action {
+            Action::Atk(a) => {
+                let target_name = if is_target_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
+                
+                // Attack Roll
+                let (roll, is_crit, is_miss) = get_attack_roll_result(&attacker);
+                let to_hit_bonus = dice::evaluate(&a.to_hit, 1);
+                // Add buff bonuses to hit
+                let buff_bonus: f64 = attacker.final_state.buffs.values()
+                    .filter_map(|b| b.to_hit.as_ref().map(|f| dice::evaluate(f, 1)))
+                    .sum();
+                
+                let total_hit = roll + to_hit_bonus + buff_bonus;
+                let target_ac = if is_target_enemy { enemies[target_idx].creature.ac } else { allies[target_idx].creature.ac };
+                // Add buff bonuses to AC
+                let target_buff_ac: f64 = if is_target_enemy {
+                    enemies[target_idx].final_state.buffs.values().filter_map(|b| b.ac.as_ref().map(|f| dice::evaluate(f, 1))).sum()
+                } else {
+                    allies[target_idx].final_state.buffs.values().filter_map(|b| b.ac.as_ref().map(|f| dice::evaluate(f, 1))).sum()
+                };
+                let total_ac = target_ac + target_buff_ac;
 
-                    // Natural 1 is always a miss (even if modifiers would hit)
-                    if is_crit_miss_roll {
-                        #[cfg(debug_assertions)]
-                        eprintln!("              CRIT MISS! {} misses {}.", attacker.creature.name, target_name);
-                        continue;
-                    }
+                let hits = !is_miss && (is_crit || total_hit >= total_ac);
+                
+                if log_enabled {
+                    let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
+                    log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (bonus) + {:.0} (buffs) = {:.0} vs AC {:.0} (Base {:.0} + {:.0} buffs){}. Result: {}", 
+                        target_name, roll, to_hit_bonus, buff_bonus, total_hit, total_ac, target_ac, target_buff_ac, crit_str, if hits { "HIT" } else { "MISS" }));
+                }
 
-                    let dice_multiplier = if is_crit_hit_roll { 2 } else { 1 };
+                if hits {
+                    let mut damage = dice::evaluate(&a.dpr, if is_crit { 2 } else { 1 });
+                    // Add buff damage bonuses
+                    let buff_dmg: f64 = attacker.final_state.buffs.values()
+                        .filter_map(|b| b.damage.as_ref().map(|f| dice::evaluate(f, 1)))
+                        .sum();
+                    damage += buff_dmg;
                     
-                    // Natural 20 is always a hit (even if modifiers would miss)
-                    if d20_roll + to_hit >= target_ac || is_crit_hit_roll {
-                        let dmg = dice::evaluate(&a.dpr, dice_multiplier);
-                        #[cfg(debug_assertions)]
-                        eprintln!("              HIT! {} hits {} for {:.1} damage (Multiplier: {}).", attacker.creature.name, target_name, dmg, dice_multiplier);
-                            if is_enemy {
-                                enemies[target_idx].final_state.current_hp = (enemies[target_idx].final_state.current_hp - dmg).max(0.0);
-                                #[cfg(debug_assertions)]
-                                eprintln!("                {} new HP: {:.1}", target_name, enemies[target_idx].final_state.current_hp);
-                                update_stats(stats, &attacker.id, &enemies[target_idx].id, dmg, 0.0);
-
-                                // Death/Concentration Check
-                                if enemies[target_idx].final_state.current_hp <= 0.0 {
-                                    // Dead: remove ALL buffs from this source
-                                    remove_all_buffs_from_source(&enemies[target_idx].id.clone(), allies, enemies);
-                                } else if let Some(buff_id) = enemies[target_idx].final_state.concentrating_on.clone() {
-                                    // Alive but may lose concentration
-                                    let con_save_bonus = enemies[target_idx].creature.con_save_bonus.unwrap_or(enemies[target_idx].creature.save_bonus);
-                                    let dc = (dmg / 2.0).max(10.0);
-                                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
-                                    if roll + con_save_bonus < dc {
-                                        // Failed concentration save: remove only the concentrated buff
-                                        let caster_id = enemies[target_idx].id.clone();
-                                        break_concentration(&caster_id, &buff_id, allies, enemies);
-                                    }
-                                }
-                            } else {
-                                allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp - dmg).max(0.0);
-                                #[cfg(debug_assertions)]
-                                eprintln!("                {} new HP: {:.1}", target_name, allies[target_idx].final_state.current_hp);
-                                update_stats(stats, &attacker.id, &allies[target_idx].id, dmg, 0.0);
-
-                                // Death/Concentration Check
-                                if allies[target_idx].final_state.current_hp <= 0.0 {
-                                    // Dead: remove ALL buffs from this source
-                                    remove_all_buffs_from_source(&allies[target_idx].id.clone(), allies, enemies);
-                                } else if let Some(buff_id) = allies[target_idx].final_state.concentrating_on.clone() {
-                                    // Alive but may lose concentration
-                                    let con_save_bonus = allies[target_idx].creature.con_save_bonus.unwrap_or(allies[target_idx].creature.save_bonus);
-                                    let dc = (dmg / 2.0).max(10.0);
-                                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
-                                    if roll + con_save_bonus < dc {
-                                        // Failed concentration save: remove only the concentrated buff
-                                        let caster_id = allies[target_idx].id.clone();
-                                        break_concentration(&caster_id, &buff_id, allies, enemies);
-                                    }
-                                }
-                            }
-                    } else {
-                        #[cfg(debug_assertions)]
-                        eprintln!("              MISS! {} misses {}.", attacker.creature.name, target_name);
+                    if log_enabled {
+                            log.push(format!("         Damage: {:.0} (Base) + {:.0} (Buffs) = {:.0}", damage - buff_dmg, buff_dmg, damage));
                     }
-                },
-                Action::Heal(a) => {
-                    let amount = dice::evaluate(&a.amount, 1);
-                    if is_enemy {
-                         let max_hp = enemies[target_idx].creature.hp;
-                         enemies[target_idx].final_state.current_hp = (enemies[target_idx].final_state.current_hp + amount).min(max_hp);
-                    } else {
-                         let max_hp = allies[target_idx].creature.hp;
-                         allies[target_idx].final_state.current_hp = (allies[target_idx].final_state.current_hp + amount).min(max_hp);
-                         update_stats(stats, &attacker.id, &allies[target_idx].id, 0.0, amount);
-                    }
-                },
-                Action::Buff(a) => {
-                    if a.buff.concentration {
-                        let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
-                        if let Some(old_buff) = current_concentration {
-                             let caster_id = allies[attacker_idx].id.clone();
-                             break_concentration(&caster_id, &old_buff, allies, enemies);
+
+                    if is_target_enemy {
+                        enemies[target_idx].final_state.current_hp -= damage;
+                        if enemies[target_idx].final_state.current_hp < 0.0 {
+                            enemies[target_idx].final_state.current_hp = 0.0;
                         }
-                        allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
+                        update_stats(stats, &attacker.id, &enemies[target_idx].id, damage, 0.0);
+                        
+                        // Concentration check
+                        if enemies[target_idx].final_state.current_hp <= 0.0 {
+                            remove_all_buffs_from_source(&enemies[target_idx].id.clone(), allies, enemies);
+                            if log_enabled { log.push(format!("         {} died!", enemies[target_idx].creature.name)); }
+                        } else if let Some(buff_id) = enemies[target_idx].final_state.concentrating_on.clone() {
+                            let dc = (damage / 2.0).max(10.0);
+                            let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
+                            let bonus = enemies[target_idx].creature.con_save_bonus.unwrap_or(0.0);
+                            
+                            if con_save + bonus < dc {
+                                break_concentration(&enemies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                if log_enabled { log.push(format!("         (Drops concentration on {})", buff_id)); }
+                            }
+                        }
+                    } else {
+                        allies[target_idx].final_state.current_hp -= damage;
+                        if allies[target_idx].final_state.current_hp < 0.0 {
+                            allies[target_idx].final_state.current_hp = 0.0;
+                        }
+                        update_stats(stats, &attacker.id, &allies[target_idx].id, damage, 0.0);
+                            if allies[target_idx].final_state.current_hp <= 0.0 {
+                            remove_all_buffs_from_source(&allies[target_idx].id.clone(), allies, enemies);
+                            if log_enabled { log.push(format!("         {} died!", allies[target_idx].creature.name)); }
+                        } else if let Some(buff_id) = allies[target_idx].final_state.concentrating_on.clone() {
+                            let dc = (damage / 2.0).max(10.0);
+                            let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1);
+                            let bonus = allies[target_idx].creature.con_save_bonus.unwrap_or(0.0);
+                            
+                            if con_save + bonus < dc {
+                                break_concentration(&allies[target_idx].id.clone(), &buff_id, allies, enemies);
+                                if log_enabled { log.push(format!("         (Drops concentration on {})", buff_id)); }
+                            }
+                        }
                     }
+                }
+            },
+            Action::Heal(a) => {
+                    let amount = dice::evaluate(&a.amount, 1);
+                    if is_target_enemy {
+                        // Enemy healing enemy (ally of attacker)
+                        let target_name = enemies[target_idx].creature.name.clone();
+                        enemies[target_idx].final_state.current_hp += amount;
+                        if enemies[target_idx].final_state.current_hp > enemies[target_idx].creature.hp {
+                            enemies[target_idx].final_state.current_hp = enemies[target_idx].creature.hp;
+                        }
+                        update_stats(stats, &attacker.id, &enemies[target_idx].id, 0.0, amount);
+                        if log_enabled {
+                            log.push(format!("      -> Heals {} for {:.0} HP", target_name, amount));
+                        }
+                    } else {
+                        // Player healing player
+                        let target_name = allies[target_idx].creature.name.clone();
+                        allies[target_idx].final_state.current_hp += amount;
+                        if allies[target_idx].final_state.current_hp > allies[target_idx].creature.hp {
+                            allies[target_idx].final_state.current_hp = allies[target_idx].creature.hp;
+                        }
+                        update_stats(stats, &attacker.id, &allies[target_idx].id, 0.0, amount);
+                        if log_enabled {
+                            log.push(format!("      -> Heals {} for {:.0} HP", target_name, amount));
+                        }
+                    }
+            },
+            Action::Buff(a) => {
+                if log_enabled {
+                    let target_name = if is_target_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
+                    log.push(format!("      -> Applies Buff {} to {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
+                }
+                if a.buff.concentration {
+                    let current_concentration = allies[index].final_state.concentrating_on.clone();
+                    if let Some(old_buff) = current_concentration {
+                            let caster_id = allies[index].id.clone();
+                            break_concentration(&caster_id, &old_buff, allies, enemies);
+                            if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                    }
+                    allies[index].final_state.concentrating_on = Some(a.base().id.clone());
+                }
+                let mut buff = a.buff.clone();
+                buff.source = Some(attacker.id.clone());
+                if is_target_enemy {
+                    enemies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
+                    update_stats_buff(stats, &attacker.id, &enemies[target_idx].id, true);
+                } else {
+                    allies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
+                    update_stats_buff(stats, &attacker.id, &allies[target_idx].id, true);
+                }
+            },
+            Action::Debuff(a) => {
+                    let target_name = if is_target_enemy { enemies[target_idx].creature.name.clone() } else { allies[target_idx].creature.name.clone() };
+                    
+                    if a.buff.concentration {
+                    let current_concentration = allies[index].final_state.concentrating_on.clone();
+                    if let Some(old_buff) = current_concentration {
+                            let caster_id = allies[index].id.clone();
+                            break_concentration(&caster_id, &old_buff, allies, enemies);
+                            if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                    }
+                    allies[index].final_state.concentrating_on = Some(a.base().id.clone());
+                }
+                
+                let dc_val = a.save_dc;
+                let dc = dice::evaluate(&DiceFormula::Value(dc_val), 1);
+                let save_bonus = if is_target_enemy { enemies[target_idx].creature.save_bonus } else { allies[target_idx].creature.save_bonus };
+                let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                
+                if log_enabled {
+                    log.push(format!("      -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
+                        a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name, dc, roll + save_bonus, roll, save_bonus));
+                }
+
+                if roll + save_bonus < dc {
                     let mut buff = a.buff.clone();
                     buff.source = Some(attacker.id.clone());
-                    if is_enemy {
+                    if is_target_enemy {
                         enemies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
-                        update_stats_buff(stats, &attacker.id, &enemies[target_idx].id, true);
+                        update_stats_buff(stats, &attacker.id, &enemies[target_idx].id, false);
                     } else {
                         allies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
-                        update_stats_buff(stats, &attacker.id, &allies[target_idx].id, true);
+                        update_stats_buff(stats, &attacker.id, &allies[target_idx].id, false);
                     }
-                },
-                Action::Debuff(a) => {
-                    if a.buff.concentration {
-                        let current_concentration = allies[attacker_idx].final_state.concentrating_on.clone();
-                        if let Some(old_buff) = current_concentration {
-                             let caster_id = allies[attacker_idx].id.clone();
-                             break_concentration(&caster_id, &old_buff, allies, enemies);
-                        }
-                        allies[attacker_idx].final_state.concentrating_on = Some(a.base().id.clone());
-                    }
-                    let mut buff = a.buff.clone();
-                    buff.source = Some(attacker.id.clone());
-                    
-                    let dc_val = a.save_dc; // Extract f64 value
-                    let dc = dice::evaluate(&DiceFormula::Value(dc_val), 1); // Pass as DiceFormula::Value
-                    let save_bonus = if is_enemy { enemies[target_idx].creature.save_bonus } else { allies[target_idx].creature.save_bonus };
-                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
-                    
-                    if roll + save_bonus < dc {
-                        if is_enemy {
-                            enemies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
-                            update_stats_buff(stats, &attacker.id, &enemies[target_idx].id, false);
-                        } else {
-                            allies[target_idx].final_state.buffs.insert(a.base().id.clone(), buff);
-                            update_stats_buff(stats, &attacker.id, &allies[target_idx].id, false);
-                        }
-                    }
-                },
-
-            }
+                    if log_enabled { log.push(format!("         Failed! Debuff applied.")); }
+                } else {
+                    if log_enabled { log.push(format!("         Saved!")); }
+                }
+            },
         }
     }
 }

@@ -94,8 +94,8 @@ const Simulation: FC<PropType> = ({ }) => {
 
                 // The return type is now just SimulationResult[]
                 const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
-                console.log('Simulation complete. Results:', results.length, 'runs')
-                console.log('First result:', results[0])
+                // console.log('Simulation complete. Results:', results.length, 'runs')
+                // console.log('First result:', results[0])
 
                 setAllResults(results)
 
@@ -106,11 +106,11 @@ const Simulation: FC<PropType> = ({ }) => {
                 const end = start + sliceSize
 
                 const slice = results.slice(start, end)
-                console.log('Aggregating slice:', start, 'to', end, '(', slice.length, 'results)')
+                // console.log('Aggregating slice:', start, 'to', end, '(', slice.length, 'results)')
 
                 // Aggregate
                 const aggregated = wasm.aggregate_simulation_results(slice) as any
-                console.log('Aggregated result:', aggregated)
+                // console.log('Aggregated result:', aggregated)
 
                 // Construct synthetic EncounterResult with proper structure
                 const syntheticResult = [{
