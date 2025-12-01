@@ -176,6 +176,12 @@ export const CreatureSchema = z.object({
     initiativeBonus: z.number().optional(),
     initiativeAdvantage: z.boolean().optional(),
     actions: z.array(ActionSchema),
+    triggers: z.array(z.object({
+        id: z.string(),
+        condition: TriggerConditionSchema,
+        action: ActionSchema,
+        cost: z.number().optional(), // ActionSlot
+    })).optional(),
 })
 
 const TeamSchema = z.array(CreatureSchema)

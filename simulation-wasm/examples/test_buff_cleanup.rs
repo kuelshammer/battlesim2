@@ -43,6 +43,7 @@ fn main() {
                 },
             }),
         ],
+        triggers: vec![],
     };
     
     let target = model::Creature {
@@ -58,6 +59,7 @@ fn main() {
         initiative_advantage: false,
         con_save_bonus: Some(3.0),
         actions: vec![],
+        triggers: vec![],
     };
     
     let enemy = model::Creature {
@@ -88,6 +90,7 @@ fn main() {
                 rider_effect: None,
             }),
         ],
+        triggers: vec![],
     };
     
     let players = vec![caster, target];

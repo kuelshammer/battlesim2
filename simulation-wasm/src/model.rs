@@ -230,6 +230,20 @@ impl DebuffAction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActionTrigger {
+    pub id: String,
+    pub condition: TriggerCondition,
+    pub action: Action, // The action to execute when triggered
+    pub cost: Option<ActionSlot>, // e.g. Reaction (4)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CleanupInstruction {
+    RemoveAllBuffsFromSource(String), // Combatant ID of the source that died
+    BreakConcentration(String, String), // (Combatant ID of concentrator, Buff ID)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Creature {
     pub id: String,
     pub arrival: Option<i32>,
@@ -252,6 +266,8 @@ pub struct Creature {
     #[serde(rename = "conSaveBonus")]
     pub con_save_bonus: Option<f64>,
     pub actions: Vec<Action>, // This might need to be flexible if templates are involved
+    #[serde(default)]
+    pub triggers: Vec<ActionTrigger>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

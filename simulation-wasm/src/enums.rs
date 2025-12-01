@@ -123,3 +123,22 @@ pub enum BuffDuration {
     #[serde(rename = "entire encounter")]
     EntireEncounter,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TriggerCondition {
+    #[serde(rename = "on hit")]
+    OnHit, // e.g. Divine Smite
+    #[serde(rename = "on being attacked")]
+    OnBeingAttacked, // e.g. Shield Spell, Cutting Words
+    #[serde(rename = "on miss")]
+    OnMiss, // e.g. Precision Attack
+    #[serde(rename = "on being damaged")]
+    OnBeingDamaged, // e.g. Hellish Rebuke
+    #[serde(rename = "on ally attacked")]
+    OnAllyAttacked, // e.g. Sentinel
+    #[serde(rename = "on enemy death")]
+    OnEnemyDeath, // e.g. Great Weapon Master, Dark One's Blessing
+    #[serde(rename = "on critical hit")]
+    OnCriticalHit, // e.g. Divine Smite (crit fishing)
+}

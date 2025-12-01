@@ -46,6 +46,7 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
             }),
         ],
         arrival: None,
+        triggers: vec![],
     }
 }
 

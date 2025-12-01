@@ -1,11 +1,12 @@
 pub mod dice;
+pub mod actions;
+pub mod targeting;
 pub mod enums;
 pub mod model;
-pub mod simulation;
-pub mod targeting;
-pub mod actions;
 pub mod aggregation;
 pub mod cleanup;
+pub mod resolution;
+pub mod simulation;
 
 use wasm_bindgen::prelude::*;
 use crate::model::{Creature, Encounter, SimulationResult};

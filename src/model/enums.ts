@@ -103,7 +103,21 @@ export function numericCR(cr: ChallengeRating) {
         case '—': return 0;
         case '1/8': return 1/8;
         case '1/4': return 1/4;
-        case '1/2': return 1/2;
-        default: return Number(cr);
-    }
-}
+            case '1/2': return 1/2;
+                default: return Number(cr);
+            }
+        }
+        
+        export const TriggerConditionList = [
+            'on hit',
+            'on being attacked',
+            'on miss',
+            'on being damaged',
+                'on ally attacked',
+                'on enemy death',
+                'on critical hit',
+            ] as const
+            
+        export const TriggerConditionSchema = z.enum(TriggerConditionList)
+        export type TriggerCondition = z.infer<typeof TriggerConditionSchema>
+        

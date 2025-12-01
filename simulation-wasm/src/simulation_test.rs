@@ -77,6 +77,7 @@ mod tests {
                 arrival: None,
                 speed_fly: None,
                 con_save_bonus: None,
+                triggers: vec![],
             },
             initial_state: CreatureState {
                 current_hp: 10.0,
@@ -347,6 +348,7 @@ mod tests {
             arrival: None,
             speed_fly: None,
             con_save_bonus: None,
+            triggers: vec![],
         };
 
         let monster = Creature {
@@ -362,6 +364,7 @@ mod tests {
             arrival: None,
             speed_fly: None,
             con_save_bonus: None,
+            triggers: vec![],
         };
 
         let encounter = Encounter {
@@ -409,6 +412,7 @@ mod tests {
             arrival: None,
             speed_fly: None,
             con_save_bonus: None,
+            triggers: vec![],
         };
 
         // Monster deals massive damage (100 dmg)
@@ -438,6 +442,7 @@ mod tests {
             arrival: None,
             speed_fly: None,
             con_save_bonus: None,
+            triggers: vec![],
         };
 
         let encounter = Encounter {
@@ -497,6 +502,7 @@ mod tests {
             speed_fly: None,
             arrival: None,
             actions: vec![heal_action],
+            triggers: vec![],
         };
 
         let paladin = create_combattant(paladin_creature, "paladin_1".to_string());
