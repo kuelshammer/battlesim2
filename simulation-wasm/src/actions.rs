@@ -50,20 +50,11 @@ pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]
         #[cfg(debug_assertions)]
         eprintln!("        Considering action: {} (Slot: {}, Freq: {:?})", action.base().name, action.base().action_slot, action.base().freq);
 
-        // For D&D 5e action economy: Allow one Action (0) and one Bonus Action (1) per turn
-        // Only check slot conflicts for the main action economy slots
-        if action.base().action_slot == 0 || action.base().action_slot == 1 {
-            if used_slots.contains(&action.base().action_slot) {
-                #[cfg(debug_assertions)]
-                eprintln!("          Slot {} already used this turn.", action.base().action_slot);
-                continue;
-            }
-        }
-
-        // Handle special trigger slots (negative numbers) - can be used with regular actions
-        if action.base().action_slot < 0 && used_slots.contains(&action.base().action_slot) {
+        // For D&D 5e action economy: Only check slot conflicts for exact same slots
+        // This allows Action (0) and Bonus Action (1) together, as well as Other actions (5,6) with Action/Bonus
+        if used_slots.contains(&action.base().action_slot) {
             #[cfg(debug_assertions)]
-            eprintln!("          Special trigger slot {} already used this turn.", action.base().action_slot);
+            eprintln!("          Slot {} already used this turn.", action.base().action_slot);
             continue;
         }
         if !is_usable(c, action) {

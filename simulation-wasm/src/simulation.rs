@@ -391,90 +391,72 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
     });
 
     // Execute up to 2 actions (1 Action + 1 Bonus Action)
-    let mut actions_executed = 0;
     let mut used_slots = std::collections::HashSet::new();
+    let mut actions_to_execute = Vec::new();
 
+    // Find first two available actions with different slots
     for action in &sorted_actions {
-        if actions_executed >= 2 {
-            break; // Limit to 2 actions per turn
-        }
-
-        // Allow both Action (0) and Bonus Action (1) in same turn
         let action_slot = action.base().action_slot;
-        if (action_slot == 0 || action_slot == 1) && used_slots.contains(&action_slot) {
-            continue;
+        if !used_slots.contains(&action_slot) {
+            used_slots.insert(action_slot);
+            actions_to_execute.push(action);
         }
 
-        // Special trigger slots (negative) can be used with regular actions
-        if action_slot < 0 && used_slots.contains(&action_slot) {
-            continue;
+        if actions_to_execute.len() >= 2 {
+            break;
         }
-
-        used_slots.insert(action_slot);
-        break; // Execute this action and loop again for second action
     }
 
-    let action = if actions_executed == 0 {
-        &sorted_actions[0]
-    } else {
-        // Find first unused action for second execution
-        sorted_actions.iter().find(|a| {
-            let slot = a.base().action_slot;
-            if (slot == 0 || slot == 1) && used_slots.contains(&slot) {
-                false
-            } else {
-                true
+    // Execute all selected actions
+    for action in &actions_to_execute {
+        #[cfg(debug_assertions)]
+        eprintln!("      Chose action: {}", action.base().name);
+
+        if log_enabled {
+            log.push(format!("    - Uses Action: {}", action.base().name));
+        }
+
+        // Resolve targets (this takes an immutable attacker and returns indices, so it's fine)
+        let raw_targets = get_targets(&allies[index], action, allies, enemies);
+
+        #[cfg(debug_assertions)]
+        eprintln!("      Selected {} targets.", raw_targets.len());
+
+        // Record action in history (Aggregation) - this requires a clone of the action
+        let mut action_record = CombattantAction {
+            action: (*action).clone(),
+            targets: HashMap::new(),
+        };
+
+        for (is_target_enemy, target_idx) in &raw_targets {
+            let target_id = if *is_target_enemy { &enemies[*target_idx].id } else { &allies[*target_idx].id };
+            *action_record.targets.entry(target_id.clone()).or_insert(0) += 1;
+        }
+
+        // Delegate execution mechanics to the resolution module
+        // This handles slice splitting, mutable borrowing, and effect application including triggers
+        let instructions = resolution::resolve_action_execution(
+            index,
+            allies,
+            enemies,
+            action,
+            &raw_targets,
+            &action_record,
+            stats,
+            log,
+            log_enabled
+        );
+
+        // Process returned cleanup instructions
+        for instruction in instructions {
+            match instruction {
+                CleanupInstruction::RemoveAllBuffsFromSource(source_id) => {
+                    remove_all_buffs_from_source(&source_id, allies, enemies);
+                },
+                CleanupInstruction::BreakConcentration(combatant_id, buff_id) => {
+                    break_concentration(&combatant_id, &buff_id, allies, enemies);
+                },
             }
-        }).unwrap_or(&actions[0])
-    };
-    
-    #[cfg(debug_assertions)]
-    eprintln!("      Chose action: {}", action.base().name);
-    
-    if log_enabled {
-        log.push(format!("    - Uses Action: {}", action.base().name));
-    }
-
-    // Resolve targets (this takes an immutable attacker and returns indices, so it's fine)
-    let raw_targets = get_targets(&allies[index], action, allies, enemies);
-    
-    #[cfg(debug_assertions)]
-    eprintln!("      Selected {} targets.", raw_targets.len());
-    
-    // Record action in history (Aggregation) - this requires a clone of the action
-    let mut action_record = CombattantAction {
-        action: action.clone(),
-        targets: HashMap::new(),
-    };
-    
-    for (is_target_enemy, target_idx) in &raw_targets {
-        let target_id = if *is_target_enemy { &enemies[*target_idx].id } else { &allies[*target_idx].id };
-        *action_record.targets.entry(target_id.clone()).or_insert(0) += 1;
-    }
-
-    // Delegate execution mechanics to the resolution module
-    // This handles slice splitting, mutable borrowing, and effect application including triggers
-    let instructions = resolution::resolve_action_execution(
-        index, 
-        allies, 
-        enemies, 
-        action, 
-        &raw_targets, 
-        &action_record,
-        stats, 
-        log, 
-        log_enabled
-    );
-
-    // Process returned cleanup instructions
-    for instruction in instructions {
-        match instruction {
-            CleanupInstruction::RemoveAllBuffsFromSource(source_id) => {
-                remove_all_buffs_from_source(&source_id, allies, enemies);
-            },
-            CleanupInstruction::BreakConcentration(combatant_id, buff_id) => {
-                break_concentration(&combatant_id, &buff_id, allies, enemies);
-            },
         }
     }
 }
