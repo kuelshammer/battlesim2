@@ -198,9 +198,21 @@ fn apply_single_effect(
         Action::Atk(a) => {
             let (roll, is_crit, is_miss) = get_attack_roll_result(attacker);
             let to_hit_bonus = dice::evaluate(&a.to_hit, 1);
-            let buff_bonus: f64 = attacker.final_state.buffs.values()
-                .filter_map(|b| b.to_hit.as_ref().map(|f| dice::evaluate(f, 1)))
-                .sum();
+            
+            let mut buff_bonus = 0.0;
+            let mut buff_details = Vec::new();
+            
+            for b in attacker.final_state.buffs.values() {
+                if let Some(f) = &b.to_hit {
+                    let val = dice::evaluate(f, 1);
+                    buff_bonus += val;
+                    if let Some(name) = &b.display_name {
+                         buff_details.push(format!("{}={:.0}", name, val));
+                    } else {
+                         buff_details.push(format!("{:.0}", val));
+                    }
+                }
+            }
             
             let total_hit = roll + to_hit_bonus + buff_bonus;
             
@@ -239,8 +251,14 @@ fn apply_single_effect(
             if log_enabled {
                 let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
-                log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (bonus) + {:.0} (buffs) = {:.0} vs AC {:.0} (Base {:.0} + {:.0} buffs){}{}. Result: {}", 
-                    target_name, roll, to_hit_bonus, buff_bonus, total_hit, final_ac, target_ac, target_buff_ac, reaction_str, crit_str, if hits { "HIT" } else { "MISS" }));
+                let buff_str = if buff_details.is_empty() {
+                    String::new()
+                } else {
+                    format!(" (buffs: {})", buff_details.join(", "))
+                };
+                
+                log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (bonus) + {:.0}{} = {:.0} vs AC {:.0} (Base {:.0} + {:.0} buffs){}{}. Result: {}", 
+                    target_name, roll, to_hit_bonus, buff_bonus, buff_str, total_hit, final_ac, target_ac, target_buff_ac, reaction_str, crit_str, if hits { "HIT" } else { "MISS" }));
             }
 
             if hits {
@@ -284,7 +302,7 @@ fn apply_single_effect(
                     
                     if t.final_state.current_hp <= 0.0 {
                         cleanup_instructions.push(CleanupInstruction::RemoveAllBuffsFromSource(t.id.clone()));
-                        if log_enabled { log.push(format!("         {} died!", t.creature.name)); }
+                        if log_enabled { log.push(format!("         {} falls unconscious!", t.creature.name)); }
                     } else if let Some(buff_id) = t.final_state.concentrating_on.clone() {
                         let dc = (damage / 2.0).max(10.0);
                         let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
@@ -292,7 +310,7 @@ fn apply_single_effect(
                         
                         if con_save + bonus < dc {
                             cleanup_instructions.push(CleanupInstruction::BreakConcentration(t.id.clone(), buff_id.clone()));
-                            if log_enabled { log.push(format!("         (Drops concentration on {})", buff_id)); }
+                            if log_enabled { log.push(format!("         -> Drops concentration on {}!", buff_id)); }
                         }
                     }
                 } else {
@@ -333,12 +351,12 @@ fn apply_single_effect(
         },
         Action::Buff(a) => {
             if log_enabled {
-                log.push(format!("      -> Applies Buff {} to {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
+                log.push(format!("      -> Casts {} on {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
             }
             if a.buff.concentration {
                 if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
                     cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
-                    if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                    if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
                 }
                 attacker.final_state.concentrating_on = Some(a.base().id.clone());
             }

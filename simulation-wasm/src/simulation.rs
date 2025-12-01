@@ -360,10 +360,8 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
 // Simplified execute_turn delegating to resolution logic
 fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>, _is_enemy: bool, log: &mut Vec<String>, log_enabled: bool) {
     // Log the turn
-    if log_enabled {
         let attacker_name_for_log = allies[index].creature.name.clone();
-        log.push(format!("  > Turn: {} (HP: {:.1})", attacker_name_for_log, allies[index].final_state.current_hp));
-    }
+        log.push(format!("  > Turn: {} (HP: {:.0} of {:.0})", attacker_name_for_log, allies[index].final_state.current_hp, allies[index].creature.hp));
 
     // Get actions
     let actions = get_actions(&allies[index], allies, enemies);
@@ -442,6 +440,9 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             log,
             log_enabled
         );
+
+        // Record action in history
+        allies[index].actions.push(action_record);
 
         // Process returned cleanup instructions
         for instruction in instructions {
