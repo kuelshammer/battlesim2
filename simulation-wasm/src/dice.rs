@@ -40,8 +40,15 @@ pub fn parse_average(expr: &str) -> f64 {
 }
 
 fn parse_term_average(term: &str) -> f64 {
-    if term.contains('d') {
-        let parts: Vec<&str> = term.split('d').collect();
+    // Strip bracket notation: "3[PB]" -> "3", "1d4[Bless]" -> "1d4"
+    let cleaned_term = if let Some(bracket_pos) = term.find('[') {
+        &term[..bracket_pos]
+    } else {
+        term
+    };
+    
+    if cleaned_term.contains('d') {
+        let parts: Vec<&str> = cleaned_term.split('d').collect();
         if parts.len() == 2 {
             let count = parts[0].parse::<i32>().unwrap_or(1);
             let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
@@ -51,7 +58,7 @@ fn parse_term_average(term: &str) -> f64 {
             return count as f64 * (sides as f64 + 1.0) / 2.0;
         }
     }
-    term.parse::<f64>().unwrap_or(0.0)
+    cleaned_term.parse::<f64>().unwrap_or(0.0)
 }
 
 
@@ -89,8 +96,15 @@ fn parse_and_roll(expr: &str, dice_multiplier: u32) -> f64 {
 }
 
 fn parse_term(term: &str, dice_multiplier: u32) -> f64 {
-    if term.contains('d') {
-        let parts: Vec<&str> = term.split('d').collect();
+    // Strip bracket notation: "3[PB]" -> "3", "1d4[Bless]" -> "1d4"
+    let cleaned_term = if let Some(bracket_pos) = term.find('[') {
+        &term[..bracket_pos]
+    } else {
+        term
+    };
+    
+    if cleaned_term.contains('d') {
+        let parts: Vec<&str> = cleaned_term.split('d').collect();
         if parts.len() == 2 {
             let count = parts[0].parse::<i32>().unwrap_or(1); // "d8" -> count 1
             let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
@@ -106,7 +120,7 @@ fn parse_term(term: &str, dice_multiplier: u32) -> f64 {
         }
     }
     
-    term.parse::<f64>().unwrap_or(0.0)
+    cleaned_term.parse::<f64>().unwrap_or(0.0)
 }
 
 #[cfg(test)]
@@ -121,5 +135,40 @@ mod tests {
         
         let res = parse_and_roll("10", 1);
         assert_eq!(res, 10.0);
+    }
+
+    #[test]
+    fn test_bracket_notation() {
+        // Test simple bracket notation
+        let res = parse_and_roll("3[PB]+5[STR]", 1);
+        assert_eq!(res, 8.0);
+        
+        let res = parse_and_roll("10[Base]-5[SS]", 1);
+        assert_eq!(res, 5.0);
+        
+        // Test single bracketed value
+        let res = parse_and_roll("7[Modifier]", 1);
+        assert_eq!(res, 7.0);
+    }
+
+    #[test]
+    fn test_dice_with_brackets() {
+        // Test dice notation with brackets
+        let res = parse_and_roll("1d1[Bless]+3[Guidance]", 1);
+        assert_eq!(res, 4.0);
+        
+        // Test complex formula
+        let res = parse_and_roll("3[PB]+5[STR]+2[Weapon]-5[SS]", 1);
+        assert_eq!(res, 5.0);
+    }
+
+    #[test]
+    fn test_average_with_brackets() {
+        // Test average calculation with brackets
+        let res = parse_average("3[PB]+5[STR]");
+        assert_eq!(res, 8.0);
+        
+        let res = parse_average("1d4[Bless]+2[Guidance]");
+        assert_eq!(res, 4.5); // Average of 1d4 is 2.5, plus 2 = 4.5
     }
 }
