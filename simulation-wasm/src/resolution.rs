@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::model::*;
 use crate::enums::*;
 use crate::dice;
-use crate::actions::{get_attack_roll_result, break_concentration, remove_all_buffs_from_source};
+use crate::actions::get_attack_roll_result;
 use rand::Rng;
 
 // Helper to update encounter stats
@@ -94,6 +94,90 @@ fn process_defensive_triggers(
     (final_ac, reaction_used)
 }
 
+// Function to handle offensive triggers (e.g., Divine Smite, OnCrit effects)
+// Returns (additional_damage, cleanup_instructions)
+fn process_offensive_triggers(
+    attacker: &Combattant,
+    _main_action: &Action, // The main action that just hit
+    target: &mut Combattant, // The target that was hit
+    is_crit: bool,
+    stats: &mut HashMap<String, EncounterStats>,
+    log: &mut Vec<String>,
+    log_enabled: bool,
+) -> (f64, Vec<CleanupInstruction>) {
+    let mut additional_damage = 0.0;
+    let cleanup_instructions = Vec::new();
+
+    // Iterate over a clone of triggers to avoid borrowing issues while modifying attacker
+    let attacker_triggers = attacker.creature.triggers.clone();
+
+    for trigger in attacker_triggers.iter() {
+        let mut trigger_should_fire = false;
+        if trigger.condition == TriggerCondition::OnHit {
+            trigger_should_fire = true;
+        } else if trigger.condition == TriggerCondition::OnCriticalHit && is_crit {
+            trigger_should_fire = true;
+        }
+
+        if trigger_should_fire {
+            // Check if trigger is usable (resource cost)
+            // For now, assume "at will" or always usable if it has no explicit cost / resource tracking.
+            // If the trigger has a cost that needs to be tracked by `remaining_uses`, it would be decremented here.
+
+            if log_enabled {
+                log.push(format!("          {} triggers {} on hit/crit!", attacker.creature.name, trigger.action.base().name));
+            }
+
+            // Execute the trigger action
+            match &trigger.action {
+                Action::Atk(a) => {
+                    // This is extra damage from a rider effect
+                    let extra_damage = dice::evaluate(&a.dpr, if is_crit { 2 } else { 1 });
+                    additional_damage += extra_damage;
+                    if log_enabled {
+                        log.push(format!("             -> Adds {:.0} additional damage ({})", extra_damage, a.base().name));
+                    }
+                },
+                Action::Buff(a) => {
+                    // Apply buff from trigger
+                    let mut buff = a.buff.clone();
+                    buff.source = Some(attacker.id.clone());
+                    target.final_state.buffs.insert(a.base().id.clone(), buff);
+                    update_stats_buff(stats, &attacker.id, &target.id, true);
+                    if log_enabled {
+                        log.push(format!("             -> Applies buff {} to {}", a.base().name, target.creature.name));
+                    }
+                },
+                Action::Debuff(a) => {
+                    // Apply debuff from trigger
+                    let dc_val = a.save_dc;
+                    let dc = dice::evaluate(&DiceFormula::Value(dc_val), 1);
+                    let save_bonus = target.creature.save_bonus;
+                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                    
+                    if log_enabled {
+                        log.push(format!("             -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
+                            a.buff.display_name.as_deref().unwrap_or("Unknown"), target.creature.name, dc, roll + save_bonus, roll, save_bonus));
+                    }
+
+                    if roll + save_bonus < dc {
+                        let mut buff = a.buff.clone();
+                        buff.source = Some(attacker.id.clone());
+                        target.final_state.buffs.insert(a.base().id.clone(), buff);
+                        update_stats_buff(stats, &attacker.id, &target.id, false);
+                        if log_enabled { log.push(format!("             Failed! Debuff applied.")); }
+                    } else {
+                        if log_enabled { log.push(format!("             Saved!")); }
+                    }
+                },
+                _ => {} // Healing triggers on attack? Unlikely.
+            }
+        }
+    }
+
+    (additional_damage, cleanup_instructions)
+}
+
 // Core logic to apply a single action to a single target
 fn apply_single_effect(
     attacker: &mut Combattant,
@@ -108,7 +192,7 @@ fn apply_single_effect(
     // Helper to get target name (Read)
     // Re-borrow for name access
     let target_name = if let Some(t) = &target_opt { t.creature.name.clone() } else { attacker.creature.name.clone() };
-    let target_id = if let Some(t) = &target_opt { t.id.clone() } else { attacker.id.clone() };
+    let _target_id = if let Some(t) = &target_opt { t.id.clone() } else { attacker.id.clone() };
 
     match action {
         Action::Atk(a) => {
@@ -160,11 +244,32 @@ fn apply_single_effect(
             }
 
             if hits {
+                // Calculate base damage and buff damage first
                 let mut damage = dice::evaluate(&a.dpr, if is_crit { 2 } else { 1 });
                 let buff_dmg: f64 = attacker.final_state.buffs.values()
                     .filter_map(|b| b.damage.as_ref().map(|f| dice::evaluate(f, 1)))
                     .sum();
                 damage += buff_dmg;
+
+                // Offensive trigger hook (e.g., Divine Smite, OnCrit effects)
+                // Handle self-targeting vs distinct target cases to avoid borrowing conflicts
+                if let Some(target) = target_opt.as_mut() {
+                    // Distinct target: can safely pass attacker as immutable reference
+                    let (offensive_damage, offensive_cleanup) = process_offensive_triggers(
+                        attacker,
+                        action,
+                        target,
+                        is_crit,
+                        stats,
+                        log,
+                        log_enabled,
+                    );
+                    cleanup_instructions.extend(offensive_cleanup);
+                    damage += offensive_damage; // Add damage from offensive triggers
+                } else {
+                    // Self-target: skip offensive triggers to avoid borrowing conflicts for now
+                    // TODO: Implement separate logic for self-targeting offensive triggers
+                }
                 
                 if log_enabled {
                     log.push(format!("         Damage: {:.0} (Base) + {:.0} (Buffs) = {:.0}", damage - buff_dmg, buff_dmg, damage));

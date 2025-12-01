@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList } from './enums'
+import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema } from './enums'
 import { ClassOptionsSchema } from './classOptions'
 import { validateDiceFormula } from './dice'
 import { ActionTemplates } from '../data/actions'
