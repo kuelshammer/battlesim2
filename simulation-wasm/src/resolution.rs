@@ -437,32 +437,27 @@ pub fn resolve_action_execution(
     
     for (is_target_enemy, mut target_idx) in raw_targets.iter().copied() {
         if is_target_enemy {
-            // Check if target is already dead and re-select if needed (for attacks)
-            if enemies[target_idx].final_state.current_hp <= 0.0 {
-                if matches!(action, Action::Atk(_)) {
-                    // Try to find a new alive target
-                    if let Action::Atk(atk_action) = action {
-                        if let Some(new_idx) = crate::targeting::select_enemy_target(
-                            atk_action.target.clone(),
-                            enemies,
-                            &used_enemy_targets,
-                            None
-                        ) {
-                            if log_enabled {
-                                log.push(format!("      -> {} is already unconscious, switching to {}", 
-                                    enemies[target_idx].creature.name,
-                                    enemies[new_idx].creature.name));
-                            }
-                            target_idx = new_idx;
-                        } else {
-                            if log_enabled {
-                                log.push(format!("      -> {} is already unconscious, no other targets available", 
-                                    enemies[target_idx].creature.name));
-                            }
-                            continue; // Skip if no other targets
+            // For attacks, always re-select target dynamically based on current state
+            // This makes "enemy with least HP" reactive to damage dealt
+            if matches!(action, Action::Atk(_)) {
+                if let Action::Atk(atk_action) = action {
+                    if let Some(new_idx) = crate::targeting::select_enemy_target(
+                        atk_action.target.clone(),
+                        enemies,
+                        &used_enemy_targets,
+                        None
+                    ) {
+                        target_idx = new_idx;
+                    } else {
+                        if log_enabled {
+                            log.push(format!("      -> No targets available for attack"));
                         }
+                        continue; // Skip if no targets
                     }
-                } else {
+                }
+            } else {
+                // For non-attacks (debuffs), only re-select if target is dead
+                if enemies[target_idx].final_state.current_hp <= 0.0 {
                     if log_enabled {
                         log.push(format!("      -> {} is already unconscious, skipping action", 
                             enemies[target_idx].creature.name));
