@@ -224,13 +224,13 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
 
             // First pass: Remove buffs from clearly dead sources (HP <= 0.0)
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                let before_count = c.final_state.buffs.len();
-                c.final_state.buffs.retain(|buff_id, buff| {
+                let _before_count = c.final_state.buffs.len();
+                c.final_state.buffs.retain(|_buff_id, buff| {
                     if let Some(source) = &buff.source {
                         if dead_source_ids.contains(source) {
                             #[cfg(debug_assertions)]
                             eprintln!("AGGREGATION: PASS1: Removing buff {} from {} (source {} is dead, HP: {:.1})",
-                                buff_id, c.creature.name, source, c.final_state.current_hp);
+                                _buff_id, c.creature.name, source, c.final_state.current_hp);
                             return false;
                         }
                         true
@@ -239,11 +239,11 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         true
                     }
                 });
-                let after_count = c.final_state.buffs.len();
+                let _after_count = c.final_state.buffs.len();
 
                 #[cfg(debug_assertions)]
-                if before_count != after_count {
-                    eprintln!("AGGREGATION: PASS1: {} had {} buffs, now has {}", c.creature.name, before_count, after_count);
+                if _before_count != _after_count {
+                    eprintln!("AGGREGATION: PASS1: {} had {} buffs, now has {}", c.creature.name, _before_count, _after_count);
                 }
             }
 
@@ -253,7 +253,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                 eprintln!("AGGREGATION: PASS2: Checking concentration mechanics for sources: {:?}", concentration_map);
 
                 for c in t1.iter_mut().chain(t2.iter_mut()) {
-                    let before_count = c.final_state.buffs.len();
+                    let _before_count = c.final_state.buffs.len();
                     c.final_state.buffs.retain(|buff_id, buff| {
                         if let Some(source) = &buff.source {
                             // Skip if already handled in first pass
@@ -288,11 +288,11 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                             true
                         }
                 });
-                let after_count = c.final_state.buffs.len();
+                let _after_count = c.final_state.buffs.len();
 
                     #[cfg(debug_assertions)]
-                    if before_count != after_count {
-                        eprintln!("AGGREGATION: PASS2: {} had {} concentration-related buffs, now has {}", c.creature.name, before_count, after_count);
+                    if _before_count != _after_count {
+                        eprintln!("AGGREGATION: PASS2: {} had {} concentration-related buffs, now has {}", c.creature.name, _before_count, _after_count);
                     }
                 }
             }

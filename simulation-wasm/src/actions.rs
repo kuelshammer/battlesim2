@@ -211,20 +211,20 @@ pub fn remove_all_buffs_from_source(source_id: &str, allies: &mut [Combattant], 
 
     // Remove ALL buffs from this source across all combatants
     for c in allies.iter_mut().chain(enemies.iter_mut()) {
-        let before_count = c.final_state.buffs.len();
-        c.final_state.buffs.retain(|buff_id, buff| {
+        let _before_count = c.final_state.buffs.len();
+        c.final_state.buffs.retain(|_buff_id, buff| {
             let should_keep = buff.source.as_ref() != Some(&source_id.to_string());
             if !should_keep {
                 #[cfg(debug_assertions)]
-                eprintln!("          Removed buff '{}' from {} (source {} is dead)", buff_id, c.creature.name, source_id);
+                eprintln!("          Removed buff '{}' from {} (source {} is dead)", _buff_id, c.creature.name, source_id);
             }
             should_keep
         });
-        let after_count = c.final_state.buffs.len();
+        let _after_count = c.final_state.buffs.len();
         
         #[cfg(debug_assertions)]
-        if before_count != after_count {
-            eprintln!("          {} had {} buffs from dead source, now has {} buffs total", c.creature.name, before_count - after_count, after_count);
+        if _before_count != _after_count {
+            eprintln!("          {} had {} buffs from dead source, now has {} buffs total", c.creature.name, _before_count - _after_count, _after_count);
         }
     }
 }

@@ -35,8 +35,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
     console.log('[Crypto Polyfill] Could not set self.crypto:', e);
   }
 } else {
-  console.error('[Crypto Polyfill] window.crypto NOT available!');
-}
+  }
 
 export default function App({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />

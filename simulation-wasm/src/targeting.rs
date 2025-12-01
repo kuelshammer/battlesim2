@@ -10,7 +10,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
     
     match action {
         Action::Atk(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
@@ -37,7 +37,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
                  return targets; // Return empty targets if no healing needed
              }
 
-             for i in 0..count {
+             for _i in 0..count {
                  #[cfg(debug_assertions)]
                  eprintln!("          Heal {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                  let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
@@ -52,7 +52,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
              }
         },
         Action::Buff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Buff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
@@ -67,7 +67,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
             }
         },
         Action::Debuff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Debuff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {
@@ -198,7 +198,7 @@ pub fn select_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx:
     best_target
 }
 
-fn select_injured_ally_target(strategy: AllyTarget, allies: &[Combattant], self_idx: usize, excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
+fn select_injured_ally_target(strategy: AllyTarget, allies: &[Combattant], _self_idx: usize, excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
     #[cfg(debug_assertions)]
     eprintln!("            Selecting injured ally target (Strategy: {:?}). Allies available: {}. Excluded: {:?}", strategy, allies.len(), excluded);
     let mut best_target = None;
