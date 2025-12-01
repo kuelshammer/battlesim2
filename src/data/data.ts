@@ -663,7 +663,7 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
                     actionSlot: ActionSlots.Action,
                     type: 'heal',
                     freq: '1/day',
-                    condition: 'ally at 0 HP',
+                    condition: 'any ally injured',
                     targets: 1,
                     target: 'ally with the least HP',
                     amount: 5 * level,

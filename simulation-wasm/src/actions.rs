@@ -5,12 +5,12 @@ use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
 pub fn check_action_condition(
-    condition: &ActionCondition,
+    action: &Action,
     actor: &Combattant,
     allies: &[Combattant],
     enemies: &[Combattant]
 ) -> bool {
-    match condition {
+    match &action.base().condition {
         ActionCondition::Default => true,
         ActionCondition::AllyAt0HP => {
             allies.iter().any(|c| c.final_state.current_hp <= 0.0)
@@ -31,8 +31,8 @@ pub fn check_action_condition(
             allies.iter().any(|c| c.final_state.current_hp < c.creature.hp)
         },
         ActionCondition::AnyAllyNeedsHealing => {
-            // More specific - check if any ally is significantly injured (more than 25% HP lost)
-            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.75)
+            // More specific - check if any ally is significantly injured (more than 50% HP lost)
+            allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.5)
         },
         ActionCondition::AnyAllyBelow50PercentHP => {
             allies.iter().any(|c| c.final_state.current_hp < c.creature.hp * 0.5)
@@ -55,6 +55,18 @@ pub fn check_action_condition(
         },
         ActionCondition::EnemyCountMultiple => {
             enemies.iter().filter(|c| c.final_state.current_hp > 0.0).count() > 1
+        },
+        ActionCondition::BuffNotActive => {
+            // Check if the buff provided by this action is already active on the actor
+            // This is primarily for Self-targeted buffs like Rage
+            if let Action::Buff(b) = action {
+                !actor.final_state.buffs.contains_key(&b.base().id)
+            } else {
+                true
+            }
+        },
+        ActionCondition::NotConcentrating => {
+            actor.final_state.concentrating_on.is_none()
         },
     }
 }
@@ -83,7 +95,7 @@ pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]
         }
         
         // Check action condition
-        if !check_action_condition(&action.base().condition, c, allies, enemies) {
+        if !check_action_condition(action, c, allies, enemies) {
             #[cfg(debug_assertions)]
             eprintln!("          Action {} condition not met.", action.base().name);
             continue;

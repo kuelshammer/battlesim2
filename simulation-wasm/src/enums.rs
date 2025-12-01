@@ -78,6 +78,10 @@ pub enum ActionCondition {
     EnemyCountOne,
     #[serde(rename = "enemy count multiple")]
     EnemyCountMultiple,
+    #[serde(rename = "buff not active")]
+    BuffNotActive,
+    #[serde(rename = "not concentrating")]
+    NotConcentrating,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

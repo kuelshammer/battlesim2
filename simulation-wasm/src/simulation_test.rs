@@ -525,4 +525,214 @@ mod tests {
 
         println!("✓ Action condition checking works correctly!");
     }
+
+    #[test]
+    fn test_barbarian_action_economy() {
+        use crate::actions::get_actions;
+        use crate::simulation::create_combattant;
+        use crate::enums::BuffDuration;
+        
+        println!("Testing: Barbarian should use Rage (Bonus), Reckless (Other), and Attack (Action) in one turn");
+
+        // Create actions with different slots
+        let attack_action = Action::Atk(AtkAction {
+            id: "attack".to_string(),
+            name: "Attack".to_string(),
+            action_slot: 0, // Action
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            dpr: DiceFormula::Value(10.0),
+            to_hit: DiceFormula::Value(5.0),
+            target: EnemyTarget::EnemyWithLeastHP,
+            use_saves: None,
+            half_on_save: None,
+            rider_effect: None,
+        });
+
+        let rage_action = Action::Buff(BuffAction {
+            id: "rage".to_string(),
+            name: "Rage".to_string(),
+            action_slot: 1, // Bonus Action
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::BuffNotActive,
+            targets: 1,
+            buff: Buff {
+                display_name: Some("Rage".to_string()),
+                duration: BuffDuration::EntireEncounter,
+                concentration: false,
+                ac: None,
+                to_hit: None,
+                damage: Some(DiceFormula::Value(2.0)),
+                condition: None,
+                source: None,
+                damage_reduction: None,
+                damage_multiplier: None,
+                damage_taken_multiplier: None,
+                dc: None,
+                save: None,
+                magnitude: None,
+            },
+            target: AllyTarget::Self_,
+        });
+
+        let reckless_action = Action::Buff(BuffAction {
+            id: "reckless".to_string(),
+            name: "Reckless Attack".to_string(),
+            action_slot: 2, // Other
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            buff: Buff {
+                display_name: Some("Reckless".to_string()),
+                duration: BuffDuration::OneRound,
+                concentration: false,
+                ac: None,
+                to_hit: None,
+                damage: None,
+                condition: Some(CreatureCondition::AttacksAndIsAttackedWithAdvantage),
+                source: None,
+                damage_reduction: None,
+                damage_multiplier: None,
+                damage_taken_multiplier: None,
+                dc: None,
+                save: None,
+                magnitude: None,
+            },
+            target: AllyTarget::Self_,
+        });
+
+        let barbarian_creature = Creature {
+            id: "barbarian".to_string(),
+            name: "Barbarian".to_string(),
+            hp: 100.0,
+            ac: 15.0,
+            initiative_bonus: 2.0,
+            initiative_advantage: true,
+            save_bonus: 5.0,
+            con_save_bonus: Some(5.0),
+            count: 1.0,
+            speed_fly: None,
+            arrival: None,
+            actions: vec![attack_action, rage_action, reckless_action],
+            triggers: vec![],
+        };
+
+        let barbarian = create_combattant(barbarian_creature, "barbarian_1".to_string());
+        let enemy = create_dummy_combattant("Enemy", "enemy_1");
+        
+        // Let's verify get_actions returns 3 actions
+        let actions = get_actions(&barbarian, &[barbarian.clone()], &[enemy.clone()]);
+        assert_eq!(actions.len(), 3, "Should return all 3 actions");
+        
+        // Now let's verify the sorting logic (Buffs before Attacks)
+        let mut sorted_actions = actions.clone();
+        sorted_actions.sort_by(|a, b| {
+            match (a, b) {
+                (Action::Buff(_), Action::Atk(_)) => std::cmp::Ordering::Less,
+                (Action::Atk(_), Action::Buff(_)) => std::cmp::Ordering::Greater,
+                _ => std::cmp::Ordering::Equal,
+            }
+        });
+        
+        // Verify we have 3 distinct slots
+        let mut used_slots = std::collections::HashSet::new();
+        let mut actions_to_execute = Vec::new();
+        for action in &sorted_actions {
+            let action_slot = action.base().action_slot;
+            if !used_slots.contains(&action_slot) {
+                used_slots.insert(action_slot);
+                actions_to_execute.push(action);
+            }
+        }
+        
+        assert_eq!(actions_to_execute.len(), 3, "Should execute all 3 actions because they have different slots");
+        
+        println!("✓ Barbarian action selection works correctly!");
+    }
+
+    #[test]
+    fn test_buff_not_active_condition() {
+        use crate::actions::get_actions;
+        use crate::simulation::create_combattant;
+        use crate::enums::BuffDuration;
+        
+        println!("Testing: BuffNotActive should prevent Rage from being selected when already active");
+
+        // Create Rage action with BuffNotActive condition
+        let rage_action = Action::Buff(BuffAction {
+            id: "rage".to_string(),
+            name: "Rage".to_string(),
+            action_slot: 1, // Bonus Action
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::BuffNotActive,
+            targets: 1,
+            buff: Buff {
+                display_name: Some("Rage".to_string()),
+                duration: BuffDuration::EntireEncounter,
+                concentration: false,
+                ac: None,
+                to_hit: None,
+                damage: Some(DiceFormula::Value(2.0)),
+                condition: None,
+                source: None,
+                damage_reduction: None,
+                damage_multiplier: None,
+                damage_taken_multiplier: None,
+                dc: None,
+                save: None,
+                magnitude: None,
+            },
+            target: AllyTarget::Self_,
+        });
+
+        let barbarian_creature = Creature {
+            id: "barbarian".to_string(),
+            name: "Barbarian".to_string(),
+            hp: 100.0,
+            ac: 15.0,
+            initiative_bonus: 2.0,
+            initiative_advantage: true,
+            save_bonus: 5.0,
+            con_save_bonus: Some(5.0),
+            count: 1.0,
+            speed_fly: None,
+            arrival: None,
+            actions: vec![rage_action],
+            triggers: vec![],
+        };
+
+        let mut barbarian = create_combattant(barbarian_creature, "barbarian_1".to_string());
+        let enemy = create_dummy_combattant("Enemy", "enemy_1");
+        
+        // Test 1: Rage should be available when NOT active
+        let actions_before = get_actions(&barbarian, &[barbarian.clone()], &[enemy.clone()]);
+        println!("Actions before Rage is active: {}", actions_before.len());
+        assert_eq!(actions_before.len(), 1, "Rage should be available when not active");
+        
+        // Test 2: Simulate Rage being applied (add to buffs)
+        barbarian.final_state.buffs.insert("rage".to_string(), Buff {
+            display_name: Some("Rage".to_string()),
+            duration: BuffDuration::EntireEncounter,
+            concentration: false,
+            ac: None,
+            to_hit: None,
+            damage: Some(DiceFormula::Value(2.0)),
+            condition: None,
+            source: Some("barbarian_1".to_string()),
+            damage_reduction: None,
+            damage_multiplier: None,
+            damage_taken_multiplier: None,
+            dc: None,
+            save: None,
+            magnitude: None,
+        });
+        
+        // Test 3: Rage should NOT be available when already active
+        let actions_after = get_actions(&barbarian, &[barbarian.clone()], &[enemy.clone()]);
+        println!("Actions after Rage is active: {}", actions_after.len());
+        assert_eq!(actions_after.len(), 0, "Rage should NOT be available when already active");
+        
+        println!("✓ BuffNotActive condition works correctly!");
+    }
 }

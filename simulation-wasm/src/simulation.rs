@@ -401,10 +401,6 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             used_slots.insert(action_slot);
             actions_to_execute.push(action);
         }
-
-        if actions_to_execute.len() >= 2 {
-            break;
-        }
     }
 
     // Execute all selected actions
