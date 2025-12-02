@@ -15,7 +15,8 @@ Better formatted for debugging
 Accessible both in GUI and as downloadable text file
 The plan includes:
 
-Similarity scoring algorithm to find the best match
+Similarity scoring algorithm to find the best match:
+    The similarity score will be calculated based on the sum of squared differences in important features. The most important feature is `10 * sum(player hp) - sum(monster hp)`. Other important factors include: rounds of combat, max player hp left, min player hp left, max monster hp left, min monster hp left.
 Enhanced log formatting (like your example with sections)
 File system integration
 React modal component design
