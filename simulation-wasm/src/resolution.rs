@@ -544,19 +544,7 @@ pub fn resolve_action_execution(
     let (allies_head, allies_tail) = allies.split_at_mut(attacker_index);
     let (attacker_mut, allies_after_attacker) = allies_tail.split_first_mut().expect("Attacker index out of bounds");
 
-    // ADD ACTION SURGE LOGIC HERE
-    if action.base().name == "Action Surge" {
-        if attacker_mut.final_state.action_surge_used {
-            if log_enabled {
-                log.push(format!("{} tried to use Action Surge but it is depleted.", attacker_mut.creature.name));
-            }
-            return Vec::new(); // Return empty cleanup instructions if Action Surge is already used
-        }
-        attacker_mut.final_state.action_surge_used = true;
-        if log_enabled {
-            log.push(format!("{} uses Action Surge!", attacker_mut.creature.name));
-        }
-    }
+
 
     // 1. Mark action as used and record it (Attacker state update)
     attacker_mut.final_state.used_actions.insert(action.base().id.clone());
