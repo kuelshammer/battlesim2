@@ -1,124 +1,102 @@
 # Implementation Plan - Battlesim Monte Carlo Upgrade
 
-This plan outlines the steps to replace the deterministic TypeScript simulation backend with a Rust/WASM-based Monte Carlo simulation while preserving the existing User Interface.
+This document tracks the implementation of major features for the Battlesim Monte Carlo simulation engine.
 
-## User Review Required
+## ✅ Completed Features
 
-> [!IMPORTANT]
-> **UI Behavior Change**: The "Luck" slider currently adjusts the simulation continuously (e.g., changing a d20 roll from 10.5 to 11.0). In the new system, the slider will select one of 5 "representative" outcomes from thousands of simulations.
-> - **0-20% (Bad Luck)**: Shows a simulation where players rolled poorly/monsters rolled well.
-> - **40-60% (Average)**: Shows the median outcome.
-> - **80-100% (Good Luck)**: Shows a simulation where players dominated.
->
-> The UI components themselves will remain identical, but the data displayed will be a "real" possible fight log rather than a mathematical average.
+### 1. Monte Carlo Simulation Engine
+- ✅ Rust/WASM backend implementation
+- ✅ True RNG dice rolling system
+- ✅ 1000+ simulation runs per execution
+- ✅ Quintile-based result selection via "Luck" slider
+- ✅ Deterministic combatant IDs for consistent aggregation
 
-## Proposed Changes
+### 2. Concentration Mechanics
+- ✅ Concentration tracking in creature state
+- ✅ Automatic concentration breaking on damage (CON save)
+- ✅ Concentration breaking on caster death
+- ✅ Concentration conflict resolution (new spell replaces old)
+- ✅ Duplicate concentration prevention (same spell on multiple targets)
 
-### 1. Rust/WASM Setup
-- Initialize a new Rust library in `simulation-wasm/`.
-- Configure `Cargo.toml` with `wasm-bindgen`, `serde`, `serde_json`, `rand`, and `getrandom` (for WASM compatibility).
-- Set up build scripts to compile Rust to WASM.
+### 3. Action Trigger System
+- ✅ Defensive triggers (Shield spell on being attacked)
+- ✅ Offensive triggers (Divine Smite on hit)
+- ✅ Resource cost tracking for triggers
+- ✅ Smart AC-based trigger activation
+- ✅ Migrated Shield, Divine Smite, and Parry to trigger system
 
-### 2. Data Modeling (Rust)
-- Mirror the TypeScript interfaces from `src/model/model.ts` and `src/model/enums.ts` into Rust structs.
-- Use `serde` to ensure strict JSON compatibility so the frontend data can be passed directly to Rust.
-- **Key Structs**: `Creature`, `Action`, `Combattant`, `Encounter`, `SimulationResult`.
+### 4. Pre-Combat Spell Casting ("Round 0")
+- ✅ Actions with `actionSlot: -3` execute before initiative
+- ✅ "Cast before combat" checkbox in UI
+- ✅ Template support for Mage Armour, Armor of Agathys, False Life, Shield of Faith
+- ✅ Pre-Combat Setup logging phase
+- ✅ Amount override for template actions
 
-### 3. Simulation Logic Port
-- Port `src/model/dice.ts`:
-    - Implement a true RNG dice roller to replace the weighted average logic.
-    - Support dice expressions (e.g., `2d8 + 4`).
-- Port `src/model/simulation.ts`:
-    - Implement the battle loop: Initiative (if applicable, or sticking to current turn order), Actions, Targeting, Buffs/Debuffs.
-    - **Logic Adaptation**: Ensure `check_action_condition`, `get_next_target`, etc., work with concrete RNG values instead of averages.
-
-### 4. Monte Carlo Engine
-- Implement `run_monte_carlo(iterations: usize)`:
-    - Run the full simulation loop `iterations` times (e.g., 1000).
-    - Store the full result (logs, stats) of each run.
-- Implement Scoring & Sorting:
-    - Score formula: `10 * sum(player_hp) - sum(monster_hp)`.
-    - Sort all runs by score.
-- Implement Quintile Selection:
-    - Based on the requested "Luck" input (0.0 - 1.0), select the specific run from the sorted list.
-    - Example: Luck 0.5 -> Select run at index 500 (Median).
-
-### 5. Frontend Integration
-- Update `package.json` to include the WASM package (or load it dynamically).
-- Modify `src/components/simulation/simulation.tsx`:
-    - Replace the `runSimulation` import from TS with the WASM import.
-    - Manage the async nature of WASM loading (if necessary).
-
-## Verification Plan
-
-### Automated Tests (Rust)
-- **Unit Tests**: Verify dice rolling distribution and modifier logic.
-- **Logic Tests**: Verify action conditions (e.g., "Heal only if ally < 50% HP") trigger correctly.
-
-### Manual Verification
-- **Regression Testing**: Compare a simple "1 Goblin vs 1 Fighter" scenario in the old vs. new system to ensure basic mechanics (AC, HP, Damage) are consistent.
-- **Monte Carlo Check**: Run a simulation and verify that "Bad Luck" results actually show missed attacks/failed saves, and "Good Luck" results show crits/successful saves.
-- **Aggregation Verification**: Verify that aggregated action labels correctly display target names (e.g., "Attack on Goblin 1") instead of just "Attack on".
-
-## Concentration Implementation Plan
-
-### 1. Data Model Updates
-- [x] **`Buff` Schema**: Add `concentration: boolean` (default `false`).
-- [x] **`Creature` Schema**: Add `conSaveBonus: number` (optional, fallback to generic `saveBonus`).
-- [x] **`CreatureState` Schema**: Add `concentratingOn: string | null` (stores the ID of the active concentration effect).
-
-### 2. Simulation Logic Updates (`simulation.rs`)
-- [x] **Helper Function: `break_concentration(caster_id: &str)`**:
-    - Identify the effect the caster is concentrating on.
-    - Iterate through all combatants (allies & enemies).
-    - Remove any buff where `source == caster_id` AND `buff_id == concentrating_on`.
-    - Clear `concentratingOn` state on the caster.
-    - Log the event.
-
-- [x] **Casting Logic (`Action::Buff` / `Action::Debuff`)**:
-    - Check if the new spell requires concentration.
-    - If yes:
-        - Check if caster is already concentrating.
-        - If so, call `break_concentration` (old spell ends).
-        - Set `concentratingOn` to the new spell's ID.
-
-- [x] **Damage Logic (`Action::Atk`)**:
-    - When a creature takes damage:
-        - Check if they are concentrating (`concentratingOn.is_some()`).
-        - Calculate DC: `max(10, damage / 2)`.
-        - Roll Save: `d20 + con_save_bonus`.
-        - If fail: Call `break_concentration`.
-
-- [x] **Incapacitation Logic**:
-    - If a creature drops to 0 HP, call `break_concentration`.
-
-### 4. Deterministic IDs & Aggregation Fix (NEW)
-- [x] **Deterministic Combatant IDs**:
-    - Modify `create_combattant` to accept a specific `id` string instead of generating a random UUID.
-    - In `run_single_simulation`, generate stable IDs for each combatant based on their template ID and index (e.g., `"{template_id}-{index}"`).
-    - This ensures "Goblin 1" has the same ID in every simulation run.
-
-- [x] **Simplify Aggregation**:
-    - Remove the complex `uuid_map` logic in `aggregate_results`.
-    - Aggregate directly using the stable IDs.
-    - This ensures that `buff.source` (which stores the caster's ID) always points to the correct entity across all runs.
-
-- [x] **Robust Concentration Cleanup**:
-    - With stable IDs, the "dead source cleanup" at the end of aggregation will be reliable.
-    - Ensure that if a combatant's aggregated HP < 0.5 (effectively dead), all buffs sourced by them are removed from the aggregated state.
-
-### 5. Median Run Logging (NEW)
-- [x] **Save Median Run Log**:
-    - In `run_monte_carlo`, identify the median simulation run (index `iterations / 2`).
-    - Generate a human-readable text log of this specific run (round by round, turn by turn).
-    - Save this log to a file (e.g., `median_run_log.txt`) in the `GEMINI_REPORTS` directory or similar, to allow the user to inspect a "representative" fight in detail.
+### 5. Enhanced Combat Logging
+- ✅ Bless/Bane detailed logging with bonus/penalty breakdowns
+- ✅ Buff display name fallbacks (uses action name if no displayName)
+- ✅ Save roll breakdowns showing base + buffs
+- ✅ Concentration status in logs
 
 ### 6. Frontend Integration
-- [x] **Stop Aggregating**:
-    - Update `src/components/simulation/simulation.tsx`.
-    - Remove `aggregate_simulation_results` call.
-- [x] **Implement Quintile/Direct Selection**:
-    - Use the `luck` slider value (0.0 - 1.0) to select a single run from the sorted `allResults`.
-    - Index formula: `Math.floor(luck * (allResults.length - 1))`.
-    - Pass this single run directly to `setSimulationResults`.
-    - This enables viewing "Real" fight logs (including multiple encounters) instead of averaged data.
+- ✅ Direct single-run selection (removed aggregation)
+- ✅ Luck slider selects from 1000+ real simulation runs
+- ✅ Template action resolution before WASM call
+- ✅ Stable combatant ID display
+
+## 📋 Current Architecture
+
+### Data Flow
+1. **Frontend** (TypeScript) → Defines creatures, actions, triggers
+2. **Template Resolution** → Converts template actions to final actions
+3. **WASM Simulation** → Runs 1000+ Monte Carlo iterations
+4. **Result Selection** → Luck slider picks one representative run
+5. **Display** → Shows actual combat log from that specific run
+
+### Key Files
+- `simulation-wasm/src/simulation.rs` - Main simulation loop, pre-combat execution
+- `simulation-wasm/src/resolution.rs` - Action resolution, triggers, enhanced logging
+- `simulation-wasm/src/targeting.rs` - Target selection logic
+- `src/data/actions.ts` - Action templates, including pre-combat spells
+- `src/data/data.ts` - Class templates with triggers and pre-combat actions
+- `src/components/creatureForm/actionForm.tsx` - Action editor with pre-combat checkbox
+
+## 🎯 Design Decisions
+
+### Monte Carlo vs Deterministic
+- **Before**: Single deterministic run with weighted averages
+- **After**: 1000+ real dice-rolled simulations, user selects representative outcome
+- **Benefit**: More realistic, shows actual variance and edge cases
+
+### Action Triggers
+- **Pattern**: Hook-based system at critical points (pre-attack, post-hit)
+- **Benefit**: Clean separation of reactive vs active actions
+- **Future**: Extensible for opportunity attacks, counterspell, etc.
+
+### Pre-Combat Spells
+- **Approach**: Re-purposed existing `actionSlot: -3` constant
+- **Benefit**: Minimal code changes, backward compatible
+- **Future**: Could expand to multi-round pre-combat sequences
+
+### Concentration
+- **Rule**: One spell at a time, breaks on damage (CON save), death, or recasting
+- **Special Case**: Same spell on multiple targets allowed (e.g., Bless on 3 allies)
+- **Implementation**: Cleanup instructions pattern for deferred removal
+
+## 🔧 Known Limitations
+
+1. **Resource Tracking**: Spell slots not fully tracked (assumes infinite for templates)
+2. **Movement**: No positioning or opportunity attacks
+3. **Counterspell**: Requires OnCast trigger (not yet implemented)
+4. **Lair Actions**: No multi-initiative system for complex encounters
+
+## 📖 Reference Documents
+
+For detailed historical context, see:
+- `walkthrough.md` in `.gemini/antigravity/brain/` - Complete changelog of all fixes and features
+- Git history for implementation details
+
+---
+
+**Last Updated**: 2025-12-02  
+**Status**: Production-ready, all planned features implemented
