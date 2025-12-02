@@ -355,11 +355,17 @@ fn apply_single_effect(
                 log.push(format!("      -> Casts {} on {}", display_name, target_name));
             }
             if a.buff.concentration {
-                if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
-                    cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
-                    if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
+                let new_buff_id = a.base().id.clone();
+                let current_conc = attacker.final_state.concentrating_on.clone();
+                
+                // Only break concentration if it's a different spell
+                if let Some(old_buff) = current_conc {
+                    if old_buff != new_buff_id {
+                        cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
+                        if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
+                    }
                 }
-                attacker.final_state.concentrating_on = Some(a.base().id.clone());
+                attacker.final_state.concentrating_on = Some(new_buff_id);
             }
             let mut buff = a.buff.clone();
             buff.source = Some(attacker.id.clone());
@@ -374,11 +380,17 @@ fn apply_single_effect(
         },
         Action::Debuff(a) => {
             if a.buff.concentration {
-                if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
-                    cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
-                    if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                let new_buff_id = a.base().id.clone();
+                let current_conc = attacker.final_state.concentrating_on.clone();
+                
+                // Only break concentration if it's a different spell
+                if let Some(old_buff) = current_conc {
+                     if old_buff != new_buff_id {
+                        cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
+                        if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                     }
                 }
-                attacker.final_state.concentrating_on = Some(a.base().id.clone());
+                attacker.final_state.concentrating_on = Some(new_buff_id);
             }
             
             let dc_val = a.save_dc;
