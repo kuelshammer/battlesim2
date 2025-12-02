@@ -8,6 +8,7 @@ pub mod cleanup;
 pub mod resolution;
 pub mod simulation;
 
+
 use wasm_bindgen::prelude::*;
 use crate::model::{Creature, Encounter, SimulationResult};
 
