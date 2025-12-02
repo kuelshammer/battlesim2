@@ -168,6 +168,152 @@ fn roll_initiative(c: &Creature) -> f64 {
     roll + c.initiative_bonus
 }
 
+/// Execute all pre-combat actions (actionSlot: -3) before combat begins
+/// This allows spells like Mage Armour, Armor of Agathys, etc. to be cast before initiative
+fn execute_precombat_actions(
+    team1: &mut [Combattant],
+    team2: &mut [Combattant],
+    stats: &mut HashMap<String, EncounterStats>,
+    log: &mut Vec<String>,
+    log_enabled: bool,
+) {
+    let mut has_precombat = false;
+    
+    // Check if any actions need to be executed
+    for combattant in team1.iter().chain(team2.iter()) {
+        if combattant.creature.actions.iter().any(|a| a.base().action_slot == -3) {
+            has_precombat = true;
+            break;
+        }
+    }
+    
+    if !has_precombat {
+        return;
+    }
+    
+    if log_enabled {
+        log.push("".to_string());
+        log.push("=== Pre-Combat Setup ===".to_string());
+    }
+    
+    // Execute pre-combat actions for team1 (players)
+    for attacker_index in 0..team1.len() {
+        let precombat_actions: Vec<_> = team1[attacker_index]
+            .creature
+            .actions
+            .iter()
+            .filter(|a| a.base().action_slot == -3)
+            .cloned()
+            .collect();
+        
+        for action in precombat_actions {
+            if log_enabled {
+                log.push(format!("  > {} uses {}", team1[attacker_index].creature.name, action.base().name));
+            }
+            
+            // Get targets for the action (correct signature: combattant, action, allies, enemies)
+            let targets = get_targets(&team1[attacker_index], &action, &team1, &team2);
+            
+            // Create action record
+            let mut action_record = CombattantAction {
+                action: action.clone(),
+                targets: HashMap::new(),
+            };
+           
+            for (is_target_enemy, target_idx) in &targets {
+                let target_id = if *is_target_enemy { &team2[*target_idx].id } else { &team1[*target_idx].id };
+                *action_record.targets.entry(target_id.clone()).or_insert(0) += 1;
+            }
+            
+            // Execute action on all targets
+            let cleanup = resolution::resolve_action_execution(
+                attacker_index,
+                team1,
+                team2,
+                &action,
+                &targets,
+                &action_record,
+                stats,
+                log,
+                log_enabled,
+            );
+            
+            // Process cleanup instructions
+            for instruction in cleanup {
+                match instruction {
+                    CleanupInstruction::RemoveAllBuffsFromSource(source_id) => {
+                        remove_all_buffs_from_source(&source_id, team1, team2);
+                    },
+                    CleanupInstruction::BreakConcentration(combatant_id, buff_id) => {
+                        break_concentration(&combatant_id, &buff_id, team1, team2);
+                    },
+                }
+            }
+        }
+    }
+    
+    // Execute pre-combat actions for team2 (monsters)
+    for attacker_index in 0..team2.len() {
+        let precombat_actions: Vec<_> = team2[attacker_index]
+            .creature
+            .actions
+            .iter()
+            .filter(|a| a.base().action_slot == -3)
+            .cloned()
+            .collect();
+        
+        for action in precombat_actions {
+            if log_enabled {
+                log.push(format!("  > {} uses {}", team2[attacker_index].creature.name, action.base().name));
+            }
+            
+            // Get targets for the action (correct signature: combattant, action, allies, enemies)
+            // Note: from team2's perspective, team2 is allies and team1 is enemies
+            let targets = get_targets(&team2[attacker_index], &action, &team2, &team1);
+            
+            // Create action record
+            let mut action_record = CombattantAction {
+                action: action.clone(),
+                targets: HashMap::new(),
+            };
+            
+            for (is_target_enemy, target_idx) in &targets {
+                let target_id = if *is_target_enemy { &team1[*target_idx].id } else { &team2[*target_idx].id };
+                *action_record.targets.entry(target_id.clone()).or_insert(0) += 1;
+            }
+            
+            // Execute action on all targets
+            let cleanup = resolution::resolve_action_execution(
+                attacker_index,
+                team2,
+                team1,  // Note: reversed for team2's perspective
+                &action,
+                &targets,
+                &action_record,
+                stats,
+                log,
+                log_enabled,
+            );
+            
+            // Process cleanup instructions
+            for instruction in cleanup {
+                match instruction {
+                    CleanupInstruction::RemoveAllBuffsFromSource(source_id) => {
+                        remove_all_buffs_from_source(&source_id, team2, team1);
+                    },
+                    CleanupInstruction::BreakConcentration(combatant_id, buff_id) => {
+                        break_concentration(&combatant_id, &buff_id, team2, team1);
+                    },
+                }
+            }
+        }
+    }
+    
+    if log_enabled {
+        log.push("".to_string());
+    }
+}
+
 fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<String>, log_enabled: bool) -> EncounterResult {
     let mut team2 = Vec::new();
     for (group_idx, monster) in encounter.monsters.iter().enumerate() {
@@ -189,6 +335,9 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<St
     if log_enabled {
         log.push(format!("--- Encounter Start: Players vs Monsters ---"));
     }
+
+    // NEW: Execute pre-combat actions (actionSlot: -3) before combat begins
+    execute_precombat_actions(&mut team1, &mut team2, &mut stats, log, log_enabled);
 
     let max_rounds = 100;
     for i in 0..max_rounds {
