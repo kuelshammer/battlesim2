@@ -527,9 +527,19 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
     // Choose actions according to D&D 5e action economy
     let _rng = rand::thread_rng();
 
-    // Sort actions: buffs first, then attacks
+    // Sort actions: 
+    // 1. Priority based on Frequency (Limited > Recharge > At Will)
+    // 2. Buffs first, then Attacks
     let mut sorted_actions = actions.clone();
     sorted_actions.sort_by(|a, b| {
+        let score_a = get_action_priority(&a.base().freq);
+        let score_b = get_action_priority(&b.base().freq);
+        
+        if score_a != score_b {
+             // Higher score comes first (Descending priority)
+             return score_b.cmp(&score_a);
+        }
+
         match (a, b) {
             (Action::Buff(_), Action::Atk(_)) => std::cmp::Ordering::Less,
             (Action::Atk(_), Action::Buff(_)) => std::cmp::Ordering::Greater,
@@ -603,6 +613,14 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
                 },
             }
         }
+    }
+}
+
+fn get_action_priority(freq: &Frequency) -> i32 {
+    match freq {
+        Frequency::Limited { .. } => 3,
+        Frequency::Recharge { .. } => 2,
+        Frequency::Static(s) => if s == "at will" { 1 } else { 3 },
     }
 }
 
