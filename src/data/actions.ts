@@ -139,6 +139,7 @@ export function getFinalAction(action: Action): FinalAction {
         ...template,
         id: action.id,
         name: templateName,
+        actionSlot: action.actionSlot ?? template.actionSlot,
         freq,
         condition,
         target: template.target || target as any,
