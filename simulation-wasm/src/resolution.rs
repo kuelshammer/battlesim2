@@ -321,8 +321,60 @@ fn apply_single_effect(
                     // TODO: Implement separate logic for self-targeting offensive triggers
                 }
                 
+                // Apply Damage Reduction (Flat)
+                let mut flat_reduction = 0.0;
+                let mut reduction_sources = Vec::new();
+                
+                if let Some(t) = target_opt.as_ref() {
+                    for b in t.final_state.buffs.values() {
+                        if let Some(reduction_formula) = &b.damage_reduction {
+                            let val = dice::evaluate(reduction_formula, 1);
+                            flat_reduction += val;
+                            if let Some(name) = &b.display_name {
+                                reduction_sources.push(format!("{} (-{:.0})", name, val));
+                            }
+                        }
+                    }
+                }
+                
+                let damage_before_reduction = damage;
+                damage = (damage - flat_reduction).max(0.0);
+
+                // Apply Damage Multipliers (Resistance/Vulnerability)
+                let mut total_multiplier = 1.0;
+                let mut multiplier_sources = Vec::new();
+
+                if let Some(t) = target_opt.as_ref() {
+                    for b in t.final_state.buffs.values() {
+                        if let Some(mult) = b.damage_taken_multiplier {
+                            total_multiplier *= mult;
+                            if let Some(name) = &b.display_name {
+                                if mult < 1.0 {
+                                    multiplier_sources.push(format!("{} (Resisted)", name));
+                                } else if mult > 1.0 {
+                                    multiplier_sources.push(format!("{} (Vulnerable)", name));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let damage_before_multiplier = damage;
+                damage = (damage * total_multiplier).floor(); // Round down damage in 5e
+
                 if log_enabled {
-                    log.push(format!("         Damage: {:.0} (Base) + {:.0} (Buffs) = {:.0}", damage - buff_dmg, buff_dmg, damage));
+                    let mut calc_log = format!("         Damage: {:.0} (Base) + {:.0} (Buffs)", damage_before_reduction - buff_dmg, buff_dmg);
+                    
+                    if flat_reduction > 0.0 {
+                        calc_log.push_str(&format!(" - {:.0} ({})", flat_reduction, reduction_sources.join(", ")));
+                    }
+                    
+                    if total_multiplier != 1.0 {
+                        calc_log.push_str(&format!(" * {:.2} ({})", total_multiplier, multiplier_sources.join(", ")));
+                    }
+                    
+                    calc_log.push_str(&format!(" = {:.0}", damage));
+                    log.push(calc_log);
                 }
 
                 // Apply Damage (Write)

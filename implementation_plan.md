@@ -20,4 +20,17 @@ Similarity scoring algorithm to find the best match:
 Enhanced log formatting (like your example with sections)
 File system integration
 React modal component design
+### 5. Enhanced Combat Logging
+- ✅ Bless/Bane detailed logging with bonus/penalty breakdowns
+- ✅ Buff display name fallbacks (uses action name if no displayName)
+- ✅ Save roll breakdowns showing base + buffs
+- ✅ Concentration status in logs
+
+### 6. Bug Fixes
+- [ ] **CRITICAL**: Implement Resistance/Vulnerability logic (currently missing)
+  - Apply `damage_taken_multiplier` from buffs (e.g., Resistance = 0.5)
+  - Apply `damage_reduction` from buffs (e.g., Heavy Armor Master)
+  - Log resistance application
+
+### 7. Frontend Integration
 Implementation phases (4-7 hours total work)
