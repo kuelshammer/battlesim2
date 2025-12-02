@@ -110,6 +110,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                     freq: { reset: 'lr', uses: scale(level, { 1: 2, 3: 3, 6: 4, 12: 5, 17: 6 }) },
                     condition: 'not used yet',
                     buff: {
+                        displayName: 'Rage',
                         duration: 'entire encounter',
                         damageTakenMultiplier: 0.5,
                     },
@@ -160,6 +161,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                     freq: 'at will',
                     target: 'self',
                     buff: {
+                        displayName: 'Reckless Attack',
                         duration: '1 round',
                         condition: 'Attacks and is attacked with Advantage',
                     }

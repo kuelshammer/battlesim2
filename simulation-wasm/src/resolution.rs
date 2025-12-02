@@ -351,7 +351,8 @@ fn apply_single_effect(
         },
         Action::Buff(a) => {
             if log_enabled {
-                log.push(format!("      -> Casts {} on {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
+                let display_name = a.buff.display_name.as_deref().unwrap_or(&a.name);
+                log.push(format!("      -> Casts {} on {}", display_name, target_name));
             }
             if a.buff.concentration {
                 if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
@@ -386,8 +387,9 @@ fn apply_single_effect(
             let roll = rand::thread_rng().gen_range(1..=20) as f64;
             
             if log_enabled {
+                let display_name = a.buff.display_name.as_deref().unwrap_or(&a.name);
                 log.push(format!("      -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
-                    a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name, dc, roll + save_bonus, roll, save_bonus));
+                    display_name, target_name, dc, roll + save_bonus, roll, save_bonus));
             }
 
             if roll + save_bonus < dc {
