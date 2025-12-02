@@ -68,23 +68,8 @@ pub enum Action {
     Buff(BuffAction),
     #[serde(rename = "debuff")]
     Debuff(DebuffAction),
-    // Template actions are resolved before simulation, so we might not need them here if we only receive "FinalAction"
-    // But the Creature struct has "actions: z.array(ActionSchema)", which includes TemplateAction.
-    // However, the simulation logic usually works with FinalAction.
-    // Let's include Template for completeness if needed, but for now I'll stick to what's needed for simulation.
-    // Actually, the input to simulation is Creature, which has ActionSchema.
-    // But the simulation converts them to FinalAction. Ideally the frontend sends resolved actions?
-    // Looking at simulation.ts: `combattant.creature.actions.map(getFinalAction)`.
-    // `getFinalAction` is in `../data/actions`.
-    // If I want to run this in Rust, I either need to port `getFinalAction` and the templates, OR ensure the frontend sends resolved actions.
-    // The prompt says "mirror the TS interfaces".
-    // Let's assume for now we might need to handle templates or the frontend will send resolved creatures.
-    // Given the complexity of porting all templates, it would be better if the frontend resolved them.
-    // BUT: The user wants to keep the frontend "exactly the same".
-    // So I should probably handle what comes in.
-    // However, `getFinalAction` seems to just look up templates.
-    // Let's define the structs for the specific actions first.
-    // ... (Action enum definition)
+    #[serde(rename = "template")]
+    Template(TemplateAction),
 }
 
 impl Action {
@@ -94,6 +79,7 @@ impl Action {
             Action::Heal(a) => a.base(),
             Action::Buff(a) => a.base(),
             Action::Debuff(a) => a.base(),
+            Action::Template(a) => a.base(),
         }
     }
 }
@@ -230,6 +216,43 @@ impl DebuffAction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TemplateAction {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "actionSlot")]
+    pub action_slot: i32,
+    pub freq: Frequency,
+    pub condition: ActionCondition,
+    pub targets: i32,
+
+    #[serde(rename = "templateOptions")]
+    pub template_options: TemplateOptions,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TemplateOptions {
+    #[serde(rename = "templateName")]
+    pub template_name: String,
+    // Add other options as needed, like saveDC, amount, etc.
+    #[serde(rename = "saveDC")]
+    pub save_dc: Option<f64>,
+    pub amount: Option<DiceFormula>,
+}
+
+impl TemplateAction {
+    pub fn base(&self) -> ActionBase {
+        ActionBase {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            action_slot: self.action_slot,
+            freq: self.freq.clone(),
+            condition: self.condition.clone(),
+            targets: self.targets,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionTrigger {
     pub id: String,
     pub condition: TriggerCondition,
@@ -286,6 +309,8 @@ pub struct CreatureState {
     #[serde(rename = "concentratingOn")]
     pub concentrating_on: Option<String>,
     pub actions_used_this_encounter: HashSet<String>,
+    #[serde(rename = "bonusActionUsed")]
+    pub bonus_action_used: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

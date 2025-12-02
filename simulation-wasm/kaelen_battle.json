@@ -124,13 +124,40 @@
       "actions": [
         {
           "id": "8648cb12-ac1b-425d-b0ab-f1187903857d",
-          "name": "Hand Crossbow x2 + Crossbow Expert + Hunter's Mark",
+          "name": "Hunter's Mark",
+          "actionSlot": 1,
+          "freq": {
+            "reset": "lr",
+            "uses": 3
+          },
+          "condition": "not used yet",
+          "targets": 1,
+          "type": "template",
+          "templateOptions": {
+            "templateName": "Hunter's Mark"
+          }
+        },
+        {
+          "id": "8648cb12-ac1b-425d-b0ab-f1187903858e",
+          "name": "Hand Crossbow",
           "actionSlot": 0,
           "freq": "at will",
           "condition": "default",
-          "targets": 3,
+          "targets": 1,
           "type": "atk",
-          "dpr": "1d6 + 5[DEX] + 1d6[HM] + 10[SS]",
+          "dpr": "1d6 + 5[DEX] + 10[SS]",
+          "toHit": "3[PB] + 5[DEX] + 2[ARCHERY] - 5[SS]",
+          "target": "enemy with least HP"
+        },
+        {
+          "id": "8648cb12-ac1b-425d-b0ab-f1187903859f",
+          "name": "Hand Crossbow (Crossbow Expert)",
+          "actionSlot": 1,
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1,
+          "type": "atk",
+          "dpr": "1d6 + 5[DEX] + 10[SS]",
           "toHit": "3[PB] + 5[DEX] + 2[ARCHERY] - 5[SS]",
           "target": "enemy with least HP"
         }

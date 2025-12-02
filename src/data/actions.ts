@@ -55,6 +55,18 @@ export const ActionTemplates = {
             concentration: true,
         },
     }),
+    'Hunter\'s Mark': createTemplate({
+        actionSlot: ActionSlots['Bonus Action'],
+        type: 'buff',
+        targets: 1,
+        target: 'enemy with least HP', // Mark the priority target
+        buff: {
+            displayName: 'Hunter\'s Mark',
+            duration: 'entire encounter', // Simplified from 1 hour
+            damage: '1d6', // Extra damage on each weapon attack hit
+            concentration: true,
+        },
+    }),
     'Fireball': createTemplate({
         actionSlot: ActionSlots.Action,
         type: 'atk',

@@ -81,6 +81,26 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
                 }
             }
         },
+        Action::Template(a) => {
+            // For templates, we need to determine the target based on the template type
+            // Since templates should be resolved to their final form, for now we'll treat them as buff actions
+            // targeting allies (like Hunter's Mark which targets enemies)
+            // TODO: Implement proper template resolution based on templateOptions.templateName
+
+            // For now, assume template targets enemies (like Hunter's Mark)
+            for i in 0..count {
+                #[cfg(debug_assertions)]
+                eprintln!("          Template {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
+                if let Some(idx) = select_enemy_target(crate::enums::EnemyTarget::EnemyWithLeastHP, enemies, &targets, Some(&a.base().id)) {
+                    #[cfg(debug_assertions)]
+                    eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
+                    targets.push((true, idx));
+                } else {
+                    #[cfg(debug_assertions)]
+                    eprintln!("            No target found for {}'s template {}.", c.creature.name, i + 1);
+                }
+            }
+        },
 
     }
     #[cfg(debug_assertions)]

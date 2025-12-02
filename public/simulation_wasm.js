@@ -195,6 +195,21 @@ export function aggregate_simulation_results(results) {
 }
 
 /**
+ * @param {any} players_val
+ * @param {any} encounters_val
+ * @param {number} iterations
+ * @param {boolean} log_enabled
+ * @returns {any}
+ */
+export function run_simulation(players_val, encounters_val, iterations, log_enabled) {
+    const ret = wasm.run_simulation(players_val, encounters_val, iterations, log_enabled);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * @param {any} players
  * @param {any} encounters
  * @param {number} iterations

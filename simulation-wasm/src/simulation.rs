@@ -186,6 +186,7 @@ fn create_combattant(creature: Creature, id: String) -> Combattant {
         used_actions: HashSet::new(),
         concentrating_on: None,
         actions_used_this_encounter: HashSet::new(),
+        bonus_action_used: false,
     };
     Combattant {
         id,
@@ -510,7 +511,10 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
     let mut new_initial_state = c.final_state.clone();
     new_initial_state.buffs.clear();
     new_initial_state.upcoming_buffs.clear();
-    
+
+    // Reset bonus action flag at start of turn
+    new_initial_state.bonus_action_used = false;
+
     for (name, buff) in &c.final_state.buffs {
         match buff.duration {
             BuffDuration::EntireEncounter => {
@@ -518,7 +522,7 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
             },
             BuffDuration::RepeatTheSaveEachRound => {
                 let dc = dice::evaluate(buff.dc.as_ref().unwrap_or(&DiceFormula::Value(10.0)), 1);
-                let save_bonus = c.creature.save_bonus; 
+                let save_bonus = c.creature.save_bonus;
                 let roll = rand::thread_rng().gen_range(1..=20) as f64;
                 if roll + save_bonus < dc {
                      new_initial_state.buffs.insert(name.clone(), buff.clone());
@@ -527,11 +531,11 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
             _ => {} // Other durations are handled elsewhere or not relevant for start of round
         }
     }
-    
+
     for (name, buff) in &c.final_state.upcoming_buffs {
         new_initial_state.buffs.insert(name.clone(), buff.clone());
     }
-    
+
     for action in &c.creature.actions {
         if let Frequency::Recharge { cooldown_rounds, .. } = &action.base().freq {
             let increment = 1.0 / *cooldown_rounds as f64;
@@ -539,7 +543,7 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
             new_initial_state.remaining_uses.insert(action.base().id.clone(), (current + increment).min(1.0));
         }
     }
-    
+
     Combattant {
         id: c.id.clone(),
         initiative: c.initiative,
@@ -624,6 +628,15 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
     // Find first two available actions with different slots
     for action in &sorted_actions {
         let action_slot = action.base().action_slot;
+
+        // Check bonus action economy: only one bonus action per turn
+        if action_slot == 1 && allies[index].final_state.bonus_action_used {
+            if log_enabled {
+                log.push(format!("    - {} skips {} (bonus action already used)", allies[index].creature.name, action.base().name));
+            }
+            continue;
+        }
+
         if !used_slots.contains(&action_slot) {
             used_slots.insert(action_slot);
             actions_to_execute.push(action);

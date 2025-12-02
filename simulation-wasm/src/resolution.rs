@@ -573,6 +573,19 @@ fn apply_single_effect(
                 if log_enabled { log.push(format!("         Saved!")); }
             }
         },
+        Action::Template(a) => {
+            // For template actions, we should resolve them to their final form first
+            // For now, we'll treat them as buff actions and apply the template effect
+            if log_enabled { log.push(format!("    - Applying template: {}", a.template_options.template_name)); }
+
+            // TODO: Implement proper template resolution
+            // For now, this is a placeholder that just logs the template application
+            // The actual template logic should be implemented based on templateOptions.templateName
+
+            if log_enabled {
+                log.push(format!("      Template {} applied to target", a.template_options.template_name));
+            }
+        },
     }
     cleanup_instructions
 }
@@ -602,6 +615,11 @@ pub fn resolve_action_execution(
 
     // NEW: Mark action as used for the encounter
     attacker_mut.final_state.actions_used_this_encounter.insert(action.base().id.clone());
+
+    // NEW: Mark bonus action as used if this was a bonus action
+    if action.base().action_slot == 1 {
+        attacker_mut.final_state.bonus_action_used = true;
+    }
 
     // Decrement remaining uses if applicable
     match &action.base().freq {
