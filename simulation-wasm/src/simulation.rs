@@ -207,6 +207,20 @@ fn execute_precombat_actions(
             .collect();
         
         for action in precombat_actions {
+            // NEW: Add validation checks here
+            if !is_usable(&team1[attacker_index], &action) {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (not usable - frequency/uses)", team1[attacker_index].creature.name, action.base().name));
+                }
+                continue; // Skip this action if not usable
+            }
+            if !check_action_condition(&action, &team1[attacker_index], team1, team2) {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (condition not met)", team1[attacker_index].creature.name, action.base().name));
+                }
+                continue; // Skip this action if condition not met
+            }
+
             if log_enabled {
                 log.push(format!("  > {} uses {}", team1[attacker_index].creature.name, action.base().name));
             }
@@ -263,6 +277,21 @@ fn execute_precombat_actions(
             .collect();
         
         for action in precombat_actions {
+            // NEW: Add validation checks here
+            // Note: from team2's perspective, team2 is allies and team1 is enemies
+            if !is_usable(&team2[attacker_index], &action) {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (not usable - frequency/uses)", team2[attacker_index].creature.name, action.base().name));
+                }
+                continue; // Skip this action if not usable
+            }
+            if !check_action_condition(&action, &team2[attacker_index], team2, team1) {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (condition not met)", team2[attacker_index].creature.name, action.base().name));
+                }
+                continue; // Skip this action if condition not met
+            }
+
             if log_enabled {
                 log.push(format!("  > {} uses {}", team2[attacker_index].creature.name, action.base().name));
             }
