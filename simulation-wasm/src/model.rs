@@ -285,7 +285,6 @@ pub struct CreatureState {
     pub used_actions: HashSet<String>,
     #[serde(rename = "concentratingOn")]
     pub concentrating_on: Option<String>,
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -544,11 +544,29 @@ pub fn resolve_action_execution(
     let (allies_head, allies_tail) = allies.split_at_mut(attacker_index);
     let (attacker_mut, allies_after_attacker) = allies_tail.split_first_mut().expect("Attacker index out of bounds");
 
-
-
     // 1. Mark action as used and record it (Attacker state update)
     attacker_mut.final_state.used_actions.insert(action.base().id.clone());
     attacker_mut.actions.push(action_record.clone());
+
+    // Decrement remaining uses if applicable
+    match &action.base().freq {
+        Frequency::Limited { .. } => {
+            let action_id = action.base().id.clone();
+            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+        },
+        Frequency::Static(s) if s != "at will" => {
+            let action_id = action.base().id.clone();
+            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+        },
+        Frequency::Recharge { .. } => {
+            let action_id = action.base().id.clone();
+            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+        },
+        _ => {} // No decrement for "at will"
+    }
 
     // 2. Iterate targets and apply effects
     // 2. Iterate targets and apply effects
