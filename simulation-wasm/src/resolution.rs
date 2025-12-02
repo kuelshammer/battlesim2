@@ -61,7 +61,7 @@ fn process_defensive_triggers(
     for trigger in target_triggers.iter() {
         if trigger.condition == TriggerCondition::OnBeingAttacked {
             if let Some(cost_slot) = trigger.cost {
-                if cost_slot == ActionSlot::Reaction {
+                if cost_slot == (ActionSlot::Reaction as i32) {
                     if total_hit_roll >= final_ac { // Currently a hit
                         if let Action::Buff(buff_action) = &trigger.action {
                             if let Some(ac_buff_dice) = &buff_action.buff.ac {
