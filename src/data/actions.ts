@@ -7,7 +7,9 @@ export const ActionTemplates = {
         actionSlot: ActionSlots.Action,
         type: 'debuff',
         targets: 3,
+        target: 'enemy with least HP',
         buff: {
+            displayName: 'Bane',
             duration: 'entire encounter',
             toHit: '-1d4',
             save: '-1d4',
@@ -20,10 +22,36 @@ export const ActionTemplates = {
         actionSlot: ActionSlots.Action,
         type: 'buff',
         targets: 3,
+        target: 'ally with the least HP',
         buff: {
+            displayName: 'Bless',
             duration: 'entire encounter',
             toHit: '1d4',
             save: '1d4',
+            concentration: true,
+        },
+    }),
+    'Haste': createTemplate({
+        actionSlot: ActionSlots.Action,
+        type: 'buff',
+        targets: 1,
+        buff: {
+            displayName: 'Haste',
+            duration: 'entire encounter', // 1 minute
+            ac: '2',
+            condition: 'Hasted',
+            concentration: true,
+        },
+    }),
+    'Holy Weapon': createTemplate({
+        actionSlot: ActionSlots['Bonus Action'],
+        type: 'buff',
+        targets: 1,
+        target: 'self', // Usually weapon, simplifying to self for now
+        buff: {
+            displayName: 'Holy Weapon',
+            duration: 'entire encounter', // 1 hour
+            damage: '2d8',
             concentration: true,
         },
     }),
@@ -46,11 +74,12 @@ export const ActionTemplates = {
     'Hypnotic Pattern': createTemplate({
         actionSlot: ActionSlots.Action,
         type: 'debuff',
-        targets: 2,
-        
+        targets: 4, // Area of effect approximation
+
         saveDC: 0,
         buff: {
-            duration: '1 round',
+            displayName: 'Hypnotic Pattern',
+            duration: 'entire encounter', // 1 minute
             condition: 'Incapacitated',
             concentration: true,
         },
@@ -65,20 +94,32 @@ export const ActionTemplates = {
 
         toHit: 0,
     }),
+    'Greater Invisibility': createTemplate({
+        actionSlot: ActionSlots.Action,
+        type: 'buff',
+        targets: 1,
+        buff: {
+            displayName: 'Greater Invisibility',
+            duration: 'entire encounter', // 1 minute
+            condition: 'Invisible',
+            concentration: true,
+        },
+    }),
     'Shield': createTemplate({
         actionSlot: ActionSlots.Reaction,
         type: 'buff',
         targets: 1,
         target: 'self',
         buff: {
+            displayName: 'Shield',
             duration: '1 round',
-            ac: 5,
+            ac: '5',
         },
     }),
 }
 
 type RealOmit<T, K extends keyof T> = { [P in keyof T as P extends K ? never : P]: T[P] };
-type ActionTemplate = RealOmit<FinalAction, 'condition'|'target'|'freq'|'name'|'id'> & { target?: AllyTarget|EnemyTarget }
+type ActionTemplate = RealOmit<FinalAction, 'condition' | 'target' | 'freq' | 'name' | 'id'> & { target?: AllyTarget | EnemyTarget }
 
 // For type safety
 function createTemplate(action: ActionTemplate): ActionTemplate {
@@ -106,7 +147,7 @@ export function getFinalAction(action: Action): FinalAction {
 
     if (result.type === 'atk') {
         if (toHit !== undefined) result.toHit = toHit
-        
+
         if (result.riderEffect && (saveDC !== undefined)) result.riderEffect.dc = saveDC
     }
 

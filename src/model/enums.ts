@@ -65,6 +65,7 @@ export const CreatureConditionList = [
     //'Deafened',
     'Frightened',
     // 'Grapple',
+    'Hasted',
     'Incapacitated',
     'Invisible',
     'Paralyzed',

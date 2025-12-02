@@ -433,12 +433,46 @@ pub fn resolve_action_execution(
     attacker_mut.actions.push(action_record.clone());
 
     // 2. Iterate targets and apply effects
-    for (is_target_enemy, target_idx) in raw_targets {
-        if *is_target_enemy {
+    // 2. Iterate targets and apply effects
+    let mut used_enemy_targets = Vec::new();
+    
+    for (is_target_enemy, mut target_idx) in raw_targets.iter().copied() {
+        if is_target_enemy {
+            // For attacks, always re-select target dynamically based on current state
+            // This makes "enemy with least HP" reactive to damage dealt
+            if matches!(action, Action::Atk(_)) {
+                if let Action::Atk(atk_action) = action {
+                    if let Some(new_idx) = crate::targeting::select_enemy_target(
+                        atk_action.target.clone(),
+                        enemies,
+                        &used_enemy_targets,
+                        None
+                    ) {
+                        target_idx = new_idx;
+                    } else {
+                        if log_enabled {
+                            log.push(format!("      -> No targets available for attack"));
+                        }
+                        continue; // Skip if no targets
+                    }
+                }
+            } else {
+                // For non-attacks (debuffs), only re-select if target is dead
+                if enemies[target_idx].final_state.current_hp <= 0.0 {
+                    if log_enabled {
+                        log.push(format!("      -> {} is already unconscious, skipping action", 
+                            enemies[target_idx].creature.name));
+                    }
+                    continue;
+                }
+            }
+            
+            used_enemy_targets.push((true, target_idx));
+            
             // Target is enemy (safe to borrow from enemies slice)
             let instructions = apply_single_effect(
                 attacker_mut,
-                Some(&mut enemies[*target_idx]),
+                Some(&mut enemies[target_idx]),
                 action,
                 stats,
                 log,
@@ -447,7 +481,7 @@ pub fn resolve_action_execution(
             all_cleanup.extend(instructions);
         } else {
             // Target is ally (need to find correct mutable reference)
-            if *target_idx == attacker_index {
+            if target_idx == attacker_index {
                 // Self-targeting: pass None as target_opt
                 let instructions = apply_single_effect(
                     attacker_mut,
@@ -459,10 +493,10 @@ pub fn resolve_action_execution(
                 );
                 all_cleanup.extend(instructions);
             } else {
-                let target_mut = if *target_idx < attacker_index {
-                    &mut allies_head[*target_idx]
+                let target_mut = if target_idx < attacker_index {
+                    &mut allies_head[target_idx]
                 } else {
-                    &mut allies_after_attacker[*target_idx - attacker_index - 1]
+                    &mut allies_after_attacker[target_idx - attacker_index - 1]
                 };
                 
                 let instructions = apply_single_effect(

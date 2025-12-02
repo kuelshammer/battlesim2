@@ -237,6 +237,18 @@ const Simulation: FC<PropType> = ({ }) => {
                     <FontAwesomeIcon icon={faPlus} />
                     Add Encounter
                 </button>
+                {(saving || loading) ? (
+                    <AdventuringDayForm
+                        players={players}
+                        encounters={encounters}
+                        onCancel={() => { setSaving(false); setLoading(false) }}
+                        onLoad={loading ? ((newPlayers, newEncounters) => {
+                            setPlayers(newPlayers)
+                            setEncounters(newEncounters)
+                            setLoading(false)
+                        }) : undefined}
+                    />
+                ) : null}
             </semiPersistentContext.Provider>
         </div>
     )
