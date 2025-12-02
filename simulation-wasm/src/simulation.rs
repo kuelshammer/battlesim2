@@ -145,6 +145,7 @@ fn create_combattant(creature: Creature, id: String) -> Combattant {
         upcoming_buffs: HashMap::new(),
         used_actions: HashSet::new(),
         concentrating_on: None,
+        action_surge_used: false,
     };
     Combattant {
         id,
