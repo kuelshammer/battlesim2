@@ -99,49 +99,26 @@ const Simulation: FC<PropType> = ({ }) => {
 
                 setAllResults(results)
 
-                // Aggregate results based on luck slice
+                // Select single run based on luck
                 const total = results.length
-                const sliceSize = Math.floor(total / 5) // 20% slice
-                const start = Math.min(total - sliceSize, Math.floor(luck * (total - sliceSize))) // Ensure start index is valid
-                const end = start + sliceSize
+                const index = Math.min(total - 1, Math.floor(luck * total))
+                const selectedRun = results[index]
 
-                const slice = results.slice(start, end)
-                // console.log('Aggregating slice:', start, 'to', end, '(', slice.length, 'results)')
-
-                // Aggregate
-                const aggregated = wasm.aggregate_simulation_results(slice) as any
-                // console.log('Aggregated result:', aggregated)
-
-                // Construct synthetic EncounterResult with proper structure
-                const syntheticResult = [{
-                    rounds: aggregated,
-                    stats: new Map(),
-                }]
-
-                setSimulationResults(syntheticResult)
+                setSimulationResults(selectedRun)
                 console.log('Simulation results set!')
             } catch (e) {
                 console.error("Simulation failed", e)
             }
         } else {
-            // Update aggregation based on new luck
+            // Update selection based on new luck
             try {
                 const total = allResults.length
-                const sliceSize = Math.floor(total / 5)
-                const start = Math.min(total - sliceSize, Math.floor(luck * (total - sliceSize)))
-                const end = start + sliceSize
+                const index = Math.min(total - 1, Math.floor(luck * total))
+                const selectedRun = allResults[index]
 
-                const slice = allResults.slice(start, end)
-                const aggregated = wasm.aggregate_simulation_results(slice) as any
-
-                const syntheticResult = [{
-                    rounds: aggregated,
-                    stats: new Map(),
-                }]
-
-                setSimulationResults(syntheticResult)
+                setSimulationResults(selectedRun)
             } catch (e) {
-                console.error("Aggregation failed", e)
+                console.error("Selection failed", e)
             }
         }
     }, [players, encounters, luck, wasm, allResults])
