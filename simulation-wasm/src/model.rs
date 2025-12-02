@@ -234,7 +234,7 @@ pub struct ActionTrigger {
     pub id: String,
     pub condition: TriggerCondition,
     pub action: Action, // The action to execute when triggered
-    pub cost: Option<ActionSlot>, // e.g. Reaction (4)
+    pub cost: Option<i32>, // e.g. Reaction (4)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

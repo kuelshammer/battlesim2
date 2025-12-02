@@ -22,11 +22,36 @@ export const ActionTemplates = {
         actionSlot: ActionSlots.Action,
         type: 'buff',
         targets: 3,
+        target: 'ally with the least HP',
         buff: {
             displayName: 'Bless',
             duration: 'entire encounter',
             toHit: '1d4',
             save: '1d4',
+            concentration: true,
+        },
+    }),
+    'Haste': createTemplate({
+        actionSlot: ActionSlots.Action,
+        type: 'buff',
+        targets: 1,
+        buff: {
+            displayName: 'Haste',
+            duration: 'entire encounter', // 1 minute
+            ac: '2',
+            condition: 'Hasted',
+            concentration: true,
+        },
+    }),
+    'Holy Weapon': createTemplate({
+        actionSlot: ActionSlots['Bonus Action'],
+        type: 'buff',
+        targets: 1,
+        target: 'self', // Usually weapon, simplifying to self for now
+        buff: {
+            displayName: 'Holy Weapon',
+            duration: 'entire encounter', // 1 hour
+            damage: '2d8',
             concentration: true,
         },
     }),
@@ -49,12 +74,12 @@ export const ActionTemplates = {
     'Hypnotic Pattern': createTemplate({
         actionSlot: ActionSlots.Action,
         type: 'debuff',
-        targets: 2,
+        targets: 4, // Area of effect approximation
 
         saveDC: 0,
         buff: {
             displayName: 'Hypnotic Pattern',
-            duration: '1 round',
+            duration: 'entire encounter', // 1 minute
             condition: 'Incapacitated',
             concentration: true,
         },
@@ -69,6 +94,17 @@ export const ActionTemplates = {
 
         toHit: 0,
     }),
+    'Greater Invisibility': createTemplate({
+        actionSlot: ActionSlots.Action,
+        type: 'buff',
+        targets: 1,
+        buff: {
+            displayName: 'Greater Invisibility',
+            duration: 'entire encounter', // 1 minute
+            condition: 'Invisible',
+            concentration: true,
+        },
+    }),
     'Shield': createTemplate({
         actionSlot: ActionSlots.Reaction,
         type: 'buff',
@@ -77,7 +113,50 @@ export const ActionTemplates = {
         buff: {
             displayName: 'Shield',
             duration: '1 round',
-            ac: 5,
+            ac: '5',
+        },
+    }),
+    'Mage Armour': createTemplate({
+        actionSlot: -3, // Pre-combat by default
+        type: 'buff',
+        targets: 1,
+        target: 'self', // Can be touch, but self for simplicity for now
+        buff: {
+            displayName: 'Mage Armour',
+            duration: 'entire encounter', // 8 hours
+            ac: '3',
+        },
+    }),
+    'Armor of Agathys': createTemplate({
+        actionSlot: -3, // Pre-combat by default
+        type: 'heal', // Using heal for THP application
+        targets: 1,
+        target: 'self',
+        amount: 0, // Base amount, scaled by level usually
+        tempHP: true,
+        // Note: Damage reflection needs a specific implementation or trigger, 
+        // for now just the THP part or we add a buff with damage reflection if supported
+        // The current system supports damageTakenMultiplier but not reflection directly in simple buffs
+        // We might need a trigger for the reflection part.
+    }),
+    'False Life': createTemplate({
+        actionSlot: -3,
+        type: 'heal',
+        targets: 1,
+        target: 'self',
+        amount: '1d4 + 4',
+        tempHP: true,
+    }),
+    'Shield of Faith': createTemplate({
+        actionSlot: ActionSlots['Bonus Action'], // Can be pre-cast too
+        type: 'buff',
+        targets: 1,
+        target: 'ally with the least HP',
+        buff: {
+            displayName: 'Shield of Faith',
+            duration: 'entire encounter', // 10 mins
+            ac: '2',
+            concentration: true,
         },
     }),
 }
@@ -103,6 +182,7 @@ export function getFinalAction(action: Action): FinalAction {
         ...template,
         id: action.id,
         name: templateName,
+        actionSlot: action.actionSlot ?? template.actionSlot,
         freq,
         condition,
         target: template.target || target as any,
@@ -117,6 +197,10 @@ export function getFinalAction(action: Action): FinalAction {
 
     if (result.type === 'debuff') {
         if (saveDC !== undefined) result.saveDC = saveDC
+    }
+
+    if (result.type === 'heal') {
+        if (action.templateOptions.amount !== undefined) result.amount = action.templateOptions.amount
     }
 
     return result

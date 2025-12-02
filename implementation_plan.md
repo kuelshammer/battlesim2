@@ -93,24 +93,32 @@ This plan outlines the steps to replace the deterministic TypeScript simulation 
     - If a creature drops to 0 HP, call `break_concentration`.
 
 ### 4. Deterministic IDs & Aggregation Fix (NEW)
-- [ ] **Deterministic Combatant IDs**:
+- [x] **Deterministic Combatant IDs**:
     - Modify `create_combattant` to accept a specific `id` string instead of generating a random UUID.
     - In `run_single_simulation`, generate stable IDs for each combatant based on their template ID and index (e.g., `"{template_id}-{index}"`).
     - This ensures "Goblin 1" has the same ID in every simulation run.
 
-- [ ] **Simplify Aggregation**:
+- [x] **Simplify Aggregation**:
     - Remove the complex `uuid_map` logic in `aggregate_results`.
     - Aggregate directly using the stable IDs.
     - This ensures that `buff.source` (which stores the caster's ID) always points to the correct entity across all runs.
 
-- [ ] **Robust Concentration Cleanup**:
+- [x] **Robust Concentration Cleanup**:
     - With stable IDs, the "dead source cleanup" at the end of aggregation will be reliable.
     - Ensure that if a combatant's aggregated HP < 0.5 (effectively dead), all buffs sourced by them are removed from the aggregated state.
 
 ### 5. Median Run Logging (NEW)
-- [ ] **Save Median Run Log**:
+- [x] **Save Median Run Log**:
     - In `run_monte_carlo`, identify the median simulation run (index `iterations / 2`).
     - Generate a human-readable text log of this specific run (round by round, turn by turn).
     - Save this log to a file (e.g., `median_run_log.txt`) in the `GEMINI_REPORTS` directory or similar, to allow the user to inspect a "representative" fight in detail.
 
 ### 6. Frontend Integration
+- [x] **Stop Aggregating**:
+    - Update `src/components/simulation/simulation.tsx`.
+    - Remove `aggregate_simulation_results` call.
+- [x] **Implement Quintile/Direct Selection**:
+    - Use the `luck` slider value (0.0 - 1.0) to select a single run from the sorted `allResults`.
+    - Index formula: `Math.floor(luck * (allResults.length - 1))`.
+    - Pass this single run directly to `setSimulationResults`.
+    - This enables viewing "Real" fight logs (including multiple encounters) instead of averaged data.

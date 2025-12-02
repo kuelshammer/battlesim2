@@ -334,17 +334,27 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             </button>
 
             {value.type !== 'template' ? (
-                <>
-                    <input
-                        type='text'
-                        value={value.name}
-                        onChange={(e) => updateFinalAction(v => { v.name = e.target.value.length < 100 ? e.target.value : v.name })}
-                        placeholder="Action name..."
-                        style={{ minWidth: `${value.name.length}ch` }}
-                    />
-                    <Select value={value.actionSlot} options={ActionOptions} onChange={actionSlot => updateFinalAction(v => { v.actionSlot = actionSlot })} />
-                </>
+                <input
+                    type='text'
+                    value={value.name}
+                    onChange={(e) => updateFinalAction(v => { v.name = e.target.value.length < 100 ? e.target.value : v.name })}
+                    placeholder="Action name..."
+                    style={{ minWidth: `${value.name.length}ch` }}
+                />
             ) : null}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+                <Checkbox
+                    value={value.actionSlot === -3}
+                    onToggle={() => update(v => { v.actionSlot = (v.actionSlot === -3) ? 0 : -3 })}
+                />
+                <span style={{ fontSize: '0.9em' }}>Cast before combat</span>
+            </div>
+
+            <Select
+                value={value.actionSlot ?? (value.type === 'template' ? ActionTemplates[value.templateOptions.templateName].actionSlot : 0)}
+                options={ActionOptions}
+                onChange={actionSlot => update(v => { v.actionSlot = actionSlot })} />
 
             <Select value={value.type} options={TypeOptions} onChange={updateType} />
 

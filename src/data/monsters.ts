@@ -10023,6 +10023,28 @@ export const Monsters: Creature[] = [
                 "targets": 1
             }
         ],
+        "triggers": [
+            {
+                "id": "7245370b-0b03-4912-a763-9080866933c1",
+                "condition": "on being attacked",
+                "cost": 4,
+                "action": {
+                    "id": "344a065a-17dc-452a-b18f-3407b9a4e899",
+                    "name": "Parry",
+                    "actionSlot": 4,
+                    "type": "buff",
+                    "freq": "at will",
+                    "condition": "default",
+                    "target": "self",
+                    "targets": 1,
+                    "buff": {
+                        "displayName": "Parry",
+                        "duration": "until next attack taken",
+                        "ac": 2
+                    }
+                }
+            }
+        ],
         "count": 1,
         "saveBonus": 0.0625
     },

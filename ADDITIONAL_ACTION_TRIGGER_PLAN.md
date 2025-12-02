@@ -80,18 +80,18 @@ For the MVP, the AI will be "Eager":
 ## 4. Implementation Phases
 
 ### Phase 1: Data Structure & Loading
-- Update `enums.rs` and `model.rs`.
-- Update `data.ts` (frontend) to support defining these triggers (or just manual JSON for testing first).
+- [x] Update `enums.rs` and `model.rs`.
+- [x] Update `data.ts` (frontend) to support defining these triggers (or just manual JSON for testing first).
 - **Deliverable:** Compiling code with new fields.
 
 ### Phase 2: The Defensive Hook (Shield Spell)
-- Implement `check_defensive_triggers` in `simulation.rs`.
-- Test case: Wizard with Shield spell vs Fighter.
+- [x] Implement `check_defensive_triggers` in `simulation.rs` (implemented as `process_defensive_triggers` in `resolution.rs`).
+- [x] Test case: Wizard with Shield spell vs Fighter.
 - **Deliverable:** Wizard AC increases dynamically when hit.
 
 ### Phase 3: The Offensive Hook (Divine Smite)
-- Implement `check_offensive_triggers` in `simulation.rs`.
-- Test case: Paladin Smites on hit.
+- [x] Implement `check_offensive_triggers` in `simulation.rs` (implemented as `process_offensive_triggers` in `resolution.rs`).
+- [x] Test case: Paladin Smites on hit.
 - **Deliverable:** Paladin deals extra damage only on hits.
 
 ## 5. Future Considerations

@@ -2,7 +2,7 @@ import { FC, useState } from "react"
 import { Creature, CreatureSchema, Encounter, EncounterSchema } from "../../model/model"
 import styles from './adventuringDayForm.module.scss'
 import { sharedStateGenerator, useCalculatedState } from "../../model/utils"
-import {z} from 'zod'
+import { z } from 'zod'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faDownload, faFolder, faSave, faTrash, faUpload } from "@fortawesome/free-solid-svg-icons"
 import { PlayerTemplates } from "../../data/data"
@@ -37,16 +37,16 @@ const ExampleAdventuringDay: SaveFile = {
     updated: Date.now(),
     name: 'Example',
     players: [
-        PlayerTemplates.barbarian(3, {gwm: false, weaponBonus: 0}),
+        PlayerTemplates.barbarian(3, { gwm: false, weaponBonus: 0 }),
         PlayerTemplates.cleric(3, {}),
-        PlayerTemplates.rogue(3, {ss: false, weaponBonus: 0}),
+        PlayerTemplates.rogue(3, { ss: false, weaponBonus: 0 }),
         PlayerTemplates.wizard(3, {}),
     ],
     encounters: [
         {
             monsters: [
                 getMonster('Bandit Captain')!,
-                {...getMonster('Bandit')!, count: 5},
+                { ...getMonster('Bandit')!, count: 5 },
             ],
         },
     ]
@@ -57,7 +57,7 @@ function loadSaves(): SaveCollection {
 
     const json = localStorage.getItem('saveFiles')
     if (!json) return [ExampleAdventuringDay]
-    
+
     const obj = JSON.parse(json)
     const parsed = SaveCollectionSchema.safeParse(obj)
 
@@ -73,12 +73,12 @@ function currentSaveName(): string {
     return localStorage.getItem('saveName') || ''
 }
 
-const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad }) => {
+const AdventuringDayForm: FC<PropType> = ({ players, encounters, onCancel, onLoad }) => {
     const useSharedContext = sharedStateGenerator('adventuringDayForm')
     const [name, setName] = useSharedContext(currentSaveName())
     const [deleted, setDeleted] = useState(0)
-    const [error, setError] = useState<string|null>(null)
-    
+    const [error, setError] = useState<string | null>(null)
+
     const isValid = useCalculatedState(() => !!name, [name])
     const searchResults = useCalculatedState(loadSaves, [name, deleted])
 
@@ -93,7 +93,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
         }
 
         const saveFiles = loadSaves()
-        
+
         const existingIndex = saveFiles.findIndex(save => (save.name === newSaveFile.name))
         if (existingIndex !== -1) saveFiles[existingIndex] = newSaveFile
         else saveFiles.push(newSaveFile)
@@ -124,7 +124,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
 
         saveFiles.splice(index, 1)
         carefulSave('saveFiles', JSON.stringify(saveFiles))
-        
+
         setName('')
         localStorage.removeItem('saveName')
     }
@@ -137,7 +137,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
             encounters,
         }
 
-        const file = new Blob([JSON.stringify(newSaveFile)], {type: 'json'})
+        const file = new Blob([JSON.stringify(newSaveFile)], { type: 'json' })
         const a = document.createElement("a")
         const url = URL.createObjectURL(file)
         a.href = url
@@ -146,7 +146,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
         a.click()
         setTimeout(() => {
             document.body.removeChild(a)
-            window.URL.revokeObjectURL(url)  
+            window.URL.revokeObjectURL(url)
         }, 0)
     }
 
@@ -161,16 +161,16 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
         if (!json) return
 
         let obj
-        try { obj = JSON.parse(json) } 
-        catch (e) { setError('File is not valid JSON');  return }
-        
+        try { obj = JSON.parse(json) }
+        catch (e) { setError('File is not valid JSON'); return }
+
         const parsed = SaveFileSchema.safeParse(obj)
         if (!parsed.success) { setError('Invalid schema'); return }
 
         const newSave: SaveFile = parsed.data
 
         const saveFiles = loadSaves()
-        
+
         const existingIndex = saveFiles.findIndex(save => (save.name === newSave.name))
         if (existingIndex !== -1) saveFiles[existingIndex] = newSave
         else saveFiles.push(newSave)
@@ -186,7 +186,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
 
     return (
         <Modal onCancel={onCancel} className={styles.adventuringDay}>
-            { onLoad ? null : (
+            {onLoad ? null : (
                 <section>
                     <h3>Save File Name:</h3>
                     <input type="text" value={name} onChange={e => setName(e.target.value)} />
@@ -201,20 +201,27 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
                     'Last Update': (a, b) => getSaveByName(a).updated - getSaveByName(b).updated,
                 }}
                 onChange={setName}>
-                    { saveName => {
-                        const save = getSaveByName(saveName)
-                        return (
-                            <div className={styles.save}>
-                                <span className={styles.fileName}>{save.name}</span>
-                                <span className={styles.fileDate}>{new Date(save.updated).toLocaleDateString()}</span>
-                                <button onClick={() => deleteSave(save.name)}><FontAwesomeIcon icon={faTrash} /></button>
-                            </div>
-                        )
-                    }}
+                {saveName => {
+                    const save = getSaveByName(saveName)
+                    return (
+                        <div className={styles.save}>
+                            <span className={styles.fileName}>{save.name}</span>
+                            <span className={styles.fileDate}>{new Date(save.updated).toLocaleDateString()}</span>
+                            <span
+                                className={styles.deleteButton}
+                                onClick={(e) => { e.stopPropagation(); deleteSave(save.name); }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <FontAwesomeIcon icon={faTrash} />
+                            </span>
+                        </div>
+                    )
+                }}
             </SortTable>
 
             <div className={styles.buttons}>
-                { onLoad ? (
+                {onLoad ? (
                     <>
                         <button
                             disabled={!isValid}
@@ -222,7 +229,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
                             <FontAwesomeIcon icon={faFolder} />
                             Load {name ? `"${name}"` : ''}
                         </button>
-                        
+
                         <label htmlFor="file" className="tooltipContainer">
                             <FontAwesomeIcon icon={faUpload} />
                             Upload save file
@@ -231,11 +238,11 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
                                 Loads an adventuring day from a file you upload.
                             </div>
                         </label>
-                        <input 
-                            type="file" 
-                            id="file" 
-                            accept="application/json" 
-                            style={{display: "none"}} 
+                        <input
+                            type="file"
+                            id="file"
+                            accept="application/json"
+                            style={{ display: "none" }}
                             onChange={(e) => onUpload(e.target.files)} />
                     </>
                 ) : (
@@ -258,7 +265,7 @@ const AdventuringDayForm:FC<PropType> = ({ players, encounters, onCancel, onLoad
                 )}
             </div>
 
-            { (error !== null) ? (
+            {(error !== null) ? (
                 <div className={styles.error}>
                     {error}
                 </div>

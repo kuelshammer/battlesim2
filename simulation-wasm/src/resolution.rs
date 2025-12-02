@@ -61,7 +61,7 @@ fn process_defensive_triggers(
     for trigger in target_triggers.iter() {
         if trigger.condition == TriggerCondition::OnBeingAttacked {
             if let Some(cost_slot) = trigger.cost {
-                if cost_slot == ActionSlot::Reaction {
+                if cost_slot == (ActionSlot::Reaction as i32) {
                     if total_hit_roll >= final_ac { // Currently a hit
                         if let Action::Buff(buff_action) = &trigger.action {
                             if let Some(ac_buff_dice) = &buff_action.buff.ac {
@@ -351,14 +351,21 @@ fn apply_single_effect(
         },
         Action::Buff(a) => {
             if log_enabled {
-                log.push(format!("      -> Casts {} on {}", a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name));
+                let display_name = a.buff.display_name.as_deref().unwrap_or(&a.name);
+                log.push(format!("      -> Casts {} on {}", display_name, target_name));
             }
             if a.buff.concentration {
-                if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
-                    cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
-                    if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
+                let new_buff_id = a.base().id.clone();
+                let current_conc = attacker.final_state.concentrating_on.clone();
+                
+                // Only break concentration if it's a different spell
+                if let Some(old_buff) = current_conc {
+                    if old_buff != new_buff_id {
+                        cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
+                        if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
+                    }
                 }
-                attacker.final_state.concentrating_on = Some(a.base().id.clone());
+                attacker.final_state.concentrating_on = Some(new_buff_id);
             }
             let mut buff = a.buff.clone();
             buff.source = Some(attacker.id.clone());
@@ -373,11 +380,17 @@ fn apply_single_effect(
         },
         Action::Debuff(a) => {
             if a.buff.concentration {
-                if let Some(old_buff) = attacker.final_state.concentrating_on.clone() {
-                    cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
-                    if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                let new_buff_id = a.base().id.clone();
+                let current_conc = attacker.final_state.concentrating_on.clone();
+                
+                // Only break concentration if it's a different spell
+                if let Some(old_buff) = current_conc {
+                     if old_buff != new_buff_id {
+                        cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
+                        if log_enabled { log.push(format!("         (Drops concentration on {})", old_buff)); }
+                     }
                 }
-                attacker.final_state.concentrating_on = Some(a.base().id.clone());
+                attacker.final_state.concentrating_on = Some(new_buff_id);
             }
             
             let dc_val = a.save_dc;
@@ -386,8 +399,9 @@ fn apply_single_effect(
             let roll = rand::thread_rng().gen_range(1..=20) as f64;
             
             if log_enabled {
+                let display_name = a.buff.display_name.as_deref().unwrap_or(&a.name);
                 log.push(format!("      -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
-                    a.buff.display_name.as_deref().unwrap_or("Unknown"), target_name, dc, roll + save_bonus, roll, save_bonus));
+                    display_name, target_name, dc, roll + save_bonus, roll, save_bonus));
             }
 
             if roll + save_bonus < dc {
@@ -433,6 +447,7 @@ pub fn resolve_action_execution(
     attacker_mut.actions.push(action_record.clone());
 
     // 2. Iterate targets and apply effects
+    // 2. Iterate targets and apply effects
     let mut used_enemy_targets = Vec::new();
     
     for (is_target_enemy, mut target_idx) in raw_targets.iter().copied() {
@@ -444,7 +459,7 @@ pub fn resolve_action_execution(
                     if let Some(new_idx) = crate::targeting::select_enemy_target(
                         atk_action.target.clone(),
                         enemies,
-                        &[],  // Empty exclusion list for dynamic targeting
+                        &used_enemy_targets,
                         None
                     ) {
                         target_idx = new_idx;

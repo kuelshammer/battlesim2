@@ -96,12 +96,14 @@ const TemplateActionSchema = z.object({
     id: z.string(),
     freq: FrequencySchema,
     condition: ActionConditionSchema,
+    actionSlot: z.number().optional(), // Override the template's default action slot
 
     templateOptions: z.object({
         target: AllyTargetSchema.or(EnemyTargetSchema).optional(),
         templateName: z.custom<ActionTemplateName>(data => (typeof data === 'string')),
         toHit: DiceFormulaSchema.optional(),
         saveDC: z.number().optional(),
+        amount: DiceFormulaSchema.optional(),
     }).refine(data => {
         const template = ActionTemplates[data.templateName]
         if (!template) return false

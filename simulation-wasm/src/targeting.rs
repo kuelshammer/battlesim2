@@ -1,6 +1,7 @@
 use crate::model::*;
 use crate::enums::*;
 use crate::dice;
+use std::cmp::Ordering;
 
 pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemies: &[Combattant]) -> Vec<(bool, usize)> {
     #[cfg(debug_assertions)]
@@ -91,43 +92,87 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
 pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
     #[cfg(debug_assertions)]
     eprintln!("            Selecting enemy target (Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
-    let mut best_target = None;
-    let mut best_val = f64::MAX; 
+    
+    // Collect valid candidates
+    let mut candidates: Vec<usize> = Vec::new();
     
     for (i, e) in enemies.iter().enumerate() {
         // Check exclusion (true = enemy)
-        if excluded.contains(&(true, i)) {
-            continue;
-        }
+        if excluded.contains(&(true, i)) { continue; }
 
         // Check buff
         if let Some(bid) = buff_check {
-            if e.final_state.buffs.contains_key(bid) {
-                continue;
-            }
+            if e.final_state.buffs.contains_key(bid) { continue; }
         }
 
-        #[cfg(debug_assertions)]
-        eprintln!("              Considering enemy {}. HP: {:.1}", e.creature.name, e.final_state.current_hp);
-        if e.final_state.current_hp <= 0.0 {
-            #[cfg(debug_assertions)]
-            eprintln!("                Enemy {} is dead, skipping.", e.creature.name);
-            continue;
-        }
+        if e.final_state.current_hp <= 0.0 { continue; }
         
-        let val = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
-            EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
-            EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
-            EnemyTarget::EnemyWithLowestAC => e.creature.ac,
-            EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
+        candidates.push(i);
+    }
+
+    if candidates.is_empty() {
+        return None;
+    }
+
+    // Sort candidates based on strategy and tie-breakers
+    candidates.sort_by(|&idx1, &idx2| {
+        let e1 = &enemies[idx1];
+        let e2 = &enemies[idx2];
+        
+        // 1. Primary Strategy Comparison
+        let v1 = match strategy {
+            EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp,
+            EnemyTarget::EnemyWithMostHP => -e1.final_state.current_hp,
+            EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
+            EnemyTarget::EnemyWithLowestAC => e1.creature.ac,
+            EnemyTarget::EnemyWithHighestAC => -e1.creature.ac,
         };
         
-        if val < best_val {
-            best_val = val;
-            best_target = Some(i);
+        let v2 = match strategy {
+            EnemyTarget::EnemyWithLeastHP => e2.final_state.current_hp,
+            EnemyTarget::EnemyWithMostHP => -e2.final_state.current_hp,
+            EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
+            EnemyTarget::EnemyWithLowestAC => e2.creature.ac,
+            EnemyTarget::EnemyWithHighestAC => -e2.creature.ac,
+        };
+
+        // Using partial_cmp for floats. We want strict ordering.
+        // For "Least" strategies, smaller is better. 
+        // Our mapping above handles "Most" by negating, so we always want "smaller" value to be first.
+        // e.g. Most HP: -100 < -50. -100 comes first (higher HP).
+        // e.g. Least HP: 10 < 20. 10 comes first (lower HP).
+        match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
+            Ordering::Equal => {}, // Proceed to tie-breakers
+            ord => return ord,
         }
-    }
+
+        // 2. Tie-Breaker: Concentration (Target Concentrating > Not Concentrating)
+        let c1 = e1.final_state.concentrating_on.is_some();
+        let c2 = e2.final_state.concentrating_on.is_some();
+        if c1 != c2 {
+            // We want c1=true to be "smaller" (come first)
+            return if c1 { Ordering::Less } else { Ordering::Greater };
+        }
+
+        // 3. Tie-Breaker: Initiative (Higher > Lower)
+        // Higher initiative comes first.
+        if e1.initiative != e2.initiative {
+            return e2.initiative.partial_cmp(&e1.initiative).unwrap_or(Ordering::Equal);
+        }
+
+        // 4. Tie-Breaker: AC (Lower > Higher) "Easier to hit"
+        // Even if Primary Strategy was AC, this still applies for other strategies.
+        if e1.creature.ac != e2.creature.ac {
+             return e1.creature.ac.partial_cmp(&e2.creature.ac).unwrap_or(Ordering::Equal);
+        }
+
+        // 5. Tie-Breaker: Name (Alphabetical)
+        // Ensure deterministic sorting
+        e1.creature.name.cmp(&e2.creature.name)
+    });
+
+    let best_target = candidates.first().copied();
+
     #[cfg(debug_assertions)]
     eprintln!("            Selected target: {:?}", best_target.map(|idx| enemies[idx].creature.name.clone()));
     

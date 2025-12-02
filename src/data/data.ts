@@ -28,6 +28,20 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
         hp: hp(level, 8, CON),
         count: 1,
         mode: 'player',
+        triggers: [
+            {
+                id: uuid(),
+                condition: 'on being attacked',
+                cost: ActionSlots.Reaction,
+                action: {
+                    id: uuid(),
+                    type: 'template',
+                    freq: { reset: 'lr', uses: scale(level, { 1: 1, 3: 2, 5: 3, 7: 4, 9: 5, 11: 6, 13: 7, 15: 8, 17: 9 }) },
+                    condition: 'is under half HP',
+                    templateOptions: { templateName: 'Shield' },
+                }
+            }
+        ],
         actions: scaleArray<Action>(level, {
             1: [
                 {
@@ -41,13 +55,6 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
                     toHit: toHit,
                     dpr: fireBolt + arcaneFireArm,
                     condition: 'default',
-                },
-                {
-                    id: uuid(),
-                    type: 'template',
-                    freq: { reset: 'lr', uses: scale(level, { 1: 1, 3: 2, 5: 3, 7: 4, 9: 5, 11: 6, 13: 7, 15: 8, 17: 9 }) },
-                    condition: 'is under half HP',
-                    templateOptions: { templateName: 'Shield' },
                 },
             ],
             2: [{
@@ -110,6 +117,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                     freq: { reset: 'lr', uses: scale(level, { 1: 2, 3: 3, 6: 4, 12: 5, 17: 6 }) },
                     condition: 'not used yet',
                     buff: {
+                        displayName: 'Rage',
                         duration: 'entire encounter',
                         damageTakenMultiplier: 0.5,
                     },
@@ -160,6 +168,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                     freq: 'at will',
                     target: 'self',
                     buff: {
+                        displayName: 'Reckless Attack',
                         duration: '1 round',
                         condition: 'Attacks and is attacked with Advantage',
                     }
@@ -614,7 +623,6 @@ function monk(level: number, options: z.infer<typeof ClassOptions.monk>): Creatu
                     riderEffect: (level < 9) ? undefined : {
                         dc: DC,
                         buff: {
-                            displayName: 'Stunning Strike',
                             duration: '1 round',
                             condition: 'Stunned',
                         },
@@ -643,6 +651,24 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
         hp: hp(level, 10, CON),
         count: 1,
         mode: 'player',
+        triggers: [
+            {
+                id: uuid(),
+                condition: 'on hit',
+                action: {
+                    id: uuid(),
+                    name: 'Divine Smite',
+                    actionSlot: ActionSlots['Other 1'],
+                    type: 'atk',
+                    freq: scale(level, { 1: "1/day", 5: { reset: 'lr', uses: Math.floor(level / 2) } }),
+                    condition: scale(level, { 1: "is available", 11: 'default' }),
+                    targets: 1,
+                    target: 'enemy with least HP',
+                    toHit: 100,
+                    dpr: `${scale(level, { 1: 2, 5: 3, 11: 4, 17: 5 })}d8`,
+                }
+            }
+        ],
         actions: scaleArray<Action>(level, {
             1: [
                 {
@@ -671,23 +697,6 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
                     targets: 1,
                     target: 'ally with the least HP',
                     amount: 5 * level,
-                },
-            ],
-            2: [
-                {
-                    id: uuid(),
-                    name: 'Divine Smite',
-                    actionSlot: ActionSlots['Other 1'],
-                    type: 'buff',
-                    freq: scale(level, { 1: "1/day", 5: { reset: 'lr', uses: Math.floor(level / 2) } }),
-                    condition: scale(level, { 1: "is available", 11: 'default' }),
-                    targets: 1,
-                    target: 'self',
-                    buff: {
-                        displayName: 'Divine Smite',
-                        duration: 'until next attack made',
-                        damage: `${scale(level, { 1: 2, 5: 3, 11: 4, 17: 5 })}d8`,
-                    },
                 },
             ],
             6: [
@@ -935,6 +944,16 @@ function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): 
                     dpr: `1d10 + 1d6[HEX]`
                         + (level > 1 ? ` + ${CHA}[AB]` : ''),
                 },
+                {
+                    id: uuid(),
+                    type: 'template',
+                    freq: { reset: 'lr', uses: scale(level, { 1: 1, 11: 2 }) },
+                    condition: 'is available',
+                    templateOptions: {
+                        templateName: 'Armor of Agathys',
+                        amount: (5 * level).toString()
+                    },
+                },
             ],
             5: [
                 {
@@ -966,6 +985,20 @@ function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Cr
         hp: hp(level, 6, CON),
         count: 1,
         mode: 'player',
+        triggers: [
+            {
+                id: uuid(),
+                condition: 'on being attacked',
+                cost: ActionSlots.Reaction,
+                action: {
+                    id: uuid(),
+                    type: 'template',
+                    freq: { reset: 'lr', uses: Math.ceil(level / 2) },
+                    condition: scale(level, { 1: 'is under half HP', 8: 'default' }),
+                    templateOptions: { templateName: 'Shield' },
+                }
+            }
+        ],
         actions: scaleArray<Action>(level, {
             1: [
                 ...(level > 11 ? [] : [
@@ -985,9 +1018,9 @@ function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Cr
                 {
                     id: uuid(),
                     type: 'template',
-                    freq: { reset: 'lr', uses: Math.ceil(level / 2) },
-                    condition: scale(level, { 1: 'is under half HP', 8: 'default' }),
-                    templateOptions: { templateName: 'Shield' },
+                    freq: { reset: 'lr', uses: 1 },
+                    condition: 'is available',
+                    templateOptions: { templateName: 'Mage Armour' },
                 },
             ],
             5: [
