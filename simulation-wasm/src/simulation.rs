@@ -4,11 +4,13 @@ use crate::model::*;
 use crate::enums::*;
 use crate::dice;
 // use crate::targeting::*; // Unused if execute_turn doesn't do targeting directly? No, it does get_targets.
-use crate::targeting::get_targets; 
+use crate::targeting::get_targets;
 use crate::actions::*;
 use crate::aggregation::*;
 use crate::cleanup::*;
 use crate::resolution; // New module
+use wasm_bindgen::prelude::*;
+use serde_wasm_bindgen;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::Write;
@@ -81,19 +83,57 @@ pub fn run_monte_carlo(players: &[Creature], encounters: &[Encounter], iteration
     results.into_iter().map(|(_, r)| r).collect()
 }
 
+#[wasm_bindgen]
+pub fn run_simulation(
+    players_val: JsValue,
+    encounters_val: JsValue,
+    iterations: usize,
+    log_enabled: bool,
+) -> Result<JsValue, JsValue> {
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players_val)?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters_val)?;
+
+    let (res, _) = run_simulation_rust(players, encounters, iterations, log_enabled);
+    
+    // Convert to JsValue for WASM
+    Ok(serde_wasm_bindgen::to_value(&res).map_err(|e| e.to_string())?)
+}
+
+pub fn run_simulation_rust(
+    players: Vec<Creature>,
+    encounters: Vec<Encounter>,
+    iterations: usize,
+    log_enabled: bool,
+) -> (Vec<SimulationResult>, Vec<String>) {
+    let mut results: Vec<SimulationResult> = Vec::new();
+    let mut log = Vec::new();
+
+    for _ in 0..iterations {
+        let (res, l) = run_single_simulation(&players, &encounters, log_enabled);
+        results.push(res);
+        if log_enabled {
+            log.extend(l);
+        }
+    }
+    
+    // No sorting needed for single runs or simple aggregation here for CLI
+    // If we want sorting, we need a score. For now, just return as is.
+    
+    (results, log)
+}
+
 fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_enabled: bool) -> (SimulationResult, Vec<String>) {
+    // ... existing implementation ...
     let mut results = Vec::new();
     let mut log = Vec::new();
     
     // Initialize players with state
-    // We iterate to capture group index for deterministic IDs
     let mut players_with_state = Vec::new();
     for (group_idx, player) in players.iter().enumerate() {
         for i in 0..player.count as i32 {
              let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
              let mut p = player.clone();
              p.name = name;
-             // ID format: {template_id}-{group_idx}-{index} to be absolutely sure of uniqueness
              let id = format!("{}-{}-{}", player.id, group_idx, i);
              players_with_state.push(create_combattant(p, id));
         }
@@ -103,7 +143,6 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
         let encounter_result = run_encounter(&players_with_state, encounter, &mut log, log_enabled);
         results.push(encounter_result.clone());
         
-        // Prepare for next encounter
         if let Some(last_round) = encounter_result.rounds.last() {
             let next_encounter = encounters.get(index + 1);
             let is_short_rest = next_encounter.map(|e| e.short_rest.unwrap_or(false)).unwrap_or(false);
@@ -113,7 +152,6 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
                 if is_short_rest {
                     state.current_hp = c.creature.hp; 
                     state.remaining_uses = get_remaining_uses(&c.creature, "short rest", Some(&state.remaining_uses));
-                    // NEW RESET FOR ENCOUNTER-WIDE ACTIONS
                     state.actions_used_this_encounter.clear();
                 } else {
                     state.remaining_uses = get_remaining_uses(&c.creature, "none", Some(&state.remaining_uses));
