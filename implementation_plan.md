@@ -1,5 +1,24 @@
 # Critical Combat Simulation Bugs - Implementation Plan
 
+## 🎯 Implementation Order (Easy → Hard, Critical First)
+
+**Phase 1: Foundation (30 min)**
+1. ✅ Bug #1: Resistance Math Verification - Quick validation of core system
+
+**Phase 2: Reliability (1-2 hours)**
+2. 🔧 Bug #4: Target Finder (Ranged) - Fix test reliability before other bugs
+
+**Phase 3: Action Economy (1 hour)**
+3. ⚖️ Bug #2: Bonus Action Economy - Enforce core D&D rules
+
+**Phase 4: AI Intelligence (1.5 hours)**
+4. 🧠 Bug #3 + #5: AI Buff/Concentration Logic - Solve together (similar fixes)
+
+**Total Estimated Time:** 4-5 hours
+
+---
+
+
 ## 🔴 Critical Issues (Priority: Immediate)
 
 ### 1. **CRITICAL: Resistance Math Verification Needed**
