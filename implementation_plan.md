@@ -3,7 +3,10 @@
 ## 🎯 Implementation Order (Easy → Hard, Critical First)
 
 **Phase 1: Foundation (30 min)**
-1. ✅ Bug #1: Resistance Math Verification - Quick validation of core system
+1. ✅ **Bug #1: Resistance Math Verification** - VERIFIED WORKING CORRECTLY
+   - Tested with Kaelen battle log
+   - All damage calculations match expected values
+   - HP progression: 90 → 52 → 21 → 0 (CORRECT)
 
 **Phase 2: Reliability (1-2 hours)**
 2. 🔧 Bug #4: Target Finder (Ranged) - Fix test reliability before other bugs
