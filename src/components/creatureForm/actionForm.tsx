@@ -343,6 +343,14 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 />
             ) : null}
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+                <Checkbox
+                    value={value.actionSlot === -3}
+                    onToggle={() => update(v => { v.actionSlot = (v.actionSlot === -3) ? 0 : -3 })}
+                />
+                <span style={{ fontSize: '0.9em' }}>Cast before combat</span>
+            </div>
+
             <Select
                 value={value.actionSlot ?? (value.type === 'template' ? ActionTemplates[value.templateOptions.templateName].actionSlot : 0)}
                 options={ActionOptions}

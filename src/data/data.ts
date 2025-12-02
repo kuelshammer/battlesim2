@@ -944,6 +944,16 @@ function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): 
                     dpr: `1d10 + 1d6[HEX]`
                         + (level > 1 ? ` + ${CHA}[AB]` : ''),
                 },
+                {
+                    id: uuid(),
+                    type: 'template',
+                    freq: { reset: 'lr', uses: scale(level, { 1: 1, 11: 2 }) },
+                    condition: 'is available',
+                    templateOptions: {
+                        templateName: 'Armor of Agathys',
+                        amount: (5 * level).toString()
+                    },
+                },
             ],
             5: [
                 {
@@ -1005,6 +1015,13 @@ function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Cr
                         dpr: `${cantrip(level)}d10`,
                     } as AtkAction
                 ]),
+                {
+                    id: uuid(),
+                    type: 'template',
+                    freq: { reset: 'lr', uses: 1 },
+                    condition: 'is available',
+                    templateOptions: { templateName: 'Mage Armour' },
+                },
             ],
             5: [
                 {

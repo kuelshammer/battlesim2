@@ -116,6 +116,49 @@ export const ActionTemplates = {
             ac: '5',
         },
     }),
+    'Mage Armour': createTemplate({
+        actionSlot: -3, // Pre-combat by default
+        type: 'buff',
+        targets: 1,
+        target: 'self', // Can be touch, but self for simplicity for now
+        buff: {
+            displayName: 'Mage Armour',
+            duration: 'entire encounter', // 8 hours
+            ac: '3',
+        },
+    }),
+    'Armor of Agathys': createTemplate({
+        actionSlot: -3, // Pre-combat by default
+        type: 'heal', // Using heal for THP application
+        targets: 1,
+        target: 'self',
+        amount: 0, // Base amount, scaled by level usually
+        tempHP: true,
+        // Note: Damage reflection needs a specific implementation or trigger, 
+        // for now just the THP part or we add a buff with damage reflection if supported
+        // The current system supports damageTakenMultiplier but not reflection directly in simple buffs
+        // We might need a trigger for the reflection part.
+    }),
+    'False Life': createTemplate({
+        actionSlot: -3,
+        type: 'heal',
+        targets: 1,
+        target: 'self',
+        amount: '1d4 + 4',
+        tempHP: true,
+    }),
+    'Shield of Faith': createTemplate({
+        actionSlot: ActionSlots['Bonus Action'], // Can be pre-cast too
+        type: 'buff',
+        targets: 1,
+        target: 'ally with the least HP',
+        buff: {
+            displayName: 'Shield of Faith',
+            duration: 'entire encounter', // 10 mins
+            ac: '2',
+            concentration: true,
+        },
+    }),
 }
 
 type RealOmit<T, K extends keyof T> = { [P in keyof T as P extends K ? never : P]: T[P] };
@@ -154,6 +197,10 @@ export function getFinalAction(action: Action): FinalAction {
 
     if (result.type === 'debuff') {
         if (saveDC !== undefined) result.saveDC = saveDC
+    }
+
+    if (result.type === 'heal') {
+        if (action.templateOptions.amount !== undefined) result.amount = action.templateOptions.amount
     }
 
     return result

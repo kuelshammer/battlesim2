@@ -103,6 +103,7 @@ const TemplateActionSchema = z.object({
         templateName: z.custom<ActionTemplateName>(data => (typeof data === 'string')),
         toHit: DiceFormulaSchema.optional(),
         saveDC: z.number().optional(),
+        amount: DiceFormulaSchema.optional(),
     }).refine(data => {
         const template = ActionTemplates[data.templateName]
         if (!template) return false
