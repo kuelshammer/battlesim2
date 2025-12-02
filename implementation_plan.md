@@ -9,7 +9,10 @@
    - HP progression: 90 → 52 → 21 → 0 (CORRECT)
 
 **Phase 2: Reliability (1-2 hours)**
-2. 🔧 Bug #4: Target Finder (Ranged) - Fix test reliability before other bugs
+2. ✅ **Bug #4: Target Finder (Ranged)** - FIXED
+   - Root cause: Exclusion list using old indices after targets died
+   - Solution: Removed exclusion for attacks (allow same target multiple times)
+   - Result: All attacks now execute without losing targets
 
 **Phase 3: Action Economy (1 hour)**
 3. ⚖️ Bug #2: Bonus Action Economy - Enforce core D&D rules

@@ -633,10 +633,13 @@ pub fn resolve_action_execution(
             // This makes "enemy with least HP" reactive to damage dealt
             if matches!(action, Action::Atk(_)) {
                 if let Action::Atk(atk_action) = action {
+                    // IMPORTANT: Pass empty exclusion list for attacks!
+                    // Attacks can target the same enemy multiple times (e.g., Multiattack)
+                    // The old exclusion system was breaking target selection after enemies died
                     if let Some(new_idx) = crate::targeting::select_enemy_target(
                         atk_action.target.clone(),
                         enemies,
-                        &used_enemy_targets,
+                        &[],  // Empty exclusion - attacks don't exclude previously targeted enemies
                         None
                     ) {
                         target_idx = new_idx;
