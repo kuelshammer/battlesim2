@@ -544,9 +544,12 @@ pub fn resolve_action_execution(
     let (allies_head, allies_tail) = allies.split_at_mut(attacker_index);
     let (attacker_mut, allies_after_attacker) = allies_tail.split_first_mut().expect("Attacker index out of bounds");
 
-    // 1. Mark action as used and record it (Attacker state update)
+    // 1. Mark action as used (for turn-based economy) and record it (Attacker state update)
     attacker_mut.final_state.used_actions.insert(action.base().id.clone());
     attacker_mut.actions.push(action_record.clone());
+
+    // NEW: Mark action as used for the encounter
+    attacker_mut.final_state.actions_used_this_encounter.insert(action.base().id.clone());
 
     // Decrement remaining uses if applicable
     match &action.base().freq {

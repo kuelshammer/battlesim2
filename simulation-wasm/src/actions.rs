@@ -45,10 +45,8 @@ pub fn check_action_condition(
             actor.final_state.temp_hp.is_none() || actor.final_state.temp_hp == Some(0.0)
         },
         ActionCondition::NotUsedYet => {
-            // Check if this action has been used in the current state
-            actor.final_state.used_actions.iter().any(|used_id| {
-                actor.creature.actions.iter().any(|a| &a.base().id == used_id)
-            })
+            // Check if this specific action has been used in the current encounter
+            !actor.final_state.actions_used_this_encounter.contains(&action.base().id)
         },
         ActionCondition::EnemyCountOne => {
             enemies.iter().filter(|c| c.final_state.current_hp > 0.0).count() == 1

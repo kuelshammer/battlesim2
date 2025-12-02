@@ -113,6 +113,8 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
                 if is_short_rest {
                     state.current_hp = c.creature.hp; 
                     state.remaining_uses = get_remaining_uses(&c.creature, "short rest", Some(&state.remaining_uses));
+                    // NEW RESET FOR ENCOUNTER-WIDE ACTIONS
+                    state.actions_used_this_encounter.clear();
                 } else {
                     state.remaining_uses = get_remaining_uses(&c.creature, "none", Some(&state.remaining_uses));
                 }
@@ -145,6 +147,7 @@ fn create_combattant(creature: Creature, id: String) -> Combattant {
         upcoming_buffs: HashMap::new(),
         used_actions: HashSet::new(),
         concentrating_on: None,
+        actions_used_this_encounter: HashSet::new(),
     };
     Combattant {
         id,
