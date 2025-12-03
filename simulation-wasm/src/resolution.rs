@@ -213,7 +213,7 @@ fn apply_single_effect(
                     let val = dice::evaluate(f, 1);
                     buff_bonus += val;
                     if let Some(name) = &b.display_name {
-                         buff_details.push(format!("{}={:.0}", name, val));
+                         buff_details.push(format!("{} {:.0}", name, val));
                     } else {
                          buff_details.push(format!("{:.0}", val));
                     }
@@ -221,7 +221,48 @@ fn apply_single_effect(
             }
 
             let total_hit = roll + to_hit_bonus + buff_bonus;
-            
+
+            // Check for target buffs that affect attack rolls (like Bane)
+            let (target_debuffs, bane_disadvantage) = if let Some(t) = &target_opt {
+                let mut debuffs = Vec::new();
+                let mut has_bane_disadvantage = false;
+
+                for b in t.final_state.buffs.values() {
+                    if let Some(to_hit_penalty) = &b.to_hit {
+                        let val = dice::evaluate(to_hit_penalty, 1);
+                        if val != 0.0 {
+                            let name = b.display_name.as_deref().unwrap_or("Unknown");
+                            debuffs.push(format!("{} {:.0}", name, val));
+                        }
+                    }
+
+                    // Check if this is Bane (special case for disadvantage)
+                    if let Some(name) = &b.display_name {
+                        if name.contains("Bane") {
+                            has_bane_disadvantage = true;
+                        }
+                    }
+                }
+                (debuffs, has_bane_disadvantage)
+            } else {
+                (Vec::new(), false)
+            };
+
+            // Check if attacker is affected by Bane
+            let attacker_bane_debuff: Vec<String> = attacker.final_state.buffs.values()
+                .filter_map(|b| {
+                    if let Some(name) = &b.display_name {
+                        if name.contains("Bane") {
+                            Some("Bane -".to_string())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+
             // Resolve Target Stats (Read)
             // Re-borrow target_opt immutably
             let (target_ac, target_buff_ac) = if let Some(t) = &target_opt {
@@ -259,11 +300,24 @@ fn apply_single_effect(
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
 
                 // Advantage/Disadvantage logging
-                let adv_str = if has_advantage && !has_disadvantage { " (ADVANTAGE)" }
-                              else if has_disadvantage && !has_advantage { " (DISADVANTAGE)" }
+                let adv_str = if has_advantage && !has_disadvantage && !bane_disadvantage { " (ADVANTAGE)" }
+                              else if has_disadvantage || bane_disadvantage { " (DISADVANTAGE)" }
                               else { "" };
 
-                // Enhanced Bless/Bane logging
+                // Combine attacker buffs (Bless) and target debuffs (Bane) for roll display
+                let roll_modifiers: Vec<String> = buff_details.iter()
+                    .filter(|d| d.contains("Bless"))
+                    .chain(target_debuffs.iter())
+                    .cloned()
+                    .collect();
+
+                let roll_mod_str = if !roll_modifiers.is_empty() {
+                    format!(" ({})", roll_modifiers.join(", "))
+                } else {
+                    String::new()
+                };
+
+                // Enhanced Bless/Bane logging (for status display)
                 let bless_details: Vec<String> = buff_details.iter()
                     .filter(|d| d.contains("Bless"))
                     .cloned()
@@ -286,8 +340,8 @@ fn apply_single_effect(
                     String::new()
                 };
                 let hit_str = if hits { "✅ **HIT**" } else { "❌ **MISS**" };
-                log.push(format!("* ⚔️ Attack vs **{}**: **{:.0}** vs AC {:.0}{}{}{}{} -> {}",
-                    target_name, total_hit, final_ac, adv_str, reaction_str, crit_str, effect_str, hit_str));
+                log.push(format!("* ⚔️ Attack vs **{}**: **{:.0}**{} vs AC {:.0}{}{}{}{} -> {}",
+                    target_name, total_hit, roll_mod_str, final_ac, adv_str, reaction_str, crit_str, effect_str, hit_str));
             }
 
             if hits {

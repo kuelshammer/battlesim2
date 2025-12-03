@@ -336,6 +336,9 @@ fn execute_precombat_actions(
             .collect();
         
         for action in precombat_actions {
+            #[cfg(debug_assertions)]
+            eprintln!("  [DEBUG] Checking pre-combat action for {}: {} (Slot: {})", team2[attacker_index].creature.name, action.base().name, action.base().action_slot);
+
             // NEW: Add validation checks here
             // Note: from team2's perspective, team2 is allies and team1 is enemies
             if !is_usable(&team2[attacker_index], &action) {
