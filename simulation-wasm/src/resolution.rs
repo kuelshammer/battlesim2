@@ -775,11 +775,35 @@ pub fn resolve_action_execution(
         if is_target_enemy {
             // Verify target is still alive (might have died in previous iteration)
             if enemies[target_idx].final_state.current_hp <= 0.0 {
-                if log_enabled {
-                    log.push(format!("      -> {} is already unconscious, skipping attack", 
-                        enemies[target_idx].creature.name));
+                // Target died - try to find a new one
+                if let Action::Atk(atk_action) = action {
+                    if let Some(new_idx) = crate::targeting::select_enemy_target(
+                        atk_action.target.clone(),
+                        enemies,
+                        &[],
+                        None
+                    ) {
+                        if log_enabled {
+                            log.push(format!("      -> {} is unconscious, switching target to {}", 
+                                enemies[target_idx].creature.name,
+                                enemies[new_idx].creature.name));
+                        }
+                        target_idx = new_idx;
+                    } else {
+                        // No valid targets at all - skip this attack
+                        if log_enabled {
+                            log.push(format!("      -> No valid targets available, skipping attack"));
+                        }
+                        continue;
+                    }
+                } else {
+                    // Non-attack action - skip if target dead
+                    if log_enabled {
+                        log.push(format!("      -> {} is already unconscious, skipping action", 
+                            enemies[target_idx].creature.name));
+                    }
+                    continue;
                 }
-                continue;
             }
             
             used_enemy_targets.push((true, target_idx));
