@@ -50,10 +50,11 @@
    - Fix: Implemented template resolution + smart concentration check
    - Result: HM only re-cast when concentration broken or target dies
 
-7. ⚠️ **Bug #8: Empty Resistance Source** - NEW
+7. ✅ **Bug #8: Empty Resistance Source** - FIXED
    - Issue: Damage log shows `* 0.50 []` instead of `* 0.50 [Rage]`
-   - Impact: Visual clarity only
-   - Suspected Cause: Missing display name in resistance modifier logic
+   - Root Cause: Code only added source if `display_name` existed
+   - Fix: Added fallback to "Resistance" when display_name is missing
+   - Result: Now shows `* 0.50 [Resistance]` correctly
 
 ---
 

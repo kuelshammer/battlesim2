@@ -399,12 +399,11 @@ fn apply_single_effect(
                     for b in t.final_state.buffs.values() {
                         if let Some(mult) = b.damage_taken_multiplier {
                             total_multiplier *= mult;
-                            if let Some(name) = &b.display_name {
-                                if mult < 1.0 {
-                                    multiplier_sources.push(format!("{} (Resisted)", name));
-                                } else if mult > 1.0 {
-                                    multiplier_sources.push(format!("{} (Vulnerable)", name));
-                                }
+                            let source_name = b.display_name.as_deref().unwrap_or("Resistance");
+                            if mult < 1.0 {
+                                multiplier_sources.push(source_name.to_string());
+                            } else if mult > 1.0 {
+                                multiplier_sources.push(format!("{} (Vulnerable)", source_name));
                             }
                         }
                     }
