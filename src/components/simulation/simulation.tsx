@@ -5,6 +5,7 @@ import { clone, useStoredState } from "../../model/utils"
 import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
+import EventLog from "./eventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "../../model/simulationContext"
@@ -37,6 +38,8 @@ const Simulation: FC<PropType> = ({ }) => {
     const [luck, setLuck] = useStoredState<number>('luck', 0.5, z.number().min(0).max(1).parse)
     const [simulationResults, setSimulationResults] = useState<SimulationResult>([])
     const [state, setState] = useState(new Map<string, any>())
+    const [simulationEvents, setSimulationEvents] = useState<string[]>([])
+    const [useEventDriven, setUseEventDriven] = useState(true) // Toggle for testing
 
     function isEmpty() {
         const hasPlayers = !!players.length
@@ -70,9 +73,6 @@ const Simulation: FC<PropType> = ({ }) => {
     useEffect(() => {
         if (!wasm) return
 
-        // Map luck (0-1) to index (0-4)
-        const index = Math.min(4, Math.floor(luck * 5))
-
         if (allResults.length === 0) {
             // Run simulation if not cached
             try {
@@ -92,9 +92,29 @@ const Simulation: FC<PropType> = ({ }) => {
                     }))
                 }))
 
-                // The return type is now just SimulationResult[]
-                const results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
-                // console.log('Simulation complete. Results:', results.length, 'runs')
+                let results: SimulationResult[]
+
+                // Use event-driven simulation if enabled
+                if (useEventDriven) {
+                    console.log('Running event-driven simulation...')
+                    results = wasm.run_event_driven_simulation(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+
+                    // Get events from the simulation
+                    try {
+                        const events = wasm.get_last_simulation_events() as string[]
+                        setSimulationEvents(events)
+                        console.log('Events collected:', events.length)
+                    } catch (eventError) {
+                        console.error("Failed to get events:", eventError)
+                        setSimulationEvents([])
+                    }
+                } else {
+                    console.log('Running legacy simulation...')
+                    results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+                    setSimulationEvents([])
+                }
+
+                console.log('Simulation complete. Results:', results.length, 'runs')
                 // console.log('First result:', results[0])
 
                 setAllResults(results)
@@ -108,6 +128,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 console.log('Simulation results set!')
             } catch (e) {
                 console.error("Simulation failed", e)
+                setSimulationEvents([])
             }
         } else {
             // Update selection based on new luck
@@ -121,11 +142,12 @@ const Simulation: FC<PropType> = ({ }) => {
                 console.error("Selection failed", e)
             }
         }
-    }, [players, encounters, luck, wasm, allResults])
+    }, [players, encounters, luck, wasm, allResults, useEventDriven])
 
     // Reset results when inputs change
     useEffect(() => {
         setAllResults([])
+        setSimulationEvents([])
     }, [players, encounters])
 
 
@@ -187,6 +209,17 @@ const Simulation: FC<PropType> = ({ }) => {
                             Load Adventuring Day
                         </button>
 
+                        {/* Toggle for testing event-driven vs legacy simulation */}
+                        <button
+                            onClick={() => setUseEventDriven(!useEventDriven)}
+                            style={{
+                                backgroundColor: useEventDriven ? '#4CAF50' : '#f44336',
+                                color: 'white'
+                            }}
+                        >
+                            {useEventDriven ? 'Event-Driven ON' : 'Legacy Mode'}
+                        </button>
+
                     </>
                 </EncounterForm>
 
@@ -214,6 +247,15 @@ const Simulation: FC<PropType> = ({ }) => {
                     <FontAwesomeIcon icon={faPlus} />
                     Add Encounter
                 </button>
+
+                {/* Event Log Display */}
+                {useEventDriven && (
+                    <EventLog
+                        events={simulationEvents}
+                        title={`Combat Events (${simulationEvents.length})`}
+                    />
+                )}
+
                 {(saving || loading) ? (
                     <AdventuringDayForm
                         players={players}
