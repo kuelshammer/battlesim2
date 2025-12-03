@@ -124,6 +124,7 @@ This is a significant refactor. We must build from the bottom up: **Data -> Reso
     *   **Why First?** The execution engine cannot be written if it doesn't know how to check/deduct costs.
 
 ### Phase 2: Action Data Structure & Frontend Creation [The New Standard]
+*   **[👉 DETAILED PLAN: Phase 2 Implementation](PHASE_2_IMPLEMENTATION_PLAN.md)**
 *   **Goal:** Define the *new* action data structures in both backend and frontend, enabling users to immediately create flexible, programmable actions via the GUI. Old monster/spell JSON data will **not** be automatically migrated and will require manual re-creation or updating.
 *   **Tasks:**
     *   **Backend (Rust):**
