@@ -228,15 +228,18 @@ export const CreatureSchema = z.object({
     speed_fly: z.number().optional(),
     saveBonus: z.number(), // Average save bonus. Using this to simplify the input, even if it makes the result slightly less accurate.
     conSaveBonus: z.number().optional(),
-    initiativeBonus: z.number().optional(),
-    initiativeAdvantage: z.boolean().optional(),
-    actions: z.array(ActionSchema),
-    triggers: z.array(z.object({
+    pub initiativeBonus: z.number().optional(),
+    pub initiativeAdvantage: z.boolean().optional(),
+    pub actions: z.array(ActionSchema),
+    pub triggers: z.array(z.object({
         id: z.string(),
         condition: TriggerConditionSchema,
         action: ActionSchema,
         cost: z.number().optional(), // ActionSlot
     })).optional(),
+    // New fields for Phase 5 resource management
+    pub spellSlots: z.record(z.string(), z.number()).optional(),
+    pub classResources: z.record(z.string(), z.number()).optional(),
 })
 
 const TeamSchema = z.array(CreatureSchema)

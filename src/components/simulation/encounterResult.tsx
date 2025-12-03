@@ -1,5 +1,6 @@
 import { FC, useState } from "react"
 import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula } from "../../model/model"
+import ResourcePanel from "./ResourcePanel"
 import styles from './encounterResult.module.scss'
 import { Round } from "../../model/model"
 import { clone } from "../../model/utils"
@@ -247,6 +248,7 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
                             </span>
                         ) : null}
                     </div>
+                    <ResourcePanel combatant={combattant} />
 
                     {(!stats && (combattant.actions.length === 0) && (combattant.finalState.buffs.size)) ? null : (
                         <div className="tooltip">

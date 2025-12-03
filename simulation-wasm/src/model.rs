@@ -395,6 +395,10 @@ pub struct Creature {
     pub actions: Vec<Action>, // This might need to be flexible if templates are involved
     #[serde(default)]
     pub triggers: Vec<ActionTrigger>,
+    #[serde(rename = "spellSlots")]
+    pub spell_slots: Option<HashMap<String, i32>>,
+    #[serde(rename = "classResources")]
+    pub class_resources: Option<HashMap<String, i32>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

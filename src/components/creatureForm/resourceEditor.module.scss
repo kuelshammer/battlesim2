@@ -1,0 +1,96 @@
+// src/components/creatureForm/resourceEditor.module.scss
+.resourceEditor {
+    width: 100%;
+    margin-top: 1em;
+    padding-top: 1em;
+    border-top: 1px dashed #ccc;
+
+    section {
+        margin-bottom: 1.5em;
+        padding-bottom: 1em;
+        border-bottom: 1px solid #eee;
+
+        &:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+    }
+
+    .sectionHeader {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        font-size: 1.1em;
+        margin-bottom: 1em;
+        color: #333;
+
+        button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.9em;
+
+            &:hover {
+                color: #0056b3;
+            }
+        }
+    }
+
+    .resourceEntry {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        margin-bottom: 0.5em;
+        background-color: #f9f9f9;
+        border: 1px solid #e9e9e9;
+        border-radius: 4px;
+        padding: 0.5em;
+
+        label {
+            font-weight: bold;
+            color: #555;
+            min-width: 40px; // Align labels
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .resourceName {
+            min-width: 80px;
+            max-width: 150px;
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 0.5em;
+
+            &:hover {
+                color: #c82333;
+            }
+        }
+    }
+
+    p {
+        color: #777;
+        font-style: italic;
+        margin-left: 1em;
+    }
+}
