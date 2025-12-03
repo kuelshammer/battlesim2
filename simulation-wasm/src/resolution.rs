@@ -242,7 +242,7 @@ fn apply_single_effect(
             let total_hit = roll + to_hit_bonus + buff_bonus;
 
             // Check for target buffs that affect attack rolls (like Bane)
-            let (target_debuffs, bane_disadvantage) = if let Some(t) = &target_opt {
+            let (target_debuffs, _bane_disadvantage) = if let Some(t) = &target_opt {
                 let mut debuffs = Vec::new();
                 let mut has_bane_disadvantage = false;
 
@@ -268,7 +268,7 @@ fn apply_single_effect(
             };
 
             // Check if attacker is affected by Bane
-            let attacker_bane_debuff: Vec<String> = attacker.final_state.buffs.values()
+            let _attacker_bane_debuff: Vec<String> = attacker.final_state.buffs.values()
                 .filter_map(|b| {
                     if let Some(name) = &b.display_name {
                         if name.contains("Bane") {
@@ -434,7 +434,7 @@ fn apply_single_effect(
                     }
                 }
 
-                let damage_before_multiplier = damage;
+                let _damage_before_multiplier = damage;
                 damage = (damage * total_multiplier).floor(); // Round down damage in 5e
 
                 if log_enabled {
