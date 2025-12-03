@@ -304,35 +304,114 @@ impl ActionExecutionEngine {
         None // No valid targets found
     }
 
-    /// Select actions for a combatant (simple AI for now)
+    /// Select actions for a combatant (basic AI implementation)
     fn select_actions_for_combatant(&self, combatant_id: &str) -> Vec<Action> {
         let Some(combatant_state) = self.context.get_combatant(combatant_id) else {
             return Vec::new(); // Combatant not found or dead
         };
 
-        let mut available_actions = Vec::new();
+        // Track which action slots have been used
+        use std::collections::HashSet;
+        let mut used_slots: HashSet<Option<i32>> = HashSet::new();
+        let mut selected_actions = Vec::new();
+
+        // Score all valid actions
+        let mut scored_actions: Vec<(Action, f64)> = Vec::new();
+        
         for action in combatant_state.base_combatant.creature.actions.iter() {
-            // 1. Check requirements using the shared validation logic
+            // 1. Check requirements
             if !validation::check_action_requirements(action, &self.context, combatant_id) {
                 continue;
             }
 
             // 2. Check affordability (costs)
-            // Note: execute_action_with_reactions also checks this, but pre-filtering here saves computation
             if !self.context.can_afford(&action.base().cost, combatant_id) {
                 continue;
             }
 
-            // TODO: 3. Evaluate combat situation and score actions
-            // For now, simply collect all valid and affordable actions.
-            // A more sophisticated AI would select the "best" action based on context.
-            available_actions.push(action.clone());
+            // 3. Score the action based on combat situation
+            let score = self.score_action(action, combatant_id);
+            if score > 0.0 {
+                scored_actions.push((action.clone(), score));
+            }
         }
 
-        // For an initial implementation that unblocks the simulation,
-        // let's return all actions that pass the checks.
-        // A future enhancement would involve sorting or selecting a subset based on AI logic.
-        available_actions
+        // Sort by score (highest first)
+        scored_actions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Select best action per slot type
+        for (action, _score) in scored_actions {
+            let slot = action.base().action_slot;
+            
+            // Skip if we've already selected an action for this slot
+            if used_slots.contains(&slot) {
+                continue;
+            }
+
+            used_slots.insert(slot);
+            selected_actions.push(action);
+
+            // Limit to reasonable number of actions per turn
+            if selected_actions.len() >= 3 {
+                break;
+            }
+        }
+
+        selected_actions
+    }
+
+    /// Score an action based on combat situation
+    fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
+        match action {
+            Action::Atk(atk) => {
+                // Attacks are always valuable
+                // Score higher for more damage
+                let base_damage = crate::dice::average(&atk.dpr);
+                let num_targets = atk.targets as f64;
+                base_damage * num_targets * 10.0 // * 10 to scale up
+            },
+            Action::Heal(heal) => {
+                // Only valuable if allies are injured
+                let allies = self.context.get_alive_combatants();
+                let injured_allies = allies.iter().filter(|c| {
+                    c.current_hp < c.base_combatant.creature.hp * 0.5
+                }).count();
+
+                if injured_allies > 0 {
+                    let heal_amount = crate::dice::average(&heal.amount);
+                    heal_amount * injured_allies as f64 * 15.0 // Higher priority
+                } else {
+                    0.0 // No one needs healing
+                }
+            },
+            Action::Buff(_buff) => {
+                // Valuable at start of combat or if targets don't have buff yet
+                let round = self.context.round_number;
+                if round <= 2 {
+                    50.0 // High priority in early rounds
+                } else {
+                    20.0 // Lower priority later
+                }
+            },
+            Action::Debuff(_debuff) => {
+                // Valuable against strong enemies
+                let enemies = self.context.get_alive_combatants();
+                let strong_enemies = enemies.iter().filter(|e| {
+                    e.id != combatant_id && e.current_hp > 20.0
+                }).count();
+
+                if strong_enemies > 0 {
+                    30.0 * strong_enemies as f64
+                } else {
+                    10.0
+                }
+            },
+            Action::Template(_) => {
+                // Template actions are context-dependent
+                // For now, give them medium priority
+                25.0
+            }
+        }
     }
 
     /// Register default reactions for combatants
