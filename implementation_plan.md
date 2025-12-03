@@ -56,6 +56,12 @@
    - Fix: Added fallback to "Resistance" when display_name is missing
    - Result: Now shows `* 0.50 [Resistance]` correctly
 
+8. ✅ **Bug #9: Target Re-selection After Death** - FIXED
+   - Issue: Multi-attacks skip remaining hits when target dies
+   - Root Cause: Code skipped attack instead of finding new target
+   - Fix: Re-select target if dead (only skip if no targets remain)
+   - Result: All attacks used when valid targets exist
+
 ---
 
 

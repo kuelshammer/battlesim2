@@ -475,7 +475,8 @@ fn apply_single_effect(
                     if t.final_state.current_hp > t.creature.hp { t.final_state.current_hp = t.creature.hp; }
                     update_stats(stats, &attacker.id, &t.id, 0.0, amount);
                     if log_enabled {
-                        log.push(format!("      -> Heals {} for {:.0} HP (was at {:.0}/{:.0})", target_name, amount, t.final_state.current_hp - amount, t.creature.hp));
+                        let hp_before = (t.final_state.current_hp - amount).max(0.0);
+                        log.push(format!("      -> Heals {} for {:.0} HP (was at {:.0}/{:.0})", target_name, amount, hp_before, t.creature.hp));
                     }
                 } else {
                     // Target doesn't need healing, waste action
@@ -696,7 +697,7 @@ fn apply_single_effect(
                     t.final_state.buffs.insert(new_buff_id, buff);
                     update_stats_buff(stats, &attacker.id, &t.id, true);
                     if log_enabled {
-                        log.push(format!("      Template {} applied to target", template_name));
+                        log.push(format!("      Template {} applied to {}", template_name, target_name));
                     }
                 } else {
                     // Self-target (e.g., Bless on self)
