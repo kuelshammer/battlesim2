@@ -63,7 +63,13 @@ export const ActionTemplates = {
         },
     }),
     'Holy Weapon': createTemplate({
-        actionSlot: ActionSlots['Bonus Action'],
+        actionSlot: ActionSlots['Bonus Action'], // Keep for backward compatibility, but define new costs
+        cost: [
+            { type: 'Discrete', resourceType: 'BonusAction', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 5 } // 5th-level spell, but can be higher. Use base level for template
+        ],
+        requirements: [],
+        tags: ['Spell', 'Concentration', 'Buff', 'Radiant'],
         type: 'buff',
         targets: 1,
         target: 'self', // Usually weapon, simplifying to self for now
@@ -75,7 +81,13 @@ export const ActionTemplates = {
         },
     }),
     'Hunter\'s Mark': createTemplate({
-        actionSlot: ActionSlots['Bonus Action'],
+        actionSlot: ActionSlots['Bonus Action'], // Keep for backward compatibility, but define new costs
+        cost: [
+            { type: 'Discrete', resourceType: 'BonusAction', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 } // 1st-level spell
+        ],
+        requirements: [],
+        tags: ['Spell', 'Concentration', 'Buff', 'Damage'],
         type: 'buff',
         targets: 1,
         target: 'enemy with least HP', // Mark the priority target
@@ -105,16 +117,24 @@ export const ActionTemplates = {
         toHit: 0,
     }),
     'Heal': createTemplate({
-        actionSlot: ActionSlots.Action,
+        actionSlot: ActionSlots.Action, // Keep for backward compatibility
+        cost: [{ type: 'Discrete', resourceType: 'Action', amount: 1 }],
+        requirements: [],
+        tags: ['Healing', 'Support'],
         type: 'heal',
         targets: 1,
         amount: 70,
     }),
     'Hypnotic Pattern': createTemplate({
-        actionSlot: ActionSlots.Action,
+        actionSlot: ActionSlots.Action, // Keep for backward compatibility
+        cost: [
+            { type: 'Discrete', resourceType: 'Action', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 3 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Concentration', 'AoE', 'Enchantment', 'Control'],
         type: 'debuff',
         targets: 4, // Area of effect approximation
-
         saveDC: 0,
         buff: {
             displayName: 'Hypnotic Pattern',
@@ -124,17 +144,28 @@ export const ActionTemplates = {
         },
     }),
     'Meteor Swarm': createTemplate({
-        actionSlot: ActionSlots.Action,
+        actionSlot: ActionSlots.Action, // Keep for backward compatibility
+        cost: [
+            { type: 'Discrete', resourceType: 'Action', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 9 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'AoE', 'Evocation', 'Fire', 'Attack', 'Damage'],
         type: 'atk',
         targets: 4,
         useSaves: true,
         dpr: '20d6 + 20d6',
         halfOnSave: true,
-
         toHit: 0,
     }),
     'Greater Invisibility': createTemplate({
-        actionSlot: ActionSlots.Action,
+        actionSlot: ActionSlots.Action, // Keep for backward compatibility
+        cost: [
+            { type: 'Discrete', resourceType: 'Action', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 4 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Concentration', 'Buff', 'Illusion'],
         type: 'buff',
         targets: 1,
         buff: {
@@ -145,7 +176,13 @@ export const ActionTemplates = {
         },
     }),
     'Shield': createTemplate({
-        actionSlot: ActionSlots.Reaction,
+        actionSlot: ActionSlots.Reaction, // Keep for backward compatibility
+        cost: [
+            { type: 'Discrete', resourceType: 'Reaction', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Abjuration', 'Defense'],
         type: 'buff',
         targets: 1,
         target: 'self',
@@ -157,6 +194,11 @@ export const ActionTemplates = {
     }),
     'Mage Armour': createTemplate({
         actionSlot: -3, // Pre-combat by default
+        cost: [
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Abjuration', 'Buff'],
         type: 'buff',
         targets: 1,
         target: 'self', // Can be touch, but self for simplicity for now
@@ -166,20 +208,29 @@ export const ActionTemplates = {
             ac: '3',
         },
     }),
-    'Armor of Agathys': createTemplate({
-        actionSlot: -3, // Pre-combat by default
-        type: 'heal', // Using heal for THP application
-        targets: 1,
-        target: 'self',
-        amount: 0, // Base amount, scaled by level usually
-        tempHP: true,
-        // Note: Damage reflection needs a specific implementation or trigger, 
-        // for now just the THP part or we add a buff with damage reflection if supported
-        // The current system supports damageTakenMultiplier but not reflection directly in simple buffs
-        // We might need a trigger for the reflection part.
-    }),
-    'False Life': createTemplate({
+        'Armor of Agathys': createTemplate({
+            actionSlot: -3, // Pre-combat by default
+            cost: [
+                { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 }
+            ],
+            requirements: [],
+            tags: ['Spell', 'Abjuration', 'Buff', 'TempHP', 'Defense'],
+            type: 'heal', // Using heal for THP application
+            targets: 1,
+            target: 'self',
+            amount: 0, // Base amount, scaled by level usually
+            tempHP: true,
+            // Note: Damage reflection needs a specific implementation or trigger,
+            // for now just the THP part or we add a buff with damage reflection if supported
+            // The current system supports damageTakenMultiplier but not reflection directly in simple buffs
+            // We might need a trigger for the reflection part.
+        }),    'False Life': createTemplate({
         actionSlot: -3,
+        cost: [
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Necromancy', 'Buff', 'TempHP'],
         type: 'heal',
         targets: 1,
         target: 'self',
@@ -187,7 +238,13 @@ export const ActionTemplates = {
         tempHP: true,
     }),
     'Shield of Faith': createTemplate({
-        actionSlot: ActionSlots['Bonus Action'], // Can be pre-cast too
+        actionSlot: ActionSlots['Bonus Action'], // Keep for backward compatibility
+        cost: [
+            { type: 'Discrete', resourceType: 'BonusAction', amount: 1 },
+            { type: 'Discrete', resourceType: 'SpellSlot', amount: 1 }
+        ],
+        requirements: [],
+        tags: ['Spell', 'Concentration', 'Abjuration', 'Buff', 'Defense'],
         type: 'buff',
         targets: 1,
         target: 'ally with the least HP',
