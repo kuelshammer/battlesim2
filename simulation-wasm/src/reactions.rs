@@ -5,6 +5,7 @@ use crate::context::{TurnContext, ActiveEffect, EffectType};
 use crate::model::Action;
 use crate::resources::{ActionCost, ActionRequirement};
 use crate::enums::TriggerCondition;
+use crate::validation;
 
 /// Manages the reaction system that allows combatants to respond to specific events
 #[derive(Debug, Clone)]
@@ -160,7 +161,7 @@ impl ReactionManager {
         }
 
         // Check requirements
-        if !self.requirements_met(reaction, context, combatant_id) {
+        if !validation::check_action_requirements(&reaction.response_action, context, combatant_id) {
             return false;
         }
 
@@ -229,64 +230,7 @@ impl ReactionManager {
         }
     }
 
-    /// Check if all requirements are met for a reaction
-    fn requirements_met(&self, reaction: &ReactionTemplate, context: &TurnContext, combatant_id: &str) -> bool {
-        for requirement in &reaction.requirements {
-            if !self.requirement_met(requirement, context, combatant_id) {
-                return false;
-            }
-        }
-        true
-    }
-
-    /// Check if a single requirement is met
-    fn requirement_met(&self, requirement: &ActionRequirement, context: &TurnContext, combatant_id: &str) -> bool {
-        match requirement {
-            ActionRequirement::ResourceAvailable(resource_type, amount) => {
-                let cost = vec![ActionCost::Discrete(resource_type.clone(), *amount)];
-                context.can_afford(&cost, combatant_id)
-            },
-            ActionRequirement::CombatState(combat_condition) => {
-                self.check_combat_condition(&combat_condition, context, combatant_id)
-            },
-            ActionRequirement::StatusEffect(effect_name) => {
-                // Check if combatant has the specified status effect
-                let effects = context.get_effects_on_target(combatant_id);
-                effects.iter().any(|effect| {
-                    match &effect.effect_type {
-                        EffectType::Buff(name) => name == effect_name,
-                        EffectType::Condition(_) => format!("{:?}", effect.effect_type) == *effect_name,
-                        _ => false,
-                    }
-                })
-            },
-            ActionRequirement::Custom(_requirement_text) => {
-                // Placeholder for custom requirement logic
-                // In a full implementation, this would be a scriptable system
-                false
-            }
-        }
-    }
-
     /// Check combat conditions
-    fn check_combat_condition(&self, condition: &crate::resources::CombatCondition, context: &TurnContext, combatant_id: &str) -> bool {
-        match condition {
-            crate::resources::CombatCondition::EnemyInRange(_range) => {
-                // Placeholder for range checking - would need position system
-                false
-            },
-            crate::resources::CombatCondition::IsSurprised => {
-                // Check if combatant is surprised
-                if let Some(_combatant) = context.get_combatant(combatant_id) {
-                    // Simplified condition check - in a full implementation,
-                    // you'd check for specific surprised conditions
-                    false // Placeholder
-                } else {
-                    false
-                }
-            },
-        }
-    }
 
     /// Execute a reaction
     pub fn execute_reaction(

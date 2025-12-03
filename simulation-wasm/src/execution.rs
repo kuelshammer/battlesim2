@@ -5,6 +5,7 @@ use crate::reactions::ReactionManager;
 use crate::events::Event;
 use crate::model::{Action, Combattant};
 use crate::action_resolver::ActionResolver;
+use crate::validation; // Import the validation module
 
 /// Central coordinator for all action processing in combat encounters
 #[derive(Debug, Clone)]
@@ -303,15 +304,34 @@ impl ActionExecutionEngine {
     }
 
     /// Select actions for a combatant (simple AI for now)
-    fn select_actions_for_combatant(&self, _combatant_id: &str) -> Vec<Action> {
-        // For now, return empty vector - this would be implemented with AI
-        // In a full implementation, this would:
-        // 1. Check available actions for the combatant
-        // 2. Evaluate combat situation
-        // 3. Select best actions based on AI or player input
-        // 4. Return valid actions that the combatant can afford
+    fn select_actions_for_combatant(&self, combatant_id: &str) -> Vec<Action> {
+        let Some(combatant_state) = self.context.get_combatant(combatant_id) else {
+            return Vec::new(); // Combatant not found or dead
+        };
 
-        Vec::new()
+        let mut available_actions = Vec::new();
+        for action in combatant_state.base_combatant.creature.actions.iter() {
+            // 1. Check requirements using the shared validation logic
+            if !validation::check_action_requirements(action, &self.context, combatant_id) {
+                continue;
+            }
+
+            // 2. Check affordability (costs)
+            // Note: execute_action_with_reactions also checks this, but pre-filtering here saves computation
+            if !self.context.can_afford(&action.base().cost, combatant_id) {
+                continue;
+            }
+
+            // TODO: 3. Evaluate combat situation and score actions
+            // For now, simply collect all valid and affordable actions.
+            // A more sophisticated AI would select the "best" action based on context.
+            available_actions.push(action.clone());
+        }
+
+        // For an initial implementation that unblocks the simulation,
+        // let's return all actions that pass the checks.
+        // A future enhancement would involve sorting or selecting a subset based on AI logic.
+        available_actions
     }
 
     /// Register default reactions for combatants

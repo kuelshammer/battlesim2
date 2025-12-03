@@ -13,6 +13,7 @@ pub mod context;
 pub mod reactions;
 pub mod execution;
 pub mod action_resolver;
+pub mod validation; // New module for requirement validation
 
 
 use wasm_bindgen::prelude::*;
