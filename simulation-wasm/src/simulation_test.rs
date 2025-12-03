@@ -87,6 +87,8 @@ mod tests {
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: None,
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
             },
             final_state: CreatureState {
                 current_hp: 10.0,
@@ -96,6 +98,8 @@ mod tests {
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: None,
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
             },
             actions: vec![],
         }
@@ -803,7 +807,7 @@ mod tests {
             triggers: vec![],
         };
 
-        let paladin = Creature {
+        let _paladin = Creature {
             id: "paladin_template".to_string(),
             name: "Paladin".to_string(),
             hp: 50.0,
