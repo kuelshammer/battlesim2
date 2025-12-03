@@ -12,6 +12,7 @@ pub mod events;
 pub mod context;
 pub mod reactions;
 pub mod execution;
+pub mod action_resolver;
 
 
 use wasm_bindgen::prelude::*;

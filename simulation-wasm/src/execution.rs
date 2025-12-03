@@ -4,6 +4,7 @@ use crate::context::{TurnContext, CombattantState};
 use crate::reactions::ReactionManager;
 use crate::events::Event;
 use crate::model::{Action, Combattant};
+use crate::action_resolver::ActionResolver;
 
 /// Central coordinator for all action processing in combat encounters
 #[derive(Debug, Clone)]
@@ -13,6 +14,9 @@ pub struct ActionExecutionEngine {
 
     /// Manages reaction templates and execution
     reaction_manager: ReactionManager,
+
+    /// Resolves actions into events
+    action_resolver: ActionResolver,
 }
 
 /// Result of executing a single action
@@ -84,6 +88,7 @@ impl ActionExecutionEngine {
         let mut engine = Self {
             context,
             reaction_manager: ReactionManager::new(),
+            action_resolver: ActionResolver::new(),
         };
 
         // Register reactions from combatants (placeholder for now)
@@ -278,76 +283,10 @@ impl ActionExecutionEngine {
         results
     }
 
-    /// Process an action and generate events (placeholder implementation)
+    /// Process an action and generate events using the ActionResolver
     fn process_action(&mut self, action: &Action, actor_id: &str) -> Vec<Event> {
-        let mut events = Vec::new();
-
-        match action {
-            Action::Atk(attack_action) => {
-                // Simple attack processing - would be more complex in full implementation
-                let target_id = self.get_random_target(actor_id);
-                if let Some(target) = target_id {
-                    // Simplified damage calculation
-                    let damage = crate::dice::average(&attack_action.dpr);
-
-                    events.push(Event::AttackHit {
-                        attacker_id: actor_id.to_string(),
-                        target_id: target.clone(),
-                        damage,
-                    });
-
-                    events.push(Event::DamageTaken {
-                        target_id: target,
-                        damage,
-                        damage_type: "Physical".to_string(),
-                    });
-                }
-            },
-            Action::Heal(heal_action) => {
-                // Simple healing processing
-                let heal_amount = crate::dice::average(&heal_action.amount);
-                let target_id = actor_id.to_string(); // Self-target for simplicity
-
-                events.push(Event::HealingApplied {
-                    target_id: target_id.clone(),
-                    amount: heal_amount,
-                    source_id: actor_id.to_string(),
-                });
-            },
-            Action::Buff(_buff_action) => {
-                // Placeholder for buff processing
-                events.push(Event::BuffApplied {
-                    target_id: actor_id.to_string(),
-                    buff_id: action.base().id.clone(),
-                    source_id: actor_id.to_string(),
-                });
-            },
-            Action::Debuff(_debuff_action) => {
-                // Placeholder for debuff processing
-                let target_id = self.get_random_target(actor_id);
-                if let Some(target) = target_id {
-                    events.push(Event::ConditionAdded {
-                        target_id: target.clone(),
-                        condition: crate::enums::CreatureCondition::Incapacitated,
-                        source_id: actor_id.to_string(),
-                    });
-                }
-            },
-            Action::Template(_template_action) => {
-                // Placeholder for template actions
-                events.push(Event::Custom {
-                    event_type: "TemplateAction".to_string(),
-                    data: {
-                        let mut data = HashMap::new();
-                        data.insert("action_id".to_string(), action.base().id.clone());
-                        data
-                    },
-                    source_id: actor_id.to_string(),
-                });
-            }
-        }
-
-        events
+        // Use the ActionResolver to convert the action into events
+        self.action_resolver.resolve_action(action, &mut self.context, actor_id)
     }
 
     /// Get a random target (simplified - would use proper targeting in full implementation)

@@ -159,8 +159,6 @@ pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], exclud
         // Using partial_cmp for floats. We want strict ordering.
         // For "Least" strategies, smaller is better. 
         // Our mapping above handles "Most" by negating, so we always want "smaller" value to be first.
-        // e.g. Most HP: -100 < -50. -100 comes first (higher HP).
-        // e.g. Least HP: 10 < 20. 10 comes first (lower HP).
         match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
             Ordering::Equal => {}, // Proceed to tie-breakers
             ord => return ord,
@@ -169,10 +167,8 @@ pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], exclud
         // 2. Tie-Breaker: Concentration (Target Concentrating > Not Concentrating)
         let c1 = e1.final_state.concentrating_on.is_some();
         let c2 = e2.final_state.concentrating_on.is_some();
-        if c1 != c2 {
-            // We want c1=true to be "smaller" (come first)
-            return if c1 { Ordering::Less } else { Ordering::Greater };
-        }
+        if c1 && !c2 { return Ordering::Less; } // c1 comes first
+        if !c1 && c2 { return Ordering::Greater; }
 
         // 3. Tie-Breaker: Initiative (Higher > Lower)
         // Higher initiative comes first.
@@ -190,6 +186,22 @@ pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], exclud
         // Ensure deterministic sorting
         e1.creature.name.cmp(&e2.creature.name)
     });
+
+    if let Some(first_idx) = candidates.first() {
+        let best = &enemies[*first_idx];
+        println!("DEBUG: Strategy '{:?}' selected {} (Index {})", strategy, best.creature.name, first_idx);
+        for idx in &candidates {
+            let e = &enemies[*idx];
+            let val = match strategy {
+                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
+                EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
+                EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
+                EnemyTarget::EnemyWithLowestAC => e.creature.ac,
+                EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
+            };
+            println!("  - Candidate {}: Score {:.1}", e.creature.name, val);
+        }
+    }
 
     let best_target = candidates.first().copied();
 
@@ -321,19 +333,16 @@ fn estimate_dpr(c: &Combattant) -> f64 {
     let mut max_dpr = 0.0;
     for action in &c.creature.actions {
         if let Action::Atk(a) = action {
-            // Simple estimation: (to_hit - 10) * 0.05 * dpr?
-            // Or just raw DPR.
-            // Let's use raw DPR for simplicity as "Highest DPR" usually refers to potential damage.
-            // But to be more accurate we could consider to_hit.
-            // For now, raw DPR.
             let dpr = match &a.dpr {
                 DiceFormula::Value(v) => *v,
                 DiceFormula::Expr(e) => dice::parse_average(e),
             };
+            eprintln!("DEBUG: Action {} DPR: {}", a.name, dpr);
             if dpr > max_dpr {
                 max_dpr = dpr;
             }
         }
     }
+    eprintln!("DEBUG: Creature {} Max DPR: {}", c.creature.name, max_dpr);
     max_dpr
 }
