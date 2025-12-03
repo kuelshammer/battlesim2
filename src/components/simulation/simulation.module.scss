@@ -65,9 +65,42 @@
                 background-color: #fff5f5;
             }
 
+            &.eventDamage {
+                border-left: 3px solid #ff4444;
+                background-color: #fff5f5;
+                color: #cc0000;
+            }
+
             &.eventHeal {
                 border-left: 3px solid #44ff44;
                 background-color: #f5fff5;
+                color: #008000;
+            }
+
+            &.eventBuff {
+                border-left: 3px solid #4444ff;
+                background-color: #f5f5ff;
+                color: #0000cc;
+            }
+
+            &.eventDebuff {
+                border-left: 3px solid #ffaa44;
+                background-color: #fffaf5;
+                color: #cc6600;
+            }
+
+            &.eventDeath {
+                border-left: 3px solid #555555;
+                background-color: #eeeeee;
+                color: #333333;
+                font-weight: bold;
+            }
+
+            &.eventEnd {
+                border-left: 3px solid #000000;
+                background-color: #dddddd;
+                color: #000000;
+                font-weight: bold;
             }
 
             &.eventReaction {
@@ -76,9 +109,15 @@
                 font-weight: bold;
             }
 
-            &.eventEffect {
-                border-left: 3px solid #ffaa44;
-                background-color: #fffaf5;
+            .eventDetails {
+                background-color: #e9e9e9;
+                padding: 0.5em;
+                margin: 0.5em 0;
+                border-radius: 4px;
+                white-space: pre-wrap;
+                font-family: monospace;
+                font-size: 0.8em;
+                color: #444;
             }
         }
     }

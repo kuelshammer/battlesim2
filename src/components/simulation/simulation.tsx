@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from "react"
 import { z } from "zod"
 import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult } from "../../model/model"
+import { parseEventString, SimulationEvent } from "../../model/events"
 import { clone, useStoredState } from "../../model/utils"
 import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
@@ -38,7 +39,7 @@ const Simulation: FC<PropType> = ({ }) => {
     const [luck, setLuck] = useStoredState<number>('luck', 0.5, z.number().min(0).max(1).parse)
     const [simulationResults, setSimulationResults] = useState<SimulationResult>([])
     const [state, setState] = useState(new Map<string, any>())
-    const [simulationEvents, setSimulationEvents] = useState<string[]>([])
+    const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
     const [useEventDriven, setUseEventDriven] = useState(true) // Toggle for testing
 
     function isEmpty() {
@@ -101,9 +102,10 @@ const Simulation: FC<PropType> = ({ }) => {
 
                     // Get events from the simulation
                     try {
-                        const events = wasm.get_last_simulation_events() as string[]
-                        setSimulationEvents(events)
-                        console.log('Events collected:', events.length)
+                        const rawEvents = wasm.get_last_simulation_events() as string[]
+                        const structuredEvents = rawEvents.map(parseEventString).filter((e): e is SimulationEvent => e !== null);
+                        setSimulationEvents(structuredEvents)
+                        console.log('Events collected and parsed:', structuredEvents.length)
                     } catch (eventError) {
                         console.error("Failed to get events:", eventError)
                         setSimulationEvents([])
