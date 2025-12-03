@@ -634,16 +634,84 @@ fn apply_single_effect(
             }
         },
         Action::Template(a) => {
-            // For template actions, we should resolve them to their final form first
-            // For now, we'll treat them as buff actions and apply the template effect
             if log_enabled { log.push(format!("    - Applying template: {}", a.template_options.template_name)); }
 
-            // TODO: Implement proper template resolution
-            // For now, this is a placeholder that just logs the template application
-            // The actual template logic should be implemented based on templateOptions.templateName
-
-            if log_enabled {
-                log.push(format!("      Template {} applied to target", a.template_options.template_name));
+            // Implement template resolution based on template name
+            let template_name = a.template_options.template_name.as_str();
+            let is_concentration = matches!(template_name, "Hunter's Mark" | "Hex" | "Bless" | "Bane");
+            
+            if is_concentration {
+                let new_buff_id = a.base().id.clone();
+                let current_conc = attacker.final_state.concentrating_on.clone();
+                
+                // Break old concentration if casting a different spell
+                if let Some(old_buff) = current_conc {
+                    if old_buff != new_buff_id {
+                        cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), old_buff.clone()));
+                        if log_enabled { log.push(format!("         -> Drops concentration on {}!", old_buff)); }
+                    }
+                }
+                
+                // Set new concentration
+                attacker.final_state.concentrating_on = Some(new_buff_id.clone());
+                
+                // Apply the buff/debuff based on template type
+                let mut buff = Buff {
+                    display_name: Some(template_name.to_string()),
+                    duration: BuffDuration::EntireEncounter,
+                    concentration: true,
+                    source: Some(attacker.id.clone()),
+                    damage: None,
+                    to_hit: None,
+                    save: None,
+                    dc: None,
+                    ac: None,
+                    damage_reduction: None,
+                    damage_multiplier: None,
+                    damage_taken_multiplier: None,
+                    condition: None,
+                    magnitude: None,
+                };
+                
+                // Configure buff based on template
+                match template_name {
+                    "Hunter's Mark" | "Hex" => {
+                        // Mark grants +1d6 damage on attacks (simplified: +3.5 avg)
+                        buff.damage = Some(DiceFormula::Value(3.5));
+                    },
+                    "Bless" => {
+                        // Bless grants +1d4 to attacks and saves
+                        buff.to_hit = Some(DiceFormula::Expr("1d4".to_string()));
+                        buff.save = Some(DiceFormula::Expr("1d4".to_string()));
+                    },
+                    "Bane" => {
+                        // Bane subtracts 1d4 from attacks and saves
+                        buff.to_hit = Some(DiceFormula::Expr("-1d4".to_string()));
+                        buff.save = Some(DiceFormula::Expr("-1d4".to_string()));
+                    },
+                    _ => {}
+                }
+                
+                // Apply to target
+                if let Some(t) = target_opt {
+                    t.final_state.buffs.insert(new_buff_id, buff);
+                    update_stats_buff(stats, &attacker.id, &t.id, true);
+                    if log_enabled {
+                        log.push(format!("      Template {} applied to target", template_name));
+                    }
+                } else {
+                    // Self-target (e.g., Bless on self)
+                    attacker.final_state.buffs.insert(new_buff_id, buff);
+                    update_stats_buff(stats, &attacker.id, &attacker.id, true);
+                    if log_enabled {
+                        log.push(format!("      Template {} applied to self", template_name));
+                    }
+                }
+            } else {
+                // Non-concentration template (placeholder)
+                if log_enabled {
+                    log.push(format!("      Template {} applied (non-concentration)", template_name));
+                }
             }
         },
     }

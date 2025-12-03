@@ -336,9 +336,6 @@ fn execute_precombat_actions(
             .collect();
         
         for action in precombat_actions {
-            #[cfg(debug_assertions)]
-            eprintln!("  [DEBUG] Checking pre-combat action for {}: {} (Slot: {})", team2[attacker_index].creature.name, action.base().name, action.base().action_slot);
-
             // NEW: Add validation checks here
             // Note: from team2's perspective, team2 is allies and team1 is enemies
             if !is_usable(&team2[attacker_index], &action) {
@@ -678,12 +675,44 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             continue;
         }
 
-        // NEW: Check for concentration conflict (Bug #5)
-        if is_concentration_action(action) && allies[index].final_state.concentrating_on.is_some() {
-             if log_enabled {
-                 log.push(format!("    - {} skips {} (already concentrating)", allies[index].creature.name, action.base().name));
-             }
-             continue;
+        // NEW: Check for concentration conflict (Bug #5 & Bug #7)
+        if is_concentration_action(action) {
+            if let Some(current_buff_id) = &allies[index].final_state.concentrating_on {
+                // Check if this is a "moveable" concentration spell (Hunter's Mark, Hex)
+                let is_moveable = match action {
+                    Action::Template(t) => {
+                        let name = t.template_options.template_name.as_str();
+                        matches!(name, "Hunter's Mark" | "Hex")
+                    },
+                    _ => false
+                };
+
+                if is_moveable {
+                    // For moveable spells, check if the current target is still valid (alive)
+                    let mut target_alive = false;
+                    for enemy in enemies.iter() {
+                        if enemy.final_state.buffs.contains_key(current_buff_id) {
+                            if enemy.final_state.current_hp > 0.0 {
+                                target_alive = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if target_alive {
+                        if log_enabled {
+                            log.push(format!("      -> Skips {} (already active on alive target)", action.base().name));
+                        }
+                        continue;
+                    }
+                    // If target is dead or buff not found, allow re-casting (moving)
+                } else {
+                    if log_enabled {
+                        log.push(format!("      -> Skips {} (already concentrating)", action.base().name));
+                    }
+                    continue;
+                }
+            }
         }
 
         if !used_slots.contains(&action_slot) {
@@ -772,10 +801,9 @@ fn is_concentration_action(action: &Action) -> bool {
         Action::Buff(a) => a.buff.concentration,
         Action::Debuff(a) => a.buff.concentration,
         Action::Template(a) => {
-            // For templates, we'd need to resolve it or check template options
-            // For now, assume false or check specific templates if needed
-            // Ideally we resolve templates before this check
-            false 
+            // Check known concentration templates
+            let name = a.template_options.template_name.as_str();
+            matches!(name, "Hunter's Mark" | "Bless" | "Bane" | "Hex")
         },
         _ => false,
     }

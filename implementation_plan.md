@@ -43,6 +43,20 @@
 
 ---
 
+**Phase 6: Final Polish (1 hour)**
+6. ✅ **Bug #7: Hunter's Mark Spam** - FIXED
+   - Issue: Andreas casts Hunter's Mark every turn, even on the same target
+   - Root Cause: `Action::Template` did nothing - never applied buffs or set concentration
+   - Fix: Implemented template resolution + smart concentration check
+   - Result: HM only re-cast when concentration broken or target dies
+
+7. ⚠️ **Bug #8: Empty Resistance Source** - NEW
+   - Issue: Damage log shows `* 0.50 []` instead of `* 0.50 [Rage]`
+   - Impact: Visual clarity only
+   - Suspected Cause: Missing display name in resistance modifier logic
+
+---
+
 
 ## 🔴 Critical Issues (Priority: Immediate)
 
