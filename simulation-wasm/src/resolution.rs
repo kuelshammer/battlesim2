@@ -199,11 +199,30 @@ fn apply_single_effect(
             let (roll, is_crit, is_miss) = get_attack_roll_result(attacker);
             let to_hit_bonus = dice::evaluate(&a.to_hit, 1);
 
-            // Check for advantage/disadvantage conditions
-            let has_advantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithAdvantage) ||
+            // Check for advantage/disadvantage from ATTACKER's conditions
+            let attacker_has_advantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithAdvantage) ||
                                crate::actions::has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
-            let has_disadvantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) ||
+            let attacker_has_disadvantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) ||
                                  crate::actions::has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage);
+
+            // Check for advantage/disadvantage from TARGET's conditions (e.g., Dodge, Reckless Attack)
+            let (target_grants_disadvantage, target_grants_advantage) = if let Some(t) = &target_opt {
+                let grants_dis = crate::actions::has_condition(t, CreatureCondition::IsAttackedWithDisadvantage);
+                // Check for IsAttackedWithAdvantage OR AttacksAndIsAttackedWithAdvantage (Reckless Attack)
+                let grants_adv = crate::actions::has_condition(t, CreatureCondition::IsAttackedWithAdvantage) ||
+                                 crate::actions::has_condition(t, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+                (grants_dis, grants_adv)
+            } else {
+                (false, false)
+            };
+
+            // D&D 5e Rule: If ANY source of advantage AND ANY source of disadvantage → Normal roll
+            let has_any_advantage = attacker_has_advantage || target_grants_advantage;
+            let has_any_disadvantage = attacker_has_disadvantage || target_grants_disadvantage;
+            
+            // Apply cancellation rule
+            let final_advantage = has_any_advantage && !has_any_disadvantage;
+            let final_disadvantage = has_any_disadvantage && !has_any_advantage;
 
             let mut buff_bonus = 0.0;
             let mut buff_details = Vec::new();
@@ -299,10 +318,16 @@ fn apply_single_effect(
                 let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
 
-                // Advantage/Disadvantage logging
-                let adv_str = if has_advantage && !has_disadvantage && !bane_disadvantage { " (ADVANTAGE)" }
-                              else if has_disadvantage || bane_disadvantage { " (DISADVANTAGE)" }
-                              else { "" };
+                // Advantage/Disadvantage logging with cancellation
+                let adv_str = if final_advantage { 
+                    " (ADVANTAGE)" 
+                } else if final_disadvantage { 
+                    " (DISADVANTAGE)" 
+                } else if has_any_advantage && has_any_disadvantage {
+                    " (ADV+DIS=Normal)"
+                } else { 
+                    "" 
+                };
 
                 // Combine attacker buffs (Bless) and target debuffs (Bane) for roll display
                 let roll_modifiers: Vec<String> = buff_details.iter()
