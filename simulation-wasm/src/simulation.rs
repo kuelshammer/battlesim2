@@ -223,7 +223,7 @@ fn execute_precombat_actions(
     
     // Check if any actions need to be executed
     for combattant in team1.iter().chain(team2.iter()) {
-        if combattant.creature.actions.iter().any(|a| a.base().action_slot == -3) {
+        if combattant.creature.actions.iter().any(|a| a.base().action_slot == Some(-3)) {
             has_precombat = true;
             break;
         }
@@ -244,7 +244,7 @@ fn execute_precombat_actions(
             .creature
             .actions
             .iter()
-            .filter(|a| a.base().action_slot == -3)
+            .filter(|a| a.base().action_slot == Some(-3))
             .cloned()
             .collect();
         
@@ -331,7 +331,7 @@ fn execute_precombat_actions(
             .creature
             .actions
             .iter()
-            .filter(|a| a.base().action_slot == -3)
+            .filter(|a| a.base().action_slot == Some(-3))
             .cloned()
             .collect();
         
@@ -663,12 +663,16 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
         let action_slot = action.base().action_slot;
 
         // NEW: Filter out pre-combat actions (Bug #3 root cause)
-        if action_slot < 0 {
-            continue;
+        if let Some(slot) = action_slot {
+            if slot < 0 {
+                continue;
+            }
+        } else {
+            continue; // Skip actions without action_slot for now
         }
 
         // Check bonus action economy: only one bonus action per turn
-        if action_slot == 1 && allies[index].final_state.bonus_action_used {
+        if action_slot == Some(1) && allies[index].final_state.bonus_action_used {
             if log_enabled {
                 log.push(format!("    - {} skips {} (bonus action already used)", allies[index].creature.name, action.base().name));
             }
@@ -715,9 +719,11 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             }
         }
 
-        if !used_slots.contains(&action_slot) {
-            used_slots.insert(action_slot);
-            actions_to_execute.push(action);
+        if let Some(slot) = action_slot {
+            if !used_slots.contains(&slot) {
+                used_slots.insert(slot);
+                actions_to_execute.push(action);
+            }
         }
     }
 

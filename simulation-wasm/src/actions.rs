@@ -77,14 +77,17 @@ pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]
 
     for action in &c.creature.actions {
         #[cfg(debug_assertions)]
-        eprintln!("        Considering action: {} (Slot: {}, Freq: {:?})", action.base().name, action.base().action_slot, action.base().freq);
+        eprintln!("        Considering action: {} (Slot: {:?}, Freq: {:?})", action.base().name, action.base().action_slot, action.base().freq);
 
         // For D&D 5e action economy: Only check slot conflicts for exact same slots
         // This allows Action (0) and Bonus Action (1) together, as well as Other actions (5,6) with Action/Bonus
-        if used_slots.contains(&action.base().action_slot) {
-            #[cfg(debug_assertions)]
-            eprintln!("          Slot {} already used this turn.", action.base().action_slot);
-            continue;
+        if let Some(slot) = action.base().action_slot {
+            if used_slots.contains(&slot) {
+                #[cfg(debug_assertions)]
+                eprintln!("          Slot {} already used this turn.", slot);
+                continue;
+            }
+            used_slots.insert(slot);
         }
         if !is_usable(c, action) {
             #[cfg(debug_assertions)]
@@ -102,7 +105,6 @@ pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]
         #[cfg(debug_assertions)]
         eprintln!("          Action {} usable. Adding to result.", action.base().name);
         result.push(action.clone());
-        used_slots.insert(action.base().action_slot);
     }
     
     result

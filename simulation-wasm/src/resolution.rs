@@ -770,7 +770,7 @@ pub fn resolve_action_execution(
     attacker_mut.final_state.actions_used_this_encounter.insert(action.base().id.clone());
 
     // NEW: Mark bonus action as used if this was a bonus action
-    if action.base().action_slot == 1 {
+    if action.base().action_slot == Some(1) {
         attacker_mut.final_state.bonus_action_used = true;
     }
 
