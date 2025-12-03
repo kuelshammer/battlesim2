@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use crate::enums::*;
+use crate::resources::{ActionCost, ActionRequirement, ActionTag};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -88,8 +89,19 @@ impl Action {
 pub struct ActionBase {
     pub id: String,
     pub name: String,
-    #[serde(rename = "actionSlot")]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     pub targets: i32,
@@ -99,8 +111,19 @@ pub struct ActionBase {
 pub struct AtkAction {
     pub id: String,
     pub name: String,
-    #[serde(rename = "actionSlot")]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     pub targets: i32,
@@ -123,6 +146,9 @@ impl AtkAction {
             id: self.id.clone(),
             name: self.name.clone(),
             action_slot: self.action_slot,
+            cost: self.cost.clone(),
+            requirements: self.requirements.clone(),
+            tags: self.tags.clone(),
             freq: self.freq.clone(),
             condition: self.condition.clone(),
             targets: self.targets,
@@ -134,8 +160,19 @@ impl AtkAction {
 pub struct HealAction {
     pub id: String,
     pub name: String,
-    #[serde(rename = "actionSlot")]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     pub targets: i32,
@@ -152,6 +189,9 @@ impl HealAction {
             id: self.id.clone(),
             name: self.name.clone(),
             action_slot: self.action_slot,
+            cost: self.cost.clone(),
+            requirements: self.requirements.clone(),
+            tags: self.tags.clone(),
             freq: self.freq.clone(),
             condition: self.condition.clone(),
             targets: self.targets,
@@ -163,8 +203,19 @@ impl HealAction {
 pub struct BuffAction {
     pub id: String,
     pub name: String,
-    #[serde(rename = "actionSlot")]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     pub targets: i32,
@@ -179,6 +230,9 @@ impl BuffAction {
             id: self.id.clone(),
             name: self.name.clone(),
             action_slot: self.action_slot,
+            cost: self.cost.clone(),
+            requirements: self.requirements.clone(),
+            tags: self.tags.clone(),
             freq: self.freq.clone(),
             condition: self.condition.clone(),
             targets: self.targets,
@@ -190,8 +244,19 @@ impl BuffAction {
 pub struct DebuffAction {
     pub id: String,
     pub name: String,
-    #[serde(rename = "actionSlot")]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     pub targets: i32,
@@ -208,6 +273,9 @@ impl DebuffAction {
             id: self.id.clone(),
             name: self.name.clone(),
             action_slot: self.action_slot,
+            cost: self.cost.clone(),
+            requirements: self.requirements.clone(),
+            tags: self.tags.clone(),
             freq: self.freq.clone(),
             condition: self.condition.clone(),
             targets: self.targets,
@@ -220,8 +288,19 @@ pub struct TemplateAction {
     pub id: String,
     #[serde(default, deserialize_with = "default_template_name")]
     pub name: String,
-    #[serde(rename = "actionSlot", default)]
-    pub action_slot: i32,
+
+    // Legacy field - kept for backward compatibility during transition
+    #[serde(rename = "actionSlot", default, skip_serializing)]
+    pub action_slot: Option<i32>,
+
+    // New fields replacing action_slot
+    #[serde(default)]
+    pub cost: Vec<ActionCost>,
+    #[serde(default)]
+    pub requirements: Vec<ActionRequirement>,
+    #[serde(default)]
+    pub tags: Vec<ActionTag>,
+
     pub freq: Frequency,
     pub condition: ActionCondition,
     #[serde(default = "default_targets")]
@@ -262,11 +341,14 @@ impl TemplateAction {
         } else {
             self.name.clone()
         };
-        
+
         ActionBase {
             id: self.id.clone(),
             name,
             action_slot: self.action_slot,
+            cost: self.cost.clone(),
+            requirements: self.requirements.clone(),
+            tags: self.tags.clone(),
             freq: self.freq.clone(),
             condition: self.condition.clone(),
             targets: self.targets,

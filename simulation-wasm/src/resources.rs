@@ -108,6 +108,57 @@ pub enum ActionRequirement {
     Custom(String),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ActionTag {
+    // Damage types
+    Melee,
+    Ranged,
+    Spell,
+    Weapon,
+    Fire,
+    Cold,
+    Lightning,
+    Poison,
+    Acid,
+    Thunder,
+    Necrotic,
+    Radiant,
+    Psychic,
+    Force,
+
+    // Properties
+    AoE,
+    Concentration,
+    RequiresSomatic,
+    RequiresVerbal,
+    RequiresMaterial,
+
+    // School/Source
+    Abjuration,
+    Conjuration,
+    Divination,
+    Enchantment,
+    Evocation,
+    Illusion,
+    Necromancy,
+    Transmutation,
+
+    // Special
+    Healing,
+    Utility,
+    Movement,
+    Social,
+
+    // Combat categories
+    Attack,
+    Defense,
+    Support,
+    Control,
+
+    // Custom tags
+    Custom(String),
+}
+
 #[cfg(test)]
 #[path = "./resources_test.rs"]
 mod resources_test;
