@@ -10,6 +10,8 @@ pub mod simulation;
 pub mod resources;
 pub mod events;
 pub mod context;
+pub mod reactions;
+pub mod execution;
 
 
 use wasm_bindgen::prelude::*;

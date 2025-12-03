@@ -112,6 +112,35 @@ impl ReactionManager {
         triggered
     }
 
+    /// Check what reactions can be triggered by a specific event (immutable version)
+    pub fn get_triggered_reactions(&self, event: &Event, context: &TurnContext) -> Vec<(String, &ReactionTemplate)> {
+        let mut triggered = Vec::new();
+
+        for (combatant_id, reactions) in &self.available_reactions {
+            // Skip if combatant is not alive
+            if !context.is_combatant_alive(combatant_id) {
+                continue;
+            }
+
+            for reaction in reactions {
+                if self.can_trigger_reaction(combatant_id, reaction, event, context) {
+                    triggered.push((combatant_id.clone(), reaction));
+                }
+            }
+        }
+
+        // Sort by priority (higher first) and then by combatant ID for consistency
+        triggered.sort_by(|a, b| {
+            let priority_cmp = b.1.priority.cmp(&a.1.priority);
+            if priority_cmp != std::cmp::Ordering::Equal {
+                return priority_cmp;
+            }
+            a.0.cmp(&b.0)
+        });
+
+        triggered
+    }
+
     /// Check if a specific reaction can be triggered
     fn can_trigger_reaction(
         &self,
@@ -308,7 +337,7 @@ impl ReactionManager {
     /// Execute the reaction action (placeholder implementation)
     fn execute_action(&self, action: &Action, context: &mut TurnContext, _actor_id: &str) -> Result<(), String> {
         match action {
-            Action::Template(template_action) => {
+            Action::Template(_template_action) => {
                 // In a full implementation, this would resolve the template
                 // and execute the action through the action system
                 context.record_event(Event::Custom {
