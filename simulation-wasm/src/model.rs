@@ -218,15 +218,30 @@ impl DebuffAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemplateAction {
     pub id: String,
+    #[serde(default, deserialize_with = "default_template_name")]
     pub name: String,
-    #[serde(rename = "actionSlot")]
+    #[serde(rename = "actionSlot", default)]
     pub action_slot: i32,
     pub freq: Frequency,
     pub condition: ActionCondition,
+    #[serde(default = "default_targets")]
     pub targets: i32,
 
     #[serde(rename = "templateOptions")]
     pub template_options: TemplateOptions,
+}
+
+fn default_targets() -> i32 {
+    1
+}
+
+fn default_template_name<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    // Try to deserialize the name field, if it doesn't exist, return empty string
+    // The actual name will be set from template_options.template_name in a post-processing step
+    Option::<String>::deserialize(deserializer).map(|opt| opt.unwrap_or_default())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -241,9 +256,16 @@ pub struct TemplateOptions {
 
 impl TemplateAction {
     pub fn base(&self) -> ActionBase {
+        // Use template_name if name is empty
+        let name = if self.name.is_empty() {
+            self.template_options.template_name.clone()
+        } else {
+            self.name.clone()
+        };
+        
         ActionBase {
             id: self.id.clone(),
-            name: self.name.clone(),
+            name,
             action_slot: self.action_slot,
             freq: self.freq.clone(),
             condition: self.condition.clone(),

@@ -198,10 +198,16 @@ fn apply_single_effect(
         Action::Atk(a) => {
             let (roll, is_crit, is_miss) = get_attack_roll_result(attacker);
             let to_hit_bonus = dice::evaluate(&a.to_hit, 1);
-            
+
+            // Check for advantage/disadvantage conditions
+            let has_advantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithAdvantage) ||
+                               crate::actions::has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+            let has_disadvantage = crate::actions::has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) ||
+                                 crate::actions::has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage);
+
             let mut buff_bonus = 0.0;
             let mut buff_details = Vec::new();
-            
+
             for b in attacker.final_state.buffs.values() {
                 if let Some(f) = &b.to_hit {
                     let val = dice::evaluate(f, 1);
@@ -213,7 +219,7 @@ fn apply_single_effect(
                     }
                 }
             }
-            
+
             let total_hit = roll + to_hit_bonus + buff_bonus;
             
             // Resolve Target Stats (Read)
@@ -252,6 +258,11 @@ fn apply_single_effect(
                 let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
 
+                // Advantage/Disadvantage logging
+                let adv_str = if has_advantage && !has_disadvantage { " (ADVANTAGE)" }
+                              else if has_disadvantage && !has_advantage { " (DISADVANTAGE)" }
+                              else { "" };
+
                 // Enhanced Bless/Bane logging
                 let bless_details: Vec<String> = buff_details.iter()
                     .filter(|d| d.contains("Bless"))
@@ -275,8 +286,8 @@ fn apply_single_effect(
                     String::new()
                 };
                 let hit_str = if hits { "✅ **HIT**" } else { "❌ **MISS**" };
-                log.push(format!("* ⚔️ Attack vs **{}**: **{:.0}** vs AC {:.0}{}{} -> {}",
-                    target_name, total_hit, final_ac, reaction_str, crit_str, hit_str));
+                log.push(format!("* ⚔️ Attack vs **{}**: **{:.0}** vs AC {:.0}{}{}{}{} -> {}",
+                    target_name, total_hit, final_ac, adv_str, reaction_str, crit_str, effect_str, hit_str));
             }
 
             if hits {
@@ -349,19 +360,26 @@ fn apply_single_effect(
                 damage = (damage * total_multiplier).floor(); // Round down damage in 5e
 
                 if log_enabled {
-                    let mut calc_log = format!("  * 🩸 Damage: **{:.0}**", damage);
-                    // Detailed breakdown could be added if needed, but keeping it simple for now as per plan
-                    // calc_log.push_str(&format!(" (Base {:.0} + Buffs {:.0})", damage_before_reduction - buff_dmg, buff_dmg));
-                    
+                    let mut calc_log = format!("  * 🩸 Damage: **{:.0}**", damage_before_reduction);
+
+                    // Add base damage breakdown if there are buffs
+                    if buff_dmg > 0.0 {
+                        calc_log.push_str(&format!(" (Base {:.0} + Buffs {:.0})", damage_before_reduction - buff_dmg, buff_dmg));
+                    }
+
+                    // Add damage reduction information
                     if flat_reduction > 0.0 {
-                        calc_log.push_str(&format!(" - {:.0} ({})", flat_reduction, reduction_sources.join(", ")));
+                        calc_log.push_str(&format!(" - {:.0} [Damage Reduction: {}]", flat_reduction, reduction_sources.join(", ")));
                     }
-                    
+
+                    // Add multiplier information (resistance/vulnerability)
                     if total_multiplier != 1.0 {
-                        calc_log.push_str(&format!(" * {:.2} ({})", total_multiplier, multiplier_sources.join(", ")));
+                        calc_log.push_str(&format!(" * {:.2} [{}]", total_multiplier, multiplier_sources.join(", ")));
+                        calc_log.push_str(&format!(" = **{:.0}**", damage));
+                    } else if flat_reduction > 0.0 {
+                        calc_log.push_str(&format!(" = **{:.0}**", damage));
                     }
-                    
-                    // calc_log.push_str(&format!(" = {:.0}", damage));
+
                     log.push(calc_log);
                 }
 
