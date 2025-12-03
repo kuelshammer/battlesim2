@@ -19,6 +19,9 @@ pub enum ResourceType {
 pub enum ResetType {
     ShortRest,
     LongRest,
+    Turn,
+    Round,
+    Encounter,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,8 +77,8 @@ impl ResourceLedger {
     pub fn reset(&mut self, reset_type: ResetType) {
         for (resource, rule) in &self.reset_rules {
             match (rule, &reset_type) {
-                (ResetType::ShortRest, ResetType::ShortRest) | 
-                (ResetType::ShortRest, ResetType::LongRest) | 
+                (ResetType::ShortRest, ResetType::ShortRest) |
+                (ResetType::ShortRest, ResetType::LongRest) |
                 (ResetType::LongRest, ResetType::LongRest) => {
                      if let Some(max_val) = self.max.get(resource) {
                          self.current.insert(resource.clone(), *max_val);
@@ -84,6 +87,11 @@ impl ResourceLedger {
                 _ => {}
             }
         }
+    }
+
+    /// Reset resources by reset type (alias for reset method)
+    pub fn reset_by_type(&mut self, reset_type: &ResetType) {
+        self.reset(reset_type.clone());
     }
 }
 

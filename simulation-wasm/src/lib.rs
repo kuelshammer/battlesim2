@@ -8,6 +8,8 @@ pub mod cleanup;
 pub mod resolution;
 pub mod simulation;
 pub mod resources;
+pub mod events;
+pub mod context;
 
 
 use wasm_bindgen::prelude::*;
