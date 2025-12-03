@@ -274,23 +274,9 @@ fn apply_single_effect(
                 } else {
                     String::new()
                 };
-
-                log.push(format!("      -> Attack vs {}: Rolled {:.0} + {:.0} (base bonus) + {:.0} (buffs){}{} = {:.0} vs AC {:.0} (Base {:.0} + {:.0} target buffs){}{}. Result: {}",
-                    target_name, roll, to_hit_bonus, buff_bonus, effect_str,
-                    if !buff_details.is_empty() && (bless_details.is_empty() && bane_details.is_empty()) {
-                        let other_buffs: Vec<String> = buff_details.iter()
-                            .filter(|d| !d.contains("Bless") && !d.contains("Bane"))
-                            .cloned()
-                            .collect();
-                        if !other_buffs.is_empty() {
-                            format!(" (other: {})", other_buffs.join(", "))
-                        } else {
-                            String::new()
-                        }
-                    } else {
-                        String::new()
-                    },
-                    total_hit, final_ac, target_ac, target_buff_ac, reaction_str, crit_str, if hits { "HIT" } else { "MISS" }));
+                let hit_str = if hits { "✅ **HIT**" } else { "❌ **MISS**" };
+                log.push(format!("* ⚔️ Attack vs **{}**: **{:.0}** vs AC {:.0}{}{} -> {}",
+                    target_name, total_hit, final_ac, reaction_str, crit_str, hit_str));
             }
 
             if hits {
@@ -363,7 +349,9 @@ fn apply_single_effect(
                 damage = (damage * total_multiplier).floor(); // Round down damage in 5e
 
                 if log_enabled {
-                    let mut calc_log = format!("         Damage: {:.0} (Base) + {:.0} (Buffs)", damage_before_reduction - buff_dmg, buff_dmg);
+                    let mut calc_log = format!("  * 🩸 Damage: **{:.0}**", damage);
+                    // Detailed breakdown could be added if needed, but keeping it simple for now as per plan
+                    // calc_log.push_str(&format!(" (Base {:.0} + Buffs {:.0})", damage_before_reduction - buff_dmg, buff_dmg));
                     
                     if flat_reduction > 0.0 {
                         calc_log.push_str(&format!(" - {:.0} ({})", flat_reduction, reduction_sources.join(", ")));
@@ -373,7 +361,7 @@ fn apply_single_effect(
                         calc_log.push_str(&format!(" * {:.2} ({})", total_multiplier, multiplier_sources.join(", ")));
                     }
                     
-                    calc_log.push_str(&format!(" = {:.0}", damage));
+                    // calc_log.push_str(&format!(" = {:.0}", damage));
                     log.push(calc_log);
                 }
 
@@ -386,7 +374,7 @@ fn apply_single_effect(
                     
                     if t.final_state.current_hp <= 0.0 {
                         cleanup_instructions.push(CleanupInstruction::RemoveAllBuffsFromSource(t.id.clone()));
-                        if log_enabled { log.push(format!("         {} falls unconscious!", t.creature.name)); }
+                        if log_enabled { log.push(format!("  * 💀 **{} falls unconscious!**", t.creature.name)); }
                     } else if let Some(buff_id) = t.final_state.concentrating_on.clone() {
                         let dc = (damage / 2.0).max(10.0);
                         let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
@@ -642,41 +630,17 @@ pub fn resolve_action_execution(
     }
 
     // 2. Iterate targets and apply effects
-    // 2. Iterate targets and apply effects
     let mut used_enemy_targets = Vec::new();
     
     for (is_target_enemy, mut target_idx) in raw_targets.iter().copied() {
         if is_target_enemy {
-            // For attacks, always re-select target dynamically based on current state
-            // This makes "enemy with least HP" reactive to damage dealt
-            if matches!(action, Action::Atk(_)) {
-                if let Action::Atk(atk_action) = action {
-                    // IMPORTANT: Pass empty exclusion list for attacks!
-                    // Attacks can target the same enemy multiple times (e.g., Multiattack)
-                    // The old exclusion system was breaking target selection after enemies died
-                    if let Some(new_idx) = crate::targeting::select_enemy_target(
-                        atk_action.target.clone(),
-                        enemies,
-                        &[],  // Empty exclusion - attacks don't exclude previously targeted enemies
-                        None
-                    ) {
-                        target_idx = new_idx;
-                    } else {
-                        if log_enabled {
-                            log.push(format!("      -> No targets available for attack"));
-                        }
-                        continue; // Skip if no targets
-                    }
+            // Verify target is still alive (might have died in previous iteration)
+            if enemies[target_idx].final_state.current_hp <= 0.0 {
+                if log_enabled {
+                    log.push(format!("      -> {} is already unconscious, skipping attack", 
+                        enemies[target_idx].creature.name));
                 }
-            } else {
-                // For non-attacks (debuffs), only re-select if target is dead
-                if enemies[target_idx].final_state.current_hp <= 0.0 {
-                    if log_enabled {
-                        log.push(format!("      -> {} is already unconscious, skipping action", 
-                            enemies[target_idx].creature.name));
-                    }
-                    continue;
-                }
+                continue;
             }
             
             used_enemy_targets.push((true, target_idx));

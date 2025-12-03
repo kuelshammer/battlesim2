@@ -267,8 +267,25 @@ fn execute_precombat_actions(
                 log.push(format!("  > {} uses {}", team1[attacker_index].creature.name, action.base().name));
             }
             
+            // NEW: Check for concentration conflict (Bug #5)
+            if is_concentration_action(&action) && team1[attacker_index].final_state.concentrating_on.is_some() {
+                 if log_enabled {
+                     log.push(format!("  > {} skips {} (already concentrating)", team1[attacker_index].creature.name, action.base().name));
+                 }
+                 continue;
+            }
+
             // Get targets for the action (correct signature: combattant, action, allies, enemies)
             let targets = get_targets(&team1[attacker_index], &action, &team1, &team2);
+            
+            // NEW: Check if any targets were found (Bug #3)
+            // If no targets found (e.g. buff already active), skip action to avoid wasting resources
+            if targets.is_empty() {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (no valid targets)", team1[attacker_index].creature.name, action.base().name));
+                }
+                continue;
+            }
             
             // Create action record
             let mut action_record = CombattantAction {
@@ -338,9 +355,25 @@ fn execute_precombat_actions(
                 log.push(format!("  > {} uses {}", team2[attacker_index].creature.name, action.base().name));
             }
             
+            // NEW: Check for concentration conflict (Bug #5)
+            if is_concentration_action(&action) && team2[attacker_index].final_state.concentrating_on.is_some() {
+                 if log_enabled {
+                     log.push(format!("  > {} skips {} (already concentrating)", team2[attacker_index].creature.name, action.base().name));
+                 }
+                 continue;
+            }
+
             // Get targets for the action (correct signature: combattant, action, allies, enemies)
             // Note: from team2's perspective, team2 is allies and team1 is enemies
             let targets = get_targets(&team2[attacker_index], &action, &team2, &team1);
+            
+            // NEW: Check if any targets were found (Bug #3)
+            if targets.is_empty() {
+                if log_enabled {
+                    log.push(format!("  > {} skips {} (no valid targets)", team2[attacker_index].creature.name, action.base().name));
+                }
+                continue;
+            }
             
             // Create action record
             let mut action_record = CombattantAction {
@@ -357,7 +390,7 @@ fn execute_precombat_actions(
             let cleanup = resolution::resolve_action_execution(
                 attacker_index,
                 team2,
-                team1,  // Note: reversed for team2's perspective
+                team1,
                 &action,
                 &targets,
                 &action_record,
@@ -431,7 +464,7 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<St
 
 fn run_round(team1: &[Combattant], team2: &[Combattant], stats: &mut HashMap<String, EncounterStats>, log: &mut Vec<String>, log_enabled: bool, round_num: usize) -> Round {
     if log_enabled {
-        log.push(format!("\n=== Round {} ===", round_num));
+        log.push(format!("\n# Round {}", round_num));
     }
 
     #[cfg(debug_assertions)]
@@ -584,7 +617,7 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
 fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combattant], stats: &mut HashMap<String, EncounterStats>, _is_enemy: bool, log: &mut Vec<String>, log_enabled: bool) {
     // Log the turn
         let attacker_name_for_log = allies[index].creature.name.clone();
-        log.push(format!("  > Turn: {} (HP: {:.0} of {:.0})", attacker_name_for_log, allies[index].final_state.current_hp, allies[index].creature.hp));
+        log.push(format!("\n## {} (HP: {:.0}/{:.0})", attacker_name_for_log, allies[index].final_state.current_hp, allies[index].creature.hp));
 
     // Get actions
     let actions = get_actions(&allies[index], allies, enemies);
@@ -629,12 +662,25 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
     for action in &sorted_actions {
         let action_slot = action.base().action_slot;
 
+        // NEW: Filter out pre-combat actions (Bug #3 root cause)
+        if action_slot < 0 {
+            continue;
+        }
+
         // Check bonus action economy: only one bonus action per turn
         if action_slot == 1 && allies[index].final_state.bonus_action_used {
             if log_enabled {
                 log.push(format!("    - {} skips {} (bonus action already used)", allies[index].creature.name, action.base().name));
             }
             continue;
+        }
+
+        // NEW: Check for concentration conflict (Bug #5)
+        if is_concentration_action(action) && allies[index].final_state.concentrating_on.is_some() {
+             if log_enabled {
+                 log.push(format!("    - {} skips {} (already concentrating)", allies[index].creature.name, action.base().name));
+             }
+             continue;
         }
 
         if !used_slots.contains(&action_slot) {
@@ -657,6 +703,14 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
 
         #[cfg(debug_assertions)]
         eprintln!("      Selected {} targets.", raw_targets.len());
+
+        // NEW: Check if any targets were found (Bug #3 secondary check)
+        if raw_targets.is_empty() {
+            if log_enabled {
+                log.push(format!("      -> No valid targets (skipping execution)"));
+            }
+            continue;
+        }
 
         // Record action in history (Aggregation) - this requires a clone of the action
         let mut action_record = CombattantAction {
@@ -710,3 +764,16 @@ fn get_action_priority(freq: &Frequency) -> i32 {
 #[cfg(test)]
 #[path = "./simulation_test.rs"]
 mod simulation_test;
+fn is_concentration_action(action: &Action) -> bool {
+    match action {
+        Action::Buff(a) => a.buff.concentration,
+        Action::Debuff(a) => a.buff.concentration,
+        Action::Template(a) => {
+            // For templates, we'd need to resolve it or check template options
+            // For now, assume false or check specific templates if needed
+            // Ideally we resolve templates before this check
+            false 
+        },
+        _ => false,
+    }
+}

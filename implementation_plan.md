@@ -15,12 +15,31 @@
    - Result: All attacks now execute without losing targets
 
 **Phase 3: Action Economy (1 hour)**
-3. ⚖️ Bug #2: Bonus Action Economy - Enforce core D&D rules
+3. ✅ **Bug #2: Bonus Action Economy** - FIXED
+   - Implemented `bonus_action_used` tracking
+   - Created Hunter's Mark template
+   - Split Andreas's actions into 3 separate components
+   - Result: Correctly enforces 1 bonus action per turn
 
 **Phase 4: AI Intelligence (1.5 hours)**
-4. 🧠 Bug #3 + #5: AI Buff/Concentration Logic - Solve together (similar fixes)
+4. ✅ **Bug #3 + #5: AI Buff/Concentration Logic** - FIXED
+   - Implemented `is_concentration_action` helper
+   - Added checks in `execute_turn` to skip actions if:
+     - Target list is empty (Buff already active)
+     - Caster is already concentrating (for concentration spells)
+     - Action is pre-combat (slot < 0)
+   - Result: Rage is not spammed, Concentration is respected
 
 **Total Estimated Time:** 4-5 hours
+
+---
+
+**Phase 5: Multi-Attack Fix (1 hour)**
+5. ✅ **Bug #6: Multi-Attack Target Loss** - FIXED
+   - Issue: Characters lose targets mid-multi-attack sequence
+   - Root cause: Redundant target re-selection in `resolution.rs`
+   - Fix: Removed re-selection logic (already handled in `get_targets()`)
+   - Result: 40 simulation runs with zero target loss occurrences
 
 ---
 
