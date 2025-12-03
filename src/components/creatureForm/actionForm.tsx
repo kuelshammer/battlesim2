@@ -11,6 +11,10 @@ import DiceFormulaInput from "../utils/diceFormulaInput"
 import Checkbox from "../utils/checkbox"
 import { ActionTemplates, getFinalAction } from "../../data/actions"
 
+import ActionCostEditor from "./ActionCostEditor"
+import ActionRequirementEditor from "./ActionRequirementEditor"
+import TagSelector from "./TagSelector"
+
 type PropType = {
     value: Action,
     onChange: (newvalue: Action) => void,
@@ -421,6 +425,21 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 value={value.actionSlot ?? (value.type === 'template' ? ActionTemplates[value.templateOptions.templateName].actionSlot : 0)}
                 options={ActionOptions}
                 onChange={actionSlot => update(v => { v.actionSlot = actionSlot })} />
+
+            <div style={{ width: '100%', borderTop: '1px solid #eee', marginTop: '4px', paddingTop: '4px' }}>
+                <ActionCostEditor
+                    value={value.cost || []}
+                    onChange={newCost => update(v => { v.cost = newCost })}
+                />
+                <ActionRequirementEditor
+                    value={value.requirements || []}
+                    onChange={newReqs => update(v => { v.requirements = newReqs })}
+                />
+                <TagSelector
+                    value={value.tags || []}
+                    onChange={newTags => update(v => { v.tags = newTags })}
+                />
+            </div>
 
             <Select value={value.type} options={TypeOptions} onChange={updateType} />
 
