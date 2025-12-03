@@ -405,18 +405,20 @@ mod tests {
             trigger_event_type: "AttackHit".to_string(),
             trigger_condition: TriggerCondition::OnBeingAttacked,
             response_action: Action::Template(crate::model::TemplateAction {
-                base: crate::model::ActionBase {
-                    id: "shield".to_string(),
-                    name: "Shield".to_string(),
-                    action_slot: Some(3), // Reaction slot
-                    cost: vec![],
-                    requirements: vec![],
-                    tags: vec![],
-                    targets: 1,
-                    target: None,
+                id: "shield".to_string(),
+                name: "Shield".to_string(), // template action has a name field
+                action_slot: Some(3), // Reaction slot
+                cost: vec![],
+                requirements: vec![],
+                tags: vec![],
+                freq: crate::model::Frequency::Static("at will".to_string()), // required field
+                condition: crate::enums::ActionCondition::Default, // required field
+                targets: 1, // required field
+                template_options: crate::model::TemplateOptions { // use TemplateOptions struct
+                    template_name: "Shield".to_string(),
+                    save_dc: None,
+                    amount: None,
                 },
-                templateName: "Shield".to_string(),
-                templateOptions: Default::default(),
             }),
             cost: vec![ActionCost::Discrete(ResourceType::Reaction, 1.0)],
             requirements: vec![],
@@ -441,18 +443,20 @@ mod tests {
             trigger_event_type: "AttackHit".to_string(),
             trigger_condition: TriggerCondition::OnBeingAttacked,
             response_action: Action::Template(crate::model::TemplateAction {
-                base: crate::model::ActionBase {
-                    id: "test".to_string(),
-                    name: "Test".to_string(),
-                    action_slot: Some(3),
-                    cost: vec![],
-                    requirements: vec![],
-                    tags: vec![],
-                    targets: 1,
-                    target: None,
+                id: "test".to_string(),
+                name: "Test".to_string(), // template action has a name field
+                action_slot: Some(3),
+                cost: vec![],
+                requirements: vec![],
+                tags: vec![],
+                freq: crate::model::Frequency::Static("at will".to_string()), // required field
+                condition: crate::enums::ActionCondition::Default, // required field
+                targets: 1, // required field
+                template_options: crate::model::TemplateOptions { // use TemplateOptions struct
+                    template_name: "Test".to_string(),
+                    save_dc: None,
+                    amount: None,
                 },
-                templateName: "Test".to_string(),
-                templateOptions: Default::default(),
             }),
             cost: vec![],
             requirements: vec![],

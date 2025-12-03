@@ -1,4 +1,4 @@
-use simulation_wasm::*;
+use simulation_wasm ::*;
 
 fn main() {
     // Simple test: Caster casts Bless on Target, then Caster dies
@@ -20,7 +20,10 @@ fn main() {
             model::Action::Buff(model::BuffAction {
                 id: "bless".to_string(),
                 name: "Bless".to_string(),
-                action_slot: 1,
+                action_slot: Some(1), // Bonus Action, ensure Some
+                cost: vec![], // Add new fields
+                requirements: vec![], // Add new fields
+                tags: vec![], // Add new fields
                 freq: model::Frequency::Static("at will".to_string()),
                 condition: enums::ActionCondition::Default,
                 targets: 3,
@@ -44,6 +47,8 @@ fn main() {
             }),
         ],
         triggers: vec![],
+        spell_slots: None, // Add missing fields
+        class_resources: None, // Add missing fields
     };
     
     let target = model::Creature {
@@ -60,6 +65,8 @@ fn main() {
         con_save_bonus: Some(3.0),
         actions: vec![],
         triggers: vec![],
+        spell_slots: None, // Add missing fields
+        class_resources: None, // Add missing fields
     };
     
     let enemy = model::Creature {
@@ -78,7 +85,10 @@ fn main() {
             model::Action::Atk(model::AtkAction {
                 id: "shortsword".to_string(),
                 name: "Shortsword".to_string(),
-                action_slot: 1,
+                action_slot: Some(0), // Ensure Some(0)
+                cost: vec![], // Add missing fields
+                requirements: vec![], // Add missing fields
+                tags: vec![], // Add missing fields
                 freq: model::Frequency::Static("at will".to_string()),
                 condition: enums::ActionCondition::Default,
                 targets: 1,
@@ -91,6 +101,8 @@ fn main() {
             }),
         ],
         triggers: vec![],
+        spell_slots: None, // Add missing fields
+        class_resources: None, // Add missing fields
     };
     
     let players = vec![caster, target];

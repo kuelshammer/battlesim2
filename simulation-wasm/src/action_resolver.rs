@@ -9,6 +9,7 @@ use crate::dice;
 #[derive(Debug, Clone)]
 pub struct ActionResolver {
     /// Random number generator for dice rolls
+    #[allow(dead_code)]
     rng_seed: Option<u64>,
 }
 
@@ -322,41 +323,38 @@ impl ActionResolver {
 
 /// Trait for actions that can apply effects
 pub trait EffectAction {
-    fn base(&self) -> &crate::model::ActionBase;
-    fn get_targets(&self, context: &TurnContext, actor_id: &str) -> Vec<String>;
+    fn base(&self) -> crate::model::ActionBase; // Changed from &crate::model::ActionBase
+    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String>; // Changed context to mut
 }
 
 impl EffectAction for BuffAction {
-    fn base(&self) -> &crate::model::ActionBase {
-        // Create an ActionBase from BuffAction fields
-        // Note: This creates a new ActionBase - in a full implementation,
-        // BuffAction would have a direct base() method like AtkAction
-        unimplemented!("BuffAction needs base() method implementation")
+    fn base(&self) -> crate::model::ActionBase {
+        self.base() // Call the struct's base method
     }
 
-    fn get_targets(&self, context: &TurnContext, actor_id: &str) -> Vec<String> {
+    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
         // Use targeting module - simplified for now
         self.get_simple_targets(context, actor_id)
     }
 }
 
 impl EffectAction for DebuffAction {
-    fn base(&self) -> &crate::model::ActionBase {
-        unimplemented!("DebuffAction needs base() method implementation")
+    fn base(&self) -> crate::model::ActionBase {
+        self.base() // Call the struct's base method
     }
 
-    fn get_targets(&self, context: &TurnContext, actor_id: &str) -> Vec<String> {
+    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
         self.get_simple_targets(context, actor_id)
     }
 }
 
 // Helper trait for simple target resolution
 trait SimpleTargeting {
-    fn get_simple_targets(&self, context: &TurnContext, actor_id: &str) -> Vec<String>;
+    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String>;
 }
 
 impl SimpleTargeting for BuffAction {
-    fn get_simple_targets(&self, context: &TurnContext, _actor_id: &str) -> Vec<String> {
+    fn get_simple_targets(&self, context: &mut TurnContext, _actor_id: &str) -> Vec<String> {
         // Simple implementation: return alive combatants
         context.combatants.keys()
             .filter(|id| context.is_combatant_alive(id))
@@ -367,7 +365,7 @@ impl SimpleTargeting for BuffAction {
 }
 
 impl SimpleTargeting for DebuffAction {
-    fn get_simple_targets(&self, context: &TurnContext, actor_id: &str) -> Vec<String> {
+    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
         // Simple implementation: return enemies (other combatants)
         context.combatants.keys()
             .filter(|id| *id != actor_id && context.is_combatant_alive(id))
@@ -380,8 +378,10 @@ impl SimpleTargeting for DebuffAction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Combattant, ActionBase, Frequency, ActionCondition, EnemyTarget};
-    use crate::resources::{ActionCost, ResourceType};
+    // Removed unused imports: Creature, Combattant, ActionBase, Frequency
+    use crate::enums::{ActionCondition, EnemyTarget};
+    // Removed unused imports: ActionCost, ResourceType
+    // use crate::resources::{ActionCost, ResourceType}; 
 
     #[test]
     fn test_action_resolver_creation() {
@@ -394,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_resolve_attack() {
-        let resolver = ActionResolver::new();
+        let _resolver = ActionResolver::new();
 
         // This test would require more setup to create a proper TurnContext
         // For now, just test that the method exists and can be called
@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn test_resolve_heal() {
-        let resolver = ActionResolver::new();
+        let _resolver = ActionResolver::new();
 
         // This test would require proper TurnContext setup
         // For now, just test method existence

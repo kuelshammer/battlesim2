@@ -6,7 +6,7 @@ import { clone, useStoredState } from "../../model/utils"
 import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
-import EventLog from "./eventLog"
+import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "../../model/simulationContext"
@@ -47,6 +47,12 @@ const Simulation: FC<PropType> = ({ }) => {
         const hasMonsters = !!encounters.find(encounter => !!encounter.monsters.length)
         return !hasPlayers && !hasMonsters
     }
+
+    // Helper to get combatant names for the log
+    const combatantNames = new Map<string, string>();
+    players.forEach(p => combatantNames.set(p.id, p.name));
+    encounters.forEach(e => e.monsters.forEach(m => combatantNames.set(m.id, m.name)));
+    // Also add numbered versions if IDs differ (simplified)
 
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -268,7 +274,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 {useEventDriven && (
                     <EventLog
                         events={simulationEvents}
-                        title={`Combat Events (${simulationEvents.length})`}
+                        combatantNames={Object.fromEntries(combatantNames)}
                     />
                 )}
 

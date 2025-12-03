@@ -228,18 +228,18 @@ export const CreatureSchema = z.object({
     speed_fly: z.number().optional(),
     saveBonus: z.number(), // Average save bonus. Using this to simplify the input, even if it makes the result slightly less accurate.
     conSaveBonus: z.number().optional(),
-    pub initiativeBonus: z.number().optional(),
-    pub initiativeAdvantage: z.boolean().optional(),
-    pub actions: z.array(ActionSchema),
-    pub triggers: z.array(z.object({
+    initiativeBonus: z.number().optional(),
+    initiativeAdvantage: z.boolean().optional(),
+    actions: z.array(ActionSchema),
+    triggers: z.array(z.object({
         id: z.string(),
         condition: TriggerConditionSchema,
         action: ActionSchema,
         cost: z.number().optional(), // ActionSlot
     })).optional(),
     // New fields for Phase 5 resource management
-    pub spellSlots: z.record(z.string(), z.number()).optional(),
-    pub classResources: z.record(z.string(), z.number()).optional(),
+    spellSlots: z.record(z.string(), z.number()).optional(),
+    classResources: z.record(z.string(), z.number()).optional(),
 })
 
 const TeamSchema = z.array(CreatureSchema)
@@ -322,3 +322,134 @@ export type EncounterStats = z.infer<typeof EncounterStatsSchema>
 export type Encounter = z.infer<typeof EncounterSchema>
 export type EncounterResult = z.infer<typeof EncounterResultSchema>
 export type SimulationResult = z.infer<typeof SimulationResultSchema>
+
+// Phase 3: Event System
+export const EventSchema = z.discriminatedUnion('type', [
+    // Combat Events
+    z.object({
+        type: z.literal('ActionStarted'),
+        actor_id: z.string(),
+        action_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('AttackHit'),
+        attacker_id: z.string(),
+        target_id: z.string(),
+        damage: z.number(),
+    }),
+    z.object({
+        type: z.literal('AttackMissed'),
+        attacker_id: z.string(),
+        target_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('DamageTaken'),
+        target_id: z.string(),
+        damage: z.number(),
+        damage_type: z.string(),
+    }),
+    z.object({
+        type: z.literal('DamagePrevented'),
+        target_id: z.string(),
+        prevented_amount: z.number(),
+    }),
+    z.object({
+        type: z.literal('HealingApplied'),
+        target_id: z.string(),
+        amount: z.number(),
+        source_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('TempHPGranted'),
+        target_id: z.string(),
+        amount: z.number(),
+        source_id: z.string(),
+    }),
+
+    // Spell Events
+    z.object({
+        type: z.literal('SpellCast'),
+        caster_id: z.string(),
+        spell_id: z.string(),
+        spell_level: z.number(),
+    }),
+    z.object({
+        type: z.literal('SpellSaved'),
+        target_id: z.string(),
+        spell_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('ConcentrationBroken'),
+        caster_id: z.string(),
+        reason: z.string(),
+    }),
+
+    // Status Events
+    z.object({
+        type: z.literal('BuffApplied'),
+        target_id: z.string(),
+        buff_id: z.string(),
+        source_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('BuffExpired'),
+        target_id: z.string(),
+        buff_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('ConditionAdded'),
+        target_id: z.string(),
+        condition: CreatureConditionSchema,
+        source_id: z.string(),
+    }),
+    z.object({
+        type: z.literal('ConditionRemoved'),
+        target_id: z.string(),
+        condition: CreatureConditionSchema,
+    }),
+
+    // Life Cycle Events
+    z.object({
+        type: z.literal('UnitDied'),
+        unit_id: z.string(),
+        killer_id: z.string().optional(),
+        damage_type: z.string().optional(),
+    }),
+    z.object({
+        type: z.literal('TurnStarted'),
+        unit_id: z.string(),
+        round_number: z.number(),
+    }),
+    z.object({
+        type: z.literal('TurnEnded'),
+        unit_id: z.string(),
+        round_number: z.number(),
+    }),
+    z.object({
+        type: z.literal('RoundStarted'),
+        round_number: z.number(),
+    }),
+    z.object({
+        type: z.literal('RoundEnded'),
+        round_number: z.number(),
+    }),
+    z.object({
+        type: z.literal('EncounterStarted'),
+        combatant_ids: z.array(z.string()),
+    }),
+    z.object({
+        type: z.literal('EncounterEnded'),
+        winner: z.string().optional(),
+        rounds: z.number(),
+    }),
+
+    // Custom/Other
+    z.object({
+        type: z.literal('Custom'),
+        event_type: z.string(),
+        data: z.record(z.string(), z.string()),
+        source_id: z.string(),
+    }),
+])
+
+export type Event = z.infer<typeof EventSchema>

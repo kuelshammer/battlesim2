@@ -1,6 +1,6 @@
 use simulation_wasm::model::*;
 use simulation_wasm::enums::*;
-use simulation_wasm::simulation;
+use simulation_wasm::simulation; // This is run_monte_carlo from simulation.rs
 
 fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -> Creature {
     Creature {
@@ -18,7 +18,10 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
             Action::Atk(AtkAction {
                 id: format!("{}_atk", id),
                 name: "Basic Attack".to_string(),
-                action_slot: 0, // Action
+                action_slot: Some(0), // Action
+                cost: vec![], // Add missing fields
+                requirements: vec![], // Add missing fields
+                tags: vec![], // Add missing fields
                 freq: Frequency::Static("at will".to_string()),
                 condition: ActionCondition::Default,
                 targets: 2, // Extra Attack
@@ -33,7 +36,10 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
             Action::Atk(AtkAction {
                 id: format!("{}_surge", id),
                 name: "Action Surge Attack".to_string(),
-                action_slot: 5, // ActionSlots['Other 1'] (for Action Surge)
+                action_slot: Some(5), // ActionSlots['Other 1'] (for Action Surge)
+                cost: vec![], // Add missing fields
+                requirements: vec![], // Add missing fields
+                tags: vec![], // Add missing fields
                 freq: Frequency::Static("1/fight".to_string()), // Usable once per fight
                 condition: ActionCondition::Default, // Condition not fully implemented yet
                 targets: 2, // Extra Attack again
@@ -47,15 +53,17 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
         ],
         arrival: None,
         triggers: vec![],
+        spell_slots: None, // Add missing fields
+        class_resources: None, // Add missing fields
     }
 }
 
 fn main() {
     let fast_fighter = create_fighter("fast", "Fast Fighter", 10.0, false); // +10 init, no advantage
-    let slow_fighter = create_fighter("slow", "Slow Fighter", 0.0, false); // +0 init, no advantage
+    let slow_fighter_creature = create_fighter("slow", "Slow Fighter", 0.0, false); // +0 init, no advantage
 
     let encounter = Encounter {
-        monsters: vec![slow_fighter],
+        monsters: vec![slow_fighter_creature], // Use the created creature
         players_surprised: Some(false),
         monsters_surprised: Some(false),
         short_rest: Some(false),
@@ -65,7 +73,9 @@ fn main() {
     let iterations = 1; // Single iteration for debugging
 
     println!("Running {} simulations...", iterations);
-    let results = simulation::run_monte_carlo(&players, &[encounter], iterations);
+    let results = simulation::run_monte_carlo(&players, &[
+        encounter
+    ], iterations);
 
     // This test is for debugging purposes, so we don't need extensive result processing
     // Just a single simulation trace.

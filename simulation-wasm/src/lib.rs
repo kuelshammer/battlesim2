@@ -72,6 +72,7 @@ pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterat
 }
 
 #[wasm_bindgen]
+#[allow(static_mut_refs)]
 pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
     unsafe {
         match &LAST_SIMULATION_EVENTS {

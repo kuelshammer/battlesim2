@@ -1,0 +1,144 @@
+.eventLogContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    .header {
+        padding: 10px;
+        background-color: #252526;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            color: #eee;
+            font-size: 1rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 5px;
+
+            button {
+                background: #333;
+                border: none;
+                color: #aaa;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.8rem;
+                transition: all 0.2s;
+
+                &:hover {
+                    background: #444;
+                    color: #fff;
+                }
+
+                &.active {
+                    background: #0e639c;
+                    color: #fff;
+                }
+            }
+        }
+    }
+
+    .logBody {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .emptyState {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+        }
+
+        .event {
+            padding: 6px 8px;
+            border-radius: 4px;
+            background-color: #2a2a2a;
+            color: #ccc;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid transparent;
+
+            strong {
+                color: #fff;
+                font-weight: 600;
+            }
+
+            svg {
+                width: 16px;
+                opacity: 0.8;
+            }
+
+            &.action {
+                border-left-color: #0e639c;
+                background-color: rgba(14, 99, 156, 0.1);
+            }
+
+            &.hit {
+                border-left-color: #d64040; // Red
+                .iconHit { color: #d64040; }
+            }
+
+            &.miss {
+                border-left-color: #888;
+                color: #888;
+                .iconMiss { color: #888; }
+            }
+
+            &.damage {
+                border-left-color: #d64040;
+                background-color: rgba(214, 64, 64, 0.05);
+                .iconDamage { color: #d64040; }
+            }
+
+            &.heal {
+                border-left-color: #4ec9b0; // Green/Teal
+                background-color: rgba(78, 201, 176, 0.05);
+                .iconHeal { color: #4ec9b0; }
+            }
+
+            &.death {
+                border-left-color: #000;
+                background-color: #330000;
+                color: #ffcccc;
+                font-weight: bold;
+                border: 1px solid #500;
+            }
+
+            &.round {
+                background-color: #444;
+                justify-content: center;
+                font-weight: bold;
+                margin: 10px 0;
+                border-radius: 12px;
+                color: #fff;
+            }
+
+            &.spell {
+                border-left-color: #b180d7; // Purple
+                background-color: rgba(177, 128, 215, 0.1);
+                color: #e0c0ff;
+            }
+
+            &.buff {
+                border-left-color: #4fc1ff; // Light Blue
+            }
+        }
+    }
+}

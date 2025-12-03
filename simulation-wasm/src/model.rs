@@ -421,6 +421,22 @@ pub struct CreatureState {
     pub bonus_action_used: bool,
 }
 
+impl Default for CreatureState {
+    fn default() -> Self {
+        CreatureState {
+            current_hp: 0.0,
+            temp_hp: None,
+            buffs: HashMap::new(),
+            remaining_uses: HashMap::new(),
+            upcoming_buffs: HashMap::new(),
+            used_actions: HashSet::new(),
+            concentrating_on: None,
+            actions_used_this_encounter: HashSet::new(),
+            bonus_action_used: false,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Combattant {
     pub id: String,

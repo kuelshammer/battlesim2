@@ -291,6 +291,7 @@ impl ActionExecutionEngine {
     }
 
     /// Get a random target (simplified - would use proper targeting in full implementation)
+    #[allow(dead_code)]
     fn get_random_target(&self, actor_id: &str) -> Option<String> {
         let alive_combatants = self.context.get_alive_combatants();
 
@@ -468,21 +469,26 @@ impl ActionExecutionEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, CreatureState};
+    use crate::model::{Creature, CreatureState, Combattant};
 
     #[test]
     fn test_action_execution_engine_creation() {
         let creature = Creature {
+            id: "warrior1".to_string(),
             name: "Test Warrior".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatant = Combattant {
@@ -504,16 +510,21 @@ mod tests {
     #[test]
     fn test_encounter_completion() {
         let creature = Creature {
+            id: "warrior".to_string(), // Added ID
             name: "Test Warrior".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatant1 = Combattant {
@@ -536,23 +547,30 @@ mod tests {
 
         let engine = ActionExecutionEngine::new(vec![combatant1, combatant2]);
 
-        // Should not be complete with 2 alive combatants on different teams
+        // Should not be complete with 2 alive combatants (teams not implemented, so all are enemies)
+        // This test case would need more sophistication for team-based completion.
+        // For now, it checks if more than 1 combatant is alive.
         assert!(!engine.is_encounter_complete());
     }
 
     #[test]
     fn test_initiative_order() {
         let creature = Creature {
+            id: "test".to_string(), // Added ID
             name: "Test".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatant1 = Combattant {

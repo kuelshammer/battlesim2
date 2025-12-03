@@ -1,15 +1,15 @@
-use crate::model::{Action, ActionRequirement};
+use crate::model::Action;
 use crate::context::TurnContext;
-use crate::resources::ActionCost;
+use crate::resources::{ActionCost, ActionRequirement};
 
 /// Checks if all requirements for an action are met by a combatant in the given context.
 pub fn check_action_requirements(
     action: &Action,
-    context: &TurnContext,
+    _context: &TurnContext,
     combatant_id: &str,
 ) -> bool {
     for requirement in action.base().requirements.iter() {
-        if !check_single_requirement(requirement, context, combatant_id) {
+        if !check_single_requirement(requirement, _context, combatant_id) {
             return false;
         }
     }
@@ -19,19 +19,19 @@ pub fn check_action_requirements(
 /// Checks if a single requirement is met by a combatant in the given context.
 pub fn check_single_requirement(
     requirement: &ActionRequirement,
-    context: &TurnContext,
+    _context: &TurnContext,
     combatant_id: &str,
 ) -> bool {
     match requirement {
         ActionRequirement::ResourceAvailable(resource_type, amount) => {
             let cost_for_check = vec![ActionCost::Discrete(resource_type.clone(), *amount)];
-            context.can_afford(&cost_for_check, combatant_id)
+            _context.can_afford(&cost_for_check, combatant_id)
         },
         ActionRequirement::CombatState(combat_condition) => {
-            check_combat_condition(combat_condition, context, combatant_id)
+            check_combat_condition(combat_condition, _context, combatant_id)
         },
         ActionRequirement::StatusEffect(effect_name) => {
-            let effects = context.get_effects_on_target(combatant_id);
+            let effects = _context.get_effects_on_target(combatant_id);
             effects.iter().any(|effect| {
                 match &effect.effect_type {
                     crate::context::EffectType::Buff(name) => name == effect_name,
@@ -51,7 +51,7 @@ pub fn check_single_requirement(
 /// Checks specific combat conditions.
 fn check_combat_condition(
     condition: &crate::resources::CombatCondition,
-    context: &TurnContext,
+    _context: &TurnContext,
     _combatant_id: &str, // _combatant_id might be needed for some conditions
 ) -> bool {
     match condition {

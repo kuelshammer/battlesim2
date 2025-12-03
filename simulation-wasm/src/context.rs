@@ -368,21 +368,26 @@ pub struct ContextStats {
 mod tests {
     use super::*;
     use crate::resources::ActionCost;
-    use crate::model::{Creature, CreatureState};
+    use crate::model::{Creature, CreatureState, Combattant};
 
     #[test]
     fn test_turn_context_creation() {
         let creature = Creature {
+            id: "player1".to_string(),
             name: "Player 1".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatants = vec![
@@ -412,16 +417,21 @@ mod tests {
     #[test]
     fn test_turn_management() {
         let creature = Creature {
+            id: "player1".to_string(),
             name: "Player 1".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatants = vec![
@@ -455,16 +465,21 @@ mod tests {
     #[test]
     fn test_resource_management() {
         let creature = Creature {
+            id: "player1".to_string(),
             name: "Player 1".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatants = vec![
@@ -498,16 +513,21 @@ mod tests {
     #[test]
     fn test_effect_management() {
         let creature = Creature {
+            id: "player1".to_string(),
             name: "Player 1".to_string(),
+            count: 1.0,
             hp: 30.0,
-            ac: 15,
-            initiative: 10,
-            speed: 30,
-            attacks: Vec::new(),
-            buffs: Vec::new(),
-            debuffs: Vec::new(),
-            conditions: Vec::new(),
+            ac: 15.0,
+            save_bonus: 0.0,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            con_save_bonus: None,
+            arrival: None,
+            speed_fly: None,
+            actions: Vec::new(),
+            triggers: Vec::new(),
             spell_slots: None,
+            class_resources: None,
         };
 
         let combatants = vec![
