@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema } from './enums'
+import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema, ResourceTypeSchema, ResetTypeSchema, ActionTagSchema } from './enums'
 import { ClassOptionsSchema } from './classOptions'
 import { validateDiceFormula } from './dice'
 import { ActionTemplates } from '../data/actions'
@@ -22,6 +22,44 @@ export const FrequencySchema = z.enum(FrequencyList).or(z.discriminatedUnion('re
     })
 ]))
 export type Frequency = z.infer<typeof FrequencySchema>;
+
+// New Phase 2 schemas for flexible action system
+export const ActionCostSchema = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal('Discrete'),
+        resourceType: ResourceTypeSchema,
+        amount: z.number(),
+    }),
+    z.object({
+        type: z.literal('Variable'),
+        resourceType: ResourceTypeSchema,
+        min: z.number(),
+        max: z.number(),
+    }),
+])
+export type ActionCost = z.infer<typeof ActionCostSchema>
+
+export const ActionRequirementSchema = z.discriminatedUnion('type', [
+    z.object({
+        type: z.literal('ResourceAvailable'),
+        resourceType: ResourceTypeSchema,
+        amount: z.number(),
+    }),
+    z.object({
+        type: z.literal('CombatState'),
+        condition: z.enum(['EnemyInRange', 'IsSurprised']),
+        value: z.number().optional(),
+    }),
+    z.object({
+        type: z.literal('StatusEffect'),
+        effect: z.string(),
+    }),
+    z.object({
+        type: z.literal('Custom'),
+        description: z.string(),
+    }),
+])
+export type ActionRequirement = z.infer<typeof ActionRequirementSchema>
 
 const BuffSchema = z.object({
     displayName: z.string().optional(),
@@ -46,7 +84,15 @@ const BuffSchema = z.object({
 const ActionSchemaBase = z.object({
     id: z.string(),
     name: z.string(),
-    actionSlot: z.number(), // Can only take 1 action for each action slot per turn, e.g. action slot 0 is all actions, and action slot 1 is all bonus actions
+
+    // Legacy field - kept for backward compatibility during transition
+    actionSlot: z.number().optional(), // Will be deprecated in favor of cost/requirements/tags
+
+    // New fields replacing actionSlot
+    cost: z.array(ActionCostSchema).default([]),
+    requirements: z.array(ActionRequirementSchema).default([]),
+    tags: z.array(ActionTagSchema).default([]),
+
     freq: FrequencySchema,
     condition: ActionConditionSchema,
     targets: z.number(),
@@ -96,7 +142,14 @@ const TemplateActionSchema = z.object({
     id: z.string(),
     freq: FrequencySchema,
     condition: ActionConditionSchema,
+
+    // Legacy field - kept for backward compatibility during transition
     actionSlot: z.number().optional(), // Override the template's default action slot
+
+    // New fields replacing actionSlot
+    cost: z.array(ActionCostSchema).default([]),
+    requirements: z.array(ActionRequirementSchema).default([]),
+    tags: z.array(ActionTagSchema).default([]),
 
     templateOptions: z.object({
         target: AllyTargetSchema.or(EnemyTargetSchema).optional(),

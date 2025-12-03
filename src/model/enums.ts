@@ -129,3 +129,75 @@ export const TriggerConditionList = [
 
 export const TriggerConditionSchema = z.enum(TriggerConditionList)
 export type TriggerCondition = z.infer<typeof TriggerConditionSchema>
+
+// New Phase 2 enums for flexible action system
+export const ResourceTypeList = [
+    'Action',
+    'BonusAction',
+    'Reaction',
+    'Movement',
+    'SpellSlot',
+    'ClassResource',
+    'ItemCharge',
+    'HitDice',
+    'HP',
+    'Custom'
+] as const
+export const ResourceTypeSchema = z.enum(ResourceTypeList)
+export type ResourceType = z.infer<typeof ResourceTypeSchema>
+
+export const ResetTypeList = ['ShortRest', 'LongRest'] as const
+export const ResetTypeSchema = z.enum(ResetTypeList)
+export type ResetType = z.infer<typeof ResetTypeSchema>
+
+export const ActionTagList = [
+    // Damage types
+    'Melee',
+    'Ranged',
+    'Spell',
+    'Weapon',
+    'Fire',
+    'Cold',
+    'Lightning',
+    'Poison',
+    'Acid',
+    'Thunder',
+    'Necrotic',
+    'Radiant',
+    'Psychic',
+    'Force',
+
+    // Properties
+    'AoE',
+    'Concentration',
+    'RequiresSomatic',
+    'RequiresVerbal',
+    'RequiresMaterial',
+
+    // School/Source
+    'Abjuration',
+    'Conjuration',
+    'Divination',
+    'Enchantment',
+    'Evocation',
+    'Illusion',
+    'Necromancy',
+    'Transmutation',
+
+    // Special
+    'Healing',
+    'Utility',
+    'Movement',
+    'Social',
+
+    // Combat categories
+    'Attack',
+    'Defense',
+    'Support',
+    'Control',
+
+    // Custom tags
+    'Custom'
+] as const
+export const ActionTagSchema = z.enum(ActionTagList)
+export type ActionTag = z.infer<typeof ActionTagSchema>

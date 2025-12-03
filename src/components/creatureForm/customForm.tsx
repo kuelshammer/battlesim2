@@ -28,7 +28,10 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
         update(v => {
             v.actions.push({
                 id: uuid(),
-                actionSlot: 0,
+                actionSlot: 0, // legacy field - default action
+                cost: [], // empty cost array for new actions
+                requirements: [], // empty requirements array
+                tags: [], // empty tags array
                 name: '',
                 freq: 'at will',
                 condition: 'default',

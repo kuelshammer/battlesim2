@@ -273,6 +273,9 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             id: value.id,
             name: finalAction.name,
             actionSlot: finalAction.actionSlot,
+            cost: finalAction.cost || [],
+            requirements: finalAction.requirements || [],
+            tags: finalAction.tags || [],
             condition: finalAction.condition,
             freq: finalAction.freq,
             targets: finalAction.targets,
@@ -283,6 +286,9 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             type: 'template',
             condition: finalAction.condition,
             freq: finalAction.freq,
+            cost: finalAction.cost || [],
+            requirements: finalAction.requirements || [],
+            tags: finalAction.tags || [],
             templateOptions: { templateName: 'Fireball', saveDC: 10, toHit: 10, target: 'enemy with least HP' },
         }
 
