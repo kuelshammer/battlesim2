@@ -195,6 +195,31 @@ export function aggregate_simulation_results(results) {
 }
 
 /**
+ * @returns {any}
+ */
+export function get_last_simulation_events() {
+    const ret = wasm.get_last_simulation_events();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @returns {any}
+ */
+export function run_event_driven_simulation(players, encounters, iterations) {
+    const ret = wasm.run_event_driven_simulation(players, encounters, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * @param {any} players_val
  * @param {any} encounters_val
  * @param {number} iterations

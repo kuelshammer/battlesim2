@@ -46,7 +46,7 @@
         }
 
         .eventLogEntry {
-            padding: 0.25em 0;
+            padding: 0.25em 0.5em;
             border-bottom: 1px solid #eee;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
@@ -58,6 +58,56 @@
 
             &:hover {
                 background-color: #f0f0f0;
+            }
+
+            &.eventAttack {
+                border-left: 3px solid #ff4444;
+                background-color: #fff5f5;
+            }
+
+            &.eventHeal {
+                border-left: 3px solid #44ff44;
+                background-color: #f5fff5;
+            }
+
+            &.eventReaction {
+                border-left: 3px solid #4444ff;
+                background-color: #f5f5ff;
+                font-weight: bold;
+            }
+
+            &.eventEffect {
+                border-left: 3px solid #ffaa44;
+                background-color: #fffaf5;
+            }
+        }
+    }
+
+    .backendStatus {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1em;
+        border-radius: 8px;
+        margin-bottom: 1em;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        h4 {
+            margin: 0 0 0.5em 0;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .statusItems {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+            font-size: 0.9em;
+
+            span {
+                background: rgba(255, 255, 255, 0.2);
+                padding: 0.3em 0.6em;
+                border-radius: 12px;
+                font-weight: 500;
             }
         }
     }

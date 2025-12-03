@@ -185,6 +185,20 @@ const Simulation: FC<PropType> = ({ }) => {
             <semiPersistentContext.Provider value={{ state, setState }}>
                 <h1 className={styles.header}>BattleSim</h1>
 
+                {/* Backend Features Status Panel */}
+                {useEventDriven && (
+                    <div className={styles.backendStatus}>
+                        <h4>🔧 Event-Driven Backend Active</h4>
+                        <div className={styles.statusItems}>
+                            <span>✅ ActionResolution Engine</span>
+                            <span>✅ Event System</span>
+                            <span>✅ Reaction Processing</span>
+                            <span>✅ Effect Tracking</span>
+                            <span>📊 Events: {simulationEvents.length}</span>
+                        </div>
+                    </div>
+                )}
+
                 <EncounterForm
                     mode='player'
                     encounter={{ monsters: players }}

@@ -3,6 +3,10 @@
 
 export function aggregate_simulation_results(results: any): any;
 
+export function get_last_simulation_events(): any;
+
+export function run_event_driven_simulation(players: any, encounters: any, iterations: number): any;
+
 export function run_simulation(players_val: any, encounters_val: any, iterations: number, log_enabled: boolean): any;
 
 export function run_simulation_wasm(players: any, encounters: any, iterations: number): any;
@@ -12,6 +16,8 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly aggregate_simulation_results: (a: any) => [number, number, number];
+  readonly get_last_simulation_events: () => [number, number, number];
+  readonly run_event_driven_simulation: (a: any, b: any, c: number) => [number, number, number];
   readonly run_simulation: (a: any, b: any, c: number, d: number) => [number, number, number];
   readonly run_simulation_wasm: (a: any, b: any, c: number) => [number, number, number];
   readonly __wbindgen_malloc: (a: number, b: number) => number;

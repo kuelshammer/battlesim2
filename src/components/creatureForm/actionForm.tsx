@@ -320,6 +320,66 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
         })
     }
 
+    // Analyze action to provide backend feedback
+    function getBackendFeedback() {
+        const feedback = {
+            processors: [] as string[],
+            reactions: [] as string[],
+            effects: [] as string[]
+        }
+
+        // All actions are processed by ActionResolver
+        feedback.processors.push('ActionResolver')
+
+        // Analyze action type for specific backend features
+        switch (value.type) {
+            case 'atk':
+                feedback.processors.push('TargetingSystem')
+                feedback.reactions.push('OpportunityAttack')
+                if (value.riderEffect) {
+                    feedback.effects.push('SaveSystem')
+                    feedback.effects.push('EffectTracking')
+                }
+                if (value.dpr > 0) {
+                    feedback.processors.push('DamageCalculation')
+                }
+                break
+            case 'heal':
+                feedback.processors.push('HealingSystem')
+                feedback.effects.push('HPTracking')
+                if ((value as any).tempHP) {
+                    feedback.effects.push('TempHPTracking')
+                }
+                break
+            case 'buff':
+            case 'debuff':
+                feedback.processors.push('BuffSystem')
+                feedback.effects.push('EffectTracking')
+                feedback.effects.push('DurationTracking')
+                if (value.type === 'debuff') {
+                    feedback.reactions.push('ConcentrationSave')
+                }
+                break
+            case 'template':
+                feedback.processors.push('TemplateSystem')
+                feedback.processors.push('SaveSystem')
+                feedback.effects.push('AreaEffect')
+                break
+        }
+
+        // Check frequency for resource management
+        if (value.freq !== 'at will') {
+            feedback.processors.push('ResourceTracking')
+        }
+
+        // Check conditions for conditional processing
+        if (value.condition !== 'default') {
+            feedback.processors.push('ConditionSystem')
+        }
+
+        return feedback
+    }
+
     return (
         <div className={styles.actionForm}>
             <div className={styles.arrowBtns}>
@@ -532,6 +592,33 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
 
                 return targetForm
             })() : null}
+
+            {/* Backend Feature Feedback Panel */}
+            <div className={styles.backendFeedback}>
+                <div className={styles.feedbackTitle}>🔧 Backend Processing</div>
+                <div className={styles.feedbackItems}>
+                    {(() => {
+                        const feedback = getBackendFeedback()
+                        return [
+                            ...feedback.processors.map(processor => (
+                                <div key={processor} className={styles.feedbackItem}>
+                                    ⚙️ {processor}
+                                </div>
+                            )),
+                            ...feedback.reactions.map(reaction => (
+                                <div key={reaction} className={`${styles.feedbackItem} ${styles.reaction}`}>
+                                    ⚡ {reaction}
+                                </div>
+                            )),
+                            ...feedback.effects.map(effect => (
+                                <div key={effect} className={`${styles.feedbackItem} ${styles.effect}`}>
+                                    ✨ {effect}
+                                </div>
+                            ))
+                        ]
+                    })()}
+                </div>
+            </div>
         </div>
     )
 }
