@@ -20,6 +20,7 @@ use wasm_bindgen::prelude::*;
 use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
 use std::collections::{HashMap, HashSet};
+use std::sync::Mutex;
 
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
@@ -37,8 +38,8 @@ pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: us
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
 }
 
-// Store last simulation events for retrieval
-static mut LAST_SIMULATION_EVENTS: Option<Vec<String>> = None;
+// Store last simulation events for retrieval (thread-safe)
+static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[wasm_bindgen]
 pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
@@ -59,9 +60,9 @@ pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterat
         }
     }
 
-    // Store events for retrieval
-    unsafe {
-        LAST_SIMULATION_EVENTS = Some(all_events.clone());
+    // Store events for retrieval (thread-safe)
+    if let Ok(mut events_guard) = LAST_SIMULATION_EVENTS.lock() {
+        *events_guard = Some(all_events.clone());
     }
 
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -72,18 +73,20 @@ pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterat
 }
 
 #[wasm_bindgen]
-#[allow(static_mut_refs)]
 pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
-    unsafe {
-        match &LAST_SIMULATION_EVENTS {
-            Some(events) => {
-                let serializer = serde_wasm_bindgen::Serializer::new()
-                    .serialize_maps_as_objects(false);
-                serde::Serialize::serialize(&events, &serializer)
-                    .map_err(|e| JsValue::from_str(&format!("Failed to serialize events: {}", e)))
+    match LAST_SIMULATION_EVENTS.lock() {
+        Ok(events_guard) => {
+            match events_guard.as_ref() {
+                Some(events) => {
+                    let serializer = serde_wasm_bindgen::Serializer::new()
+                        .serialize_maps_as_objects(false);
+                    serde::Serialize::serialize(&events, &serializer)
+                        .map_err(|e| JsValue::from_str(&format!("Failed to serialize events: {}", e)))
+                }
+                None => Ok(JsValue::from_str(&"No simulation events available")),
             }
-            None => Ok(JsValue::from_str(&"No simulation events available")),
         }
+        Err(_) => Ok(JsValue::from_str(&"Error accessing simulation events")),
     }
 }
 
