@@ -661,6 +661,9 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
         hp: hp(level, 10, CON),
         count: 1,
         mode: 'player',
+        classResources: {
+            'Lay on Hands': 5 * level,
+        },
         triggers: [
             {
                 id: uuid(),
@@ -702,11 +705,19 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
                     name: 'Lay on Hands',
                     actionSlot: ActionSlots.Action,
                     type: 'heal',
-                    freq: '1/day',
+                    freq: 'at will',
                     condition: 'any ally injured',
                     targets: 1,
                     target: 'ally with the least HP',
-                    amount: 5 * level,
+                    amount: 5, // Standard dose
+                    cost: [
+                        {
+                            type: 'Discrete',
+                            resourceType: 'ClassResource',
+                            resourceVal: 'Lay on Hands',
+                            amount: 5,
+                        }
+                    ]
                 },
             ],
             6: [

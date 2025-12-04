@@ -405,6 +405,39 @@ pub struct Creature {
     pub class_resources: Option<HashMap<String, i32>>,
 }
 
+impl Creature {
+    pub fn initialize_ledger(&self) -> crate::resources::ResourceLedger {
+        let mut ledger = crate::resources::ResourceLedger::new();
+        
+        // Add standard resources
+        ledger.register_resource(crate::resources::ResourceType::Action, None, 1.0, Some(crate::resources::ResetType::Turn));
+        ledger.register_resource(crate::resources::ResourceType::BonusAction, None, 1.0, Some(crate::resources::ResetType::Turn));
+        ledger.register_resource(crate::resources::ResourceType::Reaction, None, 1.0, Some(crate::resources::ResetType::Round));
+        ledger.register_resource(crate::resources::ResourceType::Movement, None, 30.0, Some(crate::resources::ResetType::Turn)); // Default 30ft, should use self.speed if available
+        
+        // Add spell slots
+        if let Some(slots) = &self.spell_slots {
+            for (level_str, count) in slots {
+                // Parse level string "1", "2", etc.
+                if let Ok(level) = level_str.parse::<u8>() {
+                    let resource_type = crate::resources::ResourceType::SpellSlot;
+                    ledger.register_resource(resource_type, Some(&level.to_string()), *count as f64, Some(crate::resources::ResetType::LongRest));
+                }
+            }
+        }
+        
+        // Add class resources
+        if let Some(resources) = &self.class_resources {
+            for (name, count) in resources {
+                let resource_type = crate::resources::ResourceType::ClassResource;
+                ledger.register_resource(resource_type, Some(name), *count as f64, Some(crate::resources::ResetType::LongRest));
+            }
+        }
+        
+        ledger
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatureState {
     #[serde(rename = "currentHP")]

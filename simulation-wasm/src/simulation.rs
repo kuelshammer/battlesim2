@@ -177,10 +177,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
 }
 
 fn create_combattant(creature: Creature, id: String) -> Combattant {
-    let resources = crate::model::SerializableResourceLedger {
-        current: get_remaining_uses(&creature, "long rest", None),
-        max: HashMap::new(),
-    };
+    let resources = crate::model::SerializableResourceLedger::from(creature.initialize_ledger());
     
     let state = CreatureState {
         current_hp: creature.hp,
