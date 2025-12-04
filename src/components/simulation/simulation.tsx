@@ -150,7 +150,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 console.error("Selection failed", e)
             }
         }
-    }, [players, encounters, luck, wasm, allResults, useEventDriven])
+    }, [players, encounters, luck, wasm, useEventDriven]) // Removed allResults to prevent loop
 
     // Reset results when inputs change
     useEffect(() => {

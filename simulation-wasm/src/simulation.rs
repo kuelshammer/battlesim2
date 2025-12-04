@@ -448,7 +448,7 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<St
     // NEW: Execute pre-combat actions (actionSlot: -3) before combat begins
     execute_precombat_actions(&mut team1, &mut team2, &mut stats, log, log_enabled);
 
-    let max_rounds = 100;
+    let max_rounds = 20;  // Limit to 20 rounds for realistic D&D encounter duration
     for i in 0..max_rounds {
         if !team1.iter().any(|c| c.final_state.current_hp > 0.0) || !team2.iter().any(|c| c.final_state.current_hp > 0.0) {
             break;

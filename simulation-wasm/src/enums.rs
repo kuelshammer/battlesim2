@@ -50,8 +50,8 @@ pub enum AllyTarget {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TargetType {
+    Enemy(EnemyTarget),  // Try enemy first (more common for templates)
     Ally(AllyTarget),
-    Enemy(EnemyTarget),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
