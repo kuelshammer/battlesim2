@@ -225,12 +225,12 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             combatant.final_state = final_creature_state;
 
             // Check mode
-            let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
+            let is_player = state.base_combatant.creature.mode.as_str() == "player";
 
-            if is_monster {
-                team2.push(combatant);
-            } else {
+            if is_player {
                 team1.push(combatant);
+            } else {
+                team2.push(combatant);
             }
         }
 
@@ -261,11 +261,11 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             let mut combatant = state.base_combatant.clone();
             combatant.final_state = final_creature_state;
             
-            let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
-            if is_monster {
-                team2.push(combatant);
-            } else {
+            let is_player = state.base_combatant.creature.mode.as_str() == "player";
+            if is_player {
                 team1.push(combatant);
+            } else {
+                team2.push(combatant);
             }
         }
         
