@@ -59,33 +59,32 @@ fn process_defensive_triggers(
     let target_triggers = target.creature.triggers.clone(); 
 
     for trigger in target_triggers.iter() {
-        if trigger.condition == TriggerCondition::OnBeingAttacked {
-            if let Some(cost_slot) = trigger.cost {
-                if cost_slot == (ActionSlot::Reaction as i32) {
-                    if total_hit_roll >= final_ac { // Currently a hit
-                        if let Action::Buff(buff_action) = &trigger.action {
-                            if let Some(ac_buff_dice) = &buff_action.buff.ac {
-                                let potential_ac_buff = dice::evaluate(ac_buff_dice, 1);
-                                if total_hit_roll < final_ac + potential_ac_buff {
-                                    // Trigger activates
-                                    reaction_used = true;
-                                    target.final_state.used_actions.insert((reaction_slot_id as i32).to_string());
-                                    
-                                    let mut buff = buff_action.buff.clone();
-                                    buff.source = Some(target.id.clone()); 
+        if trigger.condition == TriggerCondition::OnBeingAttacked
+            && trigger.cost.is_some()
+            && trigger.cost.unwrap() == (ActionSlot::Reaction as i32)
+            && total_hit_roll >= final_ac // Currently a hit
+            && matches!(&trigger.action, Action::Buff(_))
+        {
+            if let Action::Buff(buff_action) = &trigger.action {
+                if let Some(ac_buff_dice) = &buff_action.buff.ac {
+                    let potential_ac_buff = dice::evaluate(ac_buff_dice, 1);
+                    if total_hit_roll < final_ac + potential_ac_buff {
+                        // Trigger activates
+                        reaction_used = true;
+                        target.final_state.used_actions.insert((reaction_slot_id as i32).to_string());
 
-                                    target.final_state.buffs.insert(buff_action.base().id.clone(), buff);
-                                    update_stats_buff(stats, &target.id, &target.id, true);
+                        let mut buff = buff_action.buff.clone();
+                        buff.source = Some(target.id.clone());
 
-                                    final_ac += potential_ac_buff;
-                                    if log_enabled {
-                                        log.push(format!("          {} uses {} to increase AC by {:.0} (New AC: {:.0})",
-                                            target.creature.name, buff_action.base().name, potential_ac_buff, final_ac));
-                                    }
-                                    break; 
-                                }
-                            }
+                        target.final_state.buffs.insert(buff_action.base().id.clone(), buff);
+                        update_stats_buff(stats, &target.id, &target.id, true);
+
+                        final_ac += potential_ac_buff;
+                        if log_enabled {
+                            log.push(format!("          {} uses {} to increase AC by {:.0} (New AC: {:.0})",
+                                target.creature.name, buff_action.base().name, potential_ac_buff, final_ac));
                         }
+                        break;
                     }
                 }
             }
@@ -112,12 +111,8 @@ fn process_offensive_triggers(
     let attacker_triggers = attacker.creature.triggers.clone();
 
     for trigger in attacker_triggers.iter() {
-        let mut trigger_should_fire = false;
-        if trigger.condition == TriggerCondition::OnHit {
-            trigger_should_fire = true;
-        } else if trigger.condition == TriggerCondition::OnCriticalHit && is_crit {
-            trigger_should_fire = true;
-        }
+        let trigger_should_fire = trigger.condition == TriggerCondition::OnHit
+            || (trigger.condition == TriggerCondition::OnCriticalHit && is_crit);
 
         if trigger_should_fire {
             // Check if trigger is usable (resource cost)
@@ -654,8 +649,8 @@ fn apply_single_effect(
                     update_stats_buff(stats, &attacker.id, &attacker.id, false);
                 }
                 if log_enabled { log.push(format!("         Failed! Debuff applied.")); }
-            } else {
-                if log_enabled { log.push(format!("         Saved!")); }
+            } else if log_enabled {
+                log.push(format!("         Saved!"));
             }
         },
         Action::Template(a) => {
@@ -750,7 +745,7 @@ pub fn resolve_action_execution(
     allies: &mut [Combattant],
     enemies: &mut [Combattant],
     action: &Action,
-    raw_targets: &Vec<(bool, usize)>,
+    raw_targets: &[(bool, usize)],
     action_record: &CombattantAction, // To be pushed to attacker's history
     stats: &mut HashMap<String, EncounterStats>,
     log: &mut Vec<String>,

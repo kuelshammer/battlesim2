@@ -58,6 +58,12 @@ pub struct ReactionTemplate {
     pub consumes_reaction: bool,
 }
 
+impl Default for ReactionManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReactionManager {
     /// Create a new reaction manager
     pub fn new() -> Self {

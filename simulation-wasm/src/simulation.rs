@@ -177,7 +177,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
 }
 
 fn create_combattant(creature: Creature, id: String) -> Combattant {
-    let mut resources = crate::model::SerializableResourceLedger {
+    let resources = crate::model::SerializableResourceLedger {
         current: get_remaining_uses(&creature, "long rest", None),
         max: HashMap::new(),
     };
@@ -281,7 +281,7 @@ fn execute_precombat_actions(
             }
 
             // Get targets for the action (correct signature: combattant, action, allies, enemies)
-            let targets = get_targets(&team1[attacker_index], &action, &team1, &team2);
+            let targets = get_targets(&team1[attacker_index], &action, team1, team2);
             
             // NEW: Check if any targets were found (Bug #3)
             // If no targets found (e.g. buff already active), skip action to avoid wasting resources
@@ -370,7 +370,7 @@ fn execute_precombat_actions(
 
             // Get targets for the action (correct signature: combattant, action, allies, enemies)
             // Note: from team2's perspective, team2 is allies and team1 is enemies
-            let targets = get_targets(&team2[attacker_index], &action, &team2, &team1);
+            let targets = get_targets(&team2[attacker_index], &action, team2, team1);
             
             // NEW: Check if any targets were found (Bug #3)
             if targets.is_empty() {
@@ -702,11 +702,9 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
                     // For moveable spells, check if the current target is still valid (alive)
                     let mut target_alive = false;
                     for enemy in enemies.iter() {
-                        if enemy.final_state.buffs.contains_key(current_buff_id) {
-                            if enemy.final_state.current_hp > 0.0 {
-                                target_alive = true;
-                                break;
-                            }
+                        if enemy.final_state.buffs.contains_key(current_buff_id) && enemy.final_state.current_hp > 0.0 {
+                            target_alive = true;
+                            break;
                         }
                     }
 

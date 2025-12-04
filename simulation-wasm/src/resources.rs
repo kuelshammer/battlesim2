@@ -31,6 +31,12 @@ pub struct ResourceLedger {
     pub reset_rules: HashMap<ResourceType, ResetType>,
 }
 
+impl Default for ResourceLedger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ResourceLedger {
     pub fn new() -> Self {
         ResourceLedger {

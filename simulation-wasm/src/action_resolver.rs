@@ -21,6 +21,12 @@ pub struct ActionResolutionResult {
     pub error: Option<String>,
 }
 
+impl Default for ActionResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActionResolver {
     /// Create a new action resolver
     pub fn new() -> Self {
@@ -94,7 +100,7 @@ impl ActionResolver {
 
     /// Resolve healing actions with proper event emission
     pub fn resolve_heal(&self, heal: &HealAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
-        let mut events = Vec::new();
+        let events = Vec::new();
 
         // Get targets for healing
         let targets = self.get_heal_targets(heal, context, actor_id);

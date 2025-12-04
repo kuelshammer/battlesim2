@@ -228,14 +228,9 @@ impl TurnContext {
 
         // Convert reaction actions - this is a placeholder implementation
         // In a full implementation, you'd resolve templates through an action resolver
-        let converted_reactions: Vec<(String, Action)> = reactions
-            .into_iter()
-            .map(|(owner_id, action)| {
-                // For now, just return the action as-is
-                // TODO: Implement proper template to action conversion
-                (owner_id, action)
-            })
-            .collect();
+        // For now, just return the reactions as-is
+        // TODO: Implement proper template to action conversion
+        let converted_reactions: Vec<(String, Action)> = reactions;
 
         converted_reactions
     }
@@ -283,7 +278,7 @@ impl TurnContext {
                     // Ensure condition is applied
                     if let Some(combatant) = self.combatants.get_mut(&effect.target_id) {
                         if !combatant.conditions.contains(condition) {
-                            combatant.conditions.push(condition.clone());
+                            combatant.conditions.push(*condition);
                         }
                     }
                 },

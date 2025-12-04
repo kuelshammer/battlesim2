@@ -83,10 +83,10 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
                     serde::Serialize::serialize(&events, &serializer)
                         .map_err(|e| JsValue::from_str(&format!("Failed to serialize events: {}", e)))
                 }
-                None => Ok(JsValue::from_str(&"No simulation events available")),
+                None => Ok(JsValue::from_str("No simulation events available")),
             }
         }
-        Err(_) => Ok(JsValue::from_str(&"Error accessing simulation events")),
+        Err(_) => Ok(JsValue::from_str("Error accessing simulation events")),
     }
 }
 
