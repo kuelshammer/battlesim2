@@ -1,0 +1,58 @@
+{
+    "players": [
+        {
+            "id": "andrew-player",
+            "name": "Andrew",
+            "mode": "player",
+            "count": 1,
+            "hp": 100,
+            "AC": 20,
+            "saveBonus": 5,
+            "initiativeBonus": 2,
+            "actions": [
+                {
+                    "type": "atk",
+                    "id": "andrew-attack",
+                    "name": "Longsword",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "target": "enemy with least HP",
+                    "toHit": 7,
+                    "dpr": "1d8+4"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "bob-monster",
+                    "name": "Bob",
+                    "mode": "monster",
+                    "count": 1,
+                    "hp": 100,
+                    "AC": 20,
+                    "saveBonus": 5,
+                    "initiativeBonus": 2,
+                    "actions": [
+                        {
+                            "type": "atk",
+                            "id": "bob-attack",
+                            "name": "Battleaxe",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "target": "enemy with least HP",
+                            "toHit": 7,
+                            "dpr": "1d8+4"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
