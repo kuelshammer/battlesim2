@@ -262,33 +262,22 @@ impl TurnContext {
     pub fn update_effects(&mut self) {
         let mut effects_to_remove = Vec::new();
 
-        for (effect_id, effect) in &self.active_effects {
+        // Collect effects to apply to avoid borrow checker issues
+        let effects_to_apply: Vec<(String, ActiveEffect)> = self.active_effects
+            .iter()
+            .map(|(id, effect)| (id.clone(), effect.clone()))
+            .collect();
+
+        for (effect_id, effect) in effects_to_apply {
             // Apply effect logic based on type
             match &effect.effect_type {
                 EffectType::DamageOverTime { damage_per_round, damage_type } => {
-                    // Apply damage
-                    if let Some(combatant) = self.combatants.get_mut(&effect.target_id) {
-                        let final_damage = *damage_per_round;
-                        combatant.current_hp = (combatant.current_hp - final_damage).max(0.0);
-
-                        self.event_bus.emit_event(Event::DamageTaken {
-                            target_id: effect.target_id.clone(),
-                            damage: final_damage,
-                            damage_type: damage_type.clone(),
-                        });
-                    }
+                    // Apply damage through unified method
+                    let _events = self.apply_damage(&effect.target_id, *damage_per_round, damage_type, &effect.source_id);
                 },
                 EffectType::HealingOverTime { healing_per_round } => {
-                    // Apply healing
-                    if let Some(combatant) = self.combatants.get_mut(&effect.target_id) {
-                        combatant.current_hp = (combatant.current_hp + healing_per_round).min(combatant.base_combatant.creature.hp);
-
-                        self.event_bus.emit_event(Event::HealingApplied {
-                            target_id: effect.target_id.clone(),
-                            amount: *healing_per_round,
-                            source_id: effect.source_id.clone(),
-                        });
-                    }
+                    // Apply healing through unified method
+                    let _event = self.apply_healing(&effect.target_id, *healing_per_round, false, &effect.source_id);
                 },
                 EffectType::Condition(condition) => {
                     // Ensure condition is applied
@@ -343,19 +332,121 @@ impl TurnContext {
         self.combatants.get_mut(combatant_id)
     }
 
-    /// Check if a combatant is alive
+    /// Check if a combatant is alive (using standardized HP threshold >= 0.5)
     pub fn is_combatant_alive(&self, combatant_id: &str) -> bool {
         self.combatants
             .get(combatant_id)
-            .map_or(false, |c| c.current_hp > 0.0)
+            .map_or(false, |c| c.current_hp >= 0.5)
     }
 
-    /// Get all alive combatants
+    /// Get all alive combatants (using standardized HP threshold >= 0.5)
     pub fn get_alive_combatants(&self) -> Vec<&CombattantState> {
         self.combatants
             .values()
-            .filter(|c| c.current_hp > 0.0)
+            .filter(|c| c.current_hp >= 0.5)
             .collect()
+    }
+
+    /// Apply damage to a combatant with proper event emission
+    /// This is the unified way to apply damage - all damage should go through this method
+    pub fn apply_damage(&mut self, target_id: &str, damage: f64, damage_type: &str, source_id: &str) -> Vec<Event> {
+        let mut events = Vec::new();
+
+        if let Some(combatant) = self.combatants.get_mut(target_id) {
+            let actual_damage = damage;
+            combatant.current_hp = (combatant.current_hp - actual_damage).max(0.0);
+
+            events.push(Event::DamageTaken {
+                target_id: target_id.to_string(),
+                damage: actual_damage,
+                damage_type: damage_type.to_string(),
+            });
+
+            // Check if combatant died (using standardized threshold < 0.5)
+            if combatant.current_hp < 0.5 {
+                events.push(Event::UnitDied {
+                    unit_id: target_id.to_string(),
+                    killer_id: Some(source_id.to_string()),
+                    damage_type: Some(damage_type.to_string()),
+                });
+
+                // Immediately remove all buffs from the dead combatant
+                self.remove_all_buffs_from_source(target_id);
+            }
+        }
+
+        // Emit all events to the event bus
+        for event in &events {
+            self.event_bus.emit_event(event.clone());
+        }
+
+        events
+    }
+
+    /// Apply healing to a combatant with proper event emission
+    /// This is the unified way to apply healing - all healing should go through this method
+    pub fn apply_healing(&mut self, target_id: &str, amount: f64, is_temp_hp: bool, source_id: &str) -> Event {
+        if let Some(combatant) = self.combatants.get_mut(target_id) {
+            let event = if is_temp_hp {
+                combatant.temp_hp += amount;
+                Event::TempHPGranted {
+                    target_id: target_id.to_string(),
+                    amount,
+                    source_id: source_id.to_string(),
+                }
+            } else {
+                let max_hp = combatant.base_combatant.creature.hp;
+                let actual_healing = (combatant.current_hp + amount).min(max_hp) - combatant.current_hp;
+                combatant.current_hp += actual_healing;
+                Event::HealingApplied {
+                    target_id: target_id.to_string(),
+                    amount: actual_healing,
+                    source_id: source_id.to_string(),
+                }
+            };
+
+            // Emit the event to the event bus
+            self.event_bus.emit_event(event.clone());
+            event
+        } else {
+            let event = Event::HealingApplied {
+                target_id: target_id.to_string(),
+                amount: 0.0,
+                source_id: source_id.to_string(),
+            };
+            self.event_bus.emit_event(event.clone());
+            event
+        }
+    }
+
+    /// Remove all buffs from a specific source (used when caster dies)
+    /// This ensures no "zombie buffs" persist after caster death
+    pub fn remove_all_buffs_from_source(&mut self, source_id: &str) {
+        let mut effects_to_remove = Vec::new();
+
+        // Find all effects from the specified source
+        for (effect_id, effect) in &self.active_effects {
+            if effect.source_id == source_id {
+                effects_to_remove.push(effect_id.clone());
+            }
+        }
+
+        // Remove the effects
+        for effect_id in effects_to_remove {
+            self.active_effects.remove(&effect_id);
+
+            // Emit buff removal event
+            self.event_bus.emit_event(Event::Custom {
+                event_type: "BuffRemoved".to_string(),
+                data: {
+                    let mut data = HashMap::new();
+                    data.insert("effect_id".to_string(), effect_id.clone());
+                    data.insert("source_id".to_string(), source_id.to_string());
+                    data
+                },
+                source_id: source_id.to_string(),
+            });
+        }
     }
 
     /// Get statistics about the current context

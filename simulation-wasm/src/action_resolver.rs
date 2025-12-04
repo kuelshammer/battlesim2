@@ -78,14 +78,8 @@ impl ActionResolver {
                     damage,
                 });
 
-                events.push(Event::DamageTaken {
-                    target_id: target_id.clone(),
-                    damage,
-                    damage_type: "Physical".to_string(), // Would be determined from attack in full implementation
-                });
-
-                // Apply damage to combatant state
-                self.apply_damage_to_combatant(&target_id, damage, context);
+                // Apply damage through TurnContext (unified method) - handles event emission
+                let _damage_events = context.apply_damage(&target_id, damage, "Physical", actor_id);
             } else {
                 // Miss!
                 events.push(Event::AttackMissed {
@@ -109,22 +103,8 @@ impl ActionResolver {
         let is_temp_hp = heal.temp_hp.unwrap_or(false);
 
         for target_id in targets {
-            if is_temp_hp {
-                events.push(Event::TempHPGranted {
-                    target_id: target_id.clone(),
-                    amount: heal_amount,
-                    source_id: actor_id.to_string(),
-                });
-            } else {
-                events.push(Event::HealingApplied {
-                    target_id: target_id.clone(),
-                    amount: heal_amount,
-                    source_id: actor_id.to_string(),
-                });
-            }
-
-            // Apply healing to combatant state
-            self.apply_healing_to_combatant(&target_id, heal_amount, is_temp_hp, context);
+            // Apply healing through TurnContext (unified method) - handles event emission
+            let _healing_event = context.apply_healing(&target_id, heal_amount, is_temp_hp, actor_id);
         }
 
         events
@@ -192,53 +172,7 @@ impl ActionResolver {
         events
     }
 
-    /// Apply damage to a combatant with proper event emission
-    pub fn apply_damage(&self, target_id: &str, damage: f64, damage_type: &str, source_id: &str, context: &mut TurnContext) -> Vec<Event> {
-        let mut events = Vec::new();
-
-        if let Some(combatant) = context.get_combatant_mut(target_id) {
-            let actual_damage = damage;
-            combatant.current_hp = (combatant.current_hp - actual_damage).max(0.0);
-
-            events.push(Event::DamageTaken {
-                target_id: target_id.to_string(),
-                damage: actual_damage,
-                damage_type: damage_type.to_string(),
-            });
-
-            if combatant.current_hp <= 0.0 {
-                events.push(Event::UnitDied {
-                    unit_id: target_id.to_string(),
-                    killer_id: Some(source_id.to_string()),
-                    damage_type: Some(damage_type.to_string()),
-                });
-            }
-        }
-
-        events
-    }
-
-    /// Apply healing to a combatant with proper event emission
-    pub fn apply_healing(&self, target_id: &str, amount: f64, source_id: &str, context: &mut TurnContext) -> Event {
-        if let Some(combatant) = context.get_combatant_mut(target_id) {
-            let max_hp = combatant.base_combatant.creature.hp;
-            let actual_healing = (combatant.current_hp + amount).min(max_hp) - combatant.current_hp;
-            combatant.current_hp += actual_healing;
-
-            Event::HealingApplied {
-                target_id: target_id.to_string(),
-                amount: actual_healing,
-                source_id: source_id.to_string(),
-            }
-        } else {
-            Event::HealingApplied {
-                target_id: target_id.to_string(),
-                amount: 0.0,
-                source_id: source_id.to_string(),
-            }
-        }
-    }
-
+    
     /// Get targets for an attack action
     fn get_attack_targets(&self, _attack: &AtkAction, context: &TurnContext, actor_id: &str) -> Vec<String> {
         // Simple implementation: find enemies (other alive combatants)
@@ -279,25 +213,7 @@ impl ActionResolver {
         dice::average(&attack.dpr)
     }
 
-    /// Apply damage directly to combatant state
-    fn apply_damage_to_combatant(&self, target_id: &str, damage: f64, context: &mut TurnContext) {
-        if let Some(combatant) = context.get_combatant_mut(target_id) {
-            combatant.current_hp = (combatant.current_hp - damage).max(0.0);
-        }
-    }
-
-    /// Apply healing directly to combatant state
-    fn apply_healing_to_combatant(&self, target_id: &str, amount: f64, is_temp_hp: bool, context: &mut TurnContext) {
-        if let Some(combatant) = context.get_combatant_mut(target_id) {
-            if is_temp_hp {
-                combatant.temp_hp += amount;
-            } else {
-                let max_hp = combatant.base_combatant.creature.hp;
-                combatant.current_hp = (combatant.current_hp + amount).min(max_hp);
-            }
-        }
-    }
-
+    
     /// Apply effect directly to combatant through the context system
     fn apply_effect_to_combatant(&self, target_id: &str, effect_id: &str, source_id: &str, is_buff: bool, context: &mut TurnContext) {
         use crate::context::{ActiveEffect, EffectType};
