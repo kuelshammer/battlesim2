@@ -186,6 +186,7 @@ export const ActionTagList = [
 
     // Special
     'Healing',
+    'TempHP',
     'Utility',
     'Movement',
     'Social',
@@ -195,6 +196,8 @@ export const ActionTagList = [
     'Defense',
     'Support',
     'Control',
+    'Buff',
+    'Damage',
 
     // Custom tags
     'Custom'

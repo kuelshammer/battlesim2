@@ -112,11 +112,11 @@ pub fn get_actions(c: &Combattant, allies: &[Combattant], enemies: &[Combattant]
 
 pub fn is_usable(c: &Combattant, action: &Action) -> bool {
     #[cfg(debug_assertions)]
-    eprintln!("        Checking usability for {}: {}. Remaining uses: {:?}", c.creature.name, action.base().name, c.final_state.remaining_uses.get(&action.base().id));
+    eprintln!("        Checking usability for {}: {}. Remaining uses: {:?}", c.creature.name, action.base().name, c.final_state.resources.current.get(&action.base().id));
     match &action.base().freq {
         Frequency::Static(s) if s == "at will" => true,
         _ => {
-            let uses = *c.final_state.remaining_uses.get(&action.base().id).unwrap_or(&0.0);
+            let uses = *c.final_state.resources.current.get(&action.base().id).unwrap_or(&0.0);
             uses >= 1.0
         }
     }

@@ -1,93 +1,133 @@
 // src/components/simulation/ResourcePanel.tsx
 import { FC } from 'react';
 import { Combattant } from '../../model/model';
-import styles from './simulation.module.scss'; // Reusing simulation styles for now, or create new resourcePanel.module.scss
+import styles from './simulation.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBolt, faDiceD6, faHandPaper, faHatWizard, faHeart, faPlus, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faBolt, faDiceD6, faHandPaper, faHatWizard, faHeart, faPlus, faShieldAlt, faStar, faShoePrints } from '@fortawesome/free-solid-svg-icons';
 
 type ResourcePanelProps = {
     combatant: Combattant;
 };
 
-// Helper to format resource names
-const formatResourceName = (name: string): string => {
-    switch (name) {
-        case 'Action': return 'Action';
-        case 'BonusAction': return 'Bonus Action';
-        case 'Reaction': return 'Reaction';
-        case 'Movement': return 'Movement';
-        case 'SpellSlot': return 'Spell Slot';
-        case 'ClassResource': return 'Class Resource';
-        case 'ItemCharge': return 'Item Charge';
-        case 'HitDice': return 'Hit Dice';
-        case 'HP': return 'Hit Points';
-        case 'Custom': return 'Custom Resource';
-        default: return name;
-    }
-};
-
 const ResourcePanel: FC<ResourcePanelProps> = ({ combatant }) => {
-    // This component will primarily display initial (or final) state values for resources.
-    // The actual live resource tracking would come from event logs or direct context queries.
+    const { creature, finalState } = combatant;
+    const { resources } = finalState;
 
-    const { creature, initialState, finalState } = combatant;
-
-    // Simplified view of resources. In a real scenario, this data would come from the ResourceLedger.
-    // For now, we'll try to infer some common resources.
-
-    const currentHP = finalState.current_hp;
+    const currentHP = finalState.currentHP;
     const maxHP = creature.hp;
-    const tempHP = finalState.temp_hp || 0;
+    const tempHP = finalState.tempHP || 0;
 
-    // Placeholder for other resources. The actual ResourceLedger data is not directly in Combattant.
-    // We would ideally query the WASM for the full ResourceLedger of this combatant.
-    // For this initial implementation, we can show basic HP and some "expected" slots.
+    // Helper to parse resource keys
+    const parseResourceKey = (key: string) => {
+        if (key === 'Action') return { type: 'Action', label: 'Action', icon: faBolt };
+        if (key === 'BonusAction') return { type: 'BonusAction', label: 'Bonus', icon: faPlus };
+        if (key === 'Reaction') return { type: 'Reaction', label: 'Reaction', icon: faHandPaper };
+        if (key === 'Movement') return { type: 'Movement', label: 'Movement', icon: faShoePrints };
+
+        if (key.startsWith('SpellSlot')) {
+            const level = key.match(/\((\d+)\)/)?.[1] || '?';
+            return { type: 'SpellSlot', label: `L${level}`, icon: faHatWizard, sort: parseInt(level) };
+        }
+
+        if (key.startsWith('ClassResource')) {
+            const name = key.match(/\("(.+)"\)/)?.[1] || key.match(/\((.+)\)/)?.[1] || 'Resource';
+            return { type: 'ClassResource', label: name, icon: faStar };
+        }
+
+        return { type: 'Other', label: key, icon: faDiceD6 };
+    };
+
+    // Group resources
+    const groups: Record<string, any[]> = {
+        'Main': [],
+        'SpellSlot': [],
+        'ClassResource': [],
+        'Other': []
+    };
+
+    Object.entries(resources.current).forEach(([key, value]) => {
+        const max = resources.max[key] || 0;
+        const parsed = parseResourceKey(key);
+
+        const item = {
+            key,
+            value,
+            max,
+            ...parsed
+        };
+
+        if (['Action', 'BonusAction', 'Reaction', 'Movement'].includes(parsed.type)) {
+            groups['Main'].push(item);
+        } else if (parsed.type === 'SpellSlot') {
+            groups['SpellSlot'].push(item);
+        } else if (parsed.type === 'ClassResource') {
+            groups['ClassResource'].push(item);
+        } else {
+            groups['Other'].push(item);
+        }
+    });
+
+    // Sort spell slots
+    groups['SpellSlot'].sort((a, b) => (a.sort || 0) - (b.sort || 0));
+
+    // Sort main resources order
+    const mainOrder = ['Action', 'BonusAction', 'Reaction', 'Movement'];
+    groups['Main'].sort((a, b) => mainOrder.indexOf(a.type) - mainOrder.indexOf(b.type));
 
     return (
         <div className={styles.resourcePanel}>
             <h4>{creature.name}'s Resources</h4>
-            
+
             <div className={styles.resourceGroup}>
                 <div className={styles.resourceItem}>
                     <FontAwesomeIcon icon={faHeart} title="Hit Points" />
-                    HP: {currentHP.toFixed(0)}/{maxHP.toFixed(0)}
-                    {tempHP > 0 && <span style={{ marginLeft: '0.5em', color: '#888' }}>(+{tempHP.toFixed(0)} Temp)</span>}
+                    <span className={styles.hpText}>
+                        HP: {currentHP.toFixed(0)}/{maxHP.toFixed(0)}
+                        {tempHP > 0 && <span className={styles.tempHP}>(+{tempHP.toFixed(0)})</span>}
+                    </span>
                 </div>
             </div>
 
-            {/* Placeholder for Action Economy - assuming 1 per type for simplicity */}
-            <div className={styles.resourceGroup}>
-                <div className={styles.resourceItem}>
-                    <FontAwesomeIcon icon={faBolt} title="Action" /> Action
-                </div>
-                <div className={styles.resourceItem}>
-                    <FontAwesomeIcon icon={faPlus} title="Bonus Action" /> Bonus
-                </div>
-                <div className={styles.resourceItem}>
-                    <FontAwesomeIcon icon={faHandPaper} title="Reaction" /> Reaction
-                </div>
-            </div>
-
-            {/* Spell Slots Placeholder */}
-            {creature.class?.type && (
+            {groups['Main'].length > 0 && (
                 <div className={styles.resourceGroup}>
-                    <FontAwesomeIcon icon={faHatWizard} title="Spell Slots" /> Spell Slots:
-                    {/* These numbers are hardcoded placeholders. 
-                        In a full implementation, we'd pull these from creature.class.spell_slots or similar 
-                        and track remaining uses via the ResourceLedger. */}
-                    <span> L1: 4/4 </span>
-                    <span> L2: 3/3 </span>
-                    <span> L3: 2/2 </span>
+                    {groups['Main'].map(res => (
+                        <div key={res.key} className={`${styles.resourceItem} ${res.value <= 0 ? styles.depleted : ''}`}>
+                            <FontAwesomeIcon icon={res.icon} title={res.label} /> {res.label}
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Class Resources Placeholder */}
-            {creature.class?.type && (
+            {groups['SpellSlot'].length > 0 && (
                 <div className={styles.resourceGroup}>
-                    <FontAwesomeIcon icon={faStar} title="Class Resource" />
-                    {creature.class.type === 'barbarian' && <span>Rage: 3/4</span>}
-                    {creature.class.type === 'monk' && <span>Ki: 5/5</span>}
-                    {creature.class.type === 'paladin' && <span>Lay on Hands: 25/25</span>}
+                    <div className={styles.groupHeader}><FontAwesomeIcon icon={faHatWizard} /> Spells</div>
+                    <div className={styles.slotsContainer}>
+                        {groups['SpellSlot'].map(res => (
+                            <span key={res.key} className={`${styles.slotItem} ${res.value <= 0 ? styles.depleted : ''}`}>
+                                {res.label}: {res.value}/{res.max}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {groups['ClassResource'].length > 0 && (
+                <div className={styles.resourceGroup}>
+                    {groups['ClassResource'].map(res => (
+                        <div key={res.key} className={styles.resourceItem}>
+                            <FontAwesomeIcon icon={res.icon} /> {res.label}: {res.value}/{res.max}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {groups['Other'].length > 0 && (
+                <div className={styles.resourceGroup}>
+                    {groups['Other'].map(res => (
+                        <div key={res.key} className={styles.resourceItem}>
+                            <FontAwesomeIcon icon={res.icon} /> {res.label}: {res.value}/{res.max}
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

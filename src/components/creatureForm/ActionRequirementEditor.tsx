@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { ActionRequirement, ResourceType } from '../../model/model'
+import { ActionRequirement } from '../../model/model'
 import { ResourceTypeList } from '../../model/enums'
 import Select from '../utils/select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -55,7 +55,7 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9em', fontWeight: 'bold' }}>Reqs:</span>
                 <button onClick={addReq} title="Add Requirement">
                     <FontAwesomeIcon icon={faPlus} />
@@ -69,7 +69,7 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
                         options={RequirementTypes.map(t => ({ value: t, label: t }))}
                         onChange={t => changeType(index, t)}
                     />
-                    
+
                     {/* Type specific fields */}
                     {req.type === 'ResourceAvailable' && (
                         <>
@@ -89,12 +89,12 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
 
                     {req.type === 'CombatState' && (
                         <>
-                             <Select
+                            <Select
                                 value={req.condition}
                                 options={CombatConditions.map(c => ({ value: c, label: c }))}
                                 onChange={c => updateReq(index, { ...req, condition: c })}
                             />
-                             <input
+                            <input
                                 type="number"
                                 value={req.value || 0}
                                 onChange={e => updateReq(index, { ...req, value: Number(e.target.value) })}
@@ -115,7 +115,7 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
                     )}
 
                     {req.type === 'Custom' && (
-                         <input
+                        <input
                             type="text"
                             value={req.description}
                             onChange={e => updateReq(index, { ...req, description: e.target.value })}

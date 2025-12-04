@@ -1,0 +1,124 @@
+.strategyBuilder {
+    background: #252526;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+
+    h4 {
+        margin-top: 0;
+        margin-bottom: 5px;
+        color: #eee;
+    }
+
+    .hint {
+        font-size: 0.85rem;
+        color: #aaa;
+        margin-bottom: 15px;
+        font-style: italic;
+    }
+
+    .actionList {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .empty {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        border: 2px dashed #333;
+        border-radius: 4px;
+    }
+
+    .actionItem {
+        display: flex;
+        align-items: center;
+        background: #333;
+        padding: 8px 12px;
+        border-radius: 4px;
+        gap: 12px;
+        transition: background 0.2s;
+
+        &:hover {
+            background: #3a3a3a;
+        }
+
+        .priority {
+            font-weight: bold;
+            color: #666;
+            width: 20px;
+            text-align: center;
+        }
+
+        .iconContainer {
+            width: 24px;
+            display: flex;
+            justify-content: center;
+
+            .iconAction {
+                color: #dcdcaa;
+            }
+
+            .iconBonus {
+                color: #4ec9b0;
+            }
+
+            .iconReaction {
+                color: #ce9178;
+            }
+
+            .iconOther {
+                color: #aaa;
+            }
+        }
+
+        .details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+
+            .name {
+                font-weight: 600;
+                color: #eee;
+            }
+
+            .summary {
+                font-size: 0.8rem;
+                color: #aaa;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 4px;
+
+            .moveBtn {
+                background: transparent;
+                border: 1px solid #444;
+                color: #aaa;
+                width: 28px;
+                height: 28px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+
+                &:hover:not(:disabled) {
+                    background: #444;
+                    color: #fff;
+                    border-color: #555;
+                }
+
+                &:disabled {
+                    opacity: 0.3;
+                    cursor: not-allowed;
+                    border-color: transparent;
+                }
+            }
+        }
+    }
+}

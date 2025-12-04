@@ -778,18 +778,18 @@ pub fn resolve_action_execution(
     match &action.base().freq {
         Frequency::Limited { .. } => {
             let action_id = action.base().id.clone();
-            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
-            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+            let current_uses = *attacker_mut.final_state.resources.current.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.resources.current.insert(action_id, (current_uses - 1.0).max(0.0));
         },
         Frequency::Static(s) if s != "at will" => {
             let action_id = action.base().id.clone();
-            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
-            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+            let current_uses = *attacker_mut.final_state.resources.current.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.resources.current.insert(action_id, (current_uses - 1.0).max(0.0));
         },
         Frequency::Recharge { .. } => {
             let action_id = action.base().id.clone();
-            let current_uses = *attacker_mut.final_state.remaining_uses.get(&action_id).unwrap_or(&0.0);
-            attacker_mut.final_state.remaining_uses.insert(action_id, (current_uses - 1.0).max(0.0));
+            let current_uses = *attacker_mut.final_state.resources.current.get(&action_id).unwrap_or(&0.0);
+            attacker_mut.final_state.resources.current.insert(action_id, (current_uses - 1.0).max(0.0));
         },
         _ => {} // No decrement for "at will"
     }

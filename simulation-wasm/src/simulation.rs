@@ -151,10 +151,10 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
                 let mut state = c.final_state.clone();
                 if is_short_rest {
                     state.current_hp = c.creature.hp; 
-                    state.remaining_uses = get_remaining_uses(&c.creature, "short rest", Some(&state.remaining_uses));
+                    state.resources.current = get_remaining_uses(&c.creature, "short rest", Some(&state.resources.current));
                     state.actions_used_this_encounter.clear();
                 } else {
-                    state.remaining_uses = get_remaining_uses(&c.creature, "none", Some(&state.remaining_uses));
+                    state.resources.current = get_remaining_uses(&c.creature, "none", Some(&state.resources.current));
                 }
                 
                 state.buffs.clear();
@@ -177,11 +177,16 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
 }
 
 fn create_combattant(creature: Creature, id: String) -> Combattant {
+    let mut resources = crate::model::SerializableResourceLedger {
+        current: get_remaining_uses(&creature, "long rest", None),
+        max: HashMap::new(),
+    };
+    
     let state = CreatureState {
         current_hp: creature.hp,
         temp_hp: None,
         buffs: HashMap::new(),
-        remaining_uses: get_remaining_uses(&creature, "long rest", None),
+        resources,
         upcoming_buffs: HashMap::new(),
         used_actions: HashSet::new(),
         concentrating_on: None,
@@ -570,10 +575,12 @@ fn iterate_combattant(c: &Combattant) -> Combattant {
     }
 
     for action in &c.creature.actions {
-        if let Frequency::Recharge { cooldown_rounds, .. } = &action.base().freq {
+        if let Frequency::Recharge { reset: _, cooldown_rounds } = &action.base().freq {
+            // Increment count on recharge action
             let increment = 1.0 / *cooldown_rounds as f64;
-            let current = *new_initial_state.remaining_uses.get(&action.base().id).unwrap_or(&0.0);
-            new_initial_state.remaining_uses.insert(action.base().id.clone(), (current + increment).min(1.0));
+            
+            let current = *new_initial_state.resources.current.get(&action.base().id).unwrap_or(&0.0);
+            new_initial_state.resources.current.insert(action.base().id.clone(), (current + increment).min(1.0));
         }
     }
 
@@ -597,11 +604,11 @@ fn generate_actions_for_creature(c: &mut Combattant, allies: &[Combattant], enem
     #[cfg(debug_assertions)]
     eprintln!("      Generated {} actions for {}: {:?}", actions.len(), c.creature.name, actions.iter().map(|a| a.base().name.clone()).collect::<Vec<_>>());
     
-    for action in actions {
+        for action in actions {
         if let Frequency::Static(s) = &action.base().freq {
             if s != "at will" {
-                 let uses = *c.initial_state.remaining_uses.get(&action.base().id).unwrap_or(&0.0);
-                 c.final_state.remaining_uses.insert(action.base().id.clone(), (uses - 1.0).max(0.0));
+                 let uses = *c.initial_state.resources.current.get(&action.base().id).unwrap_or(&0.0);
+                 c.final_state.resources.current.insert(action.base().id.clone(), (uses - 1.0).max(0.0));
                  c.final_state.used_actions.insert(action.base().id.clone());
             }
         }

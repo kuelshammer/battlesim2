@@ -244,11 +244,18 @@ export const CreatureSchema = z.object({
 
 const TeamSchema = z.array(CreatureSchema)
 
+// Simplified ResourceLedger for frontend display
+export const ResourceLedgerSchema = z.object({
+    current: z.record(z.string(), z.number()),
+    max: z.record(z.string(), z.number()),
+})
+export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
+
 const CreatureStateSchema = z.object({
     currentHP: z.number(),
     tempHP: z.number().optional(),
     buffs: z.map(z.string(), BuffSchema),
-    remainingUses: z.map(z.string(), z.number()),
+    resources: ResourceLedgerSchema,
     upcomingBuffs: z.map(z.string(), BuffSchema),
     usedActions: z.set(z.string()),
     concentratingOn: z.string().nullable().optional(),

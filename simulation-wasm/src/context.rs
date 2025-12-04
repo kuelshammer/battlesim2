@@ -9,8 +9,8 @@ use crate::enums::CreatureCondition;
 /// Acts as the "single source of truth" for turn-based resource and event management
 #[derive(Debug, Clone)]
 pub struct TurnContext {
-    // Resource Management
-    pub resource_ledger: ResourceLedger,
+    // Resource Management - Moved to CombattantState
+    // pub resource_ledger: ResourceLedger, 
 
     // Event Tracking
     pub event_bus: EventBus,
@@ -37,6 +37,7 @@ pub struct CombattantState {
     pub conditions: Vec<CreatureCondition>,
     pub concentration: Option<String>, // ID of spell/concentration source
     pub position: Option<String>, // Simplified position for future expansion
+    pub resources: ResourceLedger, // Per-combatant resource tracking
 }
 
 /// An active effect applied to a combatant
@@ -68,18 +69,21 @@ impl TurnContext {
         weather: Option<String>,
         terrain: String,
     ) -> Self {
-        // Create resource ledger with default resources
-        let mut resource_ledger = ResourceLedger::new();
-
-        // Initialize basic resources that all combatants share
-        resource_ledger.register_resource(ResourceType::Action, 1.0, Some(ResetType::ShortRest));
-        resource_ledger.register_resource(ResourceType::BonusAction, 1.0, Some(ResetType::ShortRest));
-        resource_ledger.register_resource(ResourceType::Reaction, 1.0, Some(ResetType::ShortRest));
-
-        // Create combatant states
+        // Create combatant states with individual resource ledgers
         let combatant_states: HashMap<String, CombattantState> = combatants
             .into_iter()
             .map(|c| {
+                // Initialize resource ledger for this combatant
+                let mut resources = ResourceLedger::new();
+                
+                // Initialize basic resources
+                resources.register_resource(ResourceType::Action, 1.0, Some(ResetType::ShortRest));
+                resources.register_resource(ResourceType::BonusAction, 1.0, Some(ResetType::ShortRest));
+                resources.register_resource(ResourceType::Reaction, 1.0, Some(ResetType::ShortRest));
+                
+                // TODO: Initialize spell slots and class resources from creature definition
+                // This would be done here by reading c.creature.spell_slots etc.
+
                 let state = CombattantState {
                     id: c.id.clone(),
                     current_hp: c.creature.hp,
@@ -88,13 +92,13 @@ impl TurnContext {
                     concentration: None,
                     position: None,
                     base_combatant: c,
+                    resources,
                 };
                 (state.id.clone(), state)
             })
             .collect();
 
         Self {
-            resource_ledger,
             event_bus: EventBus::new(1000), // Keep last 1000 events
             round_number: 0,
             current_turn_owner: None,
@@ -117,7 +121,9 @@ impl TurnContext {
         self.current_turn_owner = Some(unit_id);
 
         // Reset turn-based resources
-        self.resource_ledger.reset_by_type(&ResetType::Turn);
+        for combatant in self.combatants.values_mut() {
+            combatant.resources.reset_by_type(&ResetType::Turn);
+        }
     }
 
     /// End the current turn
@@ -141,23 +147,30 @@ impl TurnContext {
         self.event_bus.emit_event(Event::RoundStarted { round_number: self.round_number });
 
         // Reset round-based resources
-        self.resource_ledger.reset_by_type(&ResetType::Round);
+        for combatant in self.combatants.values_mut() {
+            combatant.resources.reset_by_type(&ResetType::Round);
+        }
 
         // Update all effects
         self.update_effects();
     }
 
     /// Check if a combatant can afford the specified costs
-    pub fn can_afford(&self, costs: &[ActionCost], _unit_id: &str) -> bool {
+    pub fn can_afford(&self, costs: &[ActionCost], unit_id: &str) -> bool {
+        let combatant = match self.combatants.get(unit_id) {
+            Some(c) => c,
+            None => return false, // Combatant not found
+        };
+
         for cost in costs {
             match cost {
                 ActionCost::Discrete(resource_type, amount) => {
-                    if !self.resource_ledger.has(resource_type, *amount) {
+                    if !combatant.resources.has(resource_type, *amount) {
                         return false;
                     }
                 },
                 ActionCost::Variable(resource_type, _min, max) => {
-                    if !self.resource_ledger.has(resource_type, *max) {
+                    if !combatant.resources.has(resource_type, *max) {
                         return false;
                     }
                 }
@@ -168,10 +181,15 @@ impl TurnContext {
 
     /// Pay the specified costs for a combatant
     pub fn pay_costs(&mut self, costs: &[ActionCost], unit_id: &str) -> Result<(), String> {
+        let combatant = match self.combatants.get_mut(unit_id) {
+            Some(c) => c,
+            None => return Err(format!("Combatant {} not found", unit_id)),
+        };
+
         for cost in costs {
             match cost {
                 ActionCost::Discrete(resource_type, amount) => {
-                    if let Err(e) = self.resource_ledger.consume(resource_type, *amount) {
+                    if let Err(e) = combatant.resources.consume(resource_type, *amount) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 
@@ -183,7 +201,7 @@ impl TurnContext {
                     });
                 },
                 ActionCost::Variable(resource_type, _min, max) => {
-                    if let Err(e) = self.resource_ledger.consume(resource_type, *max) {
+                    if let Err(e) = combatant.resources.consume(resource_type, *max) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 

@@ -6,6 +6,7 @@ import styles from './customForm.module.scss'
 import { clone } from "../../model/utils"
 import ActionForm from "./actionForm"
 import ResourceEditor from "./ResourceEditor"
+import StrategyBuilder from "./StrategyBuilder"
 import DecimalInput from "../utils/DecimalInput"
 import Checkbox from "../utils/checkbox"
 import { v4 as uuid } from 'uuid'
@@ -101,11 +102,16 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                 <h3>Initiative Advantage</h3>
                 <Checkbox value={!!value.initiativeAdvantage} onToggle={() => update(v => { v.initiativeAdvantage = !v.initiativeAdvantage })} />
             </section>
-            
+
             <ResourceEditor value={value} onChange={onChange} />
 
+            <StrategyBuilder
+                actions={value.actions}
+                onReorder={(newActions) => update(v => { v.actions = newActions })}
+            />
+
             <h3 className={styles.actionsHeader}>
-                <span className={styles.label}>Actions</span>
+                <span className={styles.label}>Actions (Detailed)</span>
                 <button
                     onClick={createAction}
                     className={styles.createActionBtn}>

@@ -374,6 +374,8 @@ pub enum CleanupInstruction {
 pub struct Creature {
     pub id: String,
     pub arrival: Option<i32>,
+    #[serde(default)]
+    pub mode: String, // "player", "monster", "custom"
     pub name: String,
     pub count: f64, // TS uses number, but usually integer.
     pub hp: f64,
@@ -408,8 +410,11 @@ pub struct CreatureState {
     #[serde(rename = "tempHP")]
     pub temp_hp: Option<f64>,
     pub buffs: HashMap<String, Buff>,
-    #[serde(rename = "remainingUses")]
-    pub remaining_uses: HashMap<String, f64>,
+    
+    // Use SerializableResourceLedger for frontend compatibility
+    #[serde(default = "default_serializable_resource_ledger")]
+    pub resources: SerializableResourceLedger,
+    
     #[serde(rename = "upcomingBuffs")]
     pub upcoming_buffs: HashMap<String, Buff>,
     #[serde(rename = "usedActions")]
@@ -421,13 +426,43 @@ pub struct CreatureState {
     pub bonus_action_used: bool,
 }
 
+fn default_serializable_resource_ledger() -> SerializableResourceLedger {
+    SerializableResourceLedger::from(crate::resources::ResourceLedger::new())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SerializableResourceLedger {
+    pub current: HashMap<String, f64>,
+    pub max: HashMap<String, f64>,
+}
+
+impl From<crate::resources::ResourceLedger> for SerializableResourceLedger {
+    fn from(ledger: crate::resources::ResourceLedger) -> Self {
+        let current = ledger.current.into_iter()
+            .map(|(k, v)| (format!("{:?}", k), v))
+            .collect();
+            
+        let max = ledger.max.into_iter()
+            .map(|(k, v)| (format!("{:?}", k), v))
+            .collect();
+            
+        SerializableResourceLedger {
+            current,
+            max,
+        }
+    }
+}
+
+// We also need a way to convert back if needed, or just use it for output
+// For now, it's mostly for output to frontend.
+
 impl Default for CreatureState {
     fn default() -> Self {
         CreatureState {
             current_hp: 0.0,
             temp_hp: None,
             buffs: HashMap::new(),
-            remaining_uses: HashMap::new(),
+            resources: default_serializable_resource_ledger(),
             upcoming_buffs: HashMap::new(),
             used_actions: HashSet::new(),
             concentrating_on: None,

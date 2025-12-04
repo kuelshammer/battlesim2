@@ -3,7 +3,7 @@ import { ActionCost } from '../../model/model'
 import { ResourceTypeList } from '../../model/enums'
 import Select from '../utils/select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash, faPlus, faexchange } from '@fortawesome/free-solid-svg-icons' // faExchangeAlt? faRetweet? faRandom? Using faExchange for swapping types
+import { faTrash, faPlus, faExchange } from '@fortawesome/free-solid-svg-icons' // faExchangeAlt? faRetweet? faRandom? Using faExchange for swapping types
 import { faRandom } from '@fortawesome/free-solid-svg-icons'
 import styles from './actionForm.module.scss'
 
@@ -39,7 +39,7 @@ const ActionCostEditor: FC<Props> = ({ value, onChange }) => {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9em', fontWeight: 'bold' }}>Costs:</span>
                 <button onClick={addCost} title="Add Cost">
                     <FontAwesomeIcon icon={faPlus} />
@@ -52,16 +52,16 @@ const ActionCostEditor: FC<Props> = ({ value, onChange }) => {
                         options={ResourceTypeList.map(r => ({ value: r, label: r }))}
                         onChange={rt => updateCost(index, { ...cost, resourceType: rt })}
                     />
-                    
+
                     {cost.type === 'Discrete' ? (
                         <>
-                        <input
-                            type="number"
-                            value={cost.amount}
-                            onChange={e => updateCost(index, { ...cost, amount: Number(e.target.value) })}
-                            title="Amount"
-                            style={{ width: '45px' }}
-                        />
+                            <input
+                                type="number"
+                                value={cost.amount}
+                                onChange={e => updateCost(index, { ...cost, amount: Number(e.target.value) })}
+                                title="Amount"
+                                style={{ width: '45px' }}
+                            />
                         </>
                     ) : (
                         <>
@@ -74,7 +74,7 @@ const ActionCostEditor: FC<Props> = ({ value, onChange }) => {
                                 style={{ width: '45px' }}
                             />
                             -
-                             <input
+                            <input
                                 type="number"
                                 value={cost.max}
                                 onChange={e => updateCost(index, { ...cost, max: Number(e.target.value) })}

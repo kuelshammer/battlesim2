@@ -104,7 +104,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 current_hp: p.hp,
                 temp_hp: None,
                 buffs: HashMap::new(),
-                remaining_uses: HashMap::new(),
+                resources: crate::resources::ResourceLedger::new().into(),
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: None,
@@ -142,7 +142,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                     current_hp: m.hp,
                     temp_hp: None,
                     buffs: HashMap::new(),
-                    remaining_uses: HashMap::new(),
+                    resources: crate::resources::ResourceLedger::new().into(),
                     upcoming_buffs: HashMap::new(),
                     used_actions: HashSet::new(),
                     concentrating_on: None,
@@ -196,20 +196,95 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     (encounter_results, all_events)
 }
 
-fn convert_to_legacy_simulation_result(_encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize) -> crate::model::EncounterResult {
-    // This converts the new ActionExecutionEngine result to the old format for compatibility
-    // This is a simplified conversion - in a full implementation would preserve more details
+fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize) -> crate::model::EncounterResult {
+    // Convert final states to Combattants
+    let mut team1 = Vec::new(); // Players
+    let mut team2 = Vec::new(); // Monsters
+    
+    // We need to reconstruct Combattants from CombattantStates
+    // Note: This is imperfect because we don't have the original Creature definitions easily accessible here
+    // unless we pass them down. But CombattantState has base_combatant!
+    
+    for state in &encounter_result.final_combatant_states {
+        // Map context::CombattantState to model::CreatureState
+        let final_creature_state = crate::model::CreatureState {
+            current_hp: state.current_hp,
+            temp_hp: Some(state.temp_hp),
+            buffs: HashMap::new(), // TODO: Convert active effects to buffs if needed
+            resources: state.resources.clone().into(),
+            upcoming_buffs: HashMap::new(),
+            used_actions: HashSet::new(),
+            concentrating_on: state.concentration.clone(),
+            actions_used_this_encounter: HashSet::new(),
+            bonus_action_used: false,
+        };
+
+        let mut combatant = state.base_combatant.clone();
+        combatant.final_state = final_creature_state;
+        
+        // Determine team based on ID (hacky but works for now)
+        // Players have IDs like "player-..." or just UUIDs
+        // Monsters have IDs like "monster-..."
+        // Or we can check if it was in the original players list?
+        // For now, let's assume if it has "Monster" in name or ID it's team 2?
+        // Actually, base_combatant.creature.mode tells us!
+        
+        // Check mode
+        // Note: Creature struct has 'mode' field
+        let is_monster = match state.base_combatant.creature.mode.as_str() {
+            "monster" => true,
+            _ => false,
+        };
+
+        if is_monster {
+            team2.push(combatant);
+        } else {
+            team1.push(combatant);
+        }
+    }
+
+    // Create a single "Final Round" to represent the end state
+    let final_round = crate::model::Round {
+        team1,
+        team2,
+    };
 
     crate::model::EncounterResult {
         stats: HashMap::new(), // Would convert from encounter_result.statistics
-        rounds: Vec::new(), // Would convert from encounter_result.turn_results
+        rounds: vec![final_round],
     }
 }
 
-fn update_player_states_for_next_encounter(players: &[Combattant], _encounter_result: &crate::execution::EncounterResult) -> Vec<Combattant> {
-    // Simple implementation - just return the same players
-    // In a full implementation would handle rest mechanics, HP recovery, etc.
-    players.to_vec()
+fn update_player_states_for_next_encounter(players: &[Combattant], encounter_result: &crate::execution::EncounterResult) -> Vec<Combattant> {
+    // Update players with their final state from the encounter
+    let mut updated_players = Vec::new();
+    
+    for player in players {
+        // Find corresponding final state
+        if let Some(final_state) = encounter_result.final_combatant_states.iter().find(|s| s.id == player.id) {
+             let mut updated_player = player.clone();
+             
+             // Update state
+             updated_player.initial_state = crate::model::CreatureState {
+                current_hp: final_state.current_hp,
+                temp_hp: Some(final_state.temp_hp),
+                buffs: HashMap::new(),
+                resources: final_state.resources.clone().into(),
+                upcoming_buffs: HashMap::new(),
+                used_actions: HashSet::new(),
+                concentrating_on: final_state.concentration.clone(),
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
+             };
+             
+             updated_players.push(updated_player);
+        } else {
+            // Should not happen, but keep original if not found
+            updated_players.push(player.clone());
+        }
+    }
+    
+    updated_players
 }
 
 #[wasm_bindgen]
