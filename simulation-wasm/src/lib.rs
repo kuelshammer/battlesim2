@@ -200,58 +200,84 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
 }
 
 fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize) -> crate::model::EncounterResult {
-    // Convert final states to Combattants
-    let mut team1 = Vec::new(); // Players
-    let mut team2 = Vec::new(); // Monsters
-    
-    // We need to reconstruct Combattants from CombattantStates
-    // Note: This is imperfect because we don't have the original Creature definitions easily accessible here
-    // unless we pass them down. But CombattantState has base_combatant!
-    
-    for state in &encounter_result.final_combatant_states {
-        // Map context::CombattantState to model::CreatureState
-        let final_creature_state = crate::model::CreatureState {
-            current_hp: state.current_hp,
-            temp_hp: Some(state.temp_hp),
-            buffs: HashMap::new(), // TODO: Convert active effects to buffs if needed
-            resources: state.resources.clone().into(),
-            upcoming_buffs: HashMap::new(),
-            used_actions: HashSet::new(),
-            concentrating_on: state.concentration.clone(),
-            actions_used_this_encounter: HashSet::new(),
-            bonus_action_used: false,
-        };
+    let mut rounds = Vec::new();
 
-        let mut combatant = state.base_combatant.clone();
-        combatant.final_state = final_creature_state;
-        
-        // Determine team based on ID (hacky but works for now)
-        // Players have IDs like "player-..." or just UUIDs
-        // Monsters have IDs like "monster-..."
-        // Or we can check if it was in the original players list?
-        // For now, let's assume if it has "Monster" in name or ID it's team 2?
-        // Actually, base_combatant.creature.mode tells us!
-        
-        // Check mode
-        // Note: Creature struct has 'mode' field
-        let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
+    // Iterate through round snapshots to reconstruct history
+    for snapshot in &encounter_result.round_snapshots {
+        let mut team1 = Vec::new(); // Players
+        let mut team2 = Vec::new(); // Monsters
 
-        if is_monster {
-            team2.push(combatant);
-        } else {
-            team1.push(combatant);
+        for state in snapshot {
+            // Map context::CombattantState to model::CreatureState
+            let final_creature_state = crate::model::CreatureState {
+                current_hp: state.current_hp,
+                temp_hp: Some(state.temp_hp),
+                buffs: HashMap::new(), // TODO: Convert active effects to buffs if needed
+                resources: state.resources.clone().into(),
+                upcoming_buffs: HashMap::new(),
+                used_actions: HashSet::new(),
+                concentrating_on: state.concentration.clone(),
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
+            };
+
+            let mut combatant = state.base_combatant.clone();
+            combatant.final_state = final_creature_state;
+
+            // Check mode
+            let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
+
+            if is_monster {
+                team2.push(combatant);
+            } else {
+                team1.push(combatant);
+            }
         }
+
+        rounds.push(crate::model::Round {
+            team1,
+            team2,
+        });
     }
 
-    // Create a single "Final Round" to represent the end state
-    let final_round = crate::model::Round {
-        team1,
-        team2,
-    };
+    // If no rounds (e.g. empty encounter), create at least one final state round
+    if rounds.is_empty() {
+        let mut team1 = Vec::new();
+        let mut team2 = Vec::new();
+        
+        for state in &encounter_result.final_combatant_states {
+            let final_creature_state = crate::model::CreatureState {
+                current_hp: state.current_hp,
+                temp_hp: Some(state.temp_hp),
+                buffs: HashMap::new(),
+                resources: state.resources.clone().into(),
+                upcoming_buffs: HashMap::new(),
+                used_actions: HashSet::new(),
+                concentrating_on: state.concentration.clone(),
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
+            };
+
+            let mut combatant = state.base_combatant.clone();
+            combatant.final_state = final_creature_state;
+            
+            let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
+            if is_monster {
+                team2.push(combatant);
+            } else {
+                team1.push(combatant);
+            }
+        }
+        
+        rounds.push(crate::model::Round {
+            team1,
+            team2,
+        });
+    }
 
     crate::model::EncounterResult {
         stats: HashMap::new(), // Would convert from encounter_result.statistics
-        rounds: vec![final_round],
+        rounds,
     }
 }
 

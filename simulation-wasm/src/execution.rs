@@ -59,6 +59,7 @@ pub struct EncounterResult {
     pub total_rounds: u32,
     pub total_turns: u32,
     pub final_combatant_states: Vec<CombattantState>,
+    pub round_snapshots: Vec<Vec<CombattantState>>, // Snapshots of all combatants at end of each round
     pub event_history: Vec<Event>,
     pub statistics: EncounterStatistics,
 }
@@ -107,6 +108,8 @@ impl ActionExecutionEngine {
             combatant_ids: self.context.combatants.keys().cloned().collect(),
         });
 
+        let mut round_snapshots = Vec::new();
+
         // Main combat loop (max 20 rounds for realistic D&D encounter duration)
         const MAX_ROUNDS: u32 = 20;
         while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS {
@@ -132,10 +135,14 @@ impl ActionExecutionEngine {
                     break;
                 }
             }
+            
+            // Capture snapshot at end of round
+            let snapshot: Vec<CombattantState> = self.context.combatants.values().cloned().collect();
+            round_snapshots.push(snapshot);
         }
 
         // Generate final results
-        self.generate_encounter_results(total_turns)
+        self.generate_encounter_results(total_turns, round_snapshots)
     }
 
     /// Execute a single turn for a combatant
@@ -449,7 +456,7 @@ impl ActionExecutionEngine {
     }
 
     /// Generate final encounter results
-    fn generate_encounter_results(&self, total_turns: u32) -> EncounterResult {
+    fn generate_encounter_results(&self, total_turns: u32, round_snapshots: Vec<Vec<CombattantState>>) -> EncounterResult {
         let winner = self.determine_winner();
         let event_history = self.context.event_bus.get_all_events().to_vec();
         let statistics = self.calculate_statistics(&event_history);
@@ -459,6 +466,7 @@ impl ActionExecutionEngine {
             total_rounds: self.context.round_number,
             total_turns,
             final_combatant_states: self.context.combatants.values().cloned().collect(),
+            round_snapshots,
             event_history,
             statistics,
         }
