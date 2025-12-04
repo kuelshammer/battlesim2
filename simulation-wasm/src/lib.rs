@@ -224,6 +224,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             };
 
             let mut combatant = state.base_combatant.clone();
+            combatant.creature.hp = state.current_hp; // Update creature HP to current value
             combatant.final_state = final_creature_state;
 
             // Check mode
@@ -261,6 +262,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             };
 
             let mut combatant = state.base_combatant.clone();
+            combatant.creature.hp = state.current_hp; // Update creature HP to current value
             combatant.final_state = final_creature_state;
             
             let is_player = state.base_combatant.creature.mode.as_str() == "player";
