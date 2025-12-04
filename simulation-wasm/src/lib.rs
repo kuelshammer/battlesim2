@@ -90,6 +90,29 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
     }
 }
 
+/// Public Rust function for event-driven simulation (for CLI/testing)
+/// Returns (results, events) where events are from the first run only
+pub fn run_event_driven_simulation_rust(
+    players: Vec<Creature>,
+    encounters: Vec<Encounter>,
+    iterations: usize,
+    _log_enabled: bool,
+) -> (Vec<SimulationResult>, Vec<String>) {
+    let mut all_events = Vec::new();
+    let mut results = Vec::new();
+
+    for i in 0..iterations {
+        let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
+        results.push(result);
+
+        if i == 0 {
+            all_events = events;
+        }
+    }
+
+    (results, all_events)
+}
+
 fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encounter], _log_enabled: bool) -> (SimulationResult, Vec<String>) {
     let mut all_events = Vec::new();
     let mut players_with_state = Vec::new();
