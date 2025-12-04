@@ -46,6 +46,14 @@ pub enum AllyTarget {
     Self_,
 }
 
+// Unified target type for templates that can target either allies or enemies
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum TargetType {
+    Ally(AllyTarget),
+    Enemy(EnemyTarget),
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ActionCondition {

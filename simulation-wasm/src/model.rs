@@ -327,6 +327,8 @@ where
 pub struct TemplateOptions {
     #[serde(rename = "templateName")]
     pub template_name: String,
+    // Optional target that can be either ally or enemy
+    pub target: Option<TargetType>,
     // Add other options as needed, like saveDC, amount, etc.
     #[serde(rename = "saveDC")]
     pub save_dc: Option<f64>,
