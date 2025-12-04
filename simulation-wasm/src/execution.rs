@@ -107,8 +107,9 @@ impl ActionExecutionEngine {
             combatant_ids: self.context.combatants.keys().cloned().collect(),
         });
 
-        // Main combat loop
-        while !self.is_encounter_complete() {
+        // Main combat loop (max 20 rounds for realistic D&D encounter duration)
+        const MAX_ROUNDS: u32 = 20;
+        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS {
             self.context.advance_round();
 
             let initiative_order = self.get_initiative_order();
