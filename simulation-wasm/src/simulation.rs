@@ -134,6 +134,7 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
              let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
              let mut p = player.clone();
              p.name = name;
+             p.mode = "player".to_string(); // Explicitly set mode for team assignment
              let id = format!("{}-{}-{}", player.id, group_idx, i);
              players_with_state.push(create_combattant(p, id));
         }
@@ -427,6 +428,7 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<St
             let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
             let mut m = monster.clone();
             m.name = name;
+            m.mode = "monster".to_string(); // Explicitly set mode for team assignment
             // ID format: {template_id}-{group_idx}-{index}
             let id = format!("{}-{}-{}", monster.id, group_idx, i);
             team2.push(create_combattant(m, id));

@@ -100,6 +100,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
             let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
             let mut p = player.clone();
             p.name = name;
+            p.mode = "player".to_string(); // Explicitly set mode for team assignment
             let id = format!("{}-{}-{}", player.id, group_idx, i);
 
             // Create CreatureState
@@ -139,6 +140,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
                 let mut m = monster.clone();
                 m.name = name;
+                m.mode = "monster".to_string(); // Explicitly set mode for team assignment
                 let id = format!("{}-{}-{}", monster.id, group_idx, i);
 
                 let enemy_state = CreatureState {
