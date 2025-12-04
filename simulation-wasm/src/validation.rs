@@ -23,8 +23,12 @@ pub fn check_single_requirement(
     combatant_id: &str,
 ) -> bool {
     match requirement {
-        ActionRequirement::ResourceAvailable { resource_type, amount } => {
-            let cost_for_check = vec![ActionCost::Discrete { resource_type: resource_type.clone(), amount: *amount }];
+        ActionRequirement::ResourceAvailable { resource_type, resource_val, amount } => {
+            let cost_for_check = vec![ActionCost::Discrete { 
+                resource_type: resource_type.clone(), 
+                resource_val: resource_val.clone(),
+                amount: *amount 
+            }];
             _context.can_afford(&cost_for_check, combatant_id)
         },
         ActionRequirement::CombatState { condition: combat_condition } => {

@@ -28,11 +28,13 @@ export const ActionCostSchema = z.discriminatedUnion('type', [
     z.object({
         type: z.literal('Discrete'),
         resourceType: ResourceTypeSchema,
+        resourceVal: z.string().optional(),
         amount: z.number(),
     }),
     z.object({
         type: z.literal('Variable'),
         resourceType: ResourceTypeSchema,
+        resourceVal: z.string().optional(),
         min: z.number(),
         max: z.number(),
     }),
@@ -43,6 +45,7 @@ export const ActionRequirementSchema = z.discriminatedUnion('type', [
     z.object({
         type: z.literal('ResourceAvailable'),
         resourceType: ResourceTypeSchema,
+        resourceVal: z.string().optional(),
         amount: z.number(),
     }),
     z.object({

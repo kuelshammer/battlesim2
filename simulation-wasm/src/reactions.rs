@@ -195,6 +195,7 @@ impl ReactionManager {
         if reaction.consumes_reaction {
             let reaction_cost = vec![ActionCost::Discrete {
                 resource_type: crate::resources::ResourceType::Reaction,
+                resource_val: None,
                 amount: 1.0
             }];
             if !context.can_afford(&reaction_cost, combatant_id) {
@@ -251,6 +252,7 @@ impl ReactionManager {
         if reaction.consumes_reaction {
             let reaction_cost = vec![ActionCost::Discrete {
                 resource_type: crate::resources::ResourceType::Reaction,
+                resource_val: None,
                 amount: 1.0
             }];
             context.pay_costs(&reaction_cost, combatant_id)?;
@@ -425,7 +427,7 @@ mod tests {
                     amount: None,
                 },
             }),
-            cost: vec![ActionCost::Discrete { resource_type: ResourceType::Reaction, amount: 1.0 }],
+            cost: vec![ActionCost::Discrete { resource_type: ResourceType::Reaction, resource_val: None, amount: 1.0 }],
             requirements: vec![],
             priority: 10,
             uses_per_round: None,

@@ -330,19 +330,67 @@ fn select_injured_ally_target(strategy: AllyTarget, allies: &[Combattant], _self
 }
 
 fn estimate_dpr(c: &Combattant) -> f64 {
-    let mut max_dpr = 0.0;
+    const BASELINE_AC: f64 = 15.0;
+    
+    // Separate actions by action type for proper action economy
+    let mut action_dpr: f64 = 0.0;
+    let mut bonus_action_dpr: f64 = 0.0;
+    
     for action in &c.creature.actions {
         if let Action::Atk(a) = action {
-            let dpr = match &a.dpr {
+            // Calculate base damage per hit
+            let damage_per_hit = match &a.dpr {
                 DiceFormula::Value(v) => *v,
                 DiceFormula::Expr(e) => dice::parse_average(e),
             };
-            eprintln!("DEBUG: Action {} DPR: {}", a.name, dpr);
-            if dpr > max_dpr {
-                max_dpr = dpr;
+            
+            // Calculate to_hit bonus
+            let to_hit_bonus = match &a.to_hit {
+                DiceFormula::Value(v) => *v,
+                DiceFormula::Expr(e) => dice::parse_average(e),
+            };
+            
+            // Calculate hit probability (d20 + bonus >= AC)
+            // Need: d20 roll >= (AC - bonus)
+            // Hit on: 21 - (AC - bonus) or higher on d20
+            let needed_roll = BASELINE_AC - to_hit_bonus;
+            let hit_chance = if needed_roll <= 1.0 {
+                0.95 // Auto-hit except on nat 1
+            } else if needed_roll >= 20.0 {
+                0.05 // Only nat 20
+            } else {
+                (21.0 - needed_roll) / 20.0
+            };
+            
+            // Account for number of targets
+            let num_targets = a.targets.max(1) as f64;
+            
+            // Calculate expected DPR for this action
+            let expected_dpr = damage_per_hit * hit_chance * num_targets;
+            
+            eprintln!("DEBUG: Action {} - Damage: {:.1}, ToHit: +{:.0}, HitChance: {:.0}%, Targets: {}, DPR: {:.1}", 
+                a.name, damage_per_hit, to_hit_bonus, hit_chance * 100.0, num_targets, expected_dpr);
+            
+            // Categorize by action cost (simplified - assumes legacy action_slot)
+            // 0 = Action, 1 = Bonus Action, 2+ = Other
+            let is_bonus_action = a.action_slot == Some(1);
+            
+            if is_bonus_action {
+                bonus_action_dpr = bonus_action_dpr.max(expected_dpr);
+            } else {
+                action_dpr = action_dpr.max(expected_dpr);
             }
         }
     }
-    eprintln!("DEBUG: Creature {} Max DPR: {}", c.creature.name, max_dpr);
-    max_dpr
+    
+    // Total DPR = best Action + best Bonus Action
+    let total_dpr = action_dpr + bonus_action_dpr;
+    eprintln!("DEBUG: Creature {} - Action DPR: {:.1}, Bonus DPR: {:.1}, Total: {:.1}", 
+        c.creature.name, action_dpr, bonus_action_dpr, total_dpr);
+    
+    total_dpr
 }
+
+#[cfg(test)]
+#[path = "./targeting_test.rs"]
+mod targeting_test;

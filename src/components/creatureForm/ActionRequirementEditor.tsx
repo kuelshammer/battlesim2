@@ -78,6 +78,22 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
                                 options={ResourceTypeList.map(r => ({ value: r, label: r }))}
                                 onChange={rt => updateReq(index, { ...req, resourceType: rt })}
                             />
+                            {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(req.resourceType) && (
+                                <input
+                                    type="text"
+                                    value={req.resourceVal || ''}
+                                    onChange={e => updateReq(index, { ...req, resourceVal: e.target.value })}
+                                    placeholder={
+                                        req.resourceType === 'SpellSlot' ? 'Level' :
+                                            req.resourceType === 'ClassResource' ? 'Name' :
+                                                req.resourceType === 'ItemCharge' ? 'Item' :
+                                                    req.resourceType === 'HitDice' ? 'Die' :
+                                                        'Value'
+                                    }
+                                    title="Resource Value (e.g. Spell Level, Resource Name)"
+                                    style={{ width: '80px' }}
+                                />
+                            )}
                             <input
                                 type="number"
                                 value={req.amount}

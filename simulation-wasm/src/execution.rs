@@ -568,6 +568,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatant = Combattant {
@@ -604,6 +605,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatant1 = Combattant {
@@ -650,6 +652,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatant1 = Combattant {

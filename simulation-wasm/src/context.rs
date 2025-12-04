@@ -77,9 +77,9 @@ impl TurnContext {
                 let mut resources = ResourceLedger::new();
                 
                 // Initialize basic resources
-                resources.register_resource(ResourceType::Action, 1.0, Some(ResetType::ShortRest));
-                resources.register_resource(ResourceType::BonusAction, 1.0, Some(ResetType::ShortRest));
-                resources.register_resource(ResourceType::Reaction, 1.0, Some(ResetType::ShortRest));
+                resources.register_resource(ResourceType::Action, None, 1.0, Some(ResetType::ShortRest));
+                resources.register_resource(ResourceType::BonusAction, None, 1.0, Some(ResetType::ShortRest));
+                resources.register_resource(ResourceType::Reaction, None, 1.0, Some(ResetType::ShortRest));
                 
                 // TODO: Initialize spell slots and class resources from creature definition
                 // This would be done here by reading c.creature.spell_slots etc.
@@ -164,13 +164,13 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete { resource_type, amount } => {
-                    if !combatant.resources.has(resource_type, *amount) {
+                ActionCost::Discrete { resource_type, resource_val, amount } => {
+                    if !combatant.resources.has(resource_type.clone(), resource_val.as_deref(), *amount) {
                         return false;
                     }
                 },
-                ActionCost::Variable { resource_type, min: _min, max } => {
-                    if !combatant.resources.has(resource_type, *max) {
+                ActionCost::Variable { resource_type, resource_val, min: _min, max } => {
+                    if !combatant.resources.has(resource_type.clone(), resource_val.as_deref(), *max) {
                         return false;
                     }
                 }
@@ -188,27 +188,27 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete { resource_type, amount } => {
-                    if let Err(e) = combatant.resources.consume(resource_type, *amount) {
+                ActionCost::Discrete { resource_type, resource_val, amount } => {
+                    if let Err(e) = combatant.resources.consume(resource_type.clone(), resource_val.as_deref(), *amount) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 
                     // Emit resource consumed event
                     self.event_bus.emit_event(Event::ResourceConsumed {
                         unit_id: unit_id.to_string(),
-                        resource_type: format!("{:?}", resource_type),
+                        resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *amount,
                     });
                 },
-                ActionCost::Variable { resource_type, min: _min, max } => {
-                    if let Err(e) = combatant.resources.consume(resource_type, *max) {
+                ActionCost::Variable { resource_type, resource_val, min: _min, max } => {
+                    if let Err(e) = combatant.resources.consume(resource_type.clone(), resource_val.as_deref(), *max) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 
                     // Emit resource consumed event
                     self.event_bus.emit_event(Event::ResourceConsumed {
                         unit_id: unit_id.to_string(),
-                        resource_type: format!("{:?}", resource_type),
+                        resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *max,
                     });
                 }
@@ -492,6 +492,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatants = vec![
@@ -536,6 +537,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatants = vec![
@@ -584,6 +586,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatants = vec![
@@ -604,7 +607,11 @@ mod tests {
             "Plains".to_string(),
         );
 
-        let costs = vec![ActionCost::Discrete { resource_type: crate::resources::ResourceType::Action, amount: 1.0 }];
+        let costs = vec![ActionCost::Discrete { 
+            resource_type: crate::resources::ResourceType::Action, 
+            resource_val: None,
+            amount: 1.0 
+        }];
 
         assert!(context.can_afford(&costs, "player1"));
 
@@ -632,6 +639,7 @@ mod tests {
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let combatants = vec![

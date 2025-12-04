@@ -83,6 +83,7 @@ mod tests {
                 triggers: vec![],
                 spell_slots: None,
                 class_resources: None,
+                mode: "monster".to_string(),
             },
             initial_state: {
                 let mut state = CreatureState::default();
@@ -324,6 +325,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,
             class_resources: None,
+            mode: "monster".to_string(),
         };
 
         let monster = Creature {
@@ -342,6 +344,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let encounter = Encounter {
@@ -392,6 +395,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         // Monster deals massive damage (100 dmg)
@@ -427,6 +431,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let encounter = Encounter {
@@ -492,6 +497,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let paladin = create_combattant(paladin_creature, "paladin_1".to_string());
@@ -616,6 +622,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let barbarian = create_combattant(barbarian_creature, "barbarian_1".to_string());
@@ -705,6 +712,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let mut barbarian = create_combattant(barbarian_creature, "barbarian_1".to_string());
@@ -794,6 +802,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         // Create a target that needs Bless
@@ -813,6 +822,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let _paladin = Creature {
@@ -831,6 +841,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
         
         // Create an attacker with a buff that adds damage
@@ -866,6 +877,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         // Create a simple enemy to target
@@ -885,6 +897,7 @@ mod tests {
             triggers: vec![],
             spell_slots: None,     // Add new field
             class_resources: None, // Add new field
+            mode: "monster".to_string(),
         };
 
         let encounter = Encounter {

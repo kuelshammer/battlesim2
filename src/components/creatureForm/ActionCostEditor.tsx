@@ -53,6 +53,23 @@ const ActionCostEditor: FC<Props> = ({ value, onChange }) => {
                         onChange={rt => updateCost(index, { ...cost, resourceType: rt })}
                     />
 
+                    {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(cost.resourceType) && (
+                        <input
+                            type="text"
+                            value={cost.resourceVal || ''}
+                            onChange={e => updateCost(index, { ...cost, resourceVal: e.target.value })}
+                            placeholder={
+                                cost.resourceType === 'SpellSlot' ? 'Level' :
+                                    cost.resourceType === 'ClassResource' ? 'Name' :
+                                        cost.resourceType === 'ItemCharge' ? 'Item' :
+                                            cost.resourceType === 'HitDice' ? 'Die' :
+                                                'Value'
+                            }
+                            title="Resource Value (e.g. Spell Level, Resource Name)"
+                            style={{ width: '80px' }}
+                        />
+                    )}
+
                     {cost.type === 'Discrete' ? (
                         <>
                             <input
