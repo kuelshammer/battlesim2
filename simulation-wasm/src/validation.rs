@@ -23,14 +23,14 @@ pub fn check_single_requirement(
     combatant_id: &str,
 ) -> bool {
     match requirement {
-        ActionRequirement::ResourceAvailable(resource_type, amount) => {
-            let cost_for_check = vec![ActionCost::Discrete(resource_type.clone(), *amount)];
+        ActionRequirement::ResourceAvailable { resource_type, amount } => {
+            let cost_for_check = vec![ActionCost::Discrete { resource_type: resource_type.clone(), amount: *amount }];
             _context.can_afford(&cost_for_check, combatant_id)
         },
-        ActionRequirement::CombatState(combat_condition) => {
+        ActionRequirement::CombatState { condition: combat_condition } => {
             check_combat_condition(combat_condition, _context, combatant_id)
         },
-        ActionRequirement::StatusEffect(effect_name) => {
+        ActionRequirement::StatusEffect { effect: effect_name } => {
             let effects = _context.get_effects_on_target(combatant_id);
             effects.iter().any(|effect| {
                 match &effect.effect_type {
@@ -40,7 +40,7 @@ pub fn check_single_requirement(
                 }
             })
         },
-        ActionRequirement::Custom(_description) => {
+        ActionRequirement::Custom { description: _description } => {
             // Custom requirements are not evaluated automatically and need external scripting
             // For now, custom requirements always fail if not handled explicitly elsewhere.
             false

@@ -740,6 +740,7 @@ fn apply_single_effect(
 
 // Public function to orchestrate the action application to all targets
 // This handles the complex slice splitting and iteration
+#[allow(clippy::too_many_arguments)]
 pub fn resolve_action_execution(
     attacker_index: usize,
     allies: &mut [Combattant],

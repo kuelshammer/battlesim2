@@ -164,12 +164,12 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete(resource_type, amount) => {
+                ActionCost::Discrete { resource_type, amount } => {
                     if !combatant.resources.has(resource_type, *amount) {
                         return false;
                     }
                 },
-                ActionCost::Variable(resource_type, _min, max) => {
+                ActionCost::Variable { resource_type, min: _min, max } => {
                     if !combatant.resources.has(resource_type, *max) {
                         return false;
                     }
@@ -188,7 +188,7 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete(resource_type, amount) => {
+                ActionCost::Discrete { resource_type, amount } => {
                     if let Err(e) = combatant.resources.consume(resource_type, *amount) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
@@ -200,7 +200,7 @@ impl TurnContext {
                         amount: *amount,
                     });
                 },
-                ActionCost::Variable(resource_type, _min, max) => {
+                ActionCost::Variable { resource_type, min: _min, max } => {
                     if let Err(e) = combatant.resources.consume(resource_type, *max) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
@@ -604,7 +604,7 @@ mod tests {
             "Plains".to_string(),
         );
 
-        let costs = vec![ActionCost::Discrete(crate::resources::ResourceType::Action, 1.0)];
+        let costs = vec![ActionCost::Discrete { resource_type: crate::resources::ResourceType::Action, amount: 1.0 }];
 
         assert!(context.can_afford(&costs, "player1"));
 

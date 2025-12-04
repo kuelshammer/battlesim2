@@ -102,9 +102,21 @@ impl ResourceLedger {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum ActionCost {
-    Discrete(ResourceType, f64),
-    Variable(ResourceType, f64, f64), // Resource, Min, Max
+    #[serde(rename = "Discrete")]
+    Discrete {
+        #[serde(rename = "resourceType")]
+        resource_type: ResourceType,
+        amount: f64,
+    },
+    #[serde(rename = "Variable")]
+    Variable {
+        #[serde(rename = "resourceType")]
+        resource_type: ResourceType,
+        min: f64,
+        max: f64,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,11 +127,26 @@ pub enum CombatCondition {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum ActionRequirement {
-    ResourceAvailable(ResourceType, f64),
-    CombatState(CombatCondition),
-    StatusEffect(String),
-    Custom(String),
+    #[serde(rename = "ResourceAvailable")]
+    ResourceAvailable {
+        #[serde(rename = "resourceType")]
+        resource_type: ResourceType,
+        amount: f64,
+    },
+    #[serde(rename = "CombatState")]
+    CombatState {
+        condition: CombatCondition,
+    },
+    #[serde(rename = "StatusEffect")]
+    StatusEffect {
+        effect: String,
+    },
+    #[serde(rename = "Custom")]
+    Custom {
+        description: String,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
