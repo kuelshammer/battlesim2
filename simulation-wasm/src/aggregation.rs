@@ -277,7 +277,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                                     #[cfg(debug_assertions)]
                                     eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} not in concentration map)",
                                         buff_id, c.creature.name, source);
-                                    return false;
+                                    false
                                 }
                             } else {
                                 // Non-concentration buff from alive source - keep it
@@ -357,7 +357,7 @@ pub fn generate_combat_log(result: &SimulationResult) -> String {
                     writeln!(&mut log, "  - Uses {}: Targets {:?}", action.action.base().name, target_names).unwrap();
                 }
             }
-            writeln!(&mut log, "").unwrap();
+            writeln!(&mut log).unwrap();
         }
     }
     log

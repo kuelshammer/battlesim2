@@ -160,9 +160,9 @@ fn process_offensive_triggers(
                         buff.source = Some(attacker.id.clone());
                         target.final_state.buffs.insert(a.base().id.clone(), buff);
                         update_stats_buff(stats, &attacker.id, &target.id, false);
-                        if log_enabled { log.push(format!("             Failed! Debuff applied.")); }
-                    } else {
-                        if log_enabled { log.push(format!("             Saved!")); }
+                        if log_enabled { log.push("             Failed! Debuff applied.".to_string()); }
+                    } else if log_enabled {
+                        log.push("             Saved!".to_string());
                     }
                 },
                 _ => {} // Healing triggers on attack? Unlikely.
@@ -294,7 +294,7 @@ fn apply_single_effect(
                 // Distinct target (re-borrowed *t)
                 process_defensive_triggers(
                     attacker,
-                    *t,
+                    t,
                     stats,
                     log,
                     log_enabled,
@@ -648,9 +648,9 @@ fn apply_single_effect(
                     attacker.final_state.buffs.insert(a.base().id.clone(), buff);
                     update_stats_buff(stats, &attacker.id, &attacker.id, false);
                 }
-                if log_enabled { log.push(format!("         Failed! Debuff applied.")); }
+                if log_enabled { log.push("         Failed! Debuff applied.".to_string()); }
             } else if log_enabled {
-                log.push(format!("         Saved!"));
+                log.push("         Saved!".to_string());
             }
         },
         Action::Template(a) => {
@@ -813,7 +813,7 @@ pub fn resolve_action_execution(
                     } else {
                         // No valid targets at all - skip this attack
                         if log_enabled {
-                            log.push(format!("      -> No valid targets available, skipping attack"));
+                            log.push("      -> No valid targets available, skipping attack".to_string());
                         }
                         continue;
                     }

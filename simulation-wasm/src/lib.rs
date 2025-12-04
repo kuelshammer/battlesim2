@@ -234,10 +234,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
         
         // Check mode
         // Note: Creature struct has 'mode' field
-        let is_monster = match state.base_combatant.creature.mode.as_str() {
-            "monster" => true,
-            _ => false,
-        };
+        let is_monster = state.base_combatant.creature.mode.as_str() == "monster";
 
         if is_monster {
             team2.push(combatant);

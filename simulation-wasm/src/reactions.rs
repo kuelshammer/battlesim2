@@ -79,7 +79,7 @@ impl ReactionManager {
     pub fn register_reaction(&mut self, combatant_id: String, reaction: ReactionTemplate) {
         self.available_reactions
             .entry(combatant_id)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(reaction);
     }
 
@@ -237,7 +237,6 @@ impl ReactionManager {
     }
 
     /// Check combat conditions
-
     /// Execute a reaction
     pub fn execute_reaction(
         &mut self,
@@ -277,7 +276,7 @@ impl ReactionManager {
         // Mark as used this round
         self.used_reactions
             .entry(combatant_id.to_string())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(reaction_id.to_string());
 
         // Mark as used this encounter if it has encounter limits

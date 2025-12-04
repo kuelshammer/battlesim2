@@ -442,7 +442,7 @@ fn run_encounter(players: &[Combattant], encounter: &Encounter, log: &mut Vec<St
     let mut stats = HashMap::new();
     
     if log_enabled {
-        log.push(format!("--- Encounter Start: Players vs Monsters ---"));
+        log.push("--- Encounter Start: Players vs Monsters ---".to_string());
     }
 
     // NEW: Execute pre-combat actions (actionSlot: -3) before combat begins
@@ -633,7 +633,7 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
         #[cfg(debug_assertions)]
         eprintln!("      No actions available.");
         if log_enabled {
-            log.push(format!("    - No actions available."));
+            log.push("    - No actions available.".to_string());
         }
         return;
     }
@@ -750,7 +750,7 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
         // NEW: Check if any targets were found (Bug #3 secondary check)
         if raw_targets.is_empty() {
             if log_enabled {
-                log.push(format!("      -> No valid targets (skipping execution)"));
+                log.push("      -> No valid targets (skipping execution)".to_string());
             }
             continue;
         }

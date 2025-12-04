@@ -331,7 +331,7 @@ impl TurnContext {
     pub fn is_combatant_alive(&self, combatant_id: &str) -> bool {
         self.combatants
             .get(combatant_id)
-            .map_or(false, |c| c.current_hp >= 0.5)
+            .is_some_and(|c| c.current_hp >= 0.5)
     }
 
     /// Get all alive combatants (using standardized HP threshold >= 0.5)

@@ -106,8 +106,8 @@ impl Event {
 
     /// Check if this event involves a specific combatant
     pub fn involves_combatant(&self, combatant_id: &str) -> bool {
-        self.get_source_id().as_ref().map_or(false, |id| id == combatant_id) ||
-        self.get_target_id().as_ref().map_or(false, |id| id == combatant_id)
+        self.get_source_id().as_ref().is_some_and(|id| id == combatant_id) ||
+        self.get_target_id().as_ref().is_some_and(|id| id == combatant_id)
     }
 
     /// Get event type as string for filtering and logging
@@ -255,7 +255,7 @@ impl EventBus {
     /// Register a new event listener
     pub fn register_listener(&mut self, listener: EventListener) {
         let owner_id = listener.owner_id.clone();
-        self.listeners.entry(owner_id).or_insert_with(Vec::new).push(listener);
+        self.listeners.entry(owner_id).or_default().push(listener);
     }
 
     /// Process all pending events and return triggered reactions
