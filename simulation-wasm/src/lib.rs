@@ -110,6 +110,13 @@ pub fn run_event_driven_simulation_rust(
         }
     }
 
+    // Sort results by score (worst to best)
+    results.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(a);
+        let score_b = crate::aggregation::calculate_score(b);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
     (results, all_events)
 }
 
@@ -143,7 +150,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
             let combattant = Combattant {
                 id: id.clone(),
                 creature: p.clone(),
-                initiative: 10.0, // Default initiative
+                initiative: crate::simulation::roll_initiative(&p),
                 initial_state: state.clone(),
                 final_state: state,
                 actions: Vec::new(),
@@ -181,7 +188,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 let enemy_combattant = Combattant {
                     id: id.clone(),
                     creature: m.clone(),
-                    initiative: 10.0, // Default initiative
+                    initiative: crate::simulation::roll_initiative(&m),
                     initial_state: enemy_state.clone(),
                     final_state: enemy_state,
                     actions: Vec::new(),
@@ -196,15 +203,21 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
         all_combatants.extend(enemies);
 
         // Create ActionExecutionEngine
-        let mut engine = ActionExecutionEngine::new(all_combatants);
+        let mut engine = ActionExecutionEngine::new(all_combatants.clone());
 
         // Run encounter using the ActionExecutionEngine
         let encounter_result = engine.execute_encounter();
 
-        // Collect events from this encounter
+        // Build name map for formatting events
+        let mut combatant_names: HashMap<String, String> = HashMap::new();
+        for combatant in &all_combatants {
+            combatant_names.insert(combatant.id.clone(), combatant.creature.name.clone());
+        }
+
+        // Collect and format events from this encounter
         let encounter_events: Vec<String> = encounter_result.event_history
             .iter()
-            .map(|event| format!("{:?}", event))
+            .filter_map(|event| event.format_for_log(&combatant_names))
             .collect();
 
         all_events.extend(encounter_events);
@@ -224,13 +237,68 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     (encounter_results, all_events)
 }
 
+fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
+    let mut actions_by_round_actor: HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> = HashMap::new();
+    let mut current_round = 0;
+    let mut current_actor_actions: HashMap<String, (String, HashMap<String, i32>)> = HashMap::new();
+
+    for event in event_history {
+        match event {
+            crate::events::Event::RoundStarted { round_number } => {
+                current_round = *round_number;
+            },
+            crate::events::Event::ActionStarted { actor_id, action_id } => {
+                if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(actor_id) {
+                     actions_by_round_actor.entry((current_round, actor_id.clone()))
+                        .or_default()
+                        .push((prev_action_id, prev_targets));
+                }
+                current_actor_actions.insert(actor_id.clone(), (action_id.clone(), HashMap::new()));
+            },
+            crate::events::Event::TurnEnded { unit_id, .. } => {
+                if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(unit_id) {
+                     actions_by_round_actor.entry((current_round, unit_id.clone()))
+                        .or_default()
+                        .push((prev_action_id, prev_targets));
+                }
+            },
+            crate::events::Event::AttackHit { attacker_id, target_id, .. } | 
+            crate::events::Event::AttackMissed { attacker_id, target_id } => {
+                if let Some((_, targets)) = current_actor_actions.get_mut(attacker_id) {
+                    *targets.entry(target_id.clone()).or_insert(0) += 1;
+                }
+            },
+            crate::events::Event::HealingApplied { source_id, target_id, .. } |
+            crate::events::Event::BuffApplied { source_id, target_id, .. } |
+            crate::events::Event::ConditionAdded { source_id, target_id, .. } => {
+                 if let Some((_, targets)) = current_actor_actions.get_mut(source_id) {
+                    *targets.entry(target_id.clone()).or_insert(0) += 1;
+                }
+            },
+            _ => {}
+        }
+    }
+    
+    for (actor_id, (action_id, targets)) in current_actor_actions {
+         actions_by_round_actor.entry((current_round, actor_id))
+            .or_default()
+            .push((action_id, targets));
+    }
+    
+    actions_by_round_actor
+}
+
 fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize) -> crate::model::EncounterResult {
     let mut rounds = Vec::new();
+    
+    // Reconstruct actions from event history
+    let actions_by_round_actor = reconstruct_actions(&encounter_result.event_history);
 
     // Iterate through round snapshots to reconstruct history
-    for snapshot in &encounter_result.round_snapshots {
+    for (round_idx, snapshot) in encounter_result.round_snapshots.iter().enumerate() {
         let mut team1 = Vec::new(); // Players
         let mut team2 = Vec::new(); // Monsters
+        let current_round_num = (round_idx + 1) as u32;
 
         for state in snapshot {
             // Map context::CombattantState to model::CreatureState
@@ -249,6 +317,18 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             let mut combatant = state.base_combatant.clone();
             combatant.creature.hp = state.current_hp; // Update creature HP to current value
             combatant.final_state = final_creature_state;
+
+            // Populate actions for this round
+            if let Some(raw_actions) = actions_by_round_actor.get(&(current_round_num, combatant.id.clone())) {
+                for (action_id, targets) in raw_actions {
+                    if let Some(action) = combatant.creature.actions.iter().find(|a| a.base().id == *action_id) {
+                        combatant.actions.push(crate::model::CombattantAction {
+                            action: action.clone(),
+                            targets: targets.clone(),
+                        });
+                    }
+                }
+            }
 
             // Check mode
             let is_player = state.base_combatant.creature.mode.as_str() == "player";
