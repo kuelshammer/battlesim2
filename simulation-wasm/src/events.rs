@@ -147,7 +147,79 @@ impl Event {
             Event::Custom { .. } => "Custom",
         }
     }
+
+    /// Format event for human-readable log output (CLI)
+    pub fn format_for_log(&self, combatant_names: &std::collections::HashMap<String, String>) -> Option<String> {
+        // Helper to get name from ID
+        let get_name = |id: &str| combatant_names.get(id).cloned().unwrap_or_else(|| id.to_string());
+
+        match self {
+            Event::RoundStarted { round_number } => {
+                Some(format!("\n# Round {}\n", round_number))
+            }
+            Event::TurnStarted { unit_id, .. } => {
+                Some(format!("\n## {} starts turn", get_name(unit_id)))
+            }
+            Event::ActionStarted { actor_id, action_id } => {
+                Some(format!("    - Uses Action: {}", action_id.split('-').last().unwrap_or(action_id)))
+            }
+            Event::AttackHit { attacker_id, target_id, damage } => {
+                Some(format!("* ⚔️ Attack vs **{}**: ✅ **HIT**\n  * 🩸 Damage: **{:.0}**", 
+                    get_name(target_id), damage))
+            }
+            Event::AttackMissed { attacker_id, target_id } => {
+                Some(format!("* ⚔️ Attack vs **{}**: ❌ **MISS**", get_name(target_id)))
+            }
+            Event::DamageTaken { target_id, damage, damage_type } => {
+                Some(format!("  * 💥 {} takes {:.0} {} damage", 
+                    get_name(target_id), damage, damage_type))
+            }
+            Event::HealingApplied { target_id, amount, source_id } => {
+                Some(format!("  * 💚 {} heals {} for {:.0} HP", 
+                    get_name(source_id), get_name(target_id), amount))
+            }
+            Event::UnitDied { unit_id, killer_id, .. } => {
+                if let Some(killer) = killer_id {
+                    Some(format!("💀 **{}** was killed by **{}**", get_name(unit_id), get_name(killer)))
+                } else {
+                    Some(format!("💀 **{}** died", get_name(unit_id)))
+                }
+            }
+            Event::BuffApplied { target_id, buff_id, source_id } => {
+                Some(format!("  * ✨ Buff '{}' applied to {} by {}", 
+                    buff_id, get_name(target_id), get_name(source_id)))
+            }
+            Event::ConditionAdded { target_id, condition, source_id } => {
+                Some(format!("  * 🔴 Condition '{:?}' added to {} by {}", 
+                    condition, get_name(target_id), get_name(source_id)))
+            }
+            Event::ResourceConsumed { unit_id, resource_type, amount } => {
+                Some(format!("  * 📉 {} consumed {:.0} {}", 
+                    get_name(unit_id), amount, resource_type))
+            }
+            Event::TurnEnded { unit_id, .. } => {
+                // Don't print turn end events to reduce noise
+                None
+            }
+            Event::RoundEnded { .. } => {
+                // Don't print round end events to reduce noise
+                None
+            }
+            Event::EncounterEnded { winner, reason } => {
+                if let Some(winner_name) = winner {
+                    Some(format!("\n🏆 **Encounter Ended** - Winner: {} ({})\n", winner_name, reason))
+                } else {
+                    Some(format!("\n⚔️ **Encounter Ended** - {} (No clear winner)\n", reason))
+                }
+            }
+            _ => {
+                // For other events, return a basic debug format
+                None
+            }
+        }
+    }
 }
+
 
 /// Represents a listener that reacts to specific events
 #[derive(Debug, Clone, Serialize, Deserialize)]

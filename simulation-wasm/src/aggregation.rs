@@ -314,7 +314,7 @@ pub fn calculate_score(result: &SimulationResult) -> f64 {
         let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp).sum();
         let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp).sum();
         
-        return 3.0 * player_hp - monster_hp;
+        return 10.0 * player_hp - monster_hp;
     }
     
     0.0

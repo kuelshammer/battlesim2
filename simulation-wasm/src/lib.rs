@@ -60,9 +60,44 @@ pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterat
         }
     }
 
+    // Format events for WASM storage (legacy behavior)
+    let formatted_events: Vec<String> = if !results.is_empty() {
+        // Build name map from first result
+        let mut combatant_names = HashMap::new();
+        // We need to extract names from the result structure. 
+        // Iterating all rounds/combatants is safe enough.
+        if let Some(encounter) = results.first().and_then(|r| r.first()) {
+             if let Some(round) = encounter.rounds.first() {
+                 for c in round.team1.iter().chain(round.team2.iter()) {
+                     combatant_names.insert(c.id.clone(), c.creature.name.clone());
+                 }
+             }
+             // Also check final states if no rounds
+             // But simpler: we can't easily get ALL names if some died early?
+             // Actually, the best way is to replicate the logic inside run_single...
+             // But since we are refactoring, let's just format them inside the loop above?
+             // No, we returned raw events.
+             
+             // Let's traverse the result to find names
+             for encounter_res in results.first().unwrap() {
+                 for round in &encounter_res.rounds {
+                     for c in round.team1.iter().chain(round.team2.iter()) {
+                         combatant_names.insert(c.id.clone(), c.creature.name.clone());
+                     }
+                 }
+             }
+        }
+        
+        all_events.iter()
+            .filter_map(|e| e.format_for_log(&combatant_names))
+            .collect()
+    } else {
+        Vec::new()
+    };
+
     // Store events for retrieval (thread-safe)
     if let Ok(mut events_guard) = LAST_SIMULATION_EVENTS.lock() {
-        *events_guard = Some(all_events.clone());
+        *events_guard = Some(formatted_events);
     }
 
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -97,7 +132,7 @@ pub fn run_event_driven_simulation_rust(
     encounters: Vec<Encounter>,
     iterations: usize,
     _log_enabled: bool,
-) -> (Vec<SimulationResult>, Vec<String>) {
+) -> (Vec<SimulationResult>, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
     let mut results = Vec::new();
 
@@ -120,7 +155,7 @@ pub fn run_event_driven_simulation_rust(
     (results, all_events)
 }
 
-fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encounter], _log_enabled: bool) -> (SimulationResult, Vec<String>) {
+fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encounter], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
     let mut players_with_state = Vec::new();
 
@@ -208,19 +243,8 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
         // Run encounter using the ActionExecutionEngine
         let encounter_result = engine.execute_encounter();
 
-        // Build name map for formatting events
-        let mut combatant_names: HashMap<String, String> = HashMap::new();
-        for combatant in &all_combatants {
-            combatant_names.insert(combatant.id.clone(), combatant.creature.name.clone());
-        }
-
-        // Collect and format events from this encounter
-        let encounter_events: Vec<String> = encounter_result.event_history
-            .iter()
-            .filter_map(|event| event.format_for_log(&combatant_names))
-            .collect();
-
-        all_events.extend(encounter_events);
+        // Collect events (raw)
+        all_events.extend(encounter_result.event_history.clone());
 
         // Convert to old format for compatibility
         let legacy_result = convert_to_legacy_simulation_result(&encounter_result, encounter_idx);

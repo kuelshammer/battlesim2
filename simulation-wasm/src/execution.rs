@@ -127,6 +127,9 @@ impl ActionExecutionEngine {
                 // Execute turn with all actions and reactions
                 let _turn_result = self.execute_combatant_turn(&combatant_id);
 
+                // Process pending events (moves them to event history)
+                let _reactions = self.context.process_events();
+
                 // Process end-of-turn effects
                 self.context.update_effects();
 

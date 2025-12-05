@@ -4,6 +4,7 @@ use crate::events::Event;
 use crate::context::TurnContext;
 use crate::model::{Action, AtkAction, HealAction, BuffAction, DebuffAction, TemplateAction};
 use crate::dice;
+use rand::Rng;
 
 /// Event-driven action resolver that converts actions into events
 #[derive(Debug, Clone)]
@@ -11,6 +12,15 @@ pub struct ActionResolver {
     /// Random number generator for dice rolls
     #[allow(dead_code)]
     rng_seed: Option<u64>,
+}
+
+/// Result of an attack roll
+#[derive(Debug, Clone)]
+struct AttackRollResult {
+    total: f64,
+    natural_roll: u32,
+    is_critical: bool,
+    is_miss: bool,
 }
 
 /// Result of action resolution containing all generated events
@@ -57,26 +67,28 @@ impl ActionResolver {
     pub fn resolve_attack(&self, attack: &AtkAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
         let mut events = Vec::new();
 
-        // Find targets for this attack
+        // Get targets
         let targets = self.get_attack_targets(attack, context, actor_id);
 
         for target_id in targets {
-            // Check if target is still alive
+            // Check if target is valid
             if !context.is_combatant_alive(&target_id) {
-                events.push(Event::AttackMissed {
-                    attacker_id: actor_id.to_string(),
-                    target_id: target_id.clone(),
-                });
                 continue;
             }
 
             // Perform attack roll
-            let attack_roll = self.roll_attack(attack);
+            let attack_result = self.roll_attack(attack);
             let target_ac = self.get_target_ac(&target_id, context);
 
-            if attack_roll >= target_ac {
+            // Check for hit:
+            // 1. Critical Hit (Nat 20) always hits
+            // 2. Critical Miss (Nat 1) always misses
+            // 3. Otherwise check total vs AC
+            let is_hit = !attack_result.is_miss && (attack_result.is_critical || attack_result.total >= target_ac);
+
+            if is_hit {
                 // Hit!
-                let damage = self.calculate_damage(attack);
+                let damage = self.calculate_damage(attack, attack_result.is_critical);
 
                 events.push(Event::AttackHit {
                     attacker_id: actor_id.to_string(),
@@ -201,10 +213,17 @@ impl ActionResolver {
     }
 
     /// Roll attack value
-    fn roll_attack(&self, attack: &AtkAction) -> f64 {
-        let base_roll = dice::average(&attack.to_hit);
-        // In a full implementation, this would add d20 roll and bonuses
-        base_roll + 10.0 // Simplified - assume average roll of 10 + d20
+    fn roll_attack(&self, attack: &AtkAction) -> AttackRollResult {
+        let mut rng = rand::thread_rng();
+        let natural_roll = rng.gen_range(1..=20);
+        let bonus = dice::average(&attack.to_hit); // Keep using average for bonus part
+        
+        AttackRollResult {
+            total: natural_roll as f64 + bonus,
+            natural_roll,
+            is_critical: natural_roll == 20,
+            is_miss: natural_roll == 1,
+        }
     }
 
     /// Get target's armor class
@@ -215,8 +234,15 @@ impl ActionResolver {
     }
 
     /// Calculate damage from attack
-    fn calculate_damage(&self, attack: &AtkAction) -> f64 {
-        dice::average(&attack.dpr)
+    fn calculate_damage(&self, attack: &AtkAction, is_critical: bool) -> f64 {
+        let base_damage = dice::average(&attack.dpr);
+        
+        if is_critical {
+            // For critical hits, double the damage (simple approximation)
+            base_damage * 2.0 
+        } else {
+            base_damage
+        }
     }
 
     

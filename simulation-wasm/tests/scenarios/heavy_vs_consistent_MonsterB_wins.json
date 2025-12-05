@@ -1,0 +1,61 @@
+{
+    "name": "Heavy vs Consistent",
+    "players": [
+        {
+            "id": "player_heavy",
+            "mode": "custom",
+            "name": "PlayerHeavy",
+            "count": 1,
+            "hp": 50,
+            "AC": 15,
+            "saveBonus": 0,
+            "initiativeBonus": 0,
+            "initiativeAdvantage": false,
+            "actions": [
+                {
+                    "id": "action_heavy",
+                    "name": "Heavy Swing",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "type": "atk",
+                    "dpr": "8d1",
+                    "toHit": "4",
+                    "target": "enemy with least HP"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "monster_consistent",
+                    "mode": "custom",
+                    "name": "MonsterConsistent",
+                    "count": 1,
+                    "hp": 50,
+                    "AC": 15,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "action_consistent",
+                            "name": "Consistent Poke",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "type": "atk",
+                            "dpr": "5d1",
+                            "toHit": "10",
+                            "target": "enemy with least HP"
+                        }
+                    ]
+                }
+            ],
+            "playersSurprised": false,
+            "monstersSurprised": false
+        }
+    ]
+}
