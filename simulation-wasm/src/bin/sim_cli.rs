@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use simulation_wasm::run_event_driven_simulation_rust;
-use simulation_wasm::model::{Creature, Encounter, SimulationResult, Action, AtkAction};
+use simulation_wasm::model::{Creature, Encounter, SimulationResult, Action, DiceFormula};
 use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::events::Event;
 use simulation_wasm::dice;
@@ -62,6 +62,32 @@ enum Commands {
         #[arg(short, long)]
         defender: String,
     },
+    /// Sensitivity analysis: vary a stat across a range and plot win rates
+    Sweep {
+        /// Path to the scenario JSON file
+        scenario: PathBuf,
+        /// Target combatant name
+        #[arg(short, long)]
+        target: String,
+        /// Stat to vary: "AC", "HP", "toHit", "damage"
+        #[arg(short, long)]
+        stat: String,
+        /// Range in "start..end" format (e.g., "10..20")
+        #[arg(short, long)]
+        range: String,
+    },
+    /// Compare two scenarios side-by-side
+    Compare {
+        /// First scenario file (baseline)
+        scenario_a: PathBuf,
+        /// Second scenario file (variant)
+        scenario_b: PathBuf,
+    },
+    /// Validate a scenario JSON for common errors
+    Validate {
+        /// Path to the scenario JSON file
+        scenario: PathBuf,
+    },
 }
 
 // --- Data Structures for Output ---
@@ -109,6 +135,15 @@ fn main() {
         }
         Commands::Math { scenario, attacker, defender } => {
             run_math(&scenario, &attacker, &defender);
+        }
+        Commands::Sweep { scenario, target, stat, range } => {
+            run_sweep(&scenario, &target, &stat, &range);
+        }
+        Commands::Compare { scenario_a, scenario_b } => {
+            run_compare(&scenario_a, &scenario_b);
+        }
+        Commands::Validate { scenario } => {
+            run_validate(&scenario);
         }
     }
 }
@@ -634,4 +669,298 @@ fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<Encounter>, String) {
     let encounters: Vec<Encounter> = serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
     
     (players, encounters, name)
+}
+
+// --- Sweep Subcommand ---
+
+fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: &str) {
+    let (mut players, mut encounters, _) = load_scenario(scenario_path);
+    
+    // Parse range (e.g., "10..20")
+    let parts: Vec<&str> = range_str.split("..").collect();
+    if parts.len() != 2 {
+        println!("Error: Invalid range format. Use 'start..end' (e.g., '10..20')");
+        return;
+    }
+    let start: i32 = parts[0].parse().expect("Invalid start value");
+    let end: i32 = parts[1].parse().expect("Invalid end value");
+    
+    println!("=== Sensitivity Sweep ===");
+    println!("Target: {}, Stat: {}, Range: {}..{}\n", target_name, stat, start, end);
+    println!("{:>6} | {:>10} | {:>10}", stat, "Win Rate", "Avg Rounds");
+    println!("-------|------------|----------");
+    
+    for value in start..=end {
+        // Clone and modify scenario
+        let mut modified_players = players.clone();
+        let mut modified_encounters = encounters.clone();
+        
+        // Find and modify target in players
+        for player in &mut modified_players {
+            if player.name == target_name || player.id == target_name {
+                modify_stat(player, stat, value as f64);
+            }
+        }
+        
+        // Find and modify target in monsters
+        for encounter in &mut modified_encounters {
+            for monster in &mut encounter.monsters {
+                if monster.name == target_name || monster.id == target_name {
+                    modify_stat(monster, stat, value as f64);
+                }
+            }
+        }
+        
+        // Run simulation (fewer runs for speed)
+        let iterations = 201;
+        let (results, _) = run_event_driven_simulation_rust(modified_players, modified_encounters, iterations, false);
+        
+        // Calculate win rate for Team 1
+        let mut wins = 0;
+        let mut total_rounds = 0;
+        for result in &results {
+            if let Some(encounter) = result.last() {
+                if let Some(last_round) = encounter.rounds.last() {
+                    let team1_alive = last_round.team1.iter().any(|c| c.final_state.current_hp > 0.0);
+                    let team2_alive = last_round.team2.iter().any(|c| c.final_state.current_hp > 0.0);
+                    if team1_alive && !team2_alive {
+                        wins += 1;
+                    }
+                    total_rounds += encounter.rounds.len();
+                }
+            }
+        }
+        let win_rate = (wins as f64 / iterations as f64) * 100.0;
+        let avg_rounds = total_rounds as f64 / iterations as f64;
+        
+        // ASCII bar
+        let bar_len = (win_rate / 5.0) as usize;
+        let bar: String = "█".repeat(bar_len);
+        
+        println!("{:>6} | {:>9.1}% | {:>10.1} {}", value, win_rate, avg_rounds, bar);
+    }
+}
+
+fn modify_stat(creature: &mut Creature, stat: &str, value: f64) {
+    match stat.to_lowercase().as_str() {
+        "ac" => creature.ac = value,
+        "hp" => creature.hp = value,
+        "tohit" => {
+            // Modify toHit on all attack actions
+            for action in &mut creature.actions {
+                if let Action::Atk(atk) = action {
+                    atk.to_hit = DiceFormula::Value(value);
+                }
+            }
+        },
+        "damage" | "dpr" => {
+            // Modify dpr on all attack actions (set to flat value for simplicity)
+            for action in &mut creature.actions {
+                if let Action::Atk(atk) = action {
+                    atk.dpr = DiceFormula::Expr(format!("{}d1", value as i32));
+                }
+            }
+        },
+        _ => println!("[WARN] Unknown stat: {}", stat),
+    }
+}
+
+// --- Compare Subcommand ---
+
+fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
+    println!("=== Scenario Comparison ===\n");
+    
+    let (players_a, encounters_a, name_a) = load_scenario(scenario_a_path);
+    let (players_b, encounters_b, name_b) = load_scenario(scenario_b_path);
+    
+    // Run both
+    let iterations = 1005;
+    println!("Running {} iterations for each scenario...\n", iterations);
+    
+    let (results_a, _) = run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);
+    let (results_b, _) = run_event_driven_simulation_rust(players_b, encounters_b, iterations, false);
+    
+    // Calculate stats for each
+    let stats_a = calculate_scenario_stats(&results_a);
+    let stats_b = calculate_scenario_stats(&results_b);
+    
+    // Print comparison table
+    println!("{:<15} | {:>15} | {:>15} | {:>10}", "Metric", &name_a, &name_b, "Diff");
+    println!("----------------|-----------------|-----------------|----------");
+    
+    let win_diff = stats_b.win_rate - stats_a.win_rate;
+    let hp_diff = stats_b.avg_hp_left - stats_a.avg_hp_left;
+    let rounds_diff = stats_b.avg_rounds - stats_a.avg_rounds;
+    
+    println!("{:<15} | {:>14.1}% | {:>14.1}% | {:>+9.1}%", 
+        "Win Rate", stats_a.win_rate, stats_b.win_rate, win_diff);
+    println!("{:<15} | {:>15.1} | {:>15.1} | {:>+10.1}", 
+        "Avg HP Left", stats_a.avg_hp_left, stats_b.avg_hp_left, hp_diff);
+    println!("{:<15} | {:>15.1} | {:>15.1} | {:>+10.1}", 
+        "Avg Rounds", stats_a.avg_rounds, stats_b.avg_rounds, rounds_diff);
+    
+    println!();
+    if win_diff > 5.0 {
+        println!("✅ {} is significantly better (Win Rate +{:.1}%)", name_b, win_diff);
+    } else if win_diff < -5.0 {
+        println!("❌ {} is significantly worse (Win Rate {:.1}%)", name_b, win_diff);
+    } else {
+        println!("≈ Both scenarios perform similarly.");
+    }
+}
+
+struct ScenarioStats {
+    win_rate: f64,
+    avg_hp_left: f64,
+    avg_rounds: f64,
+}
+
+fn calculate_scenario_stats(results: &[SimulationResult]) -> ScenarioStats {
+    let count = results.len() as f64;
+    let mut wins = 0;
+    let mut total_hp = 0.0;
+    let mut total_rounds = 0.0;
+    
+    for result in results {
+        if let Some(encounter) = result.last() {
+            if let Some(last_round) = encounter.rounds.last() {
+                total_rounds += encounter.rounds.len() as f64;
+                
+                let team1_alive = last_round.team1.iter().any(|c| c.final_state.current_hp > 0.0);
+                let team2_alive = last_round.team2.iter().any(|c| c.final_state.current_hp > 0.0);
+                
+                if team1_alive && !team2_alive {
+                    wins += 1;
+                    total_hp += last_round.team1.iter().map(|c| c.final_state.current_hp).sum::<f64>();
+                }
+            }
+        }
+    }
+    
+    ScenarioStats {
+        win_rate: (wins as f64 / count) * 100.0,
+        avg_hp_left: if wins > 0 { total_hp / wins as f64 } else { 0.0 },
+        avg_rounds: total_rounds / count,
+    }
+}
+
+// --- Validate Subcommand ---
+
+fn run_validate(scenario_path: &PathBuf) {
+    println!("=== Validating Scenario ===\n");
+    
+    let content = match fs::read_to_string(scenario_path) {
+        Ok(c) => c,
+        Err(e) => {
+            println!("[ERROR] Failed to read file: {}", e);
+            return;
+        }
+    };
+    
+    let data: serde_json::Value = match serde_json::from_str(&content) {
+        Ok(d) => d,
+        Err(e) => {
+            println!("[ERROR] Invalid JSON: {}", e);
+            return;
+        }
+    };
+    
+    let mut errors = 0;
+    let mut warnings = 0;
+    
+    // Check for required fields
+    if data.get("players").is_none() {
+        println!("[ERROR] Missing 'players' array");
+        errors += 1;
+    }
+    if data.get("encounters").is_none() {
+        println!("[ERROR] Missing 'encounters' array");
+        errors += 1;
+    }
+    
+    // Validate players
+    if let Some(players) = data.get("players").and_then(|p| p.as_array()) {
+        for (i, player) in players.iter().enumerate() {
+            validate_creature(player, &format!("players[{}]", i), &mut errors, &mut warnings);
+        }
+    }
+    
+    // Validate encounters
+    if let Some(encounters) = data.get("encounters").and_then(|e| e.as_array()) {
+        for (i, encounter) in encounters.iter().enumerate() {
+            if let Some(monsters) = encounter.get("monsters").and_then(|m| m.as_array()) {
+                for (j, monster) in monsters.iter().enumerate() {
+                    validate_creature(monster, &format!("encounters[{}].monsters[{}]", i, j), &mut errors, &mut warnings);
+                }
+            } else {
+                println!("[ERROR] encounters[{}] missing 'monsters' array", i);
+                errors += 1;
+            }
+        }
+    }
+    
+    println!();
+    if errors == 0 && warnings == 0 {
+        println!("[INFO] ✅ Scenario is valid. Ready to run.");
+    } else {
+        println!("[INFO] Validation complete: {} errors, {} warnings", errors, warnings);
+    }
+}
+
+fn validate_creature(creature: &serde_json::Value, path: &str, errors: &mut u32, warnings: &mut u32) {
+    // Check name
+    if let Some(name) = creature.get("name").and_then(|n| n.as_str()) {
+        if name.is_empty() {
+            println!("[WARN] {} has empty name", path);
+            *warnings += 1;
+        }
+    } else {
+        println!("[ERROR] {} missing 'name' field", path);
+        *errors += 1;
+    }
+    
+    // Check HP
+    if let Some(hp) = creature.get("hp").and_then(|h| h.as_f64()) {
+        if hp <= 0.0 {
+            println!("[ERROR] {} has HP <= 0 ({})", path, hp);
+            *errors += 1;
+        }
+    } else {
+        println!("[ERROR] {} missing 'hp' field", path);
+        *errors += 1;
+    }
+    
+    // Check AC (allow negative for edge cases, but warn)
+    if let Some(ac) = creature.get("AC").and_then(|a| a.as_f64()) {
+        if ac < 0.0 {
+            println!("[WARN] {} has negative AC ({})", path, ac);
+            *warnings += 1;
+        }
+    }
+    
+    // Check actions
+    if let Some(actions) = creature.get("actions").and_then(|a| a.as_array()) {
+        for (i, action) in actions.iter().enumerate() {
+            let action_path = format!("{}.actions[{}]", path, i);
+            
+            // Check for empty action name
+            if let Some(name) = action.get("name").and_then(|n| n.as_str()) {
+                if name.is_empty() {
+                    println!("[WARN] {} has empty name", action_path);
+                    *warnings += 1;
+                }
+            }
+            
+            // Check toHit is not a dice formula (common mistake)
+            if let Some(to_hit) = action.get("toHit").and_then(|t| t.as_str()) {
+                if to_hit.contains("d20") {
+                    println!("[ERROR] {} toHit contains 'd20'. toHit should be a modifier, not a full roll formula.", action_path);
+                    *errors += 1;
+                }
+            }
+        }
+    } else {
+        println!("[WARN] {} has no 'actions' array", path);
+        *warnings += 1;
+    }
 }
