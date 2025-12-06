@@ -243,18 +243,20 @@ export const CreatureSchema = z.object({
     // New fields for Phase 5 resource management
     spellSlots: z.record(z.string(), z.number()).optional(),
     classResources: z.record(z.string(), z.number()).optional(),
-})
-
-const TeamSchema = z.array(CreatureSchema)
-
-// Simplified ResourceLedger for frontend display
-export const ResourceLedgerSchema = z.object({
+    hitDice: DiceFormulaSchema.optional(), // New field for hit dice for short rest healing
+    conModifier: z.number().optional(), // New field for constitution modifier to apply to hit dice rolls
+    })
+    
+    const TeamSchema = z.array(CreatureSchema)
+    
+    // Simplified ResourceLedger for frontend display
+    export const ResourceLedgerSchema = z.object({
     current: z.record(z.string(), z.number()),
     max: z.record(z.string(), z.number()),
-})
-export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
-
-const CreatureStateSchema = z.object({
+    })
+    export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
+    
+    const CreatureStateSchema = z.object({
     currentHP: z.number(),
     tempHP: z.number().optional(),
     buffs: z.map(z.string(), BuffSchema),
@@ -262,34 +264,35 @@ const CreatureStateSchema = z.object({
     upcomingBuffs: z.map(z.string(), BuffSchema),
     usedActions: z.set(z.string()),
     concentratingOn: z.string().nullable().optional(),
-})
-
-const CombattantSchema = z.object({
+    })
+    
+    const CombattantSchema = z.object({
     id: z.string(),
     initiative: z.number().optional(),
     creature: CreatureSchema,
     initialState: CreatureStateSchema,
     finalState: CreatureStateSchema,
-
+    
     // Actions taken by the creature on that round. Initially empty, will be filled by the simulator
     actions: z.array(z.object({
         action: FinalActionSchema,
         targets: z.map(z.string(), z.number()),
     })),
-})
-
-const RoundSchema = z.object({
+    })
+    
+    const RoundSchema = z.object({
     team1: z.array(CombattantSchema),
     team2: z.array(CombattantSchema),
-})
-
-export const EncounterSchema = z.object({
+    })
+    
+    export const EncounterSchema = z.object({
     monsters: TeamSchema,
     playersSurprised: z.boolean().optional(),
     monstersSurprised: z.boolean().optional(),
     shortRest: z.boolean().optional(),
-})
-
+    playersPrecast: z.boolean().optional(),
+    monstersPrecast: z.boolean().optional(),
+    })
 const EncounterStatsSchema = z.object({
     damageDealt: z.number(),
     damageTaken: z.number(),

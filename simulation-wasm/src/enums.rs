@@ -148,6 +148,7 @@ pub enum BuffDuration {
     EntireEncounter,
 }
 
+// Re-insert TriggerCondition here
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TriggerCondition {
@@ -165,4 +166,39 @@ pub enum TriggerCondition {
     OnEnemyDeath, // e.g. Great Weapon Master, Dark One's Blessing
     #[serde(rename = "on critical hit")]
     OnCriticalHit, // e.g. Divine Smite (crit fishing)
+}
+
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ResourceType {
+    Action, BonusAction, Reaction, Movement, SpellSlot, ClassResource,
+    HitDiceD6, // New
+    HitDiceD8, // New
+    HitDiceD10, // New
+    HitDiceD12, // New
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ResetType {
+    Turn,
+    Round,
+    ShortRest,
+    LongRest,
+    Encounter,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ChallengeRating {
+    Zero, Quarter, Half, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty, TwentyOne, TwentyTwo, TwentyThree, TwentyFour, TwentyFive, Thirty
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Classes {
+    Barbarian, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer, Warlock, Wizard
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CreatureType {
+    Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead
 }

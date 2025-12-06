@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use crate::enums::*;
-use crate::resources::{ActionCost, ActionRequirement, ActionTag};
+use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType}; // Added ResourceType
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -403,6 +403,10 @@ pub struct Creature {
     pub spell_slots: Option<HashMap<String, i32>>,
     #[serde(rename = "classResources")]
     pub class_resources: Option<HashMap<String, i32>>,
+    #[serde(rename = "hitDice")]
+    pub hit_dice: Option<String>, // Changed from DiceFormula
+    #[serde(rename = "conModifier")]
+    pub con_modifier: Option<f64>, // New field for constitution modifier to apply to hit dice rolls
 }
 
 impl Creature {
@@ -420,7 +424,7 @@ impl Creature {
             for (level_str, count) in slots {
                 // Parse level string "1", "2", etc.
                 if let Ok(level) = level_str.parse::<u8>() {
-                    let resource_type = crate::resources::ResourceType::SpellSlot;
+                    let resource_type = ResourceType::SpellSlot; // Use resources::ResourceType
                     ledger.register_resource(resource_type, Some(&level.to_string()), *count as f64, Some(crate::resources::ResetType::LongRest));
                 }
             }
@@ -429,12 +433,64 @@ impl Creature {
         // Add class resources
         if let Some(resources) = &self.class_resources {
             for (name, count) in resources {
-                let resource_type = crate::resources::ResourceType::ClassResource;
+                let resource_type = ResourceType::ClassResource; // Use resources::ResourceType
                 ledger.register_resource(resource_type, Some(name), *count as f64, Some(crate::resources::ResetType::LongRest));
             }
         }
         
+        // Add Hit Dice resource
+        if let Some(hit_dice_expr) = &self.hit_dice {
+            let s = hit_dice_expr.replace(" ", "");
+            let mut current_term = String::new();
+            
+            for c in s.chars() {
+                if c == '+' || c == '-' {
+                    if !current_term.is_empty() {
+                        register_hit_dice_term(&mut ledger, &current_term);
+                        current_term.clear();
+                    }
+                } else {
+                    current_term.push(c);
+                }
+            }
+            if !current_term.is_empty() {
+                register_hit_dice_term(&mut ledger, &current_term);
+            }
+        }
+        
         ledger
+    }
+}
+
+// Helper function to register a single hit dice term (e.g., "3d8")
+fn register_hit_dice_term(ledger: &mut crate::resources::ResourceLedger, term: &str) {
+    let cleaned_term = if let Some(bracket_pos) = term.find('[') {
+        &term[..bracket_pos]
+    } else {
+        term
+    };
+    
+    if cleaned_term.contains('d') {
+        let parts: Vec<&str> = cleaned_term.split('d').collect();
+        if parts.len() == 2 {
+            let count = parts[0].parse::<i32>().unwrap_or(1); // "d8" -> count 1
+            let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
+            let sides = parts[1].parse::<i32>().unwrap_or(6); // Default to d6 if parse fails
+            
+            let resource_type = match sides {
+                6 => ResourceType::HitDiceD6, // Use resources::ResourceType
+                8 => ResourceType::HitDiceD8, // Use resources::ResourceType
+                10 => ResourceType::HitDiceD10, // Use resources::ResourceType
+                12 => ResourceType::HitDiceD12, // Use resources::ResourceType
+                _ => {
+                    // Log a warning or error for unsupported hit dice size
+                    eprintln!("Warning: Unsupported hit dice size 'd{}' for term '{}'", sides, term);
+                    return; 
+                }
+            };
+            
+            ledger.register_resource(resource_type, None, count as f64, Some(crate::resources::ResetType::LongRest));
+        }
     }
 }
 
@@ -539,6 +595,10 @@ pub struct Encounter {
     pub monsters_surprised: Option<bool>,
     #[serde(rename = "shortRest")]
     pub short_rest: Option<bool>,
+    #[serde(rename = "playersPrecast")]
+    pub players_precast: Option<bool>, // New field
+    #[serde(rename = "monstersPrecast")]
+    pub monsters_precast: Option<bool>, // New field
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

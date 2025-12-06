@@ -10,7 +10,11 @@ pub enum ResourceType {
     SpellSlot,
     ClassResource,
     ItemCharge,
-    HitDice,
+    HitDice, // Generic HitDice resource (might be deprecated or refactored)
+    HitDiceD6, // Specific hit dice types
+    HitDiceD8,
+    HitDiceD10,
+    HitDiceD12,
     HP, 
     Custom,
 }
@@ -26,7 +30,11 @@ impl ResourceType {
             ResourceType::SpellSlot => format!("SpellSlot({})", val.unwrap_or("1")),
             ResourceType::ClassResource => format!("ClassResource({})", val.unwrap_or("Default")),
             ResourceType::ItemCharge => format!("ItemCharge({})", val.unwrap_or("Default")),
-            ResourceType::HitDice => format!("HitDice({})", val.unwrap_or("1")),
+            ResourceType::HitDice => format!("HitDice({})", val.unwrap_or("1")), // Generic
+            ResourceType::HitDiceD6 => "HitDice(d6)".to_string(), // New
+            ResourceType::HitDiceD8 => "HitDice(d8)".to_string(), // New
+            ResourceType::HitDiceD10 => "HitDice(d10)".to_string(), // New
+            ResourceType::HitDiceD12 => "HitDice(d12)".to_string(), // New
             ResourceType::Custom => format!("Custom({})", val.unwrap_or("Default")),
         }
     }

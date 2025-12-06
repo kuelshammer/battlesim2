@@ -151,7 +151,19 @@ fn run_single_simulation(players: &[Creature], encounters: &[Encounter], log_ena
             players_with_state = last_round.team1.iter().map(|c| {
                 let mut state = c.final_state.clone();
                 if is_short_rest {
-                    state.current_hp = c.creature.hp; 
+                    // Smart short rest healing
+                    let mut combatant_for_healing = Combattant {
+                        id: c.id.clone(),
+                        initiative: c.initiative,
+                        creature: c.creature.clone(),
+                        initial_state: state.clone(),
+                        final_state: state, // Mutate this state
+                        actions: Vec::new(),
+                    };
+                    smart_heal_short_rest(&mut combatant_for_healing, c.creature.con_modifier.unwrap_or(0.0), &mut log, log_enabled);
+                    state = combatant_for_healing.final_state;
+
+                    // Restore other short rest resources
                     state.resources.current = get_remaining_uses(&c.creature, "short rest", Some(&state.resources.current));
                     state.actions_used_this_encounter.clear();
                 } else {
@@ -816,5 +828,66 @@ fn is_concentration_action(action: &Action) -> bool {
             matches!(name, "Hunter's Mark" | "Bless" | "Bane" | "Hex")
         },
         _ => false,
+    }
+}
+
+fn smart_heal_short_rest(combatant: &mut Combattant, con_modifier: f64, log: &mut Vec<String>, log_enabled: bool) {
+    let max_hp = combatant.creature.hp;
+    let current_hp = combatant.final_state.current_hp;
+
+    if current_hp >= max_hp {
+        if log_enabled {
+            log.push(format!("  {} is already at full HP.", combatant.creature.name));
+        }
+        return;
+    }
+
+    let mut healed_amount = 0.0;
+
+    // Iterate through hit dice types (D12, D10, D8, D6 - largest first for efficiency)
+    let hit_dice_types = [
+        (ResourceType::HitDiceD12, 12),
+        (ResourceType::HitDiceD10, 10),
+        (ResourceType::HitDiceD8, 8),
+        (ResourceType::HitDiceD6, 6),
+    ];
+
+    if log_enabled {
+        log.push(format!("  {} starts short rest healing. Missing HP: {:.1}", combatant.creature.name, max_hp - current_hp));
+    }
+
+    for &(hd_type, die_size) in &hit_dice_types {
+        let hd_resource_name = format!("{:?}", hd_type); // e.g., "HitDiceD8"
+        
+        // Check current available count
+        let current_hd_count = combatant.final_state.resources.current.get(&hd_resource_name).copied().unwrap_or(0.0);
+
+        for _ in 0..(current_hd_count as u32) {
+            if combatant.final_state.current_hp >= max_hp { break; } // Stop if full HP
+
+            // Consume one hit die
+            combatant.final_state.resources.current.entry(hd_resource_name.clone()).and_modify(|e| *e -= 1.0);
+            
+            let roll_formula = DiceFormula::Expr(format!("1d{}", die_size));
+            let roll_value = dice::evaluate(&roll_formula, 1);
+            let heal_this_die = (roll_value + con_modifier).max(0.0); // Healing can't be negative
+
+            combatant.final_state.current_hp = (combatant.final_state.current_hp + heal_this_die).min(max_hp);
+            healed_amount += heal_this_die;
+
+            if log_enabled {
+                log.push(format!("  > {} uses a {} (rolled {:.1} + {:.1} CON) to heal {:.1} HP. Remaining {}: {:.0}. Current HP: {:.1}/{:.1}",
+                    combatant.creature.name, hd_resource_name, roll_value, con_modifier, heal_this_die, hd_resource_name, combatant.final_state.resources.current.get(&hd_resource_name).copied().unwrap_or(0.0), combatant.final_state.current_hp, max_hp));
+            }
+        }
+    }
+
+    if log_enabled {
+        if healed_amount > 0.0 {
+            log.push(format!("  {} healed a total of {:.1} HP during short rest. Final HP: {:.1}/{:.1}",
+                combatant.creature.name, healed_amount, combatant.final_state.current_hp, max_hp));
+        } else {
+            log.push(format!("  {} did not heal during short rest (no hit dice or already full HP).", combatant.creature.name));
+        }
     }
 }

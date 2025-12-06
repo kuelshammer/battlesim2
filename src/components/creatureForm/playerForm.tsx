@@ -108,6 +108,28 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                 )) }
             </section>
 
+            <h3>Hit Dice (e.g., "3d8+5d10")</h3>
+            <section>
+                <input
+                    type="text"
+                    value={value?.hitDice || ''}
+                    onChange={(e) => {
+                        onChange({ ...value!, hitDice: e.target.value });
+                    }}
+                />
+            </section>
+
+            <h3>Constitution Modifier</h3>
+            <section>
+                <input
+                    type="number"
+                    value={value?.conModifier || 0}
+                    onChange={(e) => {
+                        onChange({ ...value!, conModifier: parseFloat(e.target.value) || 0 });
+                    }}
+                />
+            </section>
+
             { !chosenClass ? null : (
                 (chosenClass.type === 'barbarian') ? (
                     <>
