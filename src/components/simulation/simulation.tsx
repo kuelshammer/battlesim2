@@ -280,14 +280,15 @@ const Simulation: FC<PropType> = ({ }) => {
 
                 {(saving || loading) ? (
                     <AdventuringDayForm
-                        players={players}
-                        encounters={encounters}
+                        currentPlayers={players} // New prop name
+                        currentEncounters={encounters} // New prop name
                         onCancel={() => { setSaving(false); setLoading(false) }}
-                        onLoad={loading ? ((newPlayers, newEncounters) => {
+                        onApplyChanges={(newPlayers, newEncounters) => { // New prop name and logic
                             setPlayers(newPlayers)
                             setEncounters(newEncounters)
+                            setSaving(false)
                             setLoading(false)
-                        }) : undefined}
+                        }}
                     />
                 ) : null}
             </semiPersistentContext.Provider>

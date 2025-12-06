@@ -14,10 +14,10 @@ import { v4 as uuidv4 } from 'uuid';
 import MonsterForm from "../creatureForm/monsterForm"
 
 type PropType = {
-    players: Creature[],
-    encounters: Encounter[],
+    currentPlayers: Creature[],
+    currentEncounters: Encounter[],
     onCancel: () => void,
-    onLoad: (players: Creature[], encounters: Encounter[]) => void, // onLoad now updates parent state directly
+    onApplyChanges: (newPlayers: Creature[], newEncounters: Encounter[]) => void, // Callback to update parent state
 }
 
 function carefulSave(key: string, value: string) {
@@ -81,24 +81,24 @@ function currentSaveName(): string {
     return localStorage.getItem('saveName') || ''
 }
 
-const AdventuringDayForm: FC<PropType> = ({ players, encounters, onCancel, onLoad }) => {
-    const [editedPlayers, setEditedPlayers] = useState<Creature[]>(players);
-    const [editedEncounters, setEditedEncounters] = useState<Encounter[]>(encounters);
+const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, onCancel, onApplyChanges }) => {
+    const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
+    const [editedEncounters, setEditedEncounters] = useState<Encounter[]>(currentEncounters);
     const [editingPlayer, setEditingPlayer] = useState<Creature | null>(null);
     const [editingMonster, setEditingMonster] = useState<Creature | null>(null);
     const [editingMonsterEncounterIndex, setEditingMonsterEncounterIndex] = useState<number | null>(null);
 
     // Sync external changes (if parent re-renders with new props)
     useEffect(() => {
-        setEditedPlayers(players);
-    }, [players]);
+        setEditedPlayers(currentPlayers);
+    }, [currentPlayers]);
 
     useEffect(() => {
-        setEditedEncounters(encounters);
-    }, [encounters]);
+        setEditedEncounters(currentEncounters);
+    }, [currentEncounters]);
 
     function addPlayer() {
-        const newPlayer = PlayerTemplates.barbarian(1, {}); // Default Barbarian
+        const newPlayer = PlayerTemplates.barbarian(1, { gwm: false, weaponBonus: 0 }); // Default Barbarian with correct options
         newPlayer.id = uuidv4();
         setEditedPlayers([...editedPlayers, newPlayer]);
     }
@@ -200,7 +200,7 @@ const AdventuringDayForm: FC<PropType> = ({ players, encounters, onCancel, onLoa
 
         carefulSave('saveFiles', JSON.stringify(saveFiles))
         carefulSave('saveName', saveName)
-        onLoad(editedPlayers, editedEncounters); // Pass current edited state back to parent
+        onApplyChanges(editedPlayers, editedEncounters); // Pass current edited state back to parent
     }
 
     function loadSavedDay(nameToLoad: string) {
@@ -208,7 +208,7 @@ const AdventuringDayForm: FC<PropType> = ({ players, encounters, onCancel, onLoa
 
         if (!saveFile) return
 
-        onLoad(saveFile.players, saveFile.encounters)
+        onApplyChanges(saveFile.players, saveFile.encounters) // Pass loaded state to parent
         setEditedPlayers(saveFile.players); // Update local state
         setEditedEncounters(saveFile.encounters); // Update local state
         setSaveName(nameToLoad);
@@ -278,7 +278,7 @@ const AdventuringDayForm: FC<PropType> = ({ players, encounters, onCancel, onLoa
 
         carefulSave('saveFiles', JSON.stringify(saveFiles))
         carefulSave('saveName', newSave.name)
-        onLoad(newSave.players, newSave.encounters) // Update parent
+        onApplyChanges(newSave.players, newSave.encounters) // Update parent
         setEditedPlayers(newSave.players); // Update local state
         setEditedEncounters(newSave.encounters); // Update local state
     }
