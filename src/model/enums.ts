@@ -49,6 +49,7 @@ export const ActionConditionList = [
     'any ally below 50% HP',
     'is available',
     'is under half HP',
+    'has temp HP',
     'has no THP',
     'not used yet',
     'enemy count one',
@@ -119,6 +120,7 @@ export function numericCR(cr: ChallengeRating) {
 
 export const TriggerConditionList = [
     'on hit',
+    'on being hit',
     'on being attacked',
     'on miss',
     'on being damaged',
@@ -198,6 +200,10 @@ export const ActionTagList = [
     'Control',
     'Buff',
     'Damage',
+
+    // Feature tags
+    'GWM',
+    'Sharpshooter',
 
     // Custom tags
     'Custom'

@@ -1,0 +1,210 @@
+/* src/components/creatureForm/saveBonusModal.module.scss */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal {
+    background: var(--bg-secondary, #2a2a2a);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color, #444);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--bg-tertiary, #333);
+    border-bottom: 1px solid var(--border-color, #444);
+
+    h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: var(--text-primary, #fff);
+    }
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1.25rem;
+
+    &:hover {
+        color: var(--text-primary, #fff);
+    }
+}
+
+.content {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+
+    h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+        color: var(--text-primary, #fff);
+    }
+}
+
+.averageSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+        font-weight: 500;
+        color: var(--text-primary, #fff);
+    }
+}
+
+.averageInput {
+    width: 80px;
+    padding: 0.5rem;
+    font-size: 1.25rem;
+    text-align: center;
+    border-radius: 6px;
+    border: 2px solid var(--accent-color, #4a9eff);
+    background: var(--bg-primary, #1a1a1a);
+    color: var(--text-primary, #fff);
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-color, #444);
+    margin: 1rem 0;
+}
+
+.hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    margin: 0.25rem 0 1rem;
+}
+
+.savesGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.saveRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.saveLabel {
+    width: 140px;
+    color: var(--text-primary, #fff);
+
+    strong {
+        color: var(--accent-color, #4a9eff);
+    }
+}
+
+.saveInput {
+    width: 60px;
+    padding: 0.4rem;
+    text-align: center;
+    border-radius: 4px;
+    border: 1px solid var(--border-color, #555);
+    background: var(--bg-primary, #1a1a1a);
+    color: var(--text-primary, #fff);
+
+    &::placeholder {
+        color: var(--text-secondary, #666);
+        font-style: italic;
+    }
+
+    &.overridden {
+        border-color: var(--accent-color, #4a9eff);
+        background: rgba(74, 158, 255, 0.1);
+    }
+}
+
+.advantageLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #aaa);
+    margin-left: auto;
+
+    span {
+        white-space: nowrap;
+    }
+}
+
+.globalAdvantage {
+    label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-primary, #fff);
+
+        .hint {
+            margin: 0;
+        }
+    }
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-tertiary, #333);
+    border-top: 1px solid var(--border-color, #444);
+}
+
+.cancelBtn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #555);
+    background: transparent;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--bg-primary, #1a1a1a);
+        color: var(--text-primary, #fff);
+    }
+}
+
+.saveBtn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent-color, #4a9eff);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+
+    &:hover {
+        background: var(--accent-color-hover, #3a8eef);
+    }
+}

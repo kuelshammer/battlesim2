@@ -67,5 +67,12 @@ fn check_combat_condition(
             // Requires a surprised status in combatant state. For now, always false.
             false
         },
+        crate::resources::CombatCondition::HasTempHP => {
+           if let Some(combatant) = _context.combatants.get(_combatant_id) {
+               combatant.temp_hp > 0.0
+           } else {
+               false
+           }
+        }
     }
 }

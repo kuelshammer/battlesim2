@@ -9,6 +9,7 @@ use crate::actions::*;
 use crate::aggregation::*;
 use crate::cleanup::*;
 use crate::resolution; // New module
+use crate::resources::ActionTag;
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen;
 
@@ -202,6 +203,8 @@ fn create_combattant(creature: Creature, id: String) -> Combattant {
         concentrating_on: None,
         actions_used_this_encounter: HashSet::new(),
         bonus_action_used: false,
+        known_ac: HashMap::new(),
+        arcane_ward_hp: None,
     };
     Combattant {
         id,
@@ -766,9 +769,23 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             continue;
         }
 
+        // NEW: GWM/Sharpshooter Optimization
+        // We decide based on the first target whether to use Power Attack variants
+        let effective_action = if !raw_targets.is_empty() {
+            let (is_enemy, target_idx) = raw_targets[0];
+             let target = if is_enemy { &enemies[target_idx] } else { &allies[target_idx] };
+             optimize_action_for_target(action, &allies[index], target)
+        } else {
+            (*action).clone()
+        };
+        
+        if log_enabled && effective_action.base().name != action.base().name {
+             log.push(format!("    -> Optimizing: Using Power Attack variant ({})", effective_action.base().name));
+        }
+
         // Record action in history (Aggregation) - this requires a clone of the action
         let mut action_record = CombattantAction {
-            action: (*action).clone(),
+            action: effective_action.clone(),
             targets: HashMap::new(),
         };
 
@@ -783,7 +800,7 @@ fn execute_turn(index: usize, allies: &mut [Combattant], enemies: &mut [Combatta
             index,
             allies,
             enemies,
-            action,
+            &effective_action,
             &raw_targets,
             &action_record,
             stats,
@@ -890,4 +907,109 @@ fn smart_heal_short_rest(combatant: &mut Combattant, con_modifier: f64, log: &mu
             log.push(format!("  {} did not heal during short rest (no hit dice or already full HP).", combatant.creature.name));
         }
     }
+}
+
+fn optimize_action_for_target(
+    action: &Action,
+    attacker: &Combattant,
+    target: &Combattant,
+) -> Action {
+    let target_id = &target.id;
+    
+    // Check if GWM/SS capable via specific tags or Custom string fallback
+    let is_gwm = action.base().tags.iter().any(|t| match t {
+        ActionTag::GWM => true,
+        ActionTag::Custom(s) => s.contains("GWM") || s.contains("Great Weapon Master"),
+        _ => false,
+    });
+    let is_ss = action.base().tags.iter().any(|t| match t {
+        ActionTag::Sharpshooter => true,
+        ActionTag::Custom(s) => s.contains("SS") || s.contains("Sharpshooter"),
+        _ => false,
+    });
+    
+
+
+    if is_gwm || is_ss {
+         #[cfg(debug_assertions)]
+         eprintln!("DEBUG: Checking optimization for {}. GWM: {}, SS: {}", action.base().name, is_gwm, is_ss);
+    }
+    
+    if !is_gwm && !is_ss {
+        return action.clone();
+    }
+
+
+
+    // It's a candidate. Get knowledge.
+    let knowledge = attacker.final_state.known_ac.get(target_id);
+    let estimated_ac = if let Some(k) = knowledge {
+        // Simple average of known range
+        (k.min + k.max) as f64 / 2.0
+    } else {
+        15.0 // Default guess
+    };
+    
+    // Determine Advantage/Disadvantage state
+    let attacker_adv = has_condition(attacker, CreatureCondition::AttacksWithAdvantage) ||
+                       has_condition(attacker, CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+    let target_grant_adv = has_condition(target, CreatureCondition::IsAttackedWithAdvantage);
+    let has_advantage = attacker_adv || target_grant_adv;
+    
+    // Simplified Disadvantage check
+    let attacker_dis = has_condition(attacker, CreatureCondition::AttacksWithDisadvantage) ||
+                       has_condition(attacker, CreatureCondition::AttacksAndSavesWithDisadvantage);
+    let target_grant_dis = has_condition(target, CreatureCondition::IsAttackedWithDisadvantage);
+    let has_disadvantage = attacker_dis || target_grant_dis;
+    
+    // Net state
+    let effective_advantage = has_advantage && !has_disadvantage;
+    let effective_disadvantage = has_advantage && !has_disadvantage; // Typo in original logic check? No, !Adv && Dis.
+    let effective_disadvantage_correct = !has_advantage && has_disadvantage;
+    
+    // We need dpr and to_hit formulas
+    if let Action::Atk(atk) = action {
+        let hit_bonus = dice::evaluate(&atk.to_hit, 1);
+        let dmg_avg = dice::evaluate(&atk.dpr, 1);
+        
+        let calc_prob = |bonus: f64, ac: f64, adv: bool, dis: bool| -> f64 {
+            let mut p = (21.0 + bonus - ac) / 20.0;
+            p = p.clamp(0.05, 0.95);
+            if adv {
+                1.0 - (1.0 - p).powf(2.0)
+            } else if dis {
+                p.powf(2.0)
+            } else {
+                p
+            }
+        };
+
+        // Normal
+        let p_hit_normal = calc_prob(hit_bonus, estimated_ac, effective_advantage, effective_disadvantage_correct);
+        let dpr_normal = p_hit_normal * dmg_avg;
+        
+        // Power (-5/+10)
+        let p_hit_power = calc_prob(hit_bonus - 5.0, estimated_ac, effective_advantage, effective_disadvantage_correct);
+        let dpr_power = p_hit_power * (dmg_avg + 10.0);
+        
+        if dpr_power > dpr_normal {
+             let mut new_action = action.clone();
+             if let Action::Atk(new_atk) = &mut new_action {
+                 // Adjust to_hit (-5)
+                 match &new_atk.to_hit {
+                     DiceFormula::Value(v) => new_atk.to_hit = DiceFormula::Value(v - 5.0),
+                     DiceFormula::Expr(e) => new_atk.to_hit = DiceFormula::Expr(format!("({}) - 5", e)),
+                 }
+                 // Adjust dpr (+10)
+                 match &new_atk.dpr {
+                     DiceFormula::Value(v) => new_atk.dpr = DiceFormula::Value(v + 10.0),
+                     DiceFormula::Expr(e) => new_atk.dpr = DiceFormula::Expr(format!("({}) + 10", e)),
+                 }
+                 new_atk.name = format!("{} (Power)", new_atk.name);
+             }
+             return new_action;
+        }
+    }
+    
+    action.clone()
 }

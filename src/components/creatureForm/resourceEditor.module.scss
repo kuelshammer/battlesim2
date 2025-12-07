@@ -25,17 +25,85 @@
         margin-bottom: 1em;
         color: #333;
 
+        .headerButtons {
+            display: flex;
+            gap: 0.25em;
+            margin-left: auto;
+        }
+
         button {
             background: none;
-            border: none;
+            border: 1px solid transparent;
             color: #007bff;
             cursor: pointer;
-            padding: 0;
+            padding: 0.25em 0.5em;
             font-size: 0.9em;
+            border-radius: 4px;
 
             &:hover {
                 color: #0056b3;
+                background: rgba(0, 123, 255, 0.1);
             }
+
+            &.activeBtn {
+                background: rgba(0, 123, 255, 0.15);
+                border-color: #007bff;
+            }
+        }
+    }
+
+    .casterHelper {
+        background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+        border: 1px solid #c8d4ff;
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75em;
+    }
+
+    .casterRow {
+        display: flex;
+        align-items: center;
+        gap: 0.75em;
+
+        label {
+            font-weight: 500;
+            color: #444;
+            min-width: 100px;
+        }
+
+        input,
+        select {
+            padding: 0.4em 0.6em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        select {
+            min-width: 180px;
+        }
+    }
+
+    .applyBtn {
+        align-self: flex-start;
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5em 1em;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+
+        &:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        &:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
     }
 

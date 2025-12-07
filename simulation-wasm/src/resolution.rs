@@ -309,6 +309,27 @@ fn apply_single_effect(
             
             let hits = !is_miss && (is_crit || total_hit >= final_ac);
             
+            // NEW: precise knowledge update
+            if let Some(t) = target_opt.as_ref() {
+                let t_id = t.id.clone();
+                let knowledge = attacker.final_state.known_ac.entry(t_id).or_insert(AcKnowledge::default());
+                
+                if !is_crit && hits {
+                    // Start with high max, lower it as we hit with lower rolls
+                    if (total_hit as i32) < knowledge.max {
+                        knowledge.max = total_hit as i32;
+                    }
+                }
+                
+                if !is_miss && !hits {
+                     // Missed (but not auto-miss), so AC must be higher
+                     // min starts at 0, raise it as we miss with higher rolls
+                     if (total_hit as i32 + 1) > knowledge.min {
+                         knowledge.min = total_hit as i32 + 1;
+                     }
+                }
+            }
+            
             if log_enabled {
                 let crit_str = if is_crit { " (CRIT!)" } else if is_miss { " (MISS!)" } else { "" };
                 let reaction_str = if reaction_used { " (Reaction Used)" } else { "" };
@@ -457,32 +478,139 @@ fn apply_single_effect(
                 }
 
                 // Apply Damage (Write)
-                // Consume target_opt (move) since this is the last usage
                 if let Some(t) = target_opt {
-                    t.final_state.current_hp -= damage;
-                    if t.final_state.current_hp < 0.0 { t.final_state.current_hp = 0.0; }
-                    update_stats(stats, &attacker.id, &t.id, damage, 0.0);
+                    let mut remaining_damage = damage;
+                    let mut ward_absorbed_amount = 0.0;
+                    let mut _thp_absorbed_amount = 0.0;
+
+                    // 1. Arcane Ward Absorption
+                    let ward_hp = t.final_state.arcane_ward_hp.unwrap_or(0.0);
+                    if ward_hp > 0.0 {
+                        let absorbed = remaining_damage.min(ward_hp);
+                        t.final_state.arcane_ward_hp = Some(ward_hp - absorbed);
+                        remaining_damage -= absorbed;
+                        ward_absorbed_amount = absorbed;
+                        
+                        if log_enabled && absorbed > 0.0 {
+                            log.push(format!("         (Arcane Ward absorbs {:.0} damage, {:.0} remaining)", absorbed, t.final_state.arcane_ward_hp.unwrap_or(0.0)));
+                        }
+                    }
+
+                    // 2. Temp HP Absorption (only if damage remains)
+                    if remaining_damage > 0.0 {
+                        if let Some(mut thp) = t.final_state.temp_hp {
+                            if thp > 0.0 {
+                                let absorbed = remaining_damage.min(thp);
+                                thp -= absorbed;
+                                remaining_damage -= absorbed;
+                                _thp_absorbed_amount = absorbed;
+                                t.final_state.temp_hp = if thp > 0.0 { Some(thp) } else { None };
+                                
+                                if log_enabled && absorbed > 0.0 {
+                                    log.push(format!("         (Temp HP absorbs {:.0} damage)", absorbed));
+                                }
+                            }
+                        }
+                    }
+
+                    // 3. Real HP Damage
+                    if remaining_damage > 0.0 {
+                        t.final_state.current_hp -= remaining_damage;
+                        if t.final_state.current_hp < 0.0 { t.final_state.current_hp = 0.0; }
+                    }
+
+                    // Log total effective damage taken by creature (ignoring ward/thp absorption implies logical impact)
+                    // But usually logs show "Taken X Damage". Here we might want to clarify.
+                    if log_enabled {
+                         log.push(format!("   * 💥 {} takes {:.0} damage (HP: {:.0})", target_name, damage - ward_absorbed_amount, t.final_state.current_hp));
+                    }
+                    
+                    update_stats(stats, &attacker.id, &t.id, damage - ward_absorbed_amount, 0.0);
+                    
+                    // Concentration Check (Damage > 0 to Real HP ??? Or just any damage?)
+                    // 5e Rules: "Whenever you take damage..." 
+                    // Arcane Ward: "Standard ward takes damage INSTEAD of you". So if ward takes it all, you take 0 damage -> No check.
+                    // Temp HP: You still take damage, it just comes off THP. 
+                    // PHB: "Temporary hit points... If you have 0 hit points, receiving temporary hit points doesn't restore..."
+                    // PHB: "Concentration... whenever you take damage."
+                    // Jeremy Crawford: "If the damage to you is 0 (e.g. Immunity or Ward), you don't make the check. If you take damage to THP, you DO make the check."
+                    
+                    // So: Check if remaining_damage > 0 OR (absorbed by THP > 0 and NOT ward).
+                    // Actually, if Ward absorbs ALL, remaining_damage entering THP phase is 0.
+                    // If Ward absorbs partial, remaining_damage > 0 hits THP.
+                    // If THP absorbs all, real HP damage is 0, but YOU TOOK DAMAGE (to THP).
+                    // So logic: `damage - ward_absorbed` is the "damage taken by creature".
+                    
+                    let damage_taken_by_creature = damage - ward_absorbed_amount;
                     
                     if t.final_state.current_hp <= 0.0 {
                         cleanup_instructions.push(CleanupInstruction::RemoveAllBuffsFromSource(t.id.clone()));
                         if log_enabled { log.push(format!("  * 💀 **{} falls unconscious!**", t.creature.name)); }
-                    } else if let Some(buff_id) = t.final_state.concentrating_on.clone() {
-                        let dc = (damage / 2.0).max(10.0);
-                        let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
-                        let bonus = t.creature.con_save_bonus.unwrap_or(0.0);
-                        
-                        if con_save + bonus < dc {
-                            cleanup_instructions.push(CleanupInstruction::BreakConcentration(t.id.clone(), buff_id.clone()));
-                            if log_enabled { log.push(format!("         -> Drops concentration on {}!", buff_id)); }
+                    } else if damage_taken_by_creature > 0.0 { // Only check concentration if creature actually took damage (not just ward)
+                        if let Some(buff_id) = t.final_state.concentrating_on.clone() {
+                            let dc = (damage_taken_by_creature / 2.0).max(10.0);
+                            let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
+                            let bonus = t.creature.con_save_bonus.unwrap_or(0.0);
+                            
+                            if con_save + bonus < dc {
+                                cleanup_instructions.push(CleanupInstruction::BreakConcentration(t.id.clone(), buff_id.clone()));
+                                if log_enabled { log.push(format!("         -> Drops concentration on {}!", buff_id)); }
+                            }
                         }
                     }
                 } else {
-                    // Self Damage
-                    attacker.final_state.current_hp -= damage;
-                    if attacker.final_state.current_hp < 0.0 { attacker.final_state.current_hp = 0.0; }
-                    update_stats(stats, &attacker.id, &attacker.id, damage, 0.0);
-                    if log_enabled { log.push(format!("         Self-damaged for {:.0} HP", damage)); }
-                    // No self-concentration check logic for now
+                    // Self Damage (Simplification: Treat same as target)
+                     let mut remaining_damage = damage;
+                     let mut ward_absorbed_amount = 0.0;
+                     let mut _thp_absorbed_amount = 0.0;
+                     
+                    // 1. Arcane Ward Absorption
+                    let ward_hp = attacker.final_state.arcane_ward_hp.unwrap_or(0.0);
+                    if ward_hp > 0.0 {
+                        let absorbed = remaining_damage.min(ward_hp);
+                        attacker.final_state.arcane_ward_hp = Some(ward_hp - absorbed);
+                        remaining_damage -= absorbed;
+                        ward_absorbed_amount = absorbed;
+                         if log_enabled && absorbed > 0.0 {
+                            log.push(format!("         (Arcane Ward absorbs {:.0})", absorbed));
+                        }
+                    }
+                    
+                     // 2. Temp HP Absorption
+                    if remaining_damage > 0.0 {
+                        if let Some(mut thp) = attacker.final_state.temp_hp {
+                             if thp > 0.0 {
+                                let absorbed = remaining_damage.min(thp);
+                                thp -= absorbed;
+                                remaining_damage -= absorbed;
+                                _thp_absorbed_amount = absorbed;
+                                attacker.final_state.temp_hp = if thp > 0.0 { Some(thp) } else { None };
+                            }
+                        }
+                    }
+                    
+                    if remaining_damage > 0.0 {
+                         attacker.final_state.current_hp -= remaining_damage;
+                         if attacker.final_state.current_hp < 0.0 { attacker.final_state.current_hp = 0.0; }
+                    }
+                    
+                    let damage_taken_by_creature = damage - ward_absorbed_amount;
+                    update_stats(stats, &attacker.id, &attacker.id, damage_taken_by_creature, 0.0);
+                    if log_enabled { log.push(format!("         Self-damaged for {:.0} real HP", damage_taken_by_creature)); }
+
+                    // Self-concentration check logic
+                    if damage_taken_by_creature > 0.0 {
+                        if let Some(buff_id) = attacker.final_state.concentrating_on.clone() {
+                            let dc = (damage_taken_by_creature / 2.0).max(10.0);
+                            let con_save = dice::evaluate(&DiceFormula::Expr("1d20".to_string()), 1); 
+                            let bonus = attacker.creature.con_save_bonus.unwrap_or(0.0);
+                            
+                            if con_save + bonus < dc {
+                                cleanup_instructions.push(CleanupInstruction::BreakConcentration(attacker.id.clone(), buff_id.clone()));
+                                if log_enabled { log.push(format!("         -> Drops concentration on {}!", buff_id)); }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -800,6 +928,7 @@ pub fn resolve_action_execution(
                 // Target died - try to find a new one
                 if let Action::Atk(atk_action) = action {
                     if let Some(new_idx) = crate::targeting::select_enemy_target(
+                        attacker_mut,
                         atk_action.target.clone(),
                         enemies,
                         &[],

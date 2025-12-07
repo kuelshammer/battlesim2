@@ -16,7 +16,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
                 eprintln!("          Attack {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
                 // So we pass an empty excluded list.
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &[], None) {
+                if let Some(idx) = select_enemy_target(c, a.target.clone(), enemies, &[], None) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -71,7 +71,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
             for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Debuff {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(a.target.clone(), enemies, &targets, Some(&a.base().id)) {
+                if let Some(idx) = select_enemy_target(c, a.target.clone(), enemies, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -91,7 +91,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
             for i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!("          Template {}/{} of {}. Attempting to select target.", i + 1, count, c.creature.name);
-                if let Some(idx) = select_enemy_target(crate::enums::EnemyTarget::EnemyWithLeastHP, enemies, &targets, Some(&a.base().id)) {
+                if let Some(idx) = select_enemy_target(c, crate::enums::EnemyTarget::EnemyWithLeastHP, enemies, &targets, Some(&a.base().id)) {
                     #[cfg(debug_assertions)]
                     eprintln!("            Target selected for {}: Enemy {}", c.creature.name, enemies[idx].creature.name);
                     targets.push((true, idx));
@@ -109,7 +109,7 @@ pub fn get_targets(c: &Combattant, action: &Action, allies: &[Combattant], enemi
     targets
 }
 
-pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
+pub fn select_enemy_target(attacker: &Combattant, strategy: EnemyTarget, enemies: &[Combattant], excluded: &[(bool, usize)], buff_check: Option<&str>) -> Option<usize> {
     #[cfg(debug_assertions)]
     eprintln!("            Selecting enemy target (Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
     
@@ -139,51 +139,59 @@ pub fn select_enemy_target(strategy: EnemyTarget, enemies: &[Combattant], exclud
         let e1 = &enemies[idx1];
         let e2 = &enemies[idx2];
         
+        let get_estimated_ac = |target: &Combattant| -> f64 {
+            if let Some(k) = attacker.final_state.known_ac.get(&target.id) {
+                (k.min + k.max) as f64 / 2.0
+            } else {
+                15.0 // Default assumption
+            }
+        };
+
+        let est_ac1 = get_estimated_ac(e1);
+        let est_ac2 = get_estimated_ac(e2);
+
         // 1. Primary Strategy Comparison
         let v1 = match strategy {
             EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp,
             EnemyTarget::EnemyWithMostHP => -e1.final_state.current_hp,
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
-            EnemyTarget::EnemyWithLowestAC => e1.creature.ac,
-            EnemyTarget::EnemyWithHighestAC => -e1.creature.ac,
+            EnemyTarget::EnemyWithLowestAC => est_ac1,
+            EnemyTarget::EnemyWithHighestAC => -est_ac1,
         };
         
         let v2 = match strategy {
             EnemyTarget::EnemyWithLeastHP => e2.final_state.current_hp,
             EnemyTarget::EnemyWithMostHP => -e2.final_state.current_hp,
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
-            EnemyTarget::EnemyWithLowestAC => e2.creature.ac,
-            EnemyTarget::EnemyWithHighestAC => -e2.creature.ac,
+            EnemyTarget::EnemyWithLowestAC => est_ac2,
+            EnemyTarget::EnemyWithHighestAC => -est_ac2,
         };
 
         // Using partial_cmp for floats. We want strict ordering.
-        // For "Least" strategies, smaller is better. 
-        // Our mapping above handles "Most" by negating, so we always want "smaller" value to be first.
         match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
             Ordering::Equal => {}, // Proceed to tie-breakers
             ord => return ord,
         }
 
         // 2. Tie-Breaker: Concentration (Target Concentrating > Not Concentrating)
+        // Prefer breaking concentration!
         let c1 = e1.final_state.concentrating_on.is_some();
         let c2 = e2.final_state.concentrating_on.is_some();
         if c1 && !c2 { return Ordering::Less; } // c1 comes first
         if !c1 && c2 { return Ordering::Greater; }
 
-        // 3. Tie-Breaker: Initiative (Higher > Lower)
-        // Higher initiative comes first.
-        if e1.initiative != e2.initiative {
-            return e2.initiative.partial_cmp(&e1.initiative).unwrap_or(Ordering::Equal);
+        // 3. Tie-Breaker: AC (Lower Estimated AC > Higher) "Easier to hit"
+        // Use KNOWLEDGE here!
+        if est_ac1 != est_ac2 {
+             return est_ac1.partial_cmp(&est_ac2).unwrap_or(Ordering::Equal);
         }
 
-        // 4. Tie-Breaker: AC (Lower > Higher) "Easier to hit"
-        // Even if Primary Strategy was AC, this still applies for other strategies.
-        if e1.creature.ac != e2.creature.ac {
-             return e1.creature.ac.partial_cmp(&e2.creature.ac).unwrap_or(Ordering::Equal);
+        // 4. Tie-Breaker: HP (Lower HP > Higher) "Execute weak targets"
+        if e1.final_state.current_hp != e2.final_state.current_hp {
+             return e1.final_state.current_hp.partial_cmp(&e2.final_state.current_hp).unwrap_or(Ordering::Equal);
         }
 
-        // 5. Tie-Breaker: Name (Alphabetical)
-        // Ensure deterministic sorting
+        // 5. Tie-Breaker: Name (Alphabetical) - Deterministic fallback
         e1.creature.name.cmp(&e2.creature.name)
     });
 

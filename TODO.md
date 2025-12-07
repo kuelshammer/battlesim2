@@ -36,6 +36,17 @@
 - [ ] **Damage Calculation**:
     - [ ] Update `calculate_damage` to roll actual damage dice (e.g., `2d6 + str`) defined in the `Action` struct.
     - [ ] Implement "Double Dice" rule for Critical Hits.
+- [ ] **Update Class Templates**: Bring remaining classes up to 5e 2014 standards (Spell Slots, Class Resources, Feature parity).
+    - [ ] Artificer
+    - [ ] Barbarian (Rage, etc.)
+    - [ ] Bard (Spell Slots, Bardic Inspiration)
+    - [ ] Cleric (Spell Slots, Channel Divinity)
+    - [ ] Druid (Spell Slots, Wild Shape)
+    - [ ] Monk (Ki Points)
+    - [ ] Paladin (Spell Slots, Lay on Hands)
+    - [ ] Rogue (Feature review)
+    - [ ] Sorcerer (Spell Slots, Sorcery Points)
+    - [ ] Warlock (Pact Magic, Arcanum)
 
 ## Phase 3: Artificial Intelligence & Targeting
 *Enabling the simulation to run autonomously. This depends on Phase 1 & 2 working correctly so the AI makes valid decisions.*

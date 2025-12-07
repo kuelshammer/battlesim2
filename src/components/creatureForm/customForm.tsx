@@ -1,7 +1,7 @@
 import { FC, ReactNode, useState } from "react"
 import { Action, Creature } from "../../model/model"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faCog } from "@fortawesome/free-solid-svg-icons"
 import styles from './customForm.module.scss'
 import { clone } from "../../model/utils"
 import ActionForm from "./actionForm"
@@ -11,6 +11,7 @@ import DecimalInput from "../utils/DecimalInput"
 import Checkbox from "../utils/checkbox"
 import { v4 as uuid } from 'uuid'
 import LoadCreatureForm, { saveCreature } from "./loadCreatureForm"
+import SaveBonusModal from "./SaveBonusModal"
 
 type PropType = {
     value: Creature,
@@ -19,6 +20,7 @@ type PropType = {
 
 const CustomForm: FC<PropType> = ({ value, onChange }) => {
     const [isLoading, setIsLoading] = useState(false)
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false)
 
     function update(callback: (valueClone: Creature) => void) {
         const valueClone = clone(value)
@@ -56,6 +58,16 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
 
     const canSaveTemplate = !!localStorage && !!localStorage.getItem('useLocalStorage')
 
+    // Check if any individual saves are overridden
+    const hasDetailedSaves = value.strSaveBonus !== undefined ||
+        value.dexSaveBonus !== undefined ||
+        value.conSaveBonus !== undefined ||
+        value.intSaveBonus !== undefined ||
+        value.wisSaveBonus !== undefined ||
+        value.chaSaveBonus !== undefined ||
+        value.conSaveAdvantage ||
+        value.saveAdvantage;
+
     return (
         <div className={styles.customForm}>
             <section>
@@ -85,14 +97,20 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                 <DecimalInput min={0} value={value.AC} onChange={ac => update(v => { v.AC = ac || 0 })} />
             </section>
             <section className="tooltipContainer">
-                <h3>Average Save</h3>
-                <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} />
-                <div className="tooltip">Average of all saves' bonuses. For player characters, you can use the Proficiency Bonus. For monsters, either calculate it, or just use half of the monster's CR.</div>
-            </section>
-            <section className="tooltipContainer">
-                <h3>Constitution Save</h3>
-                <DecimalInput value={value.conSaveBonus ?? value.saveBonus} onChange={save => update(v => { v.conSaveBonus = save })} />
-                <div className="tooltip">Specific bonus for Constitution saves (used for Concentration). Defaults to Average Save if not set.</div>
+                <h3>Average Save Bonus</h3>
+                <div className={styles.saveRow}>
+                    <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} />
+                    <button
+                        onClick={() => setIsSaveModalOpen(true)}
+                        className={styles.detailsBtn}
+                        title="Configure individual saves and advantages"
+                    >
+                        <FontAwesomeIcon icon={faCog} />
+                        <span>Details</span>
+                        {hasDetailedSaves && <span className={styles.badge}>✓</span>}
+                    </button>
+                </div>
+                <div className="tooltip">Average of all saves' bonuses. Click "Details" to set individual save bonuses and advantages (e.g., CON save advantage for Concentration).</div>
             </section>
             <section>
                 <h3>Initiative Bonus</h3>
@@ -142,6 +160,14 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                     onLoad={(creature) => { onChange(creature); setIsLoading(false) }}
                     onCancel={() => setIsLoading(false)} />
             ) : null}
+
+            {isSaveModalOpen && (
+                <SaveBonusModal
+                    value={value}
+                    onChange={onChange}
+                    onClose={() => setIsSaveModalOpen(false)}
+                />
+            )}
         </div>
     )
 }

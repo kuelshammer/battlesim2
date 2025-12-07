@@ -59,6 +59,18 @@ pub struct RiderEffect {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AcKnowledge {
+    pub min: i32,
+    pub max: i32,
+}
+
+impl Default for AcKnowledge {
+    fn default() -> Self {
+        Self { min: 0, max: 30 }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum Action {
     #[serde(rename = "atk")]
@@ -385,17 +397,35 @@ pub struct Creature {
     pub ac: f64,
     #[serde(rename = "speed_fly")]
     pub speed_fly: Option<f64>,
+    
+    // Save bonuses - average is required, individual are optional overrides
     #[serde(rename = "saveBonus")]
     pub save_bonus: f64,
+    #[serde(default, rename = "strSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub str_save_bonus: Option<f64>,
+    #[serde(default, rename = "dexSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub dex_save_bonus: Option<f64>,
+    #[serde(default, rename = "conSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub con_save_bonus: Option<f64>,
+    #[serde(default, rename = "intSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub int_save_bonus: Option<f64>,
+    #[serde(default, rename = "wisSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub wis_save_bonus: Option<f64>,
+    #[serde(default, rename = "chaSaveBonus", skip_serializing_if = "Option::is_none")]
+    pub cha_save_bonus: Option<f64>,
+    
+    // Advantage on saves
+    #[serde(default, rename = "conSaveAdvantage", skip_serializing_if = "Option::is_none")]
+    pub con_save_advantage: Option<bool>,
+    #[serde(default, rename = "saveAdvantage", skip_serializing_if = "Option::is_none")]
+    pub save_advantage: Option<bool>, // Advantage on ALL saves (e.g. Paladin Aura)
+    
     #[serde(default)]
     #[serde(rename = "initiativeBonus")]
     pub initiative_bonus: f64,
     #[serde(default)]
     #[serde(rename = "initiativeAdvantage")]
     pub initiative_advantage: bool,
-    #[serde(default)]
-    #[serde(rename = "conSaveBonus")]
-    pub con_save_bonus: Option<f64>,
     pub actions: Vec<Action>, // This might need to be flexible if templates are involved
     #[serde(default)]
     pub triggers: Vec<ActionTrigger>,
@@ -515,6 +545,10 @@ pub struct CreatureState {
     pub actions_used_this_encounter: HashSet<String>,
     #[serde(rename = "bonusActionUsed")]
     pub bonus_action_used: bool,
+    #[serde(default)]
+    pub known_ac: HashMap<String, AcKnowledge>,
+    #[serde(rename = "arcaneWardHP", default, skip_serializing_if = "Option::is_none")]
+    pub arcane_ward_hp: Option<f64>,
 }
 
 fn default_serializable_resource_ledger() -> SerializableResourceLedger {
@@ -559,6 +593,8 @@ impl Default for CreatureState {
             concentrating_on: None,
             actions_used_this_encounter: HashSet::new(),
             bonus_action_used: false,
+            known_ac: HashMap::new(),
+            arcane_ward_hp: None,
         }
     }
 }

@@ -234,6 +234,7 @@ impl ReactionManager {
             TriggerCondition::OnCriticalHit => {
                 matches!(event, Event::AttackHit { .. }) // Placeholder for critical checking
             },
+            TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
         }
     }
 

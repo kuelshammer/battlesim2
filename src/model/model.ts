@@ -50,7 +50,7 @@ export const ActionRequirementSchema = z.discriminatedUnion('type', [
     }),
     z.object({
         type: z.literal('CombatState'),
-        condition: z.enum(['EnemyInRange', 'IsSurprised']),
+        condition: z.enum(['EnemyInRange', 'IsSurprised', 'HasTempHP']),
         value: z.number().optional(),
     }),
     z.object({
@@ -229,8 +229,20 @@ export const CreatureSchema = z.object({
     hp: z.number(),
     AC: z.number(),
     speed_fly: z.number().optional(),
-    saveBonus: z.number(), // Average save bonus. Using this to simplify the input, even if it makes the result slightly less accurate.
+
+    // Save bonuses - average is required, individual are optional overrides
+    saveBonus: z.number(), // Average save bonus (required)
+    strSaveBonus: z.number().optional(),
+    dexSaveBonus: z.number().optional(),
     conSaveBonus: z.number().optional(),
+    intSaveBonus: z.number().optional(),
+    wisSaveBonus: z.number().optional(),
+    chaSaveBonus: z.number().optional(),
+
+    // Advantage on saves
+    conSaveAdvantage: z.boolean().optional(), // For Resilient (Con), War Caster, etc.
+    saveAdvantage: z.boolean().optional(), // For Paladin Aura, advantage on ALL saves
+
     initiativeBonus: z.number().optional(),
     initiativeAdvantage: z.boolean().optional(),
     actions: z.array(ActionSchema),
@@ -245,18 +257,18 @@ export const CreatureSchema = z.object({
     classResources: z.record(z.string(), z.number()).optional(),
     hitDice: DiceFormulaSchema.optional(), // New field for hit dice for short rest healing
     conModifier: z.number().optional(), // New field for constitution modifier to apply to hit dice rolls
-    })
-    
-    const TeamSchema = z.array(CreatureSchema)
-    
-    // Simplified ResourceLedger for frontend display
-    export const ResourceLedgerSchema = z.object({
+})
+
+const TeamSchema = z.array(CreatureSchema)
+
+// Simplified ResourceLedger for frontend display
+export const ResourceLedgerSchema = z.object({
     current: z.record(z.string(), z.number()),
     max: z.record(z.string(), z.number()),
-    })
-    export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
-    
-    const CreatureStateSchema = z.object({
+})
+export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
+
+const CreatureStateSchema = z.object({
     currentHP: z.number(),
     tempHP: z.number().optional(),
     buffs: z.map(z.string(), BuffSchema),
@@ -264,35 +276,36 @@ export const CreatureSchema = z.object({
     upcomingBuffs: z.map(z.string(), BuffSchema),
     usedActions: z.set(z.string()),
     concentratingOn: z.string().nullable().optional(),
-    })
-    
-    const CombattantSchema = z.object({
+    arcaneWardHP: z.number().optional(),
+})
+
+const CombattantSchema = z.object({
     id: z.string(),
     initiative: z.number().optional(),
     creature: CreatureSchema,
     initialState: CreatureStateSchema,
     finalState: CreatureStateSchema,
-    
+
     // Actions taken by the creature on that round. Initially empty, will be filled by the simulator
     actions: z.array(z.object({
         action: FinalActionSchema,
         targets: z.map(z.string(), z.number()),
     })),
-    })
-    
-    const RoundSchema = z.object({
+})
+
+const RoundSchema = z.object({
     team1: z.array(CombattantSchema),
     team2: z.array(CombattantSchema),
-    })
-    
-    export const EncounterSchema = z.object({
+})
+
+export const EncounterSchema = z.object({
     monsters: TeamSchema,
     playersSurprised: z.boolean().optional(),
     monstersSurprised: z.boolean().optional(),
     shortRest: z.boolean().optional(),
     playersPrecast: z.boolean().optional(),
     monstersPrecast: z.boolean().optional(),
-    })
+})
 const EncounterStatsSchema = z.object({
     damageDealt: z.number(),
     damageTaken: z.number(),

@@ -179,6 +179,8 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 concentrating_on: None,
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
+                known_ac: HashMap::new(),
+                arcane_ward_hp: None,
             };
 
             // Create Combattant for ActionExecutionEngine
@@ -218,6 +220,8 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                     concentrating_on: None,
                     actions_used_this_encounter: HashSet::new(),
                     bonus_action_used: false,
+                    known_ac: HashMap::new(),
+                    arcane_ward_hp: None,
                 };
 
                 let enemy_combattant = Combattant {
@@ -336,6 +340,8 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
                 concentrating_on: state.concentration.clone(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
+                known_ac: HashMap::new(),
+                arcane_ward_hp: None,
             };
 
             let mut combatant = state.base_combatant.clone();
@@ -386,6 +392,8 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
                 concentrating_on: state.concentration.clone(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
+                known_ac: HashMap::new(),
+                arcane_ward_hp: None,
             };
 
             let mut combatant = state.base_combatant.clone();
@@ -432,6 +440,8 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
                 concentrating_on: final_state.concentration.clone(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
+                known_ac: HashMap::new(),
+                arcane_ward_hp: None,
              };
              
              updated_players.push(updated_player);

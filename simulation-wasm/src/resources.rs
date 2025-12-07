@@ -151,6 +151,7 @@ pub enum ActionCost {
 pub enum CombatCondition {
     EnemyInRange(f64),
     IsSurprised,
+    HasTempHP,
     // Add more as needed
 }
 
@@ -228,6 +229,10 @@ pub enum ActionTag {
     Control,
     Buff,
     Damage,
+    
+    // Feature specifics
+    GWM,
+    Sharpshooter,
 
     // Custom tags
     Custom(String),

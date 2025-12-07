@@ -1,11 +1,11 @@
 // src/components/creatureForm/ResourceEditor.tsx
-import { FC } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { Creature } from '../../model/model';
-import styles from './resourceEditor.module.scss'; // Creating a new style module
+import styles from './resourceEditor.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import DecimalInput from '../utils/DecimalInput';
+import { faPlus, faTrash, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
 import { clone } from '../../model/utils';
+import { calculateSpellSlots, detectCasterLevel, CasterType, CASTER_TYPE_LABELS } from '../../model/spellSlots';
 
 type Props = {
     value: Creature;
@@ -13,22 +13,58 @@ type Props = {
 };
 
 const ResourceEditor: FC<Props> = ({ value, onChange }) => {
+    // State for caster level feature
+    const [casterLevel, setCasterLevel] = useState<number | ''>('');
+    const [casterType, setCasterType] = useState<CasterType>('full');
+    const [showCasterHelper, setShowCasterHelper] = useState(false);
+
+    // Detect caster level from existing spell slots on mount
+    useEffect(() => {
+        const detected = detectCasterLevel(value.spellSlots);
+        if (detected) {
+            setCasterLevel(detected.level);
+            setCasterType(detected.type);
+        }
+    }, []);
+
     function updateCreature(callback: (creatureClone: Creature) => void) {
         const creatureClone = clone(value);
         callback(creatureClone);
         onChange(creatureClone);
     }
 
+    // --- Caster Level Helper ---
+    const applyCasterLevel = () => {
+        if (typeof casterLevel !== 'number' || casterLevel < 1) return;
+
+        const slots = calculateSpellSlots(casterLevel, casterType);
+        updateCreature(c => {
+            c.spellSlots = Object.keys(slots).length > 0 ? slots : undefined;
+        });
+    };
+
     // --- Spell Slots ---
     const addSpellSlot = () => {
         updateCreature(c => {
             if (!c.spellSlots) c.spellSlots = {};
-            const nextLevel = (Object.keys(c.spellSlots).length + 1);
-            c.spellSlots[`level_${nextLevel}`] = 1; // Default to level 1, 1 slot
+            const existingLevels = Object.keys(c.spellSlots).map(k => parseInt(k.replace('level_', '')) || 0);
+            const nextLevel = existingLevels.length > 0 ? Math.max(...existingLevels) + 1 : 1;
+            c.spellSlots[`level_${nextLevel}`] = 2;
         });
     };
 
-    const updateSpellSlot = (level: string, newCount: number) => {
+    const updateSpellSlotLevel = (oldLevel: string, newLevel: string) => {
+        if (oldLevel === newLevel) return;
+        updateCreature(c => {
+            if (c.spellSlots) {
+                const count = c.spellSlots[oldLevel];
+                delete c.spellSlots[oldLevel];
+                c.spellSlots[newLevel] = count;
+            }
+        });
+    };
+
+    const updateSpellSlotCount = (level: string, newCount: number) => {
         updateCreature(c => {
             if (c.spellSlots) c.spellSlots[level] = newCount;
         });
@@ -44,7 +80,8 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
     const addClassResource = () => {
         updateCreature(c => {
             if (!c.classResources) c.classResources = {};
-            c.classResources[`New Resource ${Object.keys(c.classResources).length + 1}`] = 1; // Default name, 1 count
+            const existingCount = Object.keys(c.classResources).length;
+            c.classResources[`Resource ${existingCount + 1}`] = 1;
         });
     };
 
@@ -71,43 +108,96 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
         });
     };
 
+    // Sort spell slots by level for display
+    const sortedSpellSlots = value.spellSlots
+        ? Object.entries(value.spellSlots).sort((a, b) => {
+            const levelA = parseInt(a[0].replace('level_', '')) || 0;
+            const levelB = parseInt(b[0].replace('level_', '')) || 0;
+            return levelA - levelB;
+        })
+        : [];
+
     return (
         <div className={styles.resourceEditor}>
             <section>
                 <h3 className={styles.sectionHeader}>
                     Spell Slots
-                    <button onClick={addSpellSlot} title="Add Spell Slot">
-                        <FontAwesomeIcon icon={faPlus} />
-                    </button>
+                    <div className={styles.headerButtons}>
+                        <button
+                            onClick={() => setShowCasterHelper(!showCasterHelper)}
+                            title="Set slots from Caster Level"
+                            className={showCasterHelper ? styles.activeBtn : ''}
+                        >
+                            <FontAwesomeIcon icon={faMagicWandSparkles} />
+                        </button>
+                        <button onClick={addSpellSlot} title="Add Spell Slot">
+                            <FontAwesomeIcon icon={faPlus} />
+                        </button>
+                    </div>
                 </h3>
-                {value.spellSlots && Object.entries(value.spellSlots).map(([level, count]) => (
+
+                {showCasterHelper && (
+                    <div className={styles.casterHelper}>
+                        <div className={styles.casterRow}>
+                            <label>Caster Level:</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={20}
+                                value={casterLevel}
+                                onChange={e => setCasterLevel(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                placeholder="1-20"
+                                style={{ width: '60px' }}
+                            />
+                        </div>
+                        <div className={styles.casterRow}>
+                            <label>Caster Type:</label>
+                            <select
+                                value={casterType}
+                                onChange={e => setCasterType(e.target.value as CasterType)}
+                            >
+                                {Object.entries(CASTER_TYPE_LABELS).map(([type, label]) => (
+                                    <option key={type} value={type}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button
+                            onClick={applyCasterLevel}
+                            disabled={typeof casterLevel !== 'number' || casterLevel < 1}
+                            className={styles.applyBtn}
+                        >
+                            Apply Spell Slots
+                        </button>
+                    </div>
+                )}
+
+                {sortedSpellSlots.map(([level, count]) => (
                     <div key={level} className={styles.resourceEntry}>
                         <label>Level:</label>
-                        {/* Assuming level is always 'level_X' or similar string, can be parsed to int for display */}
                         <input
                             type="text"
-                            value={level}
-                            // Allow editing level string, but warn about consistency if not 'level_X'
+                            value={level.replace('level_', '')}
                             onChange={e => {
-                                // For simplicity, we don't allow changing the key directly here without a more complex map management.
-                                // Instead, we might focus on 'count' and just display 'level'.
-                                // If actual level editing is needed, consider an array or more complex state.
+                                const newLevel = `level_${e.target.value}`;
+                                updateSpellSlotLevel(level, newLevel);
                             }}
-                            disabled // Disable editing the key for now
                             className={styles.resourceName}
+                            style={{ width: '50px' }}
                         />
-                        <label>Count:</label>
-                        <DecimalInput
+                        <label>Slots:</label>
+                        <input
+                            type="number"
                             value={count}
-                            onChange={newCount => updateSpellSlot(level, newCount || 0)}
+                            onChange={e => updateSpellSlotCount(level, parseInt(e.target.value) || 0)}
                             min={0}
+                            style={{ width: '50px' }}
                         />
                         <button onClick={() => deleteSpellSlot(level)} title="Delete Spell Slot">
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     </div>
                 ))}
-                {(!value.spellSlots || Object.keys(value.spellSlots).length === 0) && <p>No spell slots configured.</p>}
+                {sortedSpellSlots.length === 0 && <p>No spell slots configured.</p>}
             </section>
 
             <section>
@@ -125,12 +215,15 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                             value={name}
                             onChange={e => updateClassResourceName(name, e.target.value)}
                             className={styles.resourceName}
+                            style={{ width: '120px' }}
                         />
-                        <label>Count:</label>
-                        <DecimalInput
+                        <label>Uses:</label>
+                        <input
+                            type="number"
                             value={count}
-                            onChange={newCount => updateClassResourceCount(name, newCount || 0)}
+                            onChange={e => updateClassResourceCount(name, parseInt(e.target.value) || 0)}
                             min={0}
+                            style={{ width: '50px' }}
                         />
                         <button onClick={() => deleteClassResource(name)} title="Delete Class Resource">
                             <FontAwesomeIcon icon={faTrash} />

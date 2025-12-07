@@ -166,6 +166,8 @@ pub enum TriggerCondition {
     OnEnemyDeath, // e.g. Great Weapon Master, Dark One's Blessing
     #[serde(rename = "on critical hit")]
     OnCriticalHit, // e.g. Divine Smite (crit fishing)
+    #[serde(rename = "on being hit")]
+    OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
 }
 
 
