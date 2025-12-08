@@ -18,7 +18,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
 
   // Try to set on various global scopes (some may be read-only)
   try {
-    if (typeof globalThis !== 'undefined') {
+    if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto === 'undefined') {
       (globalThis as any).crypto = cryptoWrapper;
       console.log('[Crypto Polyfill] Set globalThis.crypto with bound wrapper');
     }
@@ -27,7 +27,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   }
 
   try {
-    if (typeof self !== 'undefined' && self !== window) {
+    if (typeof self !== 'undefined' && self !== window && typeof (self as any).crypto === 'undefined') {
       (self as any).crypto = cryptoWrapper;
       console.log('[Crypto Polyfill] Set self.crypto with bound wrapper');
     }

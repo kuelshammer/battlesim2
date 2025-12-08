@@ -211,7 +211,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                     toHit: `${PB}[PB] + ${STR}[STR]`
                         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
                         + (options.gwm ? ` - 5[GWM]` : ''),
-                    dpr: `2d6 + ${STR}[STR] + ${RAGE}[RAGE]`
+                    dpr: `2d6 + ${STR}[STR] + ${RAGE_DAMAGE_BONUS}[RAGE]`
                         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
                         + (options.gwm ? ` + 10[GWM]` : ''),
                 },
@@ -228,7 +228,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
                         toHit: `${PB}[PB] + ${STR}[STR]`
                             + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
                             + (options.gwm ? ` - 5[GWM]` : ''),
-                        dpr: `2d6 + ${STR}[STR] + ${RAGE}[RAGE]`
+                        dpr: `2d6 + ${STR}[STR] + ${RAGE_DAMAGE_BONUS}[RAGE]`
                             + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
                             + (options.gwm ? ` + 10[GWM]` : ''),
                     } as Action
@@ -1803,13 +1803,19 @@ const REACTION = 4
 const PASSIVE = 5
 const RIDER_EFFECT = 6
 
-function scale<T>(currentLevel: number, levelScale: { [minLevel: number]: T }) {
-    const level = Object.keys(levelScale)
-        .map(Number)
-        .filter(scaleLevel => (scaleLevel <= currentLevel))
-        .reduce((a, b) => Math.max(a, b))
+function scale<T>(currentLevel: number, levelScale: { [minLevel: number]: T }): T {
+    const keys = Object.keys(levelScale).map(Number);
+    const applicableLevels = keys.filter(scaleLevel => (scaleLevel <= currentLevel));
 
-    return levelScale[level]
+    if (applicableLevels.length === 0) {
+        // If currentLevel is below all defined minLevels, use the smallest minLevel.
+        // Assumes levelScale is not empty itself.
+        const minLevel = Math.min(...keys);
+        return levelScale[minLevel];
+    }
+
+    const effectiveLevel = applicableLevels.reduce((a, b) => Math.max(a, b));
+    return levelScale[effectiveLevel];
 }
 
 function scaleArray<T>(currentLevel: number, minLevelScale: { [minLevel: number]: T[] }): T[] {

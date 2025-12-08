@@ -11,16 +11,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "../../model/simulationContext"
 import AdventuringDayForm from "./adventuringDayForm"
+import { getFinalAction } from "../../data/actions"
 
-// Ensure crypto is available globally for wasm-bindgen BEFORE any WASM imports
-if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
-    if (!globalThis.crypto) {
-        globalThis.crypto = window.crypto;
-    }
-    // Also set on self for compatibility with different bundlers
-    if (typeof self !== 'undefined' && !self.crypto) {
-        (self as any).crypto = window.crypto;
-    }
+console.log("Simulation module evaluating...");
+
+try {
+    console.log("Imports check:", { getFinalAction: !!getFinalAction });
+} catch (e) {
+    console.error("Error checking imports:", e);
 }
 
 type PropType = {
@@ -68,13 +66,37 @@ const Simulation: FC<PropType> = ({ }) => {
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
+    const wasmLoading = React.useRef(false)
 
     useEffect(() => {
-        import('simulation-wasm').then(async (module) => {
-            await module.default()
-            setWasm(module)
-        })
-    }, [])
+        // Load WASM module using the original working approach
+        const loadWasm = async () => {
+            if (wasmLoading.current) return
+            wasmLoading.current = true
+            
+            try {
+                console.log('🔄 Loading WASM module...')
+                import('simulation-wasm').then(async (module) => {
+                    console.log('✅ WASM package imported')
+                    // Pass object to avoid deprecation warning
+                    await module.default({ module_or_path: '/simulation_wasm_bg.wasm' })
+                    console.log('✅ WASM initialized successfully!')
+                    console.log('Available functions:', Object.keys(module).filter(k => typeof module[k] === 'function'))
+                    setWasm(module)
+                }).catch(error => {
+                    console.error('❌ WASM import failed:', error)
+                    wasmLoading.current = false
+                })
+            } catch (error) {
+                console.error('❌ WASM loading error:', error)
+                wasmLoading.current = false
+            }
+        }
+
+        if (!wasm) {
+            loadWasm()
+        }
+    }, [wasm])
 
 
     useEffect(() => {
@@ -83,9 +105,6 @@ const Simulation: FC<PropType> = ({ }) => {
         if (allResults.length === 0) {
             // Run simulation if not cached
             try {
-                // Import getFinalAction
-                const { getFinalAction } = require('../../data/actions')
-
                 const cleanPlayers = players.map(p => ({
                     ...p,
                     actions: p.actions.map(getFinalAction)

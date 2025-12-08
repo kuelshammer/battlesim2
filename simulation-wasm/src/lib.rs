@@ -62,34 +62,8 @@ pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterat
 
     // Format events for WASM storage (legacy behavior)
     let formatted_events: Vec<String> = if !results.is_empty() {
-        // Build name map from first result
-        let mut combatant_names = HashMap::new();
-        // We need to extract names from the result structure. 
-        // Iterating all rounds/combatants is safe enough.
-        if let Some(encounter) = results.first().and_then(|r| r.first()) {
-             if let Some(round) = encounter.rounds.first() {
-                 for c in round.team1.iter().chain(round.team2.iter()) {
-                     combatant_names.insert(c.id.clone(), c.creature.name.clone());
-                 }
-             }
-             // Also check final states if no rounds
-             // But simpler: we can't easily get ALL names if some died early?
-             // Actually, the best way is to replicate the logic inside run_single...
-             // But since we are refactoring, let's just format them inside the loop above?
-             // No, we returned raw events.
-             
-             // Let's traverse the result to find names
-             for encounter_res in results.first().unwrap() {
-                 for round in &encounter_res.rounds {
-                     for c in round.team1.iter().chain(round.team2.iter()) {
-                         combatant_names.insert(c.id.clone(), c.creature.name.clone());
-                     }
-                 }
-             }
-        }
-        
         all_events.iter()
-            .filter_map(|e| e.format_for_log(&combatant_names))
+            .map(|e| serde_json::to_string(e).unwrap_or_default())
             .collect()
     } else {
         Vec::new()
