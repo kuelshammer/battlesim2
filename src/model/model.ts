@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema, ResourceTypeSchema, ResetTypeSchema, ActionTagSchema } from './enums'
 import { ClassOptionsSchema } from './classOptions'
 import { validateDiceFormula } from './dice'
+import type { ActionTemplateName } from '../data/actions'
 
 export const DiceFormulaSchema = z.number().or(z.custom<string>((data) => {
     if (typeof data !== 'string') return false
@@ -137,7 +138,7 @@ const DebuffActionSchema = ActionSchemaBase.merge(z.object({
     buff: BuffSchema,
 }))
 
-type ActionTemplateName = keyof typeof ActionTemplates
+
 
 const TemplateActionSchema = z.object({
     type: z.literal('template'),
@@ -155,7 +156,7 @@ const TemplateActionSchema = z.object({
 
     templateOptions: z.object({
         target: AllyTargetSchema.or(EnemyTargetSchema).optional(),
-        templateName: z.custom<ActionTemplateName>(data => (typeof data === 'string')),
+        templateName: z.string() as z.ZodType<ActionTemplateName>, // Use string and cast to ActionTemplateName
         toHit: DiceFormulaSchema.optional(),
         saveDC: z.number().optional(),
         amount: DiceFormulaSchema.optional(),

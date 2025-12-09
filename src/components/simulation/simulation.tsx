@@ -81,7 +81,7 @@ const Simulation: FC<PropType> = ({ }) => {
                     // Pass object to avoid deprecation warning
                     await module.default({ module_or_path: '/simulation_wasm_bg.wasm' })
                     console.log('✅ WASM initialized successfully!')
-                    console.log('Available functions:', Object.keys(module).filter(k => typeof module[k] === 'function'))
+                    console.log('Available functions:', Object.keys(module).filter(k => typeof (module as Record<string, unknown>)[k] === 'function'))
                     setWasm(module)
                 }).catch(error => {
                     console.error('❌ WASM import failed:', error)
