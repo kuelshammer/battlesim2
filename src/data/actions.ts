@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid'
-import { Action, FinalAction } from "../model/model"
+import type { Action, FinalAction } from "../model/model"
 import { ActionSlots, AllyTarget, EnemyTarget } from '../model/enums';
 
 export const ActionTemplates = {

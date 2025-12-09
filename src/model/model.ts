@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema, ResourceTypeSchema, ResetTypeSchema, ActionTagSchema } from './enums'
 import { ClassOptionsSchema } from './classOptions'
 import { validateDiceFormula } from './dice'
-import { ActionTemplates } from '../data/actions'
 
 export const DiceFormulaSchema = z.number().or(z.custom<string>((data) => {
     if (typeof data !== 'string') return false
@@ -160,29 +159,6 @@ const TemplateActionSchema = z.object({
         toHit: DiceFormulaSchema.optional(),
         saveDC: z.number().optional(),
         amount: DiceFormulaSchema.optional(),
-    }).refine(data => {
-        const template = ActionTemplates[data.templateName]
-        if (!template) return false
-
-        // Attacks and debuffs need extra info
-        if (template.type === 'atk') {
-            if (data.toHit === undefined) return false
-            if (template.riderEffect && (data.saveDC === undefined)) return false
-        }
-
-        if ((template.type === 'debuff') && (data.saveDC === undefined)) return false
-
-        // Check that this has right kind of target
-        if (!template.target) {
-            if ((template.type === 'atk') || (template.type === 'debuff')) {
-                if (!EnemyTargetList.includes(data.target as any)) return false
-            }
-            else if ((template.type === 'buff') || (template.type === 'heal')) {
-                if (!AllyTargetList.includes(data.target as any)) return false
-            }
-        }
-
-        return true
     }),
 })
 
