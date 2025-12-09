@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import React, { FC, useEffect, useState, useRef } from "react"
 import { z } from "zod"
 import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult } from "../../model/model"
 import { parseEventString, SimulationEvent } from "../../model/events"
@@ -66,7 +66,7 @@ const Simulation: FC<PropType> = ({ }) => {
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
-    const wasmLoading = React.useRef(false)
+    const wasmLoading = useRef(false)
 
     useEffect(() => {
         // Load WASM module using the original working approach
