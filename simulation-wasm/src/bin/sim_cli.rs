@@ -674,7 +674,7 @@ fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<Encounter>, String) {
 // --- Sweep Subcommand ---
 
 fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: &str) {
-    let (mut players, mut encounters, _) = load_scenario(scenario_path);
+    let (players, encounters, _) = load_scenario(scenario_path);
     
     // Parse range (e.g., "10..20")
     let parts: Vec<&str> = range_str.split("..").collect();

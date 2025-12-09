@@ -9,11 +9,18 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
         count: 1.0,
         hp: 100.0,
         ac: 10.0,
+        speed_fly: None,
         save_bonus: 3.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
         con_save_bonus: Some(3.0),
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
         initiative_bonus: init_bonus,
         initiative_advantage: init_advantage,
-        speed_fly: None,
         actions: vec![
             Action::Atk(AtkAction {
                 id: format!("{}_atk", id),
@@ -51,13 +58,15 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
                 rider_effect: None,
             }),
         ],
-        arrival: None,
         triggers: vec![],
-        spell_slots: None, // Add missing fields
-        class_resources: None, // Add missing fields
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+        arrival: None,
+        mode: "monster".to_string(),
     }
 }
-
 fn main() {
     let fast_fighter = create_fighter("fast", "Fast Fighter", 10.0, false); // +10 init, no advantage
     let slow_fighter_creature = create_fighter("slow", "Slow Fighter", 0.0, false); // +0 init, no advantage
@@ -67,6 +76,8 @@ fn main() {
         players_surprised: Some(false),
         monsters_surprised: Some(false),
         short_rest: Some(false),
+        players_precast: None,
+        monsters_precast: None,
     };
 
     let players = vec![fast_fighter];

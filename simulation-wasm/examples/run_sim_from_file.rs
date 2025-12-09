@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use simulation_wasm::model::{Creature, Encounter};
 use simulation_wasm::simulation::run_simulation_rust;
 use simulation_wasm::run_event_driven_simulation_rust;
+use serde_json;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct SimulationInput {
@@ -33,8 +34,12 @@ fn main() {
     );
 
     // Run a single simulation with logging enabled
-    let (results, logs) = if use_event_driven {
-        run_event_driven_simulation_rust(input.players, input.encounters, 1, true)
+    let (results, logs): (_, Vec<String>) = if use_event_driven {
+        let (res, events) = run_event_driven_simulation_rust(input.players, input.encounters, 1, true);
+        let string_logs = events.into_iter()
+                                .map(|event| serde_json::to_string(&event).unwrap_or_default())
+                                .collect();
+        (res, string_logs)
     } else {
         run_simulation_rust(input.players, input.encounters, 1, true)
     };

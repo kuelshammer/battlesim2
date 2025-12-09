@@ -73,16 +73,25 @@ mod tests {
                 count: 1.0,
                 hp: 10.0,
                 ac: 10.0, // Ensure float
+                speed_fly: None,
                 save_bonus: 0.0,
+                str_save_bonus: None,
+                dex_save_bonus: None,
+                con_save_bonus: None,
+                int_save_bonus: None,
+                wis_save_bonus: None,
+                cha_save_bonus: None,
+                con_save_advantage: None,
+                save_advantage: None,
                 initiative_bonus: 0.0,
                 initiative_advantage: false,
                 actions: vec![],
-                arrival: None,
-                speed_fly: None,
-                con_save_bonus: None,
                 triggers: vec![],
                 spell_slots: None,
                 class_resources: None,
+                hit_dice: None,
+                con_modifier: None,
+                arrival: None,
                 mode: "monster".to_string(),
             },
             initial_state: {
@@ -299,7 +308,16 @@ mod tests {
             count: 1.0,
             hp: 20.0,
             ac: 10.0,
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
             actions: vec![Action::Atk(AtkAction {
@@ -319,12 +337,12 @@ mod tests {
                 half_on_save: None,
                 rider_effect: None,
             })],
-            arrival: None,
-            speed_fly: None,
-            con_save_bonus: None,
             triggers: vec![],
             spell_slots: None,
             class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -334,16 +352,25 @@ mod tests {
             count: 1.0,
             hp: 10.0,
             ac: 8.0, // Ensure float
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
             actions: vec![], // Passive target
-            arrival: None,
-            speed_fly: None,
-            con_save_bonus: None,
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -352,6 +379,8 @@ mod tests {
             short_rest: Some(false),
             players_surprised: None,
             monsters_surprised: None,
+            players_precast: None,
+            monsters_precast: None,
         };
 
         let players = vec![player];
@@ -385,16 +414,25 @@ mod tests {
             count: 1.0,
             hp: 10.0,
             ac: 10.0, // Ensure float
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
             actions: vec![], // Passive
-            arrival: None,
-            speed_fly: None,
-            con_save_bonus: None,
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -405,7 +443,16 @@ mod tests {
             count: 1.0,
             hp: 100.0,
             ac: 10.0,
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 100.0, // Go first
             initiative_advantage: false,
             actions: vec![Action::Atk(AtkAction {
@@ -425,12 +472,12 @@ mod tests {
                 half_on_save: None,
                 rider_effect: None,
             })],
-            arrival: None,
-            speed_fly: None,
-            con_save_bonus: None,
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -439,6 +486,8 @@ mod tests {
             short_rest: Some(false),
             players_surprised: None,
             monsters_surprised: None,
+            players_precast: None,
+            monsters_precast: None,
         };
 
         let players = vec![player];
@@ -486,17 +535,26 @@ mod tests {
             name: "Paladin".to_string(),
             hp: 50.0,
             ac: 18.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 3.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(3.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            save_bonus: 3.0,
-            con_save_bonus: Some(3.0),
             count: 1.0,
-            speed_fly: None, // Keep if exists, otherwise remove
-            arrival: None,   // Keep if exists, otherwise remove
             actions: vec![heal_action],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -611,17 +669,26 @@ mod tests {
             name: "Barbarian".to_string(),
             hp: 100.0,
             ac: 15.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 5.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(5.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 2.0,
             initiative_advantage: true,
-            save_bonus: 5.0,
-            con_save_bonus: Some(5.0),
             count: 1.0,
-            speed_fly: None, // Keep if exists, otherwise remove
-            arrival: None,   // Keep if exists, otherwise remove
             actions: vec![attack_action, rage_action, reckless_action],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -701,17 +768,26 @@ mod tests {
             name: "Barbarian".to_string(),
             hp: 100.0,
             ac: 15.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 5.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(5.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 2.0,
             initiative_advantage: true,
-            save_bonus: 5.0,
-            con_save_bonus: Some(5.0),
             count: 1.0,
-            speed_fly: None, // Keep if exists, otherwise remove
-            arrival: None,   // Keep if exists, otherwise remove
             actions: vec![rage_action],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -791,17 +867,26 @@ mod tests {
             name: "Cleric".to_string(),
             hp: 50.0,
             ac: 14.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 2.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(2.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            save_bonus: 2.0,
-            con_save_bonus: Some(2.0),
             count: 1.0,
-            speed_fly: None,
-            arrival: None,
             actions: vec![bless_action.clone()],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -811,17 +896,26 @@ mod tests {
             name: "Fighter".to_string(),
             hp: 40.0,
             ac: 16.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 2.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            save_bonus: 2.0,
-            con_save_bonus: None,
             count: 1.0,
-            speed_fly: None,
-            arrival: None,
             actions: vec![],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -830,17 +924,26 @@ mod tests {
             name: "Paladin".to_string(),
             hp: 50.0,
             ac: 18.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 3.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(3.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 2.0,
             initiative_advantage: false,
-            save_bonus: 3.0,
-            con_save_bonus: Some(3.0),
             count: 1.0,
-            speed_fly: None,
-            arrival: None,
             actions: vec![bless_action.clone()],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
         
@@ -850,13 +953,19 @@ mod tests {
             name: "Buffed Attacker".to_string(),
             hp: 50.0,
             ac: 14.0,
+            speed_fly: None,
+            save_bonus: 2.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: Some(2.0),
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            save_bonus: 2.0,
-            con_save_bonus: Some(2.0),
             count: 1.0,
-            speed_fly: None,
-            arrival: None,
             actions: vec![Action::Atk(AtkAction {
                 id: "attack".to_string(),
                 name: "Attack".to_string(),
@@ -875,8 +984,11 @@ mod tests {
                 rider_effect: None,
             })],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -886,17 +998,26 @@ mod tests {
             name: "Goblin".to_string(),
             hp: 20.0,
             ac: 12.0, // Ensure float
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            save_bonus: 0.0,
-            con_save_bonus: None,
             count: 1.0,
-            speed_fly: None,
-            arrival: None,
             actions: vec![],
             triggers: vec![],
-            spell_slots: None,     // Add new field
-            class_resources: None, // Add new field
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -905,6 +1026,8 @@ mod tests {
             short_rest: Some(false),
             players_surprised: None,
             monsters_surprised: None,
+            players_precast: None,
+            monsters_precast: None,
         };
 
         let players = vec![cleric, buffed_attacker, fighter];

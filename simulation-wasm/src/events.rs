@@ -161,7 +161,7 @@ impl Event {
                 Some(format!("\n## {} starts turn", get_name(unit_id)))
             }
             Event::ActionStarted { actor_id, action_id } => {
-                Some(format!("    - Uses Action: {}", action_id.split('-').last().unwrap_or(action_id)))
+                Some(format!("    - Uses Action: {}", action_id.split('-').next_back().unwrap_or(action_id)))
             }
             Event::AttackHit { attacker_id, target_id, damage } => {
                 Some(format!("* ⚔️ Attack vs **{}**: ✅ **HIT**\n  * 🩸 Damage: **{:.0}**", 
@@ -197,7 +197,7 @@ impl Event {
                 Some(format!("  * 📉 {} consumed {:.0} {}", 
                     get_name(unit_id), amount, resource_type))
             }
-            Event::TurnEnded { unit_id, .. } => {
+            Event::TurnEnded {  .. } => {
                 // Don't print turn end events to reduce noise
                 None
             }

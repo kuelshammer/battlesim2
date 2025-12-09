@@ -10,12 +10,18 @@ fn main() {
         count: 1.0,
         hp: 5.0, // Very low HP so it dies quickly
         ac: 10.0,
-        arrival: None,
         speed_fly: None,
         save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: Some(2.0),
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
         initiative_bonus: 0.0,
         initiative_advantage: false,
-        con_save_bonus: Some(2.0),
         actions: vec![
             model::Action::Buff(model::BuffAction {
                 id: "bless".to_string(),
@@ -47,26 +53,39 @@ fn main() {
             }),
         ],
         triggers: vec![],
-        spell_slots: None, // Add missing fields
-        class_resources: None, // Add missing fields
-    };
-    
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+        arrival: None,
+        mode: "monster".to_string(),
+    };    
     let target = model::Creature {
         id: "target-template".to_string(),
         name: "Player Fighter".to_string(),
         count: 1.0,
         hp: 54.0,
         ac: 18.0,
-        arrival: None,
         speed_fly: None,
         save_bonus: 1.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: Some(3.0),
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
         initiative_bonus: 0.0,
         initiative_advantage: false,
-        con_save_bonus: Some(3.0),
         actions: vec![],
         triggers: vec![],
-        spell_slots: None, // Add missing fields
-        class_resources: None, // Add missing fields
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+        arrival: None,
+        mode: "monster".to_string(),
     };
     
     let enemy = model::Creature {
@@ -75,12 +94,18 @@ fn main() {
         count: 1.0,
         hp: 7.0,
         ac: 15.0,
-        arrival: None,
         speed_fly: None,
         save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: Some(0.0),
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
         initiative_bonus: 2.0,
         initiative_advantage: false,
-        con_save_bonus: Some(0.0),
         actions: vec![
             model::Action::Atk(model::AtkAction {
                 id: "shortsword".to_string(),
@@ -101,8 +126,12 @@ fn main() {
             }),
         ],
         triggers: vec![],
-        spell_slots: None, // Add missing fields
-        class_resources: None, // Add missing fields
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+        arrival: None,
+        mode: "monster".to_string(),
     };
     
     let players = vec![caster, target];
@@ -111,6 +140,8 @@ fn main() {
         players_surprised: None,
         monsters_surprised: None,
         short_rest: None,
+        players_precast: None,
+        monsters_precast: None,
     };
     
     println!("Running 10 simulations...");

@@ -424,6 +424,7 @@ mod tests {
                 targets: 1, // required field
                 template_options: crate::model::TemplateOptions { // use TemplateOptions struct
                     template_name: "Shield".to_string(),
+                    target: Some(crate::enums::TargetType::Ally(crate::enums::AllyTarget::Self_)), // Add a default target
                     save_dc: None,
                     amount: None,
                 },
@@ -462,6 +463,7 @@ mod tests {
                 targets: 1, // required field
                 template_options: crate::model::TemplateOptions { // use TemplateOptions struct
                     template_name: "Test".to_string(),
+                    target: Some(crate::enums::TargetType::Ally(crate::enums::AllyTarget::Self_)), // Add a default target
                     save_dc: None,
                     amount: None,
                 },

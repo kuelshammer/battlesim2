@@ -482,16 +482,25 @@ mod tests {
             count: 1.0,
             hp: 30.0,
             ac: 15.0,
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            con_save_bonus: None,
-            arrival: None,
-            speed_fly: None,
             actions: Vec::new(),
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -527,16 +536,25 @@ mod tests {
             count: 1.0,
             hp: 30.0,
             ac: 15.0,
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            con_save_bonus: None,
-            arrival: None,
-            speed_fly: None,
             actions: Vec::new(),
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -568,60 +586,67 @@ mod tests {
         assert_eq!(context.round_number, 1);
     }
 
-    #[test]
-    fn test_resource_management() {
-        let creature = Creature {
-            id: "player1".to_string(),
-            name: "Player 1".to_string(),
-            count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
-            save_bonus: 0.0,
-            initiative_bonus: 0.0,
-            initiative_advantage: false,
-            con_save_bonus: None,
-            arrival: None,
-            speed_fly: None,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            mode: "monster".to_string(),
-        };
-
-        let combatants = vec![
-            Combattant {
+        #[test]
+        fn test_resource_management() {
+            let creature = Creature {
                 id: "player1".to_string(),
-                creature,
-                initiative: 10.0,
-                initial_state: CreatureState::default(),
-                final_state: CreatureState::default(),
+                name: "Player 1".to_string(),
+                count: 1.0,
+                hp: 30.0,
+                ac: 15.0,
+                speed_fly: None,
+                save_bonus: 0.0,
+                str_save_bonus: None,
+                dex_save_bonus: None,
+                con_save_bonus: None,
+                int_save_bonus: None,
+                wis_save_bonus: None,
+                cha_save_bonus: None,
+                con_save_advantage: None,
+                save_advantage: None,
+                initiative_bonus: 0.0,
+                initiative_advantage: false,
                 actions: Vec::new(),
-            },
-        ];
-
-        let mut context = TurnContext::new(
-            combatants,
-            Vec::new(),
-            None,
-            "Plains".to_string(),
-        );
-
-        let costs = vec![ActionCost::Discrete { 
-            resource_type: crate::resources::ResourceType::Action, 
-            resource_val: None,
-            amount: 1.0 
-        }];
-
-        assert!(context.can_afford(&costs, "player1"));
-
-        let result = context.pay_costs(&costs, "player1");
-        assert!(result.is_ok());
-
-        assert!(!context.can_afford(&costs, "player1"));
-    }
-
-    #[test]
+                triggers: Vec::new(),
+                spell_slots: None,
+                class_resources: None,
+                hit_dice: None,
+                con_modifier: None,
+                arrival: None,
+                mode: "monster".to_string(),
+            };
+    
+            let combatants = vec![
+                Combattant {
+                    id: "player1".to_string(),
+                    creature,
+                    initiative: 10.0,
+                    initial_state: CreatureState::default(),
+                    final_state: CreatureState::default(),
+                    actions: Vec::new(),
+                },
+            ];
+    
+            let mut context = TurnContext::new(
+                combatants,
+                Vec::new(),
+                None,
+                "Plains".to_string(),
+            );
+    
+            let costs = vec![ActionCost::Discrete {
+                resource_type: crate::resources::ResourceType::Action,
+                resource_val: None,
+                amount: 1.0
+            }];
+    
+            assert!(context.can_afford(&costs, "player1"));
+    
+            let result = context.pay_costs(&costs, "player1");
+            assert!(result.is_ok());
+    
+            assert!(!context.can_afford(&costs, "player1"));
+        }    #[test]
     fn test_effect_management() {
         let creature = Creature {
             id: "player1".to_string(),
@@ -629,16 +654,25 @@ mod tests {
             count: 1.0,
             hp: 30.0,
             ac: 15.0,
+            speed_fly: None,
             save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
             initiative_bonus: 0.0,
             initiative_advantage: false,
-            con_save_bonus: None,
-            arrival: None,
-            speed_fly: None,
             actions: Vec::new(),
             triggers: Vec::new(),
             spell_slots: None,
             class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
             mode: "monster".to_string(),
         };
 
@@ -682,5 +716,4 @@ mod tests {
         context.update_effects();
         let combatant = context.get_combatant("player1").unwrap();
         assert_eq!(combatant.current_hp, 25.0); // 30 - 5 = 25
-    }
-}
+    }}

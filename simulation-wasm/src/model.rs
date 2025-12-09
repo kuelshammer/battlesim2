@@ -564,11 +564,9 @@ pub struct SerializableResourceLedger {
 impl From<crate::resources::ResourceLedger> for SerializableResourceLedger {
     fn from(ledger: crate::resources::ResourceLedger) -> Self {
         let current = ledger.current.into_iter()
-            .map(|(k, v)| (k, v))
             .collect();
             
         let max = ledger.max.into_iter()
-            .map(|(k, v)| (k, v))
             .collect();
             
         SerializableResourceLedger {

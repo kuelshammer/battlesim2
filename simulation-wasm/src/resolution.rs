@@ -312,7 +312,7 @@ fn apply_single_effect(
             // NEW: precise knowledge update
             if let Some(t) = target_opt.as_ref() {
                 let t_id = t.id.clone();
-                let knowledge = attacker.final_state.known_ac.entry(t_id).or_insert(AcKnowledge::default());
+                let knowledge = attacker.final_state.known_ac.entry(t_id).or_default();
                 
                 if !is_crit && hits {
                     // Start with high max, lower it as we hit with lower rolls
