@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use crate::events::Event;
-use crate::context::TurnContext;
-use crate::model::{Action, AtkAction, HealAction, BuffAction, DebuffAction, TemplateAction};
+use crate::context::{TurnContext, CombattantState, ActiveEffect, EffectType};
 use crate::dice;
+use crate::events::Event;
+use crate::model::{Action, AtkAction, HealAction, BuffAction, DebuffAction, TemplateAction};
 use rand::Rng;
 
 /// Event-driven action resolver that converts actions into events
@@ -64,17 +64,18 @@ impl ActionResolver {
     }
 
     /// Resolve attack actions with proper event emission
+    /// Each attack re-evaluates the best target from currently alive enemies
     pub fn resolve_attack(&self, attack: &AtkAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
         let mut events = Vec::new();
+        let attack_count = attack.targets.max(1) as usize;
 
-        // Get targets
-        let targets = self.get_attack_targets(attack, context, actor_id);
-
-        for target_id in targets {
-            // Check if target is valid
-            if !context.is_combatant_alive(&target_id) {
-                continue;
-            }
+        // For each attack, find the best target at that moment
+        for _attack_num in 0..attack_count {
+            // Get best target for THIS attack (re-evaluates each time)
+            let target_id = match self.get_single_attack_target(attack, context, actor_id) {
+                Some(id) => id,
+                None => continue, // No valid target, skip this attack
+            };
 
             // Perform attack roll
             let attack_result = self.roll_attack(attack);
@@ -97,6 +98,7 @@ impl ActionResolver {
                 });
 
                 // Apply damage through TurnContext (unified method) - handles event emission
+                // This updates HP so next iteration knows if target died
                 let _damage_events = context.apply_damage(&target_id, damage, "Physical", actor_id);
             } else {
                 // Miss!
@@ -109,6 +111,7 @@ impl ActionResolver {
 
         events
     }
+
 
     /// Resolve healing actions with proper event emission
     pub fn resolve_heal(&self, heal: &HealAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
@@ -170,11 +173,45 @@ impl ActionResolver {
     }
 
     /// Resolve template actions
-    pub fn resolve_template(&self, template_action: &TemplateAction, _context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
+    /// Resolve template actions
+    pub fn resolve_template(&self, template_action: &TemplateAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
         let mut events = Vec::new();
+        let template_name = template_action.template_options.template_name.to_lowercase();
+        
+        // Determine target type
+        let target_type = template_action.template_options.target.clone().unwrap_or_else(|| {
+             // Default based on name if missing
+            if template_name == "bane" { 
+                use crate::enums::{TargetType, EnemyTarget};
+                TargetType::Enemy(EnemyTarget::EnemyWithLeastHP) 
+            } else { 
+                use crate::enums::{TargetType, AllyTarget};
+                TargetType::Ally(AllyTarget::AllyWithLeastHP) 
+            }
+        });
 
-        // Placeholder implementation for template actions
-        // In a full implementation, this would resolve the template and execute the resulting actions
+        // Select targets
+        let targets = self.get_targets_by_type(context, actor_id, &target_type, template_action.targets);
+
+        for target_id in targets {
+            // Apply effect
+            let effect_type = if template_name == "bane" {
+                EffectType::Custom("bane".to_string())
+            } else {
+                EffectType::Buff(template_name.clone())
+            };
+
+            let effect = ActiveEffect {
+                id: format!("{}-{}-{}", template_name, actor_id, target_id), // Unique ID per target/source
+                source_id: actor_id.to_string(),
+                target_id: target_id.clone(),
+                effect_type,
+                remaining_duration: 10, // Default duration
+                conditions: Vec::new(),
+            };
+
+            events.push(context.apply_effect(effect));
+        }
 
         events.push(Event::Custom {
             event_type: "TemplateActionExecuted".to_string(),
@@ -190,24 +227,133 @@ impl ActionResolver {
         events
     }
 
-    
-    /// Get targets for an attack action
-    fn get_attack_targets(&self, _attack: &AtkAction, context: &TurnContext, actor_id: &str) -> Vec<String> {
-        // Simple implementation: find enemies (other alive combatants)
-        context.combatants.keys()
-            .filter(|id| *id != actor_id && context.is_combatant_alive(id))
-            .take(1) // Default to 1 target for simplicity
-            .cloned()
-            .collect()
+    /// Helper to get targets based on TargetType
+    fn get_targets_by_type(&self, context: &TurnContext, actor_id: &str, target_type: &crate::enums::TargetType, count: i32) -> Vec<String> {
+        use crate::enums::TargetType;
+        
+        let actor_mode = context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+
+        match target_type {
+            TargetType::Enemy(_strategy) => {
+                // Find enemies
+                context.combatants.values()
+                    .filter(|c| c.id != actor_id)
+                    .filter(|c| context.is_combatant_alive(&c.id))
+                    .filter(|c| c.base_combatant.creature.mode != actor_mode)
+                    .take(count.max(1) as usize)
+                    .map(|c| c.id.clone())
+                    .collect()
+            },
+            TargetType::Ally(_strategy) => {
+                 // Find allies
+                 context.combatants.values()
+                    .filter(|c| context.is_combatant_alive(&c.id))
+                    .filter(|c| c.base_combatant.creature.mode == actor_mode)
+                    .take(count.max(1) as usize)
+                    .map(|c| c.id.clone())
+                    .collect()
+            }
+        }
     }
 
-    /// Get targets for a heal action
-    fn get_heal_targets(&self, _heal: &HealAction, context: &TurnContext, _actor_id: &str) -> Vec<String> {
-        // Simple implementation: find injured allies (including self)
+    /// Get SINGLE best target for an attack - re-called for each attack
+    /// Allows same enemy to be targeted again if still alive
+    /// Uses priority-based tie-breaking when primary strategy results in ties
+    fn get_single_attack_target(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str) -> Option<String> {
+        use std::cmp::Ordering;
+        
+        // Get actor's team (mode)
+        let actor_mode = context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
+        // Find all alive enemies
+        let mut enemies: Vec<_> = context.combatants.values()
+            .filter(|c| c.id != actor_id)  // Not self
+            .filter(|c| context.is_combatant_alive(&c.id))  // Must be alive
+            .filter(|c| c.base_combatant.creature.mode != actor_mode)  // Different team = enemy
+            .collect();
+        
+        if enemies.is_empty() {
+            return None;
+        }
+        
+        // Helper: estimate DPR for a combatant
+        let estimate_dpr = |c: &crate::context::CombattantState| -> f64 {
+            c.base_combatant.creature.actions.iter()
+                .filter_map(|action| {
+                    if let crate::model::Action::Atk(atk) = action {
+                        Some(crate::dice::average(&atk.dpr) * atk.targets as f64)
+                    } else { None }
+                }).sum::<f64>()
+        };
+        
+        // Sort with full priority-based tie-breaking
+        enemies.sort_by(|a, b| {
+            // 1. PRIMARY STRATEGY
+            let primary = match &attack.target {
+                crate::enums::EnemyTarget::EnemyWithLeastHP => {
+                    a.current_hp.partial_cmp(&b.current_hp).unwrap_or(Ordering::Equal)
+                },
+                crate::enums::EnemyTarget::EnemyWithMostHP => {
+                    b.current_hp.partial_cmp(&a.current_hp).unwrap_or(Ordering::Equal)
+                },
+                crate::enums::EnemyTarget::EnemyWithLowestAC => {
+                    a.base_combatant.creature.ac.partial_cmp(&b.base_combatant.creature.ac).unwrap_or(Ordering::Equal)
+                },
+                crate::enums::EnemyTarget::EnemyWithHighestAC => {
+                    b.base_combatant.creature.ac.partial_cmp(&a.base_combatant.creature.ac).unwrap_or(Ordering::Equal)
+                },
+                crate::enums::EnemyTarget::EnemyWithHighestDPR => {
+                    let dpr_a = estimate_dpr(a);
+                    let dpr_b = estimate_dpr(b);
+                    dpr_b.partial_cmp(&dpr_a).unwrap_or(Ordering::Equal)
+                },
+            };
+            if primary != Ordering::Equal { return primary; }
+            
+            // 2. TIE-BREAKER: Concentration (prefer enemies who are concentrating)
+            let conc_a = a.concentration.is_some();
+            let conc_b = b.concentration.is_some();
+            if conc_a && !conc_b { return Ordering::Less; }  // a is concentrating, prefer a
+            if !conc_a && conc_b { return Ordering::Greater; }  // b is concentrating, prefer b
+            
+            // 3. TIE-BREAKER: Hit Probability (lower AC = easier to hit)
+            let ac_cmp = a.base_combatant.creature.ac.partial_cmp(&b.base_combatant.creature.ac);
+            if ac_cmp != Some(Ordering::Equal) { return ac_cmp.unwrap_or(Ordering::Equal); }
+            
+            // 4. TIE-BREAKER: Higher DPR (more dangerous enemy)
+            let dpr_a = estimate_dpr(a);
+            let dpr_b = estimate_dpr(b);
+            let dpr_cmp = dpr_b.partial_cmp(&dpr_a);  // Higher DPR first
+            if dpr_cmp != Some(Ordering::Equal) { return dpr_cmp.unwrap_or(Ordering::Equal); }
+            
+            // 5. TIE-BREAKER: Higher Initiative
+            let init_cmp = b.base_combatant.initiative.partial_cmp(&a.base_combatant.initiative);
+            if init_cmp != Some(Ordering::Equal) { return init_cmp.unwrap_or(Ordering::Equal); }
+            
+            // 6. FINAL TIE-BREAKER: Alphabetical name (deterministic)
+            a.base_combatant.creature.name.cmp(&b.base_combatant.creature.name)
+        });
+        
+        enemies.first().map(|c| c.id.clone())
+    }
+
+    /// Get targets for a heal action - TARGET ALLIES ONLY
+    fn get_heal_targets(&self, heal: &HealAction, context: &TurnContext, actor_id: &str) -> Vec<String> {
+        // Get actor's team (mode)
+        let actor_mode = context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
+        // Find injured allies (same team, including self if injured)
         context.combatants.values()
-            .filter(|c| c.current_hp < c.base_combatant.creature.hp)
-            .filter(|c| context.is_combatant_alive(&c.id))
-            .take(1) // Default to 1 target for simplicity
+            .filter(|c| c.current_hp < c.base_combatant.creature.hp)  // Must be injured
+            .filter(|c| context.is_combatant_alive(&c.id))  // Must be alive
+            .filter(|c| c.base_combatant.creature.mode == actor_mode)  // Same team = ally
+            .take(heal.targets.max(1) as usize)
             .map(|c| c.id.clone())
             .collect()
     }
@@ -302,23 +448,36 @@ trait SimpleTargeting {
 }
 
 impl SimpleTargeting for BuffAction {
-    fn get_simple_targets(&self, context: &mut TurnContext, _actor_id: &str) -> Vec<String> {
-        // Simple implementation: return alive combatants
-        context.combatants.keys()
-            .filter(|id| context.is_combatant_alive(id))
+    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
+        // Get actor's team (mode) - BUFFS TARGET ALLIES
+        let actor_mode = context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
+        // Find allies (same team)
+        context.combatants.values()
+            .filter(|c| context.is_combatant_alive(&c.id))  // Must be alive
+            .filter(|c| c.base_combatant.creature.mode == actor_mode)  // Same team = ally
             .take(self.targets.max(1) as usize)
-            .cloned()
+            .map(|c| c.id.clone())
             .collect()
     }
 }
 
 impl SimpleTargeting for DebuffAction {
     fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
-        // Simple implementation: return enemies (other combatants)
-        context.combatants.keys()
-            .filter(|id| *id != actor_id && context.is_combatant_alive(id))
+        // Get actor's team (mode) - DEBUFFS TARGET ENEMIES
+        let actor_mode = context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
+        // Find enemies (different team)
+        context.combatants.values()
+            .filter(|c| c.id != actor_id)  // Not self
+            .filter(|c| context.is_combatant_alive(&c.id))  // Must be alive
+            .filter(|c| c.base_combatant.creature.mode != actor_mode)  // Different team = enemy
             .take(self.targets.max(1) as usize)
-            .cloned()
+            .map(|c| c.id.clone())
             .collect()
     }
 }

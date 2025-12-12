@@ -240,9 +240,10 @@ impl TurnContext {
     }
 
     /// Apply an active effect to a target
-    pub fn apply_effect(&mut self, effect: ActiveEffect) {
+    /// Apply an active effect to a target
+    pub fn apply_effect(&mut self, effect: ActiveEffect) -> Event {
         // Emit effect application event
-        self.event_bus.emit_event(Event::Custom {
+        let event = Event::Custom {
             event_type: "EffectApplied".to_string(),
             data: {
                 let mut data = HashMap::new();
@@ -252,9 +253,13 @@ impl TurnContext {
                 data
             },
             source_id: effect.source_id.clone(),
-        });
+        };
+
+        self.event_bus.emit_event(event.clone());
 
         self.active_effects.insert(effect.id.clone(), effect);
+        
+        event
     }
 
     /// Update all active effects (called at end of turn)

@@ -269,6 +269,11 @@ impl ActionExecutionEngine {
                     Event::ConditionAdded { target_id, .. } => {
                         *targets.entry(target_id.clone()).or_insert(0) += 1;
                     },
+                    Event::Custom { event_type, data, .. } if event_type == "EffectApplied" => {
+                        if let Some(target_id) = data.get("target_id") {
+                            *targets.entry(target_id.clone()).or_insert(0) += 1;
+                        }
+                    },
                     _ => {}
                 }
             }
