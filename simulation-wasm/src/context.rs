@@ -83,7 +83,11 @@ impl TurnContext {
                 
                 // TODO: Initialize spell slots and class resources from creature definition
                 // This would be done here by reading c.creature.spell_slots etc.
-
+                // Copy initialized resources from combatant state (e.g. 1/fight actions)
+                for (key, val) in &c.initial_state.resources.current {
+                    resources.current.insert(key.clone(), *val);
+                    resources.max.insert(key.clone(), *val);
+                }
                 let state = CombattantState {
                     id: c.id.clone(),
                     current_hp: c.creature.hp,

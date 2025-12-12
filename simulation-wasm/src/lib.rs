@@ -147,7 +147,15 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 current_hp: p.hp,
                 temp_hp: None,
                 buffs: HashMap::new(),
-                resources: p.initialize_ledger().into(),
+                resources: {
+                    let mut r = crate::model::SerializableResourceLedger::from(p.initialize_ledger());
+                    // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+                    let action_uses = crate::actions::get_remaining_uses(&p, "long rest", None);
+                    for (action_id, uses) in action_uses {
+                        r.current.insert(action_id, uses);
+                    }
+                    r
+                },
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: None,
@@ -188,7 +196,15 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                     current_hp: m.hp,
                     temp_hp: None,
                     buffs: HashMap::new(),
-                    resources: m.initialize_ledger().into(),
+                    resources: {
+                        let mut r = crate::model::SerializableResourceLedger::from(m.initialize_ledger());
+                        // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+                        let action_uses = crate::actions::get_remaining_uses(&m, "long rest", None);
+                        for (action_id, uses) in action_uses {
+                            r.current.insert(action_id, uses);
+                        }
+                        r
+                    },
                     upcoming_buffs: HashMap::new(),
                     used_actions: HashSet::new(),
                     concentrating_on: None,

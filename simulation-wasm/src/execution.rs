@@ -223,6 +223,23 @@ impl ActionExecutionEngine {
             };
         }
 
+        // Deduct usage for limited frequency actions
+        match &action.base().freq {
+            crate::model::Frequency::Static(s) if s == "at will" => {},
+            _ => {
+                // Determine action ID (which tracks usage)
+                let tracking_id = action.base().id.clone();
+                
+                if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
+                    let current = *combatant.resources.current.get(&tracking_id).unwrap_or(&0.0);
+                    combatant.resources.current.insert(tracking_id.clone(), (current - 1.0).max(0.0));
+                    
+                    // Also mark as used in this encounter (for "1/encounter" tracking if used elsewhere)
+                    // actions_used_this_encounter is not available on CombattantState, but resource deduction is sufficient.
+                }
+            }
+        }
+
         // Record action start
         self.context.record_event(Event::ActionStarted {
             actor_id: actor_id.to_string(),
@@ -235,6 +252,37 @@ impl ActionExecutionEngine {
         // Emit all events to context
         for event in &events {
             self.context.record_event(event.clone());
+        }
+
+        // Record the action in the combatant's history for logging
+        if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
+            let mut targets = HashMap::new();
+            
+            // Reconstruct targets from events
+            for event in &events {
+                match event {
+                    Event::AttackHit { target_id, .. } | 
+                    Event::AttackMissed { target_id, .. } |
+                    Event::DamageTaken { target_id, .. } |
+                    Event::HealingApplied { target_id, .. } |
+                    Event::BuffApplied { target_id, .. } |
+                    Event::ConditionAdded { target_id, .. } => {
+                        *targets.entry(target_id.clone()).or_insert(0) += 1;
+                    },
+                    _ => {}
+                }
+            }
+            
+            // If it's a multi-target action but no specific target events were generated yet 
+            // (e.g. clean miss or no targets found), we might miss logging targets.
+            // But for now this is better than nothing.
+            
+            let action_record = crate::model::CombattantAction {
+                action: action.clone(),
+                targets,
+            };
+            
+            combatant.base_combatant.actions.push(action_record);
         }
 
         // Process reaction phase for each event
@@ -301,18 +349,23 @@ impl ActionExecutionEngine {
         self.action_resolver.resolve_action(action, &mut self.context, actor_id)
     }
 
-    /// Get a random target (simplified - would use proper targeting in full implementation)
+    /// Get a random enemy target (different team than actor)
     #[allow(dead_code)]
     fn get_random_target(&self, actor_id: &str) -> Option<String> {
+        // Get actor's team (mode)
+        let actor_mode = self.context.get_combatant(actor_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
+        // Find enemies (different team)
         let alive_combatants = self.context.get_alive_combatants();
-
         for combatant in alive_combatants {
-            if combatant.id != actor_id {
+            if combatant.id != actor_id && combatant.base_combatant.creature.mode != actor_mode {
                 return Some(combatant.id.clone());
             }
         }
 
-        None // No valid targets found
+        None // No valid enemy targets found
     }
 
     /// Select actions for a combatant (basic AI implementation)
@@ -333,6 +386,17 @@ impl ActionExecutionEngine {
             // 1. Check requirements
             if !validation::check_action_requirements(action, &self.context, combatant_id) {
                 continue;
+            }
+
+            // 1.5 Check frequency limit
+            match &action.base().freq {
+                crate::model::Frequency::Static(s) if s == "at will" => {},
+                _ => {
+                    let uses = *combatant_state.resources.current.get(&action.base().id).unwrap_or(&0.0);
+                    if uses < 1.0 {
+                        continue;
+                    }
+                }
             }
 
             // 2. Check affordability (costs)
@@ -373,17 +437,31 @@ impl ActionExecutionEngine {
 
     /// Score an action based on combat situation
     fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
+        // Get combatant's team (mode)
+        let actor_mode = self.context.get_combatant(combatant_id)
+            .map(|c| c.base_combatant.creature.mode.clone())
+            .unwrap_or_default();
+        
         match action {
             Action::Atk(atk) => {
-                // Attacks are always valuable
-                // Score higher for more damage
+                // Check if there are any enemies to attack
+                let living_enemies = self.context.get_alive_combatants().iter()
+                    .any(|c| c.base_combatant.creature.mode != actor_mode);
+                
+                if !living_enemies {
+                    return 0.0; // No enemies to attack
+                }
+                
+                // Attacks are valuable
                 let base_damage = crate::dice::average(&atk.dpr);
                 let num_targets = atk.targets as f64;
                 base_damage * num_targets * 10.0 // * 10 to scale up
             },
             Action::Heal(heal) => {
                 // Only valuable if allies are injured
-                let allies = self.context.get_alive_combatants();
+                let allies: Vec<_> = self.context.get_alive_combatants().into_iter()
+                    .filter(|c| c.base_combatant.creature.mode == actor_mode)
+                    .collect();
                 let injured_allies = allies.iter().filter(|c| {
                     c.current_hp < c.base_combatant.creature.hp * 0.5
                 }).count();
@@ -406,9 +484,11 @@ impl ActionExecutionEngine {
             },
             Action::Debuff(_debuff) => {
                 // Valuable against strong enemies
-                let enemies = self.context.get_alive_combatants();
+                let enemies: Vec<_> = self.context.get_alive_combatants().into_iter()
+                    .filter(|c| c.base_combatant.creature.mode != actor_mode)
+                    .collect();
                 let strong_enemies = enemies.iter().filter(|e| {
-                    e.id != combatant_id && e.current_hp > 20.0
+                    e.current_hp > 20.0
                 }).count();
 
                 if strong_enemies > 0 {
@@ -418,9 +498,24 @@ impl ActionExecutionEngine {
                 }
             },
             Action::Template(_) => {
-                // Template actions are context-dependent
-                // For now, give them medium priority
-                25.0
+                // Check if already concentrating
+                let is_concentrating = self.context.get_combatant(combatant_id)
+                    .map(|c| c.concentration.is_some())
+                    .unwrap_or(false);
+
+                if is_concentrating {
+                    // If already concentrating, only use template if it's very important or a bonus action
+                    // For now, drastically reduce score
+                    5.0
+                } else {
+                    // Valuable at start of combat (like Buffs)
+                    let round = self.context.round_number;
+                    if round <= 2 {
+                        100.0 // Very high priority in early rounds!
+                    } else {
+                        40.0 // Lower priority later, but still decent
+                    }
+                }
             }
         }
     }
@@ -446,16 +541,23 @@ impl ActionExecutionEngine {
         combatants.into_iter().map(|c| c.id.clone()).collect()
     }
 
-    /// Check if encounter is complete
+    /// Check if encounter is complete (all alive combatants are on the same team)
     fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
 
-        // Simple completion check: if only one or zero combatants are alive
-        alive_combatants.len() <= 1
+        // If no one is alive, encounter is complete
+        if alive_combatants.is_empty() {
+            return true;
+        }
 
-        // TODO: In a full implementation, check team composition when teams are added
-        // let first_team = alive_combatants[0].base_combatant.team;
-        // alive_combatants.iter().all(|c| c.base_combatant.team == first_team)
+        // If only one combatant is alive, encounter is complete
+        if alive_combatants.len() == 1 {
+            return true;
+        }
+
+        // Check if all alive combatants are on the same team
+        let first_mode = &alive_combatants[0].base_combatant.creature.mode;
+        alive_combatants.iter().all(|c| &c.base_combatant.creature.mode == first_mode)
     }
 
     /// Generate final encounter results
@@ -610,9 +712,10 @@ mod tests {
 
     #[test]
     fn test_encounter_completion() {
-        let creature = Creature {
-            id: "warrior".to_string(), // Added ID
-            name: "Test Warrior".to_string(),
+        // Create a PLAYER creature
+        let player_creature = Creature {
+            id: "player1".to_string(),
+            name: "Test Player".to_string(),
             count: 1.0,
             hp: 30.0,
             ac: 15.0,
@@ -635,12 +738,41 @@ mod tests {
             hit_dice: None,
             con_modifier: None,
             arrival: None,
-            mode: "monster".to_string(),
+            mode: "player".to_string(),  // PLAYER team
+        };
+
+        // Create a MONSTER creature
+        let monster_creature = Creature {
+            id: "monster1".to_string(),
+            name: "Test Monster".to_string(),
+            count: 1.0,
+            hp: 30.0,
+            ac: 15.0,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: 0.0,
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "monster".to_string(),  // MONSTER team
         };
 
         let combatant1 = Combattant {
-            id: "warrior1".to_string(),
-            creature: creature.clone(),
+            id: "player1".to_string(),
+            creature: player_creature,
             initiative: 10.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),
@@ -648,8 +780,8 @@ mod tests {
         };
 
         let combatant2 = Combattant {
-            id: "warrior2".to_string(),
-            creature,
+            id: "monster1".to_string(),
+            creature: monster_creature,
             initiative: 5.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),
@@ -658,9 +790,7 @@ mod tests {
 
         let engine = ActionExecutionEngine::new(vec![combatant1, combatant2]);
 
-        // Should not be complete with 2 alive combatants (teams not implemented, so all are enemies)
-        // This test case would need more sophistication for team-based completion.
-        // For now, it checks if more than 1 combatant is alive.
+        // Should NOT be complete with 2 alive combatants on DIFFERENT teams
         assert!(!engine.is_encounter_complete());
     }
 
