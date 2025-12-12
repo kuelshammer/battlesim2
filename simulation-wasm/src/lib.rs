@@ -29,7 +29,7 @@ pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: us
     let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
 
-    let results = simulation::run_monte_carlo(&players, &encounters, iterations);
+    let (results, _) = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);
