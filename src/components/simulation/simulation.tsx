@@ -38,7 +38,6 @@ const Simulation: FC<PropType> = ({ }) => {
     const [simulationResults, setSimulationResults] = useState<SimulationResult>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
-    const [useEventDriven, setUseEventDriven] = useState(true) // Toggle for testing
 
     function isEmpty() {
         const hasPlayers = !!players.length
@@ -120,24 +119,17 @@ const Simulation: FC<PropType> = ({ }) => {
 
                 let results: SimulationResult[]
 
-                // Use event-driven simulation if enabled
-                if (useEventDriven) {
-                    console.log('Running event-driven simulation...')
-                    results = wasm.run_event_driven_simulation(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+                console.log('Running event-driven simulation...')
+                results = wasm.run_event_driven_simulation(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
 
-                    // Get events from the simulation
-                    try {
-                        const rawEvents = wasm.get_last_simulation_events() as string[]
-                        const structuredEvents = rawEvents.map(parseEventString).filter((e): e is SimulationEvent => e !== null);
-                        setSimulationEvents(structuredEvents)
-                        console.log('Events collected and parsed:', structuredEvents.length)
-                    } catch (eventError) {
-                        console.error("Failed to get events:", eventError)
-                        setSimulationEvents([])
-                    }
-                } else {
-                    console.log('Running legacy simulation...')
-                    results = wasm.run_simulation_wasm(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
+                // Get events from the simulation
+                try {
+                    const rawEvents = wasm.get_last_simulation_events() as string[]
+                    const structuredEvents = rawEvents.map(parseEventString).filter((e): e is SimulationEvent => e !== null);
+                    setSimulationEvents(structuredEvents)
+                    console.log('Events collected and parsed:', structuredEvents.length)
+                } catch (eventError) {
+                    console.error("Failed to get events:", eventError)
                     setSimulationEvents([])
                 }
 
@@ -169,7 +161,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 console.error("Selection failed", e)
             }
         }
-    }, [players, encounters, luck, wasm, useEventDriven]) // Removed allResults to prevent loop
+    }, [players, encounters, luck, wasm]) // Removed allResults and useEventDriven to prevent loop
 
     // Reset results when inputs change
     useEffect(() => {
@@ -213,18 +205,16 @@ const Simulation: FC<PropType> = ({ }) => {
                 <h1 className={styles.header}>BattleSim</h1>
 
                 {/* Backend Features Status Panel */}
-                {useEventDriven && (
-                    <div className={styles.backendStatus}>
-                        <h4>🔧 Event-Driven Backend Active</h4>
-                        <div className={styles.statusItems}>
-                            <span>✅ ActionResolution Engine</span>
-                            <span>✅ Event System</span>
-                            <span>✅ Reaction Processing</span>
-                            <span>✅ Effect Tracking</span>
-                            <span>📊 Events: {simulationEvents.length}</span>
-                        </div>
+                <div className={styles.backendStatus}>
+                    <h4>🔧 Event-Driven Backend Active</h4>
+                    <div className={styles.statusItems}>
+                        <span>✅ ActionResolution Engine</span>
+                        <span>✅ Event System</span>
+                        <span>✅ Reaction Processing</span>
+                        <span>✅ Effect Tracking</span>
+                        <span>📊 Events: {simulationEvents.length}</span>
                     </div>
-                )}
+                </div>
 
                 <EncounterForm
                     mode='player'
@@ -250,17 +240,7 @@ const Simulation: FC<PropType> = ({ }) => {
                             Load Adventuring Day
                         </button>
 
-                        {/* Toggle for testing event-driven vs legacy simulation */}
-                        <button
-                            onClick={() => setUseEventDriven(!useEventDriven)}
-                            style={{
-                                backgroundColor: useEventDriven ? '#4CAF50' : '#f44336',
-                                color: 'white'
-                            }}
-                        >
-                            {useEventDriven ? 'Event-Driven ON' : 'Legacy Mode'}
-                        </button>
-
+                        
                     </>
                 </EncounterForm>
 
@@ -290,12 +270,10 @@ const Simulation: FC<PropType> = ({ }) => {
                 </button>
 
                 {/* Event Log Display */}
-                {useEventDriven && (
-                    <EventLog
-                        events={simulationEvents}
-                        combatantNames={Object.fromEntries(combatantNames)}
-                    />
-                )}
+                <EventLog
+                    events={simulationEvents}
+                    combatantNames={Object.fromEntries(combatantNames)}
+                />
 
                 {(saving || loading) ? (
                     <AdventuringDayForm
