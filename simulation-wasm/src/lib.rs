@@ -6,7 +6,7 @@ pub mod model;
 pub mod aggregation;
 pub mod cleanup;
 pub mod resolution;
-pub mod simulation;
+// pub mod simulation;
 pub mod resources;
 pub mod events;
 pub mod context;
@@ -14,6 +14,7 @@ pub mod reactions;
 pub mod execution;
 pub mod action_resolver;
 pub mod validation; // New module for requirement validation
+pub mod utilities;
 
 
 use wasm_bindgen::prelude::*;
@@ -169,7 +170,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
             let combattant = Combattant {
                 id: id.clone(),
                 creature: p.clone(),
-                initiative: crate::simulation::roll_initiative(&p),
+                initiative: crate::utilities::roll_initiative(&p),
                 initial_state: state.clone(),
                 final_state: state,
                 actions: Vec::new(),
@@ -217,7 +218,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 let enemy_combattant = Combattant {
                     id: id.clone(),
                     creature: m.clone(),
-                    initiative: crate::simulation::roll_initiative(&m),
+                    initiative: crate::utilities::roll_initiative(&m),
                     initial_state: enemy_state.clone(),
                     final_state: enemy_state,
                     actions: Vec::new(),
