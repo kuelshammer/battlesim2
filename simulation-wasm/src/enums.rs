@@ -170,6 +170,34 @@ pub enum TriggerCondition {
     OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "type", content = "value")]
+pub enum TriggerRequirement {
+    #[serde(rename = "damageType")]
+    DamageType(String),
+    #[serde(rename = "range")]
+    Range(i32),
+    #[serde(rename = "hasTempHP")]
+    HasTempHP,
+    #[serde(rename = "actionTag")]
+    ActionTag(String),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum TriggerEffect {
+    #[serde(rename = "Damage")]
+    DealDamage { 
+        amount: String, // DiceFormula string representation
+        #[serde(rename = "damageType")]
+        damage_type: String 
+    },
+    #[serde(rename = "ReduceDamage")]
+    ReduceDamage { amount: String },
+    #[serde(rename = "RestoreResource")]
+    RestoreResource { resource: String, amount: String },
+}
+
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {

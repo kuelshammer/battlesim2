@@ -38,6 +38,8 @@ pub struct CombattantState {
     pub concentration: Option<String>, // ID of spell/concentration source
     pub position: Option<String>, // Simplified position for future expansion
     pub resources: ResourceLedger, // Per-combatant resource tracking
+    #[serde(default)]
+    pub arcane_ward_hp: Option<f64>,
 }
 
 /// An active effect applied to a combatant
@@ -54,7 +56,7 @@ pub struct ActiveEffect {
 /// Types of effects that can be applied
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EffectType {
-    Buff(String), // Effect identifier
+    Buff(crate::model::Buff), // Store full Buff object
     DamageOverTime { damage_per_round: f64, damage_type: String },
     HealingOverTime { healing_per_round: f64 },
     Condition(CreatureCondition),
@@ -91,12 +93,13 @@ impl TurnContext {
                 let state = CombattantState {
                     id: c.id.clone(),
                     current_hp: c.creature.hp,
-                    temp_hp: 0.0,
+                    temp_hp: c.initial_state.temp_hp.unwrap_or(0.0),
                     conditions: Vec::new(),
                     concentration: None,
                     position: None,
-                    base_combatant: c,
+                    base_combatant: c.clone(), // Clone to avoid borrow issues if c is used below? No, map takes ownership.
                     resources,
+                    arcane_ward_hp: c.initial_state.arcane_ward_hp,
                 };
                 (state.id.clone(), state)
             })
@@ -357,7 +360,28 @@ impl TurnContext {
         let mut events = Vec::new();
 
         if let Some(combatant) = self.combatants.get_mut(target_id) {
-            let actual_damage = damage;
+            let mut remaining_damage = damage;
+
+            // 1. Arcane Ward Absorption
+            if let Some(ward) = combatant.arcane_ward_hp {
+                if ward > 0.0 {
+                    let absorbed = ward.min(remaining_damage);
+                    combatant.arcane_ward_hp = Some(ward - absorbed);
+                    remaining_damage = (remaining_damage - absorbed).max(0.0);
+                    
+                    // Could emit WardAbsorbed event here if Event enum supported it
+                }
+            }
+
+            // 2. Temporary HP Absorption
+            if combatant.temp_hp > 0.0 {
+                let absorbed = combatant.temp_hp.min(remaining_damage);
+                combatant.temp_hp -= absorbed;
+                remaining_damage = (remaining_damage - absorbed).max(0.0);
+            }
+
+            // 3. Apply remaining damage to HP
+            let actual_damage = remaining_damage;
             combatant.current_hp = (combatant.current_hp - actual_damage).max(0.0);
 
             events.push(Event::DamageTaken {

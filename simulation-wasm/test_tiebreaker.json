@@ -1,0 +1,98 @@
+{
+    "players": [
+        {
+            "id": "player1",
+            "name": "Player1",
+            "count": 1,
+            "hp": 50,
+            "AC": 15,
+            "saveBonus": 0,
+            "actions": [
+                {
+                    "id": "atk_player1",
+                    "name": "Strong Attack",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "dpr": "1d8+10",
+                    "toHit": "1d20+10",
+                    "target": "enemy with least HP",
+                    "type": "atk"
+                }
+            ]
+        },
+        {
+            "id": "player2",
+            "name": "Player2",
+            "count": 1,
+            "hp": 50,
+            "AC": 15,
+            "saveBonus": 0,
+            "actions": [
+                {
+                    "id": "atk_player2",
+                    "name": "Weak Attack",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "dpr": "1d8+0",
+                    "toHit": "1d20+0",
+                    "target": "enemy with least HP",
+                    "type": "atk"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "monster1",
+                    "name": "Monster1",
+                    "count": 1,
+                    "hp": 50,
+                    "AC": 20,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "atk_monster1",
+                            "name": "Monster1 Attack",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "1d8+5",
+                            "toHit": "1d20+5",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                },
+                {
+                    "id": "monster2",
+                    "name": "Monster2",
+                    "count": 1,
+                    "hp": 50,
+                    "AC": 10,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "atk_monster2",
+                            "name": "Monster2 Attack",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "1d8+5",
+                            "toHit": "1d20+5",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,76 @@
+{
+    "players": [
+        {
+            "id": "alistair",
+            "name": "Alistair",
+            "count": 1,
+            "hp": 25,
+            "AC": 18,
+            "saveBonus": 3,
+            "actions": [
+                {
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 2,
+                    "dpr": "1d10+4",
+                    "toHit": "1d20+7",
+                    "target": "enemy with least HP",
+                    "type": "atk"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "weak_minion",
+                    "name": "Weak Minion",
+                    "count": 1,
+                    "hp": 8,
+                    "AC": 10,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "atk_claw",
+                            "name": "Claw",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "1d4",
+                            "toHit": "1d20+2",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                },
+                {
+                    "id": "strong_brute",
+                    "name": "Strong Brute",
+                    "count": 1,
+                    "hp": 50,
+                    "AC": 14,
+                    "saveBonus": 2,
+                    "actions": [
+                        {
+                            "id": "atk_club",
+                            "name": "Club",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "2d6+4",
+                            "toHit": "1d20+5",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -97,9 +97,19 @@ impl ActionResolver {
                     damage,
                 });
 
+                // Check for "OnBeingHit" triggers (e.g. Armor of Agathys)
+                let trigger_events = self.resolve_trigger_effects(
+                    &target_id, 
+                    crate::enums::TriggerCondition::OnBeingHit, 
+                    context, 
+                    Some(actor_id),
+                    None // TODO: Pass damage type if needed for requirements
+                );
+                events.extend(trigger_events);
+
                 // Apply damage through TurnContext (unified method) - handles event emission
-                // This updates HP so next iteration knows if target died
-                let _damage_events = context.apply_damage(&target_id, damage, "Physical", actor_id);
+                let damage_events = context.apply_damage(&target_id, damage, "Physical", actor_id); // Default to Physical, upgrade later
+                events.extend(damage_events);
             } else {
                 // Miss!
                 events.push(Event::AttackMissed {
@@ -164,8 +174,28 @@ impl ActionResolver {
 
     /// Resolve buff actions
     pub fn resolve_buff(&self, buff_action: &BuffAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
-        self.resolve_effect(buff_action, context, actor_id, true)
+        let mut events = Vec::new();
+        
+        use crate::enums::TargetType;
+        let target_type = TargetType::Ally(buff_action.target.clone());
+        let targets = self.get_targets_by_type(context, actor_id, &target_type, buff_action.targets);
+
+        for target_id in targets {
+             let effect = ActiveEffect {
+                id: format!("{}-{}-{}", buff_action.name, actor_id, target_id),
+                source_id: actor_id.to_string(),
+                target_id: target_id.clone(),
+                effect_type: EffectType::Buff(buff_action.buff.clone()),
+                remaining_duration: 10, 
+                conditions: Vec::new(),
+            };
+
+            events.push(context.apply_effect(effect));
+        }
+
+        events
     }
+
 
     /// Resolve debuff actions
     pub fn resolve_debuff(&self, debuff_action: &DebuffAction, context: &mut TurnContext, actor_id: &str) -> Vec<Event> {
@@ -198,7 +228,25 @@ impl ActionResolver {
             let effect_type = if template_name == "bane" {
                 EffectType::Custom("bane".to_string())
             } else {
-                EffectType::Buff(template_name.clone())
+                use crate::model::Buff;
+                use crate::enums::BuffDuration;
+                EffectType::Buff(Buff {
+                    display_name: Some(template_name.clone()),
+                    duration: BuffDuration::EntireEncounter, 
+                    ac: None,
+                    to_hit: None,
+                    damage: None,
+                    damage_reduction: None,
+                    damage_multiplier: None,
+                    damage_taken_multiplier: None,
+                    dc: None,
+                    save: None,
+                    condition: None,
+                    magnitude: None,
+                    source: Some(actor_id.to_string()),
+                    concentration: true, 
+                    triggers: Vec::new(),
+                })
             };
 
             let effect = ActiveEffect {
@@ -224,6 +272,69 @@ impl ActionResolver {
             source_id: actor_id.to_string(),
         });
 
+        events
+    }
+
+    /// Helper to resolve reactive effects from buffs (Triggers)
+    /// Helper to resolve reactive effects from buffs (Triggers)
+    fn resolve_trigger_effects(&self, 
+        reactor_id: &str, 
+        condition: crate::enums::TriggerCondition, 
+        context: &mut TurnContext, 
+        triggering_actor_id: Option<&str>,
+        _damage_info: Option<&str>
+    ) -> Vec<Event> {
+        let mut events = Vec::new();
+        
+        // Iterate over active effects to find buffs on the reactor
+        // Access values() directly to avoid borrow checker issues with iterating the map
+        let active_effects: Vec<crate::context::ActiveEffect> = context.active_effects.values().cloned().collect();
+
+        for effect in active_effects {
+            if effect.target_id != reactor_id {
+                continue;
+            }
+
+            if let EffectType::Buff(buff) = &effect.effect_type {
+                for trigger in &buff.triggers {
+                    if trigger.condition == condition {
+                        // Check requirements
+                        let requirements_met = trigger.requirements.iter().all(|req| {
+                            match req {
+                                crate::enums::TriggerRequirement::HasTempHP => {
+                                    if let Some(c) = context.combatants.get(reactor_id) {
+                                        c.temp_hp > 0.0
+                                    } else { false }
+                                },
+                                // Implement other requirements as needed
+                                _ => true 
+                            }
+                        });
+
+                        if requirements_met {
+                             // Execute Effect
+                             match &trigger.effect {
+                                crate::enums::TriggerEffect::DealDamage { amount, damage_type } => {
+                                    if let Some(target_id) = triggering_actor_id {
+                                         // Parse amount formula
+                                         let formula = crate::model::DiceFormula::Expr(amount.clone());
+                                         // Basic eval for now, assume no variable parts specific to reactor yet (except fixed values)
+                                         let dmg_value = dice::evaluate(&formula, 1);
+                                         
+                                         // Apply damage to the TRIGGERING ACTOR (Retaliation)
+                                         let dmg_events = context.apply_damage(target_id, dmg_value, damage_type, reactor_id);
+                                         events.extend(dmg_events);
+                                    }
+                                },
+                                // Implement other effects as needed
+                                _ => {}
+                             }
+                        }
+                    }
+                }
+            }
+        }
+        
         events
     }
 
@@ -397,7 +508,8 @@ impl ActionResolver {
         use crate::context::{ActiveEffect, EffectType};
 
         let effect_type = if is_buff {
-            EffectType::Buff(effect_id.to_string())
+            // EffectType::Buff(effect_id.to_string()) // Invalid
+            panic!("Buffs must use resolve_buff directly to preserve data");
         } else {
             EffectType::Condition(crate::enums::CreatureCondition::Incapacitated)
         };
@@ -514,5 +626,87 @@ mod tests {
 
         // This test would require proper TurnContext setup
         // For now, just test method existence
+    }
+
+    #[test]
+    fn test_reactive_retaliation() {
+        use crate::context::TurnContext;
+        use crate::model::{Creature, Combattant, CreatureState, Buff, EffectTrigger};
+        use crate::enums::{BuffDuration, TriggerCondition, TriggerRequirement, TriggerEffect, ActionCondition, EnemyTarget};
+        use crate::resources::ResourceLedger;
+
+        // 1. Setup Context with Attacker and Defender
+        let attacker = Creature { id: "orc".to_string(), name: "Orc".to_string(), hp: 20.0, ac: 10.0, count: 1.0, actions: vec![], triggers: vec![], arrival: None, mode: "monster".to_string(), speed_fly: None, save_bonus: 0.0, str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None, int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None, con_save_advantage: None, save_advantage: None, initiative_bonus: 0.0, initiative_advantage: false, spell_slots: None, class_resources: None, hit_dice: None, con_modifier: None };
+        let defender = Creature { id: "warlock".to_string(), name: "Warlock".to_string(), hp: 20.0, ac: 10.0, count: 1.0, actions: vec![], triggers: vec![], arrival: None, mode: "player".to_string(), speed_fly: None, save_bonus: 0.0, str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None, int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None, con_save_advantage: None, save_advantage: None, initiative_bonus: 0.0, initiative_advantage: false, spell_slots: None, class_resources: None, hit_dice: None, con_modifier: None };
+
+        let mut context = TurnContext::new(
+            vec![
+                Combattant { id: "orc".to_string(), creature: attacker, initiative: 10.0, initial_state: CreatureState::default(), final_state: CreatureState::default(), actions: vec![] },
+                Combattant { id: "warlock".to_string(), creature: defender.clone(), initiative: 10.0, initial_state: {
+                    let mut s = CreatureState::default();
+                    s.temp_hp = Some(10.0); // Pre-give Temp HP
+                    s
+                }, final_state: CreatureState::default(), actions: vec![] }
+            ],
+            vec![], None, "Plains".to_string()
+        );
+
+        // 2. Apply Reactive Buff manually to Defender
+        let buff = Buff {
+            display_name: Some("Armor of Agathys".to_string()),
+            duration: BuffDuration::EntireEncounter,
+            ac: None, to_hit: None, damage: None, damage_reduction: None, damage_multiplier: None, damage_taken_multiplier: None, dc: None, save: None, condition: None, magnitude: None, source: Some("warlock".to_string()), concentration: false,
+            triggers: vec![
+                EffectTrigger {
+                    condition: TriggerCondition::OnBeingHit,
+                    requirements: vec![TriggerRequirement::HasTempHP],
+                    effect: TriggerEffect::DealDamage { amount: "5".to_string(), damage_type: "Cold".to_string() }
+                }
+            ]
+        };
+
+        use crate::context::{ActiveEffect, EffectType};
+        context.apply_effect(ActiveEffect {
+            id: "aoa".to_string(),
+            source_id: "warlock".to_string(),
+            target_id: "warlock".to_string(),
+            effect_type: EffectType::Buff(buff),
+            remaining_duration: 100,
+            conditions: vec![],
+        });
+
+        // 3. Resolve Attack
+        let resolver = ActionResolver::new();
+        let attack = crate::model::AtkAction {
+            id: "axe".to_string(), name: "Axe".to_string(), action_slot: None, cost: vec![], requirements: vec![], tags: vec![], freq: crate::model::Frequency::Static("at will".to_string()), condition: ActionCondition::Default, targets: 1,
+            dpr: crate::model::DiceFormula::Value(4.0), // Low damage so temp hp remains
+            to_hit: crate::model::DiceFormula::Value(100.0), // Ensure Hit
+            target: EnemyTarget::EnemyWithLeastHP,
+            use_saves: None, half_on_save: None, rider_effect: None
+        };
+
+        // Mock getting target manually since our resolution doesn't run full selection here easily
+        // But resolve_attack calls get_single_attack_target.
+        // We need to ensure logic selects "warlock".
+        // resolve_attack -> get_single_attack_target.
+        // Ensure Warlock is enemy of Orc (modes differ). They do (monster vs player).
+
+        let events = resolver.resolve_attack(&attack, &mut context, "orc");
+
+        // 4. Assertions
+        // Check for AttackHit
+        assert!(events.iter().any(|e| matches!(e, crate::events::Event::AttackHit { target_id, .. } if target_id == "warlock")));
+        
+        // Check for Retaliation Damage on Orc
+        let retaliation = events.iter().find(|e| matches!(e, crate::events::Event::DamageTaken { target_id, damage_type, .. } if target_id == "orc" && damage_type == "Cold"));
+        assert!(retaliation.is_some(), "Retaliation damage event not found!");
+        
+        if let Some(crate::events::Event::DamageTaken { damage, .. }) = retaliation {
+           assert_eq!(*damage, 5.0);
+        }
+
+        // Check Temp HP reduced on Warlock
+        let warlock = context.combatants.get("warlock").unwrap();
+        assert!(warlock.temp_hp < 10.0, "Temp HP should be reduced by attack damage");
     }
 }

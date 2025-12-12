@@ -26,6 +26,14 @@ pub enum Frequency {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EffectTrigger {
+    pub condition: TriggerCondition,
+    #[serde(default)]
+    pub requirements: Vec<TriggerRequirement>,
+    pub effect: TriggerEffect,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Buff {
     #[serde(rename = "displayName")]
     pub display_name: Option<String>,
@@ -50,6 +58,8 @@ pub struct Buff {
     pub source: Option<String>,
     #[serde(default)]
     pub concentration: bool,
+    #[serde(default)]
+    pub triggers: Vec<EffectTrigger>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,0 +1,156 @@
+{
+    "players": [
+        {
+            "id": "cleric1",
+            "name": "PlayerCleric1",
+            "count": 1,
+            "hp": 40,
+            "AC": 15,
+            "saveBonus": 0,
+            "initiativeBonus": 20,
+            "actions": [
+                {
+                    "id": "bless",
+                    "name": "Bless",
+                    "actionSlot": 0,
+                    "freq": "1/fight",
+                    "condition": "default",
+                    "targets": 2,
+                    "target": "ally with highest DPR",
+                    "type": "template",
+                    "templateOptions": {
+                        "templateName": "Bless"
+                    }
+                },
+                {
+                    "id": "atk_cleric1",
+                    "name": "Mace",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "dpr": "5",
+                    "toHit": "1d20+5",
+                    "target": "enemy with least HP",
+                    "type": "atk"
+                }
+            ]
+        },
+        {
+            "id": "cleric2",
+            "name": "PlayerCleric2",
+            "count": 1,
+            "hp": 40,
+            "AC": 15,
+            "saveBonus": 0,
+            "initiativeBonus": 20,
+            "actions": [
+                {
+                    "id": "bane",
+                    "name": "Bane",
+                    "actionSlot": 0,
+                    "freq": "1/fight",
+                    "condition": "default",
+                    "targets": 2,
+                    "target": "enemy with highest DPR",
+                    "type": "template",
+                    "templateOptions": {
+                        "templateName": "Bane",
+                        "saveDC": 13
+                    }
+                },
+                {
+                    "id": "atk_cleric2",
+                    "name": "Mace",
+                    "actionSlot": 0,
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "dpr": "5",
+                    "toHit": "1d20+5",
+                    "target": "enemy with least HP",
+                    "type": "atk"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "monster_cleric1",
+                    "name": "MonsterCleric1",
+                    "count": 1,
+                    "hp": 40,
+                    "AC": 15,
+                    "saveBonus": 0,
+                    "initiativeBonus": 0,
+                    "actions": [
+                        {
+                            "id": "m_bless",
+                            "name": "Bless",
+                            "actionSlot": 0,
+                            "freq": "1/fight",
+                            "condition": "default",
+                            "targets": 2,
+                            "target": "ally with highest DPR",
+                            "type": "template",
+                            "templateOptions": {
+                                "templateName": "Bless"
+                            }
+                        },
+                        {
+                            "id": "m_atk1",
+                            "name": "Mace",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "5",
+                            "toHit": "1d20+5",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                },
+                {
+                    "id": "monster_cleric2",
+                    "name": "MonsterCleric2",
+                    "count": 1,
+                    "hp": 40,
+                    "AC": 15,
+                    "saveBonus": 0,
+                    "initiativeBonus": 0,
+                    "actions": [
+                        {
+                            "id": "m_bane",
+                            "name": "Bane",
+                            "actionSlot": 0,
+                            "freq": "1/fight",
+                            "condition": "default",
+                            "targets": 2,
+                            "target": "enemy with highest DPR",
+                            "type": "template",
+                            "templateOptions": {
+                                "templateName": "Bane",
+                                "saveDC": 13
+                            }
+                        },
+                        {
+                            "id": "m_atk2",
+                            "name": "Mace",
+                            "actionSlot": 0,
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "dpr": "5",
+                            "toHit": "1d20+5",
+                            "target": "enemy with least HP",
+                            "type": "atk"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

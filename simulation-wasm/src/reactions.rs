@@ -332,7 +332,7 @@ impl ReactionManager {
                     id: format!("{}_{}", buff_action.base().id, "reaction_effect"), // Simple ID without chrono
                     source_id: buff_action.base().id.clone(),
                     target_id: "TODO".to_string(), // Would need to extract from action
-                    effect_type: EffectType::Buff(buff_action.base().name.clone()),
+                    effect_type: EffectType::Buff(buff_action.buff.clone()),
                     remaining_duration: 1, // Placeholder
                     conditions: Vec::new(),
                 };

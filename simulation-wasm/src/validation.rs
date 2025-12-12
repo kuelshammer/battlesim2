@@ -38,7 +38,7 @@ pub fn check_single_requirement(
             let effects = _context.get_effects_on_target(combatant_id);
             effects.iter().any(|effect| {
                 match &effect.effect_type {
-                    crate::context::EffectType::Buff(name) => name == effect_name,
+                    crate::context::EffectType::Buff(buff) => buff.display_name.as_ref() == Some(effect_name),
                     crate::context::EffectType::Condition(condition) => format!("{:?}", condition) == *effect_name,
                     _ => false, // Only buffs and conditions are considered for StatusEffect requirement
                 }

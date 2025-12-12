@@ -819,6 +819,7 @@ fn apply_single_effect(
                     damage_taken_multiplier: None,
                     condition: None,
                     magnitude: None,
+                    triggers: Vec::new(),
                 };
                 
                 // Configure buff based on template
