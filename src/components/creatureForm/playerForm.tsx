@@ -114,7 +114,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                     type="text"
                     value={value?.hitDice || ''}
                     onChange={(e) => {
-                        onChange({ ...value!, hitDice: e.target.value });
+                        onChange({ ...value!, hitDice: e.target.value || undefined });
                     }}
                 />
             </section>

@@ -100,14 +100,26 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
             </div>
 
             <div className={styles.buttons}>
-                <button onClick={() => onSubmit(value)} disabled={!isValid} className="tooltipContainer">
-                    <FontAwesomeIcon icon={faCheck} />
-                    OK
+                <div className="tooltipContainer">
+                    <button 
+                        onClick={() => {
+                            console.log('Submitting creature:', value)
+                            onSubmit(value)
+                        }} 
+                        disabled={!isValid}
+                        style={{ width: '100%' }}
+                    >
+                        <FontAwesomeIcon icon={faCheck} />
+                        OK
+                    </button>
                     
                     <div className="tooltip">
-                        Save this creature for the current encounter
+                        { isValid 
+                            ? "Save this creature for the current encounter"
+                            : "Please fix the errors in the form before saving"
+                        }
                     </div>
-                </button>
+                </div>
                 { (value.mode === 'custom') ? null : (
                     <button onClick={() => setValue({...value, mode: 'custom'})} disabled={!isValid} className="tooltipContainer">
                         <FontAwesomeIcon icon={faWrench} />

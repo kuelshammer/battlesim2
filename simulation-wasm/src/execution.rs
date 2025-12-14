@@ -249,10 +249,10 @@ impl ActionExecutionEngine {
         // Process action and generate events (placeholder implementation)
         let events = self.process_action(&action, actor_id);
 
-        // Emit all events to context
-        for event in &events {
-            self.context.record_event(event.clone());
-        }
+        // Emit all events to context -> REMOVED because process_action now handles emission directly
+        // for event in &events {
+        //    self.context.record_event(event.clone());
+        // }
 
         // Record the action in the combatant's history for logging
         if let Some(combatant) = self.context.get_combatant_mut(actor_id) {

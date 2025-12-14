@@ -87,15 +87,17 @@ impl ActionResolver {
             // 3. Otherwise check total vs AC
             let is_hit = !attack_result.is_miss && (attack_result.is_critical || attack_result.total >= target_ac);
 
-            if is_hit {
+                if is_hit {
                 // Hit!
                 let damage = self.calculate_damage(attack, attack_result.is_critical);
 
-                events.push(Event::AttackHit {
+                let hit_event = Event::AttackHit {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
                     damage,
-                });
+                };
+                context.record_event(hit_event.clone());
+                events.push(hit_event);
 
                 // Check for "OnBeingHit" triggers (e.g. Armor of Agathys)
                 let trigger_events = self.resolve_trigger_effects(
@@ -112,10 +114,12 @@ impl ActionResolver {
                 events.extend(damage_events);
             } else {
                 // Miss!
-                events.push(Event::AttackMissed {
+                let miss_event = Event::AttackMissed {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
-                });
+                };
+                context.record_event(miss_event.clone());
+                events.push(miss_event);
             }
         }
 
@@ -149,21 +153,9 @@ impl ActionResolver {
 
         for target_id in targets {
             let effect_id = effect_action.base().id.clone();
-
-            if is_buff {
-                events.push(Event::BuffApplied {
-                    target_id: target_id.clone(),
-                    buff_id: effect_id.clone(),
-                    source_id: actor_id.to_string(),
-                });
-            } else {
-                // For debuffs, convert to condition
-                events.push(Event::ConditionAdded {
-                    target_id: target_id.clone(),
-                    condition: crate::enums::CreatureCondition::Incapacitated, // Placeholder
-                    source_id: actor_id.to_string(),
-                });
-            }
+            
+            // Note: Event emission is handled by apply_effect_to_combatant -> context.apply_effect
+            // No need to push events here manually anymore.
 
             // Apply effect through the context's effect system
             self.apply_effect_to_combatant(&target_id, &effect_id, actor_id, is_buff, context);
@@ -708,5 +700,68 @@ mod tests {
         // Check Temp HP reduced on Warlock
         let warlock = context.combatants.get("warlock").unwrap();
         assert!(warlock.temp_hp < 10.0, "Temp HP should be reduced by attack damage");
+    }
+    #[test]
+    fn test_multiattack_retargeting() {
+        use crate::context::TurnContext;
+        use crate::model::{Creature, Combattant, CreatureState};
+        use crate::enums::{ActionCondition, EnemyTarget};
+        
+        // Setup: Attacker (3 attacks), 3 Victims (10 HP each)
+        // Damage = 5 (Fixed). 2 Hits to kill.
+        
+        let attacker_c = Creature { id: "attacker".to_string(), name: "Attacker".to_string(), hp: 100.0, ac: 15.0, count: 1.0, actions: vec![], triggers: vec![], arrival: None, mode: "player".to_string(), speed_fly: None, save_bonus: 0.0, str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None, int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None, con_save_advantage: None, save_advantage: None, initiative_bonus: 0.0, initiative_advantage: false, spell_slots: None, class_resources: None, hit_dice: None, con_modifier: None };
+        let victim_tpl = Creature { id: "victim".to_string(), name: "Victim".to_string(), hp: 10.0, ac: 10.0, count: 1.0, actions: vec![], triggers: vec![], arrival: None, mode: "monster".to_string(), speed_fly: None, save_bonus: 0.0, str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None, int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None, con_save_advantage: None, save_advantage: None, initiative_bonus: 0.0, initiative_advantage: false, spell_slots: None, class_resources: None, hit_dice: None, con_modifier: None };
+
+        let mut context = TurnContext::new(
+            vec![
+                Combattant { id: "attacker".to_string(), creature: attacker_c, initiative: 20.0, initial_state: CreatureState::default(), final_state: CreatureState::default(), actions: vec![] },
+                Combattant { id: "v1".to_string(), creature: victim_tpl.clone(), initiative: 10.0, initial_state: CreatureState::default(), final_state: CreatureState::default(), actions: vec![] },
+                Combattant { id: "v2".to_string(), creature: victim_tpl.clone(), initiative: 10.0, initial_state: CreatureState::default(), final_state: CreatureState::default(), actions: vec![] },
+                Combattant { id: "v3".to_string(), creature: victim_tpl.clone(), initiative: 10.0, initial_state: CreatureState::default(), final_state: CreatureState::default(), actions: vec![] },
+            ],
+            vec![], None, "Arena".to_string()
+        );
+
+        let resolver = ActionResolver::with_seed(12345); // Deterministic
+        
+        // 3 Attacks. 5 Damage Each. 10 HP Targets.
+        // Should go: v1(5dmg) -> v1(Kill) -> v2(5dmg).
+        let attack = AtkAction {
+            id: "multi".to_string(),
+            name: "Multiattack".to_string(),
+            action_slot: Some(1),
+            freq: crate::model::Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 3, 
+            dpr: crate::model::DiceFormula::Expr("5".to_string()),
+            to_hit: crate::model::DiceFormula::Expr("100".to_string()), // Sure hit
+            target: EnemyTarget::EnemyWithLeastHP,
+            use_saves: None,
+            half_on_save: None,
+            rider_effect: None,
+            cost: vec![],
+            requirements: vec![],
+            tags: vec![],
+        };
+
+        let events = resolver.resolve_attack(&attack, &mut context, "attacker");
+        
+        println!("Events: {:?}", events);
+
+        let v1_hits = events.iter().filter(|e| matches!(e, crate::events::Event::AttackHit { target_id, .. } if target_id == "v1")).count();
+        let v2_hits = events.iter().filter(|e| matches!(e, crate::events::Event::AttackHit { target_id, .. } if target_id == "v2")).count();
+        let v3_hits = events.iter().filter(|e| matches!(e, crate::events::Event::AttackHit { target_id, .. } if target_id == "v3")).count();
+
+        let dead_count = events.iter().filter(|e| matches!(e, crate::events::Event::UnitDied { .. })).count();
+        
+        // Assertions:
+        // 1. Exactly one unit should die
+        assert_eq!(dead_count, 1, "Exactly one victim should die");
+
+        // 2. Hits distribution should be 2, 1, 0 (order irrelevant)
+        let mut hits = vec![v1_hits, v2_hits, v3_hits];
+        hits.sort();
+        assert_eq!(hits, vec![0, 1, 2], "Hits should be distributed as [0, 1, 2] across the 3 victims");
     }
 }

@@ -18,14 +18,28 @@ import {
 type Props = {
     events: Event[];
     combatantNames: Record<string, string>; // Map ID to Name for display
+    actionNames?: Record<string, string>; // Map ActionID to Name
 };
 
 type EventFilter = 'all' | 'combat' | 'spell' | 'status' | 'lifecycle';
 
-const EventLog: FC<Props> = ({ events, combatantNames }) => {
+const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
     const [filter, setFilter] = useState<EventFilter>('all');
 
-    const getName = (id: string) => combatantNames[id] || id;
+    const getName = (id: string) => {
+        if (combatantNames[id]) return combatantNames[id];
+        // Try UUID prefix (36 chars) if ID looks like UUID-Suffix
+        if (id.length > 36 && id[36] === '-') {
+            const baseId = id.substring(0, 36);
+            if (combatantNames[baseId]) {
+                // specific suffix handling if desired, e.g. append #Index
+                return combatantNames[baseId];
+            }
+        }
+        return id;
+    };
+
+    const getActionName = (id: string) => actionNames[id] || id;
 
     const filteredEvents = useMemo(() => {
         if (filter === 'all') return events;
@@ -35,7 +49,7 @@ const EventLog: FC<Props> = ({ events, combatantNames }) => {
                 case 'combat':
                     return ['AttackHit', 'AttackMissed', 'DamageTaken', 'DamagePrevented', 'ActionStarted'].includes(e.type);
                 case 'spell':
-                    return ['SpellCast', 'SpellSaved', 'ConcentrationBroken'].includes(e.type);
+                    return ['SpellCast', 'SpellSaved', 'ConcentrationBroken', 'SpellFailed'].includes(e.type);
                 case 'status':
                     return ['BuffApplied', 'BuffExpired', 'ConditionAdded', 'ConditionRemoved', 'HealingApplied', 'TempHPGranted'].includes(e.type);
                 case 'lifecycle':
@@ -52,7 +66,7 @@ const EventLog: FC<Props> = ({ events, combatantNames }) => {
                 return (
                     <div key={index} className={`${styles.event} ${styles.action}`}>
                         <FontAwesomeIcon icon={faFistRaised} />
-                        <span><strong>{getName(event.actor_id)}</strong> uses <strong>{event.action_id}</strong></span>
+                        <span><strong>{getName(event.actor_id)}</strong> uses <strong>{getActionName(event.action_id)}</strong></span>
                     </div>
                 );
             case 'AttackHit':
@@ -97,6 +111,30 @@ const EventLog: FC<Props> = ({ events, combatantNames }) => {
                         <span>=== Round {event.round_number} Started ===</span>
                     </div>
                 );
+            case 'TurnStarted':
+                return (
+                    <div key={index} className={styles.event}>
+                        <FontAwesomeIcon icon={faRunning} />
+                        <span><strong>{getName(event.unit_id)}</strong> starts turn</span>
+                    </div>
+                )
+            case 'TurnEnded':
+            case 'RoundEnded':
+                return null; // Don't spam logs with these
+            case 'EncounterStarted':
+                return (
+                    <div key={index} className={styles.event}>
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                        <span>Encounter Started!</span>
+                    </div>
+                )
+            case 'EncounterEnded':
+                return (
+                    <div key={index} className={styles.event}>
+                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                        <span>Encounter Ended! Winner: {event.winner ? getName(event.winner) : 'None'}</span>
+                    </div>
+                )
             case 'SpellCast':
                 return (
                     <div key={index} className={`${styles.event} ${styles.spell}`}>

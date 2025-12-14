@@ -119,7 +119,7 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
 
     return (
         <div className={styles.resourceEditor}>
-            <section>
+            <div className={styles.section}>
                 <h3 className={styles.sectionHeader}>
                     Spell Slots
                     <div className={styles.headerButtons}>
@@ -198,9 +198,9 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                     </div>
                 ))}
                 {sortedSpellSlots.length === 0 && <p>No spell slots configured.</p>}
-            </section>
+            </div>
 
-            <section>
+            <div className={styles.section}>
                 <h3 className={styles.sectionHeader}>
                     Class Resources
                     <button onClick={addClassResource} title="Add Class Resource">
@@ -231,7 +231,7 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                     </div>
                 ))}
                 {(!value.classResources || Object.keys(value.classResources).length === 0) && <p>No class resources configured.</p>}
-            </section>
+            </div>
         </div>
     );
 };

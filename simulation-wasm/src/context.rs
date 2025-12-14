@@ -245,21 +245,31 @@ impl TurnContext {
     /// Apply an active effect to a target
     /// Apply an active effect to a target
     pub fn apply_effect(&mut self, effect: ActiveEffect) -> Event {
-        // Emit effect application event
-        let event = Event::Custom {
-            event_type: "EffectApplied".to_string(),
-            data: {
-                let mut data = HashMap::new();
-                data.insert("effect_id".to_string(), effect.id.clone());
-                data.insert("target_id".to_string(), effect.target_id.clone());
-                data.insert("source_id".to_string(), effect.source_id.clone());
-                data
+        // Determine event based on effect type
+        let event = match &effect.effect_type {
+            EffectType::Buff(buff) => Event::BuffApplied {
+                target_id: effect.target_id.clone(),
+                buff_id: buff.display_name.clone().unwrap_or(effect.id.clone()),
+                source_id: effect.source_id.clone(),
             },
-            source_id: effect.source_id.clone(),
+            EffectType::Condition(condition) => Event::ConditionAdded {
+                target_id: effect.target_id.clone(),
+                condition: *condition,
+                source_id: effect.source_id.clone(),
+            },
+            _ => Event::Custom {
+                event_type: "EffectApplied".to_string(),
+                data: {
+                    let mut data = HashMap::new();
+                    data.insert("effect_id".to_string(), effect.id.clone());
+                    data.insert("target_id".to_string(), effect.target_id.clone());
+                    data
+                },
+                source_id: effect.source_id.clone(),
+            }
         };
 
         self.event_bus.emit_event(event.clone());
-
         self.active_effects.insert(effect.id.clone(), effect);
         
         event

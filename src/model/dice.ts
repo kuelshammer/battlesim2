@@ -11,7 +11,7 @@ export function validateDiceFormula(expr: number|string) {
     if (typeof expr === 'number' || !isNaN(+expr)) return true
 
     try {
-        const roll = roller.roll(expr.trim())
+        const roll = roller.parse(expr.trim())
         return true
     } catch (e) {
         return false

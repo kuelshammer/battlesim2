@@ -72,7 +72,7 @@ const Simulation: FC<PropType> = ({ }) => {
         const loadWasm = async () => {
             if (wasmLoading.current) return
             wasmLoading.current = true
-            
+
             try {
                 console.log('🔄 Loading WASM module...')
                 import('simulation-wasm').then(async (module) => {
@@ -199,6 +199,17 @@ const Simulation: FC<PropType> = ({ }) => {
         setEncounters(encountersClone)
     }
 
+    // Helper to get action names for the log
+    const actionNames = new Map<string, string>();
+    players.forEach(p => p.actions.forEach(a => {
+        const name = a.type === 'template' ? a.templateOptions.templateName : a.name;
+        actionNames.set(a.id, name);
+    }));
+    encounters.forEach(e => e.monsters.forEach(m => m.actions.forEach(a => {
+        const name = a.type === 'template' ? a.templateOptions.templateName : a.name;
+        actionNames.set(a.id, name);
+    })));
+
     return (
         <div className={styles.simulation}>
             <semiPersistentContext.Provider value={{ state, setState }}>
@@ -240,7 +251,7 @@ const Simulation: FC<PropType> = ({ }) => {
                             Load Adventuring Day
                         </button>
 
-                        
+
                     </>
                 </EncounterForm>
 
@@ -269,10 +280,12 @@ const Simulation: FC<PropType> = ({ }) => {
                     Add Encounter
                 </button>
 
+
                 {/* Event Log Display */}
                 <EventLog
                     events={simulationEvents}
                     combatantNames={Object.fromEntries(combatantNames)}
+                    actionNames={Object.fromEntries(actionNames)}
                 />
 
                 {(saving || loading) ? (
