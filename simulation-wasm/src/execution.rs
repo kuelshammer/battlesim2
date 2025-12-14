@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::context::{TurnContext, CombattantState};
-use crate::reactions::ReactionManager;
+use crate::action_resolver::ActionResolver;
+use crate::context::{CombattantState, TurnContext};
 use crate::events::Event;
 use crate::model::{Action, Combattant};
-use crate::action_resolver::ActionResolver;
-use crate::validation; // Import the validation module
+use crate::reactions::ReactionManager;
+use crate::validation;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap; // Import the validation module
 
 /// Central coordinator for all action processing in combat encounters
 #[derive(Debug, Clone)]
@@ -82,8 +82,8 @@ impl ActionExecutionEngine {
         // Initialize TurnContext with empty battlefield conditions
         let context = TurnContext::new(
             combatants.clone(),
-            Vec::new(), // battlefield_conditions
-            None, // weather
+            Vec::new(),             // battlefield_conditions
+            None,                   // weather
             "Standard".to_string(), // terrain
         );
 
@@ -138,9 +138,10 @@ impl ActionExecutionEngine {
                     break;
                 }
             }
-            
+
             // Capture snapshot at end of round
-            let snapshot: Vec<CombattantState> = self.context.combatants.values().cloned().collect();
+            let snapshot: Vec<CombattantState> =
+                self.context.combatants.values().cloned().collect();
             round_snapshots.push(snapshot);
         }
 
@@ -150,7 +151,9 @@ impl ActionExecutionEngine {
 
     /// Execute a single turn for a combatant
     pub fn execute_combatant_turn(&mut self, combatant_id: &str) -> TurnResult {
-        let start_hp = self.context.get_combatant(combatant_id)
+        let start_hp = self
+            .context
+            .get_combatant(combatant_id)
             .map(|c| c.current_hp)
             .unwrap_or(0.0);
 
@@ -181,7 +184,9 @@ impl ActionExecutionEngine {
 
         self.context.end_current_turn();
 
-        let end_hp = self.context.get_combatant(combatant_id)
+        let end_hp = self
+            .context
+            .get_combatant(combatant_id)
             .map(|c| c.current_hp)
             .unwrap_or(0.0);
 
@@ -196,7 +201,11 @@ impl ActionExecutionEngine {
     }
 
     /// Execute an action and process all resulting reactions
-    pub fn execute_action_with_reactions(&mut self, actor_id: &str, action: Action) -> ActionResult {
+    pub fn execute_action_with_reactions(
+        &mut self,
+        actor_id: &str,
+        action: Action,
+    ) -> ActionResult {
         let action_id = action.base().id.clone();
 
         // Check if combatant can afford the action
@@ -225,15 +234,22 @@ impl ActionExecutionEngine {
 
         // Deduct usage for limited frequency actions
         match &action.base().freq {
-            crate::model::Frequency::Static(s) if s == "at will" => {},
+            crate::model::Frequency::Static(s) if s == "at will" => {}
             _ => {
                 // Determine action ID (which tracks usage)
                 let tracking_id = action.base().id.clone();
-                
+
                 if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
-                    let current = *combatant.resources.current.get(&tracking_id).unwrap_or(&0.0);
-                    combatant.resources.current.insert(tracking_id.clone(), (current - 1.0).max(0.0));
-                    
+                    let current = *combatant
+                        .resources
+                        .current
+                        .get(&tracking_id)
+                        .unwrap_or(&0.0);
+                    combatant
+                        .resources
+                        .current
+                        .insert(tracking_id.clone(), (current - 1.0).max(0.0));
+
                     // Also mark as used in this encounter (for "1/encounter" tracking if used elsewhere)
                     // actions_used_this_encounter is not available on CombattantState, but resource deduction is sufficient.
                 }
@@ -257,36 +273,38 @@ impl ActionExecutionEngine {
         // Record the action in the combatant's history for logging
         if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
             let mut targets = HashMap::new();
-            
+
             // Reconstruct targets from events
             for event in &events {
                 match event {
-                    Event::AttackHit { target_id, .. } | 
-                    Event::AttackMissed { target_id, .. } |
-                    Event::DamageTaken { target_id, .. } |
-                    Event::HealingApplied { target_id, .. } |
-                    Event::BuffApplied { target_id, .. } |
-                    Event::ConditionAdded { target_id, .. } => {
+                    Event::AttackHit { target_id, .. }
+                    | Event::AttackMissed { target_id, .. }
+                    | Event::DamageTaken { target_id, .. }
+                    | Event::HealingApplied { target_id, .. }
+                    | Event::BuffApplied { target_id, .. }
+                    | Event::ConditionAdded { target_id, .. } => {
                         *targets.entry(target_id.clone()).or_insert(0) += 1;
-                    },
-                    Event::Custom { event_type, data, .. } if event_type == "EffectApplied" => {
+                    }
+                    Event::Custom {
+                        event_type, data, ..
+                    } if event_type == "EffectApplied" => {
                         if let Some(target_id) = data.get("target_id") {
                             *targets.entry(target_id.clone()).or_insert(0) += 1;
                         }
-                    },
+                    }
                     _ => {}
                 }
             }
-            
-            // If it's a multi-target action but no specific target events were generated yet 
+
+            // If it's a multi-target action but no specific target events were generated yet
             // (e.g. clean miss or no targets found), we might miss logging targets.
             // But for now this is better than nothing.
-            
+
             let action_record = crate::model::CombattantAction {
                 action: action.clone(),
                 targets,
             };
-            
+
             combatant.base_combatant.actions.push(action_record);
         }
 
@@ -311,8 +329,13 @@ impl ActionExecutionEngine {
     pub fn process_reaction_phase(&mut self, triggering_event: &Event) -> Vec<ReactionResult> {
         // Get reactions that would trigger for this event (collect as owned data)
         let triggered_reactions: Vec<(String, crate::reactions::ReactionTemplate)> = {
-            let reactions_refs = self.reaction_manager.get_triggered_reactions(triggering_event, &self.context);
-            reactions_refs.into_iter().map(|(id, reaction)| (id, reaction.clone())).collect()
+            let reactions_refs = self
+                .reaction_manager
+                .get_triggered_reactions(triggering_event, &self.context);
+            reactions_refs
+                .into_iter()
+                .map(|(id, reaction)| (id, reaction.clone()))
+                .collect()
         };
 
         let mut results = Vec::new();
@@ -323,7 +346,11 @@ impl ActionExecutionEngine {
                 continue;
             }
 
-            match self.reaction_manager.execute_reaction(&combatant_id, &reaction, &mut self.context) {
+            match self.reaction_manager.execute_reaction(
+                &combatant_id,
+                &reaction,
+                &mut self.context,
+            ) {
                 Ok(()) => {
                     results.push(ReactionResult {
                         combatant_id: combatant_id.clone(),
@@ -332,7 +359,7 @@ impl ActionExecutionEngine {
                         events_generated: self.context.event_bus.get_recent_events(5).to_vec(),
                         error: None,
                     });
-                },
+                }
                 Err(e) => {
                     results.push(ReactionResult {
                         combatant_id: combatant_id.clone(),
@@ -351,17 +378,20 @@ impl ActionExecutionEngine {
     /// Process an action and generate events using the ActionResolver
     fn process_action(&mut self, action: &Action, actor_id: &str) -> Vec<Event> {
         // Use the ActionResolver to convert the action into events
-        self.action_resolver.resolve_action(action, &mut self.context, actor_id)
+        self.action_resolver
+            .resolve_action(action, &mut self.context, actor_id)
     }
 
     /// Get a random enemy target (different team than actor)
     #[allow(dead_code)]
     fn get_random_target(&self, actor_id: &str) -> Option<String> {
         // Get actor's team (mode)
-        let actor_mode = self.context.get_combatant(actor_id)
+        let actor_mode = self
+            .context
+            .get_combatant(actor_id)
             .map(|c| c.base_combatant.creature.mode.clone())
             .unwrap_or_default();
-        
+
         // Find enemies (different team)
         let alive_combatants = self.context.get_alive_combatants();
         for combatant in alive_combatants {
@@ -386,7 +416,7 @@ impl ActionExecutionEngine {
 
         // Score all valid actions
         let mut scored_actions: Vec<(Action, f64)> = Vec::new();
-        
+
         for action in combatant_state.base_combatant.creature.actions.iter() {
             // 1. Check requirements
             if !validation::check_action_requirements(action, &self.context, combatant_id) {
@@ -395,9 +425,13 @@ impl ActionExecutionEngine {
 
             // 1.5 Check frequency limit
             match &action.base().freq {
-                crate::model::Frequency::Static(s) if s == "at will" => {},
+                crate::model::Frequency::Static(s) if s == "at will" => {}
                 _ => {
-                    let uses = *combatant_state.resources.current.get(&action.base().id).unwrap_or(&0.0);
+                    let uses = *combatant_state
+                        .resources
+                        .current
+                        .get(&action.base().id)
+                        .unwrap_or(&0.0);
                     if uses < 1.0 {
                         continue;
                     }
@@ -422,7 +456,7 @@ impl ActionExecutionEngine {
         // Select best action per slot type
         for (action, _score) in scored_actions {
             let slot = action.base().action_slot;
-            
+
             // Skip if we've already selected an action for this slot
             if used_slots.contains(&slot) {
                 continue;
@@ -431,8 +465,8 @@ impl ActionExecutionEngine {
             used_slots.insert(slot);
             selected_actions.push(action);
 
-            // Limit to reasonable number of actions per turn
-            if selected_actions.len() >= 3 {
+            // D&D 5e: Limit to 1 action per turn (plus bonus action)
+            if selected_actions.len() >= 1 {
                 break;
             }
         }
@@ -443,33 +477,42 @@ impl ActionExecutionEngine {
     /// Score an action based on combat situation
     fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
         // Get combatant's team (mode)
-        let actor_mode = self.context.get_combatant(combatant_id)
+        let actor_mode = self
+            .context
+            .get_combatant(combatant_id)
             .map(|c| c.base_combatant.creature.mode.clone())
             .unwrap_or_default();
-        
+
         match action {
             Action::Atk(atk) => {
                 // Check if there are any enemies to attack
-                let living_enemies = self.context.get_alive_combatants().iter()
+                let living_enemies = self
+                    .context
+                    .get_alive_combatants()
+                    .iter()
                     .any(|c| c.base_combatant.creature.mode != actor_mode);
-                
+
                 if !living_enemies {
                     return 0.0; // No enemies to attack
                 }
-                
+
                 // Attacks are valuable
                 let base_damage = crate::dice::average(&atk.dpr);
                 let num_targets = atk.targets as f64;
                 base_damage * num_targets * 10.0 // * 10 to scale up
-            },
+            }
             Action::Heal(heal) => {
                 // Only valuable if allies are injured
-                let allies: Vec<_> = self.context.get_alive_combatants().into_iter()
+                let allies: Vec<_> = self
+                    .context
+                    .get_alive_combatants()
+                    .into_iter()
                     .filter(|c| c.base_combatant.creature.mode == actor_mode)
                     .collect();
-                let injured_allies = allies.iter().filter(|c| {
-                    c.current_hp < c.base_combatant.creature.hp * 0.5
-                }).count();
+                let injured_allies = allies
+                    .iter()
+                    .filter(|c| c.current_hp < c.base_combatant.creature.hp * 0.5)
+                    .count();
 
                 if injured_allies > 0 {
                     let heal_amount = crate::dice::average(&heal.amount);
@@ -477,7 +520,7 @@ impl ActionExecutionEngine {
                 } else {
                     0.0 // No one needs healing
                 }
-            },
+            }
             Action::Buff(_buff) => {
                 // Valuable at start of combat or if targets don't have buff yet
                 let round = self.context.round_number;
@@ -486,25 +529,28 @@ impl ActionExecutionEngine {
                 } else {
                     20.0 // Lower priority later
                 }
-            },
+            }
             Action::Debuff(_debuff) => {
                 // Valuable against strong enemies
-                let enemies: Vec<_> = self.context.get_alive_combatants().into_iter()
+                let enemies: Vec<_> = self
+                    .context
+                    .get_alive_combatants()
+                    .into_iter()
                     .filter(|c| c.base_combatant.creature.mode != actor_mode)
                     .collect();
-                let strong_enemies = enemies.iter().filter(|e| {
-                    e.current_hp > 20.0
-                }).count();
+                let strong_enemies = enemies.iter().filter(|e| e.current_hp > 20.0).count();
 
                 if strong_enemies > 0 {
                     30.0 * strong_enemies as f64
                 } else {
                     10.0
                 }
-            },
+            }
             Action::Template(_) => {
                 // Check if already concentrating
-                let is_concentrating = self.context.get_combatant(combatant_id)
+                let is_concentrating = self
+                    .context
+                    .get_combatant(combatant_id)
                     .map(|c| c.concentration.is_some())
                     .unwrap_or(false);
 
@@ -540,7 +586,9 @@ impl ActionExecutionEngine {
     fn get_initiative_order(&self) -> Vec<String> {
         let mut combatants: Vec<_> = self.context.combatants.values().collect();
         combatants.sort_by(|a, b| {
-            b.base_combatant.initiative.partial_cmp(&a.base_combatant.initiative)
+            b.base_combatant
+                .initiative
+                .partial_cmp(&a.base_combatant.initiative)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
         combatants.into_iter().map(|c| c.id.clone()).collect()
@@ -562,11 +610,17 @@ impl ActionExecutionEngine {
 
         // Check if all alive combatants are on the same team
         let first_mode = &alive_combatants[0].base_combatant.creature.mode;
-        alive_combatants.iter().all(|c| &c.base_combatant.creature.mode == first_mode)
+        alive_combatants
+            .iter()
+            .all(|c| &c.base_combatant.creature.mode == first_mode)
     }
 
     /// Generate final encounter results
-    fn generate_encounter_results(&self, total_turns: u32, round_snapshots: Vec<Vec<CombattantState>>) -> EncounterResult {
+    fn generate_encounter_results(
+        &self,
+        total_turns: u32,
+        round_snapshots: Vec<Vec<CombattantState>>,
+    ) -> EncounterResult {
         let winner = self.determine_winner();
         let event_history = self.context.event_bus.get_all_events().to_vec();
         let statistics = self.calculate_statistics(&event_history);
@@ -609,30 +663,37 @@ impl ActionExecutionEngine {
 
         for event in events {
             match event {
-                Event::AttackHit { attacker_id, damage, .. } => {
+                Event::AttackHit {
+                    attacker_id,
+                    damage,
+                    ..
+                } => {
                     *total_damage_dealt.entry(attacker_id.clone()).or_insert(0.0) += damage;
                     *attacks_landed.entry(attacker_id.clone()).or_insert(0) += 1;
 
                     // Check if it was a critical hit (simplified check)
                     // In a real implementation, this would be determined by the attack
-                    if *damage > 20.0 { // Arbitrary threshold for demo
+                    if *damage > 20.0 {
+                        // Arbitrary threshold for demo
                         critical_hits += 1;
                     }
-                },
+                }
                 Event::AttackMissed { attacker_id, .. } => {
                     *attacks_missed.entry(attacker_id.clone()).or_insert(0) += 1;
-                },
-                Event::HealingApplied { source_id, amount, .. } => {
+                }
+                Event::HealingApplied {
+                    source_id, amount, ..
+                } => {
                     *total_healing_dealt.entry(source_id.clone()).or_insert(0.0) += amount;
-                },
+                }
                 Event::ActionStarted { .. } => {
                     total_actions_executed += 1;
-                },
+                }
                 Event::Custom { event_type, .. } => {
                     if event_type == "ReactionAction" {
                         reactions_triggered += 1;
                     }
-                },
+                }
                 _ => {}
             }
         }
@@ -667,7 +728,7 @@ impl ActionExecutionEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, CreatureState, Combattant};
+    use crate::model::{Combattant, Creature, CreatureState};
 
     #[test]
     fn test_action_execution_engine_creation() {
@@ -687,7 +748,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -734,7 +795,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -743,7 +804,7 @@ mod tests {
             hit_dice: None,
             con_modifier: None,
             arrival: None,
-            mode: "player".to_string(),  // PLAYER team
+            mode: "player".to_string(), // PLAYER team
         };
 
         // Create a MONSTER creature
@@ -763,7 +824,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -772,7 +833,7 @@ mod tests {
             hit_dice: None,
             con_modifier: None,
             arrival: None,
-            mode: "monster".to_string(),  // MONSTER team
+            mode: "monster".to_string(), // MONSTER team
         };
 
         let combatant1 = Combattant {
@@ -817,7 +878,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),

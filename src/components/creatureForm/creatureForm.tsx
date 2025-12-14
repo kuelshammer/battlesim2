@@ -1,7 +1,8 @@
 import { FC, useEffect, useState } from "react"
-import { Creature, CreatureSchema } from "../../model/model"
+import { Creature, CreatureSchema } from "@/model/model"
+import creatureForm from './creatureForm.module.scss'
+import { clone } from "@/model/utils"
 import styles from './creatureForm.module.scss'
-import { clone } from "../../model/utils"
 import PlayerForm from "./playerForm"
 import MonsterForm from "./monsterForm"
 import CustomForm from "./customForm"
@@ -103,7 +104,6 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                 <div className="tooltipContainer">
                     <button 
                         onClick={() => {
-                            console.log('Submitting creature:', value)
                             onSubmit(value)
                         }} 
                         disabled={!isValid}

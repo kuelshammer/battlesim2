@@ -1,11 +1,9 @@
-import '../../styles/globals.scss'
+import '@/styles/globals.scss'
 import type { AppProps } from 'next/app'
 
 // Critical: Ensure crypto is available globally for WASM before ANY components mount
 if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   const originalCrypto = window.crypto;
-  console.log('[Crypto Polyfill] window.crypto exists:', !!originalCrypto);
-  console.log('[Crypto Polyfill] window.crypto.getRandomValues:', typeof originalCrypto.getRandomValues);
 
   // Create a wrapper object with getRandomValues properly bound
   // This is needed because wasm-bindgen expects a callable function
@@ -18,21 +16,19 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
 
   // Try to set on various global scopes (some may be read-only)
   try {
-    if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto === 'undefined') {
-      (globalThis as any).crypto = cryptoWrapper;
-      console.log('[Crypto Polyfill] Set globalThis.crypto with bound wrapper');
+    if (typeof globalThis !== 'undefined' && typeof (globalThis as { crypto?: Crypto }).crypto === 'undefined') {
+      (globalThis as { crypto?: Crypto }).crypto = cryptoWrapper;
     }
   } catch (e) {
-    console.log('[Crypto Polyfill] Could not set globalThis.crypto:', e);
+    // Silently handle crypto polyfill errors in production
   }
 
   try {
-    if (typeof self !== 'undefined' && self !== window && typeof (self as any).crypto === 'undefined') {
-      (self as any).crypto = cryptoWrapper;
-      console.log('[Crypto Polyfill] Set self.crypto with bound wrapper');
+    if (typeof self !== 'undefined' && self !== window && typeof self.crypto === 'undefined') {
+      (self as { crypto: Crypto }).crypto = cryptoWrapper;
     }
   } catch (e) {
-    console.log('[Crypto Polyfill] Could not set self.crypto:', e);
+    // Silently handle crypto polyfill errors in production
   }
 } else {
   }

@@ -1,21 +1,21 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {
     Action,
     BonusAction,
     Reaction,
-    Movement, 
+    Movement,
     SpellSlot,
     ClassResource,
     ItemCharge,
-    HitDice, // Generic HitDice resource (might be deprecated or refactored)
+    HitDice,   // Generic HitDice resource (might be deprecated or refactored)
     HitDiceD6, // Specific hit dice types
     HitDiceD8,
     HitDiceD10,
     HitDiceD12,
-    HP, 
+    HP,
     Custom,
 }
 
@@ -31,10 +31,10 @@ impl ResourceType {
             ResourceType::ClassResource => format!("ClassResource({})", val.unwrap_or("Default")),
             ResourceType::ItemCharge => format!("ItemCharge({})", val.unwrap_or("Default")),
             ResourceType::HitDice => format!("HitDice({})", val.unwrap_or("1")), // Generic
-            ResourceType::HitDiceD6 => "HitDice(d6)".to_string(), // New
-            ResourceType::HitDiceD8 => "HitDice(d8)".to_string(), // New
-            ResourceType::HitDiceD10 => "HitDice(d10)".to_string(), // New
-            ResourceType::HitDiceD12 => "HitDice(d12)".to_string(), // New
+            ResourceType::HitDiceD6 => "HitDice(d6)".to_string(),                // New
+            ResourceType::HitDiceD8 => "HitDice(d8)".to_string(),                // New
+            ResourceType::HitDiceD10 => "HitDice(d10)".to_string(),              // New
+            ResourceType::HitDiceD12 => "HitDice(d12)".to_string(),              // New
             ResourceType::Custom => format!("Custom({})", val.unwrap_or("Default")),
         }
     }
@@ -71,7 +71,13 @@ impl ResourceLedger {
         }
     }
 
-    pub fn register_resource(&mut self, resource: ResourceType, val: Option<&str>, max_amount: f64, reset_rule: Option<ResetType>) {
+    pub fn register_resource(
+        &mut self,
+        resource: ResourceType,
+        val: Option<&str>,
+        max_amount: f64,
+        reset_rule: Option<ResetType>,
+    ) {
         let key = resource.to_key(val);
         self.max.insert(key.clone(), max_amount);
         self.current.insert(key.clone(), max_amount);
@@ -85,14 +91,22 @@ impl ResourceLedger {
         *self.current.get(&key).unwrap_or(&0.0) >= amount
     }
 
-    pub fn consume(&mut self, resource: ResourceType, val: Option<&str>, amount: f64) -> Result<(), String> {
+    pub fn consume(
+        &mut self,
+        resource: ResourceType,
+        val: Option<&str>,
+        amount: f64,
+    ) -> Result<(), String> {
         let key = resource.to_key(val);
         let current_val = self.current.get(&key).unwrap_or(&0.0);
         if *current_val >= amount {
             self.current.insert(key, current_val - amount);
             Ok(())
         } else {
-            Err(format!("Insufficient resource: {} (Required: {}, Available: {})", key, amount, current_val))
+            Err(format!(
+                "Insufficient resource: {} (Required: {}, Available: {})",
+                key, amount, current_val
+            ))
         }
     }
 
@@ -100,21 +114,21 @@ impl ResourceLedger {
         let key = resource.to_key(val);
         let current_val = *self.current.get(&key).unwrap_or(&0.0);
         let max_val = *self.max.get(&key).unwrap_or(&f64::MAX);
-        
+
         let new_val = (current_val + amount).min(max_val);
         self.current.insert(key, new_val);
     }
-    
+
     pub fn reset(&mut self, reset_type: ResetType) {
         for (key, rule) in &self.reset_rules {
             match (rule, &reset_type) {
-                (ResetType::ShortRest, ResetType::ShortRest) |
-                (ResetType::ShortRest, ResetType::LongRest) |
-                (ResetType::LongRest, ResetType::LongRest) => {
-                     if let Some(max_val) = self.max.get(key) {
-                         self.current.insert(key.clone(), *max_val);
-                     }
-                },
+                (ResetType::ShortRest, ResetType::ShortRest)
+                | (ResetType::ShortRest, ResetType::LongRest)
+                | (ResetType::LongRest, ResetType::LongRest) => {
+                    if let Some(max_val) = self.max.get(key) {
+                        self.current.insert(key.clone(), *max_val);
+                    }
+                }
                 _ => {}
             }
         }
@@ -167,17 +181,11 @@ pub enum ActionRequirement {
         amount: f64,
     },
     #[serde(rename = "CombatState")]
-    CombatState {
-        condition: CombatCondition,
-    },
+    CombatState { condition: CombatCondition },
     #[serde(rename = "StatusEffect")]
-    StatusEffect {
-        effect: String,
-    },
+    StatusEffect { effect: String },
     #[serde(rename = "Custom")]
-    Custom {
-        description: String,
-    },
+    Custom { description: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -229,7 +237,7 @@ pub enum ActionTag {
     Control,
     Buff,
     Damage,
-    
+
     // Feature specifics
     GWM,
     Sharpshooter,

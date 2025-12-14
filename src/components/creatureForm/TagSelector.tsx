@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { ActionTag } from '../../model/enums'
-import { ActionTagList } from '../../model/enums'
-import Select from '../utils/select'
+import { ActionTag } from '@/model/enums'
+import { ActionTagList } from '@/model/enums'
+import Select from '@/utils/select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faPlus } from '@fortawesome/free-solid-svg-icons'
 

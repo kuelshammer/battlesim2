@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Action } from '../../model/model';
+import { Action } from '@/model/model';
 import styles from './StrategyBuilder.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp, faArrowDown, faBolt, faHandPaper, faPlus, faClock } from '@fortawesome/free-solid-svg-icons';

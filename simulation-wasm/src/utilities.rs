@@ -1,6 +1,6 @@
-use rand::Rng;
-use crate::model::{Creature, DiceFormula};
-use crate::dice; // Import the dice module
+use crate::dice;
+use crate::model::Creature;
+use rand::Rng; // Import the dice module
 
 pub fn roll_initiative(c: &Creature) -> f64 {
     let roll = if c.initiative_advantage {

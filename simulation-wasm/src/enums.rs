@@ -50,7 +50,7 @@ pub enum AllyTarget {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TargetType {
-    Enemy(EnemyTarget),  // Try enemy first (more common for templates)
+    Enemy(EnemyTarget), // Try enemy first (more common for templates)
     Ally(AllyTarget),
 }
 
@@ -187,10 +187,10 @@ pub enum TriggerRequirement {
 #[serde(tag = "type")]
 pub enum TriggerEffect {
     #[serde(rename = "Damage")]
-    DealDamage { 
+    DealDamage {
         amount: String, // DiceFormula string representation
         #[serde(rename = "damageType")]
-        damage_type: String 
+        damage_type: String,
     },
     #[serde(rename = "ReduceDamage")]
     ReduceDamage { amount: String },
@@ -198,12 +198,16 @@ pub enum TriggerEffect {
     RestoreResource { resource: String, amount: String },
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {
-    Action, BonusAction, Reaction, Movement, SpellSlot, ClassResource,
-    HitDiceD6, // New
-    HitDiceD8, // New
+    Action,
+    BonusAction,
+    Reaction,
+    Movement,
+    SpellSlot,
+    ClassResource,
+    HitDiceD6,  // New
+    HitDiceD8,  // New
     HitDiceD10, // New
     HitDiceD12, // New
 }
@@ -220,15 +224,67 @@ pub enum ResetType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ChallengeRating {
-    Zero, Quarter, Half, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty, TwentyOne, TwentyTwo, TwentyThree, TwentyFour, TwentyFive, Thirty
+    Zero,
+    Quarter,
+    Half,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Eleven,
+    Twelve,
+    Thirteen,
+    Fourteen,
+    Fifteen,
+    Sixteen,
+    Seventeen,
+    Eighteen,
+    Nineteen,
+    Twenty,
+    TwentyOne,
+    TwentyTwo,
+    TwentyThree,
+    TwentyFour,
+    TwentyFive,
+    Thirty,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Classes {
-    Barbarian, Bard, Cleric, Druid, Fighter, Monk, Paladin, Ranger, Rogue, Sorcerer, Warlock, Wizard
+    Barbarian,
+    Bard,
+    Cleric,
+    Druid,
+    Fighter,
+    Monk,
+    Paladin,
+    Ranger,
+    Rogue,
+    Sorcerer,
+    Warlock,
+    Wizard,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CreatureType {
-    Aberration, Beast, Celestial, Construct, Dragon, Elemental, Fey, Fiend, Giant, Humanoid, Monstrosity, Ooze, Plant, Undead
+    Aberration,
+    Beast,
+    Celestial,
+    Construct,
+    Dragon,
+    Elemental,
+    Fey,
+    Fiend,
+    Giant,
+    Humanoid,
+    Monstrosity,
+    Ooze,
+    Plant,
+    Undead,
 }

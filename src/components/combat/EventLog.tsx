@@ -1,5 +1,5 @@
 import { FC, useState, useMemo } from 'react';
-import { Event } from '../../model/model';
+import { Event } from '@/model/model';
 import styles from './EventLog.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {

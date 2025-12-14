@@ -9,7 +9,10 @@ pub fn remove_dead_buffs(targets: &mut [Combattant], dead_source_ids: &HashSet<S
     }
 
     #[cfg(debug_assertions)]
-    eprintln!("CLEANUP: Removing buffs from dead sources: {:?}", dead_source_ids);
+    eprintln!(
+        "CLEANUP: Removing buffs from dead sources: {:?}",
+        dead_source_ids
+    );
 
     for target in targets.iter_mut() {
         let _before_count = target.final_state.buffs.len();
@@ -18,8 +21,10 @@ pub fn remove_dead_buffs(targets: &mut [Combattant], dead_source_ids: &HashSet<S
                 let should_keep = !dead_source_ids.contains(source);
                 if !should_keep {
                     #[cfg(debug_assertions)]
-                    eprintln!("CLEANUP: Removing buff '{}' from {} (source {} is dead)",
-                        _buff_id, target.creature.name, source);
+                    eprintln!(
+                        "CLEANUP: Removing buff '{}' from {} (source {} is dead)",
+                        _buff_id, target.creature.name, source
+                    );
                 }
                 should_keep
             } else {
@@ -31,8 +36,10 @@ pub fn remove_dead_buffs(targets: &mut [Combattant], dead_source_ids: &HashSet<S
 
         #[cfg(debug_assertions)]
         if _before_count != _after_count {
-            eprintln!("CLEANUP: {} had {} buffs, now has {} buffs",
-                target.creature.name, _before_count, _after_count);
+            eprintln!(
+                "CLEANUP: {} had {} buffs, now has {} buffs",
+                target.creature.name, _before_count, _after_count
+            );
         }
     }
 }

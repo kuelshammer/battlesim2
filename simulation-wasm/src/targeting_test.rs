@@ -1,21 +1,26 @@
-
 #[cfg(test)]
 mod tests {
-    use crate::model::*;
     use crate::enums::*;
+    use crate::model::*;
+    use crate::resources::{ActionCost, ResourceType};
     use crate::targeting::estimate_dpr;
-    use crate::resources::{ResourceType, ActionCost};
     use std::collections::HashMap;
 
-    fn create_dummy_action(name: &str, damage: &str, targets: i32, to_hit: &str, cost_type: ResourceType) -> Action {
+    fn create_dummy_action(
+        name: &str,
+        damage: &str,
+        targets: i32,
+        to_hit: &str,
+        cost_type: ResourceType,
+    ) -> Action {
         Action::Atk(AtkAction {
             id: name.to_string(),
             name: name.to_string(),
             action_slot: None,
-            cost: vec![ActionCost::Discrete { 
-                resource_type: cost_type, 
+            cost: vec![ActionCost::Discrete {
+                resource_type: cost_type,
                 resource_val: None,
-                amount: 1.0 
+                amount: 1.0,
             }],
             requirements: vec![],
             tags: vec![],
@@ -48,7 +53,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions,
             triggers: vec![],
@@ -88,7 +93,10 @@ mod tests {
 
         // Current buggy implementation will likely say A (10) > B (5) because it ignores targets count
         // Correct behavior should be B (15) > A (10)
-        assert!(dpr_b > dpr_a, "Creature B with 3x5 damage should have higher DPR than Creature A with 1x10 damage");
+        assert!(
+            dpr_b > dpr_a,
+            "Creature B with 3x5 damage should have higher DPR than Creature A with 1x10 damage"
+        );
     }
 
     #[test]
@@ -108,7 +116,10 @@ mod tests {
         // A: +10 needs 5+ (80% chance). 10 * 0.8 = 8.0
         // B: +0 needs 15+ (30% chance). 12 * 0.3 = 3.6
         // Current implementation ignores hit chance, so it sees 12 > 10.
-        
-        assert!(dpr_a > dpr_b, "Accurate creature should have higher effective DPR");
+
+        assert!(
+            dpr_a > dpr_b,
+            "Accurate creature should have higher effective DPR"
+        );
     }
 }

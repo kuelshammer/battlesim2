@@ -1,14 +1,14 @@
 import { FC, useState, useEffect } from "react"
-import { Creature, CreatureSchema, Encounter, EncounterSchema } from "../../model/model"
+import { Creature, CreatureSchema, Encounter, EncounterSchema } from "@/model/model"
 import styles from './adventuringDayForm.module.scss'
-import { sharedStateGenerator, useCalculatedState } from "../../model/utils"
+import { sharedStateGenerator, useCalculatedState } from "@/model/utils"
 import { z } from 'zod'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faDownload, faFolder, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faEye } from "@fortawesome/free-solid-svg-icons"
-import { PlayerTemplates } from "../../data/data"
-import { getMonster } from "../../data/monsters"
-import Modal from "../utils/modal"
-import Checkbox from "../utils/checkbox"
+import { PlayerTemplates } from "@/data/data"
+import { getMonster } from "@/data/monsters"
+import Modal from "@/utils/modal"
+import Checkbox from "@/utils/checkbox"
 import PlayerForm from "../creatureForm/playerForm"
 import { v4 as uuidv4 } from 'uuid';
 import MonsterForm from "../creatureForm/monsterForm"

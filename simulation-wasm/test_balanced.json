@@ -1,0 +1,78 @@
+{
+    "updated": 1234567890,
+    "name": "Test",
+    "players": [
+        {
+            "id": "player1",
+            "mode": "custom",
+            "class": {
+                "type": "fighter",
+                "level": 1,
+                "options": {}
+            },
+            "name": "Player",
+            "count": 1,
+            "hp": 100,
+            "AC": 15,
+            "saveBonus": 0,
+            "initiativeBonus": 0,
+            "initiativeAdvantage": false,
+            "actions": [
+                {
+                    "id": "attack1",
+                    "name": "Attack",
+                    "actionSlot": 0,
+                    "cost": [],
+                    "requirements": [],
+                    "tags": [],
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "type": "atk",
+                    "dpr": "10d1",
+                    "toHit": "5",
+                    "target": "enemy with least HP"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "monster1",
+                    "mode": "custom",
+                    "class": {
+                        "type": "fighter",
+                        "level": 1,
+                        "options": {}
+                    },
+                    "name": "Monster",
+                    "count": 1,
+                    "hp": 100,
+                    "AC": 15,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "attack2",
+                            "name": "Attack",
+                            "actionSlot": 0,
+                            "cost": [],
+                            "requirements": [],
+                            "tags": [],
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "type": "atk",
+                            "dpr": "10d1",
+                            "toHit": "5",
+                            "target": "enemy with least HP"
+                        }
+                    ]
+                }
+            ],
+            "playersSurprised": false,
+            "monstersSurprised": false
+        }
+    ]
+}

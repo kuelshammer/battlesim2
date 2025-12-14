@@ -2,6 +2,9 @@
 name = "simulation-wasm"
 version = "0.1.0"
 edition = "2021"
+description = "WebAssembly-based D&D 5e combat simulation engine"
+license = "MIT"
+repository = "https://github.com/max/battlesim2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -1,11 +1,11 @@
 // src/components/creatureForm/SaveBonusModal.tsx
 import { FC, useState } from 'react';
-import { Creature } from '../../model/model';
-import { clone } from '../../model/utils';
+import { Creature } from '@/model/model';
+import { clone } from '@/model/utils';
 import styles from './saveBonusModal.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCheck } from '@fortawesome/free-solid-svg-icons';
-import Checkbox from '../utils/checkbox';
+import Checkbox from '@/utils/checkbox';
 
 type Props = {
     value: Creature;

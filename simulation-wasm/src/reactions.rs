@@ -1,11 +1,11 @@
-use std::collections::{HashMap, HashSet};
-use serde::{Deserialize, Serialize};
+use crate::context::{ActiveEffect, EffectType, TurnContext};
+use crate::enums::TriggerCondition;
 use crate::events::Event;
-use crate::context::{TurnContext, ActiveEffect, EffectType};
 use crate::model::Action;
 use crate::resources::{ActionCost, ActionRequirement};
-use crate::enums::TriggerCondition;
 use crate::validation;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 /// Manages the reaction system that allows combatants to respond to specific events
 #[derive(Debug, Clone)]
@@ -91,7 +91,11 @@ impl ReactionManager {
     }
 
     /// Check what reactions can be triggered by a specific event
-    pub fn check_reactions(&mut self, event: &Event, context: &TurnContext) -> Vec<(String, &ReactionTemplate)> {
+    pub fn check_reactions(
+        &mut self,
+        event: &Event,
+        context: &TurnContext,
+    ) -> Vec<(String, &ReactionTemplate)> {
         let mut triggered = Vec::new();
 
         for (combatant_id, reactions) in &self.available_reactions {
@@ -120,7 +124,11 @@ impl ReactionManager {
     }
 
     /// Check what reactions can be triggered by a specific event (immutable version)
-    pub fn get_triggered_reactions(&self, event: &Event, context: &TurnContext) -> Vec<(String, &ReactionTemplate)> {
+    pub fn get_triggered_reactions(
+        &self,
+        event: &Event,
+        context: &TurnContext,
+    ) -> Vec<(String, &ReactionTemplate)> {
         let mut triggered = Vec::new();
 
         for (combatant_id, reactions) in &self.available_reactions {
@@ -157,7 +165,11 @@ impl ReactionManager {
         context: &TurnContext,
     ) -> bool {
         // Check if the event type matches
-        if !self.event_matches_trigger(event, &reaction.trigger_event_type, &reaction.trigger_condition) {
+        if !self.event_matches_trigger(
+            event,
+            &reaction.trigger_event_type,
+            &reaction.trigger_condition,
+        ) {
             return false;
         }
 
@@ -167,14 +179,18 @@ impl ReactionManager {
         }
 
         // Check requirements
-        if !validation::check_action_requirements(&reaction.response_action, context, combatant_id) {
+        if !validation::check_action_requirements(&reaction.response_action, context, combatant_id)
+        {
             return false;
         }
 
         // Check if already used this round
         if reaction.uses_per_round.is_some() {
             if let Some(used_this_round) = self.used_reactions.get(combatant_id) {
-                let use_count = used_this_round.iter().filter(|id| **id == reaction.id).count();
+                let use_count = used_this_round
+                    .iter()
+                    .filter(|id| **id == reaction.id)
+                    .count();
                 if use_count >= reaction.uses_per_round.unwrap() as usize {
                     return false;
                 }
@@ -184,7 +200,10 @@ impl ReactionManager {
         // Check if already used this encounter
         if reaction.uses_per_encounter.is_some() {
             if let Some(used_encounter) = self.encounter_used.get(combatant_id) {
-                let use_count = used_encounter.iter().filter(|id| **id == reaction.id).count();
+                let use_count = used_encounter
+                    .iter()
+                    .filter(|id| **id == reaction.id)
+                    .count();
                 if use_count >= reaction.uses_per_encounter.unwrap() as usize {
                     return false;
                 }
@@ -196,7 +215,7 @@ impl ReactionManager {
             let reaction_cost = vec![ActionCost::Discrete {
                 resource_type: crate::resources::ResourceType::Reaction,
                 resource_val: None,
-                amount: 1.0
+                amount: 1.0,
             }];
             if !context.can_afford(&reaction_cost, combatant_id) {
                 return false;
@@ -207,7 +226,12 @@ impl ReactionManager {
     }
 
     /// Check if an event matches the trigger conditions
-    fn event_matches_trigger(&self, event: &Event, trigger_type: &str, trigger_condition: &TriggerCondition) -> bool {
+    fn event_matches_trigger(
+        &self,
+        event: &Event,
+        trigger_type: &str,
+        trigger_condition: &TriggerCondition,
+    ) -> bool {
         // First check if the event type matches
         if event.get_type() != trigger_type {
             return false;
@@ -220,20 +244,20 @@ impl ReactionManager {
                 matches!(event, Event::AttackHit { .. })
                 // This is a simplified check - in a full implementation,
                 // you'd need to know which combatant we're checking for
-            },
+            }
             TriggerCondition::OnMiss => matches!(event, Event::AttackMissed { .. }),
             TriggerCondition::OnBeingDamaged => {
                 matches!(event, Event::DamageTaken { .. })
-            },
+            }
             TriggerCondition::OnAllyAttacked => {
                 matches!(event, Event::AttackHit { .. }) // Placeholder for ally checking
-            },
+            }
             TriggerCondition::OnEnemyDeath => {
                 matches!(event, Event::UnitDied { .. }) // Placeholder for enemy checking
-            },
+            }
             TriggerCondition::OnCriticalHit => {
                 matches!(event, Event::AttackHit { .. }) // Placeholder for critical checking
-            },
+            }
             TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
         }
     }
@@ -254,7 +278,7 @@ impl ReactionManager {
             let reaction_cost = vec![ActionCost::Discrete {
                 resource_type: crate::resources::ResourceType::Reaction,
                 resource_val: None,
-                amount: 1.0
+                amount: 1.0,
             }];
             context.pay_costs(&reaction_cost, combatant_id)?;
         }
@@ -287,7 +311,12 @@ impl ReactionManager {
     }
 
     /// Execute the reaction action (placeholder implementation)
-    fn execute_action(&self, action: &Action, context: &mut TurnContext, _actor_id: &str) -> Result<(), String> {
+    fn execute_action(
+        &self,
+        action: &Action,
+        context: &mut TurnContext,
+        _actor_id: &str,
+    ) -> Result<(), String> {
         match action {
             Action::Template(_template_action) => {
                 // In a full implementation, this would resolve the template
@@ -302,7 +331,7 @@ impl ReactionManager {
                     source_id: "ReactionManager".to_string(),
                 });
                 Ok(())
-            },
+            }
             Action::Atk(atk_action) => {
                 // Record attack action
                 context.record_event(Event::Custom {
@@ -315,7 +344,7 @@ impl ReactionManager {
                     source_id: atk_action.base().id.clone(),
                 });
                 Ok(())
-            },
+            }
             Action::Heal(heal_action) => {
                 // Record healing action
                 let heal_amount = crate::dice::average(&heal_action.amount);
@@ -325,7 +354,7 @@ impl ReactionManager {
                     source_id: heal_action.base().id.clone(),
                 });
                 Ok(())
-            },
+            }
             Action::Buff(buff_action) => {
                 // Apply buff effect
                 let effect = ActiveEffect {
@@ -338,20 +367,22 @@ impl ReactionManager {
                 };
                 context.apply_effect(effect);
                 Ok(())
-            },
+            }
             Action::Debuff(debuff_action) => {
                 // Apply debuff effect
                 let effect = ActiveEffect {
                     id: format!("{}_{}", debuff_action.base().id, "reaction_effect"), // Simple ID without chrono
                     source_id: debuff_action.base().id.clone(),
                     target_id: "TODO".to_string(), // Would need to extract from action
-                    effect_type: EffectType::Condition(crate::enums::CreatureCondition::Incapacitated), // Placeholder
-                    remaining_duration: 1, // Placeholder
+                    effect_type: EffectType::Condition(
+                        crate::enums::CreatureCondition::Incapacitated,
+                    ), // Placeholder
+                    remaining_duration: 1,         // Placeholder
                     conditions: Vec::new(),
                 };
                 context.apply_effect(effect);
                 Ok(())
-            },
+            }
         }
     }
 
@@ -368,8 +399,13 @@ impl ReactionManager {
 
     /// Get statistics about the reaction system
     pub fn get_stats(&self) -> ReactionStats {
-        let total_reactions: usize = self.available_reactions.values().map(|reactions| reactions.len()).sum();
-        let total_used_this_round: usize = self.used_reactions.values().map(|used| used.len()).sum();
+        let total_reactions: usize = self
+            .available_reactions
+            .values()
+            .map(|reactions| reactions.len())
+            .sum();
+        let total_used_this_round: usize =
+            self.used_reactions.values().map(|used| used.len()).sum();
         let total_used_encounter: usize = self.encounter_used.values().map(|used| used.len()).sum();
 
         ReactionStats {
@@ -415,21 +451,28 @@ mod tests {
             response_action: Action::Template(crate::model::TemplateAction {
                 id: "shield".to_string(),
                 name: "Shield".to_string(), // template action has a name field
-                action_slot: Some(3), // Reaction slot
+                action_slot: Some(3),       // Reaction slot
                 cost: vec![],
                 requirements: vec![],
                 tags: vec![],
                 freq: crate::model::Frequency::Static("at will".to_string()), // required field
-                condition: crate::enums::ActionCondition::Default, // required field
-                targets: 1, // required field
-                template_options: crate::model::TemplateOptions { // use TemplateOptions struct
+                condition: crate::enums::ActionCondition::Default,            // required field
+                targets: 1,                                                   // required field
+                template_options: crate::model::TemplateOptions {
+                    // use TemplateOptions struct
                     template_name: "Shield".to_string(),
-                    target: Some(crate::enums::TargetType::Ally(crate::enums::AllyTarget::Self_)), // Add a default target
+                    target: Some(crate::enums::TargetType::Ally(
+                        crate::enums::AllyTarget::Self_,
+                    )), // Add a default target
                     save_dc: None,
                     amount: None,
                 },
             }),
-            cost: vec![ActionCost::Discrete { resource_type: ResourceType::Reaction, resource_val: None, amount: 1.0 }],
+            cost: vec![ActionCost::Discrete {
+                resource_type: ResourceType::Reaction,
+                resource_val: None,
+                amount: 1.0,
+            }],
             requirements: vec![],
             priority: 10,
             uses_per_round: None,
@@ -459,11 +502,14 @@ mod tests {
                 requirements: vec![],
                 tags: vec![],
                 freq: crate::model::Frequency::Static("at will".to_string()), // required field
-                condition: crate::enums::ActionCondition::Default, // required field
-                targets: 1, // required field
-                template_options: crate::model::TemplateOptions { // use TemplateOptions struct
+                condition: crate::enums::ActionCondition::Default,            // required field
+                targets: 1,                                                   // required field
+                template_options: crate::model::TemplateOptions {
+                    // use TemplateOptions struct
                     template_name: "Test".to_string(),
-                    target: Some(crate::enums::TargetType::Ally(crate::enums::AllyTarget::Self_)), // Add a default target
+                    target: Some(crate::enums::TargetType::Ally(
+                        crate::enums::AllyTarget::Self_,
+                    )), // Add a default target
                     save_dc: None,
                     amount: None,
                 },

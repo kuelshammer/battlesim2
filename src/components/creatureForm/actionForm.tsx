@@ -1,19 +1,20 @@
 import { FC, useState } from "react"
-import { Action, AllyTarget, AtkAction, Buff, BuffAction, DebuffAction, DiceFormula, EnemyTarget, FinalAction, Frequency, HealAction, TemplateAction } from "../../model/model"
+import { Action, AllyTarget, AtkAction, Buff, BuffAction, DebuffAction, DiceFormula, EnemyTarget, FinalAction, Frequency, HealAction, TemplateAction } from "@/model/model"
+import actionForm from './actionForm.module.scss'
+import { clone, inDevEnvironment } from "@/model/utils"
+import { ActionType, BuffDuration, ActionCondition, CreatureConditionList, CreatureCondition, ActionSlots } from "@/model/enums"
 import styles from './actionForm.module.scss'
-import { clone, inDevEnvironment } from "../../model/utils"
-import { ActionType, BuffDuration, ActionCondition, CreatureConditionList, CreatureCondition, ActionSlots } from "../../model/enums"
-import Select from "../utils/select"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faChevronDown, faChevronUp, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons"
-import DecimalInput from "../utils/DecimalInput"
-import DiceFormulaInput from "../utils/diceFormulaInput"
-import Checkbox from "../utils/checkbox"
-import { ActionTemplates, getFinalAction } from "../../data/actions"
+import { ActionTemplates, getFinalAction } from "@/data/actions"
 
 import ActionCostEditor from "./ActionCostEditor"
 import ActionRequirementEditor from "./ActionRequirementEditor"
 import TagSelector from "./TagSelector"
+import Checkbox from "@/utils/checkbox"
+import Select from "@/utils/select"
+import DecimalInput from "@/utils/DecimalInput"
+import DiceFormulaInput from "@/utils/diceFormulaInput"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faTrash, faPlus, faChevronUp, faChevronDown } from "@fortawesome/free-solid-svg-icons"
 
 type PropType = {
     value: Action,
@@ -134,7 +135,7 @@ const AtkOptions: Options<boolean> = [
 ]
 
 const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ value, onUpdate }) => {
-    const [modifiers, setModifiers] = useState<(keyof Omit<Buff, 'duration' | 'concentration'>)[]>(Object.keys(value).filter(key => (key !== 'duration') && (key !== 'concentration')) as any)
+    const [modifiers, setModifiers] = useState<(keyof Omit<Buff, 'duration' | 'concentration'>)[]>(Object.keys(value).filter(key => (key !== 'duration') && (key !== 'concentration')) as Array<keyof Omit<Buff, 'duration' | 'concentration'>>)
 
 
     function setModifier(index: number, newValue: keyof Omit<Buff, 'duration' | 'concentration'> | null) {
@@ -159,7 +160,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
 
     function updateDiceFormula(modifier: string, newValue: DiceFormula) {
         const buffClone = clone(value);
-        (buffClone as any)[modifier] = newValue
+        (buffClone as Buff & Record<string, unknown>)[modifier] = newValue
         onUpdate(buffClone)
     }
 
@@ -257,7 +258,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                         : v.freq
 
         onChange(v)
-        console.log(v)
+
     }
 
     function updateRiderEffect(callback: (riderEffect: { dc: number, buff: Buff }) => void) {
@@ -351,7 +352,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             case 'heal':
                 feedback.processors.push('HealingSystem')
                 feedback.effects.push('HPTracking')
-                if ((value as any).tempHP) {
+                if ('tempHP' in value && value.tempHP) {
                     feedback.effects.push('TempHPTracking')
                 }
                 break

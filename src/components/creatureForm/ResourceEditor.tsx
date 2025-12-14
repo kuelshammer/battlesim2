@@ -1,11 +1,11 @@
 // src/components/creatureForm/ResourceEditor.tsx
 import { FC, useState, useEffect } from 'react';
-import { Creature } from '../../model/model';
+import { Creature } from '@/model/model';
 import styles from './resourceEditor.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faMagicWandSparkles } from '@fortawesome/free-solid-svg-icons';
-import { clone } from '../../model/utils';
-import { calculateSpellSlots, detectCasterLevel, CasterType, CASTER_TYPE_LABELS } from '../../model/spellSlots';
+import { clone } from '@/model/utils';
+import { calculateSpellSlots, detectCasterLevel, CasterType, CASTER_TYPE_LABELS } from '@/model/spellSlots';
 
 type Props = {
     value: Creature;

@@ -1,25 +1,19 @@
-import React, { FC, useEffect, useState, useRef } from "react"
+import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
 import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult } from "../../model/model"
-import { parseEventString, SimulationEvent } from "../../model/events"
-import { clone, useStoredState } from "../../model/utils"
+import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult } from "@/model/model"
+import { parseEventString, SimulationEvent } from "@/model/events"
+import { clone, useStoredState } from "@/model/utils"
 import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
-import { semiPersistentContext } from "../../model/simulationContext"
+import { semiPersistentContext } from "@/model/simulationContext"
 import AdventuringDayForm from "./adventuringDayForm"
-import { getFinalAction } from "../../data/actions"
+import { getFinalAction } from "@/data/actions"
 
-console.log("Simulation module evaluating...");
 
-try {
-    console.log("Imports check:", { getFinalAction: !!getFinalAction });
-} catch (e) {
-    console.error("Error checking imports:", e);
-}
 
 type PropType = {
     // TODO
@@ -31,7 +25,7 @@ const emptyEncounter: Encounter = {
     playersSurprised: false,
 }
 
-const Simulation: FC<PropType> = ({ }) => {
+const Simulation: FC<PropType> = memo(({ }) => {
     const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
     const [encounters, setEncounters] = useStoredState<Encounter[]>('encounters', [emptyEncounter], z.array(EncounterSchema).parse)
     const [luck, setLuck] = useStoredState<number>('luck', 0.5, z.number().min(0).max(1).parse)
@@ -39,29 +33,31 @@ const Simulation: FC<PropType> = ({ }) => {
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
 
-    function isEmpty() {
+    // Memoize expensive computations
+    const isEmptyResult = useMemo(() => {
         const hasPlayers = !!players.length
         const hasMonsters = !!encounters.find(encounter => !!encounter.monsters.length)
         return !hasPlayers && !hasMonsters
-    }
+    }, [players.length, encounters])
 
-    // Helper to get combatant names for the log
-    const combatantNames = new Map<string, string>();
-    players.forEach(p => combatantNames.set(p.id, p.name));
-    encounters.forEach(e => e.monsters.forEach(m => combatantNames.set(m.id, m.name)));
-    // Also add numbered versions if IDs differ (simplified)
+    // Memoize combatant names map
+    const combatantNames = useMemo(() => {
+        const names = new Map<string, string>()
+        players.forEach(p => names.set(p.id, p.name))
+        encounters.forEach(e => e.monsters.forEach(m => names.set(m.id, m.name)))
+        return names
+    }, [players, encounters])
 
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [canSave, setCanSave] = useState(false)
-    useEffect(() => {
-        setCanSave(
-            !isEmpty()
-            && (typeof window !== "undefined")
-            && !!localStorage
-            && !!localStorage.getItem('useLocalStorage')
-        )
-    }, [players, encounters])
+    
+    // Memoize canSave computation
+    const canSave = useMemo(() => (
+        !isEmptyResult
+        && (typeof window !== "undefined")
+        && !!localStorage
+        && !!localStorage.getItem('useLocalStorage')
+    ), [isEmptyResult])
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
@@ -74,20 +70,15 @@ const Simulation: FC<PropType> = ({ }) => {
             wasmLoading.current = true
 
             try {
-                console.log('🔄 Loading WASM module...')
-                import('simulation-wasm').then(async (module) => {
-                    console.log('✅ WASM package imported')
+            import('simulation-wasm').then(async (module) => {
                     // Pass object to avoid deprecation warning
                     await module.default({ module_or_path: '/simulation_wasm_bg.wasm' })
-                    console.log('✅ WASM initialized successfully!')
-                    console.log('Available functions:', Object.keys(module).filter(k => typeof (module as Record<string, unknown>)[k] === 'function'))
                     setWasm(module)
                 }).catch(error => {
-                    console.error('❌ WASM import failed:', error)
                     wasmLoading.current = false
                 })
+
             } catch (error) {
-                console.error('❌ WASM loading error:', error)
                 wasmLoading.current = false
             }
         }
@@ -129,12 +120,8 @@ const Simulation: FC<PropType> = ({ }) => {
                     setSimulationEvents(structuredEvents)
                     console.log('Events collected and parsed:', structuredEvents.length)
                 } catch (eventError) {
-                    console.error("Failed to get events:", eventError)
                     setSimulationEvents([])
                 }
-
-                console.log('Simulation complete. Results:', results.length, 'runs')
-                // console.log('First result:', results[0])
 
                 setAllResults(results)
 
@@ -144,9 +131,7 @@ const Simulation: FC<PropType> = ({ }) => {
                 const selectedRun = results[index]
 
                 setSimulationResults(selectedRun)
-                console.log('Simulation results set!')
             } catch (e) {
-                console.error("Simulation failed", e)
                 setSimulationEvents([])
             }
         } else {
@@ -199,16 +184,19 @@ const Simulation: FC<PropType> = ({ }) => {
         setEncounters(encountersClone)
     }
 
-    // Helper to get action names for the log
-    const actionNames = new Map<string, string>();
-    players.forEach(p => p.actions.forEach(a => {
-        const name = a.type === 'template' ? a.templateOptions.templateName : a.name;
-        actionNames.set(a.id, name);
-    }));
-    encounters.forEach(e => e.monsters.forEach(m => m.actions.forEach(a => {
-        const name = a.type === 'template' ? a.templateOptions.templateName : a.name;
-        actionNames.set(a.id, name);
-    })));
+    // Memoize action names map
+    const actionNames = useMemo(() => {
+        const names = new Map<string, string>()
+        players.forEach(p => p.actions.forEach(a => {
+            const name = a.type === 'template' ? a.templateOptions.templateName : a.name
+            names.set(a.id, name)
+        }))
+        encounters.forEach(e => e.monsters.forEach(m => m.actions.forEach(a => {
+            const name = a.type === 'template' ? a.templateOptions.templateName : a.name
+            names.set(a.id, name)
+        })))
+        return names
+    }, [players, encounters])
 
     return (
         <div className={styles.simulation}>
@@ -234,7 +222,7 @@ const Simulation: FC<PropType> = ({ }) => {
                     luck={luck}
                     setLuck={setLuck}>
                     <>
-                        {!isEmpty() ? (
+                        {!isEmptyResult ? (
                             <button onClick={() => { setPlayers([]); setEncounters([emptyEncounter]) }}>
                                 <FontAwesomeIcon icon={faTrash} />
                                 Clear Adventuring Day
@@ -304,6 +292,6 @@ const Simulation: FC<PropType> = ({ }) => {
             </semiPersistentContext.Provider>
         </div>
     )
-}
+})
 
 export default Simulation

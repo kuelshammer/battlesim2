@@ -1,16 +1,16 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::events::{Event, EventBus};
-use crate::resources::{ResourceLedger, ResourceType, ResetType, ActionCost};
-use crate::model::{Action, Combattant};
 use crate::enums::CreatureCondition;
+use crate::events::{Event, EventBus};
+use crate::model::{Action, Combattant};
+use crate::resources::{ActionCost, ResetType, ResourceLedger, ResourceType};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Central context that maintains all game state during a combat encounter
 /// Acts as the "single source of truth" for turn-based resource and event management
 #[derive(Debug, Clone)]
 pub struct TurnContext {
     // Resource Management - Moved to CombattantState
-    // pub resource_ledger: ResourceLedger, 
+    // pub resource_ledger: ResourceLedger,
 
     // Event Tracking
     pub event_bus: EventBus,
@@ -23,8 +23,8 @@ pub struct TurnContext {
 
     // Environmental Context
     pub battlefield_conditions: Vec<String>, // Simplified to string for now
-    pub weather: Option<String>, // Simplified to string for now
-    pub terrain: String, // Simplified to string for now
+    pub weather: Option<String>,             // Simplified to string for now
+    pub terrain: String,                     // Simplified to string for now
 }
 
 /// State of a combatant within the current encounter
@@ -36,8 +36,8 @@ pub struct CombattantState {
     pub temp_hp: f64,
     pub conditions: Vec<CreatureCondition>,
     pub concentration: Option<String>, // ID of spell/concentration source
-    pub position: Option<String>, // Simplified position for future expansion
-    pub resources: ResourceLedger, // Per-combatant resource tracking
+    pub position: Option<String>,      // Simplified position for future expansion
+    pub resources: ResourceLedger,     // Per-combatant resource tracking
     #[serde(default)]
     pub arcane_ward_hp: Option<f64>,
 }
@@ -57,8 +57,13 @@ pub struct ActiveEffect {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EffectType {
     Buff(crate::model::Buff), // Store full Buff object
-    DamageOverTime { damage_per_round: f64, damage_type: String },
-    HealingOverTime { healing_per_round: f64 },
+    DamageOverTime {
+        damage_per_round: f64,
+        damage_type: String,
+    },
+    HealingOverTime {
+        healing_per_round: f64,
+    },
     Condition(CreatureCondition),
     Custom(String),
 }
@@ -77,12 +82,27 @@ impl TurnContext {
             .map(|c| {
                 // Initialize resource ledger for this combatant
                 let mut resources = ResourceLedger::new();
-                
+
                 // Initialize basic resources
-                resources.register_resource(ResourceType::Action, None, 1.0, Some(ResetType::ShortRest));
-                resources.register_resource(ResourceType::BonusAction, None, 1.0, Some(ResetType::ShortRest));
-                resources.register_resource(ResourceType::Reaction, None, 1.0, Some(ResetType::ShortRest));
-                
+                resources.register_resource(
+                    ResourceType::Action,
+                    None,
+                    1.0,
+                    Some(ResetType::ShortRest),
+                );
+                resources.register_resource(
+                    ResourceType::BonusAction,
+                    None,
+                    1.0,
+                    Some(ResetType::ShortRest),
+                );
+                resources.register_resource(
+                    ResourceType::Reaction,
+                    None,
+                    1.0,
+                    Some(ResetType::ShortRest),
+                );
+
                 // TODO: Initialize spell slots and class resources from creature definition
                 // This would be done here by reading c.creature.spell_slots etc.
                 // Copy initialized resources from combatant state (e.g. 1/fight actions)
@@ -151,7 +171,9 @@ impl TurnContext {
         self.round_number += 1;
 
         // Emit round start event
-        self.event_bus.emit_event(Event::RoundStarted { round_number: self.round_number });
+        self.event_bus.emit_event(Event::RoundStarted {
+            round_number: self.round_number,
+        });
 
         // Reset round-based resources
         for combatant in self.combatants.values_mut() {
@@ -171,13 +193,30 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete { resource_type, resource_val, amount } => {
-                    if !combatant.resources.has(resource_type.clone(), resource_val.as_deref(), *amount) {
+                ActionCost::Discrete {
+                    resource_type,
+                    resource_val,
+                    amount,
+                } => {
+                    if !combatant.resources.has(
+                        resource_type.clone(),
+                        resource_val.as_deref(),
+                        *amount,
+                    ) {
                         return false;
                     }
-                },
-                ActionCost::Variable { resource_type, resource_val, min: _min, max } => {
-                    if !combatant.resources.has(resource_type.clone(), resource_val.as_deref(), *max) {
+                }
+                ActionCost::Variable {
+                    resource_type,
+                    resource_val,
+                    min: _min,
+                    max,
+                } => {
+                    if !combatant.resources.has(
+                        resource_type.clone(),
+                        resource_val.as_deref(),
+                        *max,
+                    ) {
                         return false;
                     }
                 }
@@ -195,8 +234,16 @@ impl TurnContext {
 
         for cost in costs {
             match cost {
-                ActionCost::Discrete { resource_type, resource_val, amount } => {
-                    if let Err(e) = combatant.resources.consume(resource_type.clone(), resource_val.as_deref(), *amount) {
+                ActionCost::Discrete {
+                    resource_type,
+                    resource_val,
+                    amount,
+                } => {
+                    if let Err(e) = combatant.resources.consume(
+                        resource_type.clone(),
+                        resource_val.as_deref(),
+                        *amount,
+                    ) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 
@@ -206,9 +253,18 @@ impl TurnContext {
                         resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *amount,
                     });
-                },
-                ActionCost::Variable { resource_type, resource_val, min: _min, max } => {
-                    if let Err(e) = combatant.resources.consume(resource_type.clone(), resource_val.as_deref(), *max) {
+                }
+                ActionCost::Variable {
+                    resource_type,
+                    resource_val,
+                    min: _min,
+                    max,
+                } => {
+                    if let Err(e) = combatant.resources.consume(
+                        resource_type.clone(),
+                        resource_val.as_deref(),
+                        *max,
+                    ) {
                         return Err(format!("Failed to pay cost: {}", e));
                     }
 
@@ -266,12 +322,12 @@ impl TurnContext {
                     data
                 },
                 source_id: effect.source_id.clone(),
-            }
+            },
         };
 
         self.event_bus.emit_event(event.clone());
         self.active_effects.insert(effect.id.clone(), effect);
-        
+
         event
     }
 
@@ -280,7 +336,8 @@ impl TurnContext {
         let mut effects_to_remove = Vec::new();
 
         // Collect effects to apply to avoid borrow checker issues
-        let effects_to_apply: Vec<(String, ActiveEffect)> = self.active_effects
+        let effects_to_apply: Vec<(String, ActiveEffect)> = self
+            .active_effects
             .iter()
             .map(|(id, effect)| (id.clone(), effect.clone()))
             .collect();
@@ -288,14 +345,27 @@ impl TurnContext {
         for (effect_id, effect) in effects_to_apply {
             // Apply effect logic based on type
             match &effect.effect_type {
-                EffectType::DamageOverTime { damage_per_round, damage_type } => {
+                EffectType::DamageOverTime {
+                    damage_per_round,
+                    damage_type,
+                } => {
                     // Apply damage through unified method
-                    let _events = self.apply_damage(&effect.target_id, *damage_per_round, damage_type, &effect.source_id);
-                },
+                    let _events = self.apply_damage(
+                        &effect.target_id,
+                        *damage_per_round,
+                        damage_type,
+                        &effect.source_id,
+                    );
+                }
                 EffectType::HealingOverTime { healing_per_round } => {
                     // Apply healing through unified method
-                    let _event = self.apply_healing(&effect.target_id, *healing_per_round, false, &effect.source_id);
-                },
+                    let _event = self.apply_healing(
+                        &effect.target_id,
+                        *healing_per_round,
+                        false,
+                        &effect.source_id,
+                    );
+                }
                 EffectType::Condition(condition) => {
                     // Ensure condition is applied
                     if let Some(combatant) = self.combatants.get_mut(&effect.target_id) {
@@ -303,7 +373,7 @@ impl TurnContext {
                             combatant.conditions.push(*condition);
                         }
                     }
-                },
+                }
                 _ => {} // Buffs and Custom effects handled elsewhere
             }
 
@@ -366,7 +436,13 @@ impl TurnContext {
 
     /// Apply damage to a combatant with proper event emission
     /// This is the unified way to apply damage - all damage should go through this method
-    pub fn apply_damage(&mut self, target_id: &str, damage: f64, damage_type: &str, source_id: &str) -> Vec<Event> {
+    pub fn apply_damage(
+        &mut self,
+        target_id: &str,
+        damage: f64,
+        damage_type: &str,
+        source_id: &str,
+    ) -> Vec<Event> {
         let mut events = Vec::new();
 
         if let Some(combatant) = self.combatants.get_mut(target_id) {
@@ -378,7 +454,7 @@ impl TurnContext {
                     let absorbed = ward.min(remaining_damage);
                     combatant.arcane_ward_hp = Some(ward - absorbed);
                     remaining_damage = (remaining_damage - absorbed).max(0.0);
-                    
+
                     // Could emit WardAbsorbed event here if Event enum supported it
                 }
             }
@@ -423,7 +499,13 @@ impl TurnContext {
 
     /// Apply healing to a combatant with proper event emission
     /// This is the unified way to apply healing - all healing should go through this method
-    pub fn apply_healing(&mut self, target_id: &str, amount: f64, is_temp_hp: bool, source_id: &str) -> Event {
+    pub fn apply_healing(
+        &mut self,
+        target_id: &str,
+        amount: f64,
+        is_temp_hp: bool,
+        source_id: &str,
+    ) -> Event {
         if let Some(combatant) = self.combatants.get_mut(target_id) {
             let event = if is_temp_hp {
                 combatant.temp_hp += amount;
@@ -434,7 +516,8 @@ impl TurnContext {
                 }
             } else {
                 let max_hp = combatant.base_combatant.creature.hp;
-                let actual_healing = (combatant.current_hp + amount).min(max_hp) - combatant.current_hp;
+                let actual_healing =
+                    (combatant.current_hp + amount).min(max_hp) - combatant.current_hp;
                 combatant.current_hp += actual_healing;
                 Event::HealingApplied {
                     target_id: target_id.to_string(),
@@ -514,8 +597,8 @@ pub struct ContextStats {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::{Combattant, Creature, CreatureState};
     use crate::resources::ActionCost;
-    use crate::model::{Creature, CreatureState, Combattant};
 
     #[test]
     fn test_turn_context_creation() {
@@ -535,7 +618,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -547,23 +630,16 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![
-            Combattant {
-                id: "player1".to_string(),
-                creature,
-                initiative: 10.0,
-                initial_state: CreatureState::default(),
-                final_state: CreatureState::default(),
-                actions: Vec::new(),
-            },
-        ];
+        let combatants = vec![Combattant {
+            id: "player1".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState::default(),
+            final_state: CreatureState::default(),
+            actions: Vec::new(),
+        }];
 
-        let context = TurnContext::new(
-            combatants,
-            Vec::new(),
-            None,
-            "Plains".to_string(),
-        );
+        let context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
 
         assert_eq!(context.round_number, 0);
         assert!(context.current_turn_owner.is_none());
@@ -589,7 +665,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -601,23 +677,16 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![
-            Combattant {
-                id: "player1".to_string(),
-                creature,
-                initiative: 10.0,
-                initial_state: CreatureState::default(),
-                final_state: CreatureState::default(),
-                actions: Vec::new(),
-            },
-        ];
+        let combatants = vec![Combattant {
+            id: "player1".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState::default(),
+            final_state: CreatureState::default(),
+            actions: Vec::new(),
+        }];
 
-        let mut context = TurnContext::new(
-            combatants,
-            Vec::new(),
-            None,
-            "Plains".to_string(),
-        );
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
 
         context.start_new_turn("player1".to_string());
         assert_eq!(context.current_turn_owner, Some("player1".to_string()));
@@ -629,67 +698,61 @@ mod tests {
         assert_eq!(context.round_number, 1);
     }
 
-        #[test]
-        fn test_resource_management() {
-            let creature = Creature {
-                id: "player1".to_string(),
-                name: "Player 1".to_string(),
-                count: 1.0,
-                hp: 30.0,
-                ac: 15.0,
-                speed_fly: None,
-                save_bonus: 0.0,
-                str_save_bonus: None,
-                dex_save_bonus: None,
-                con_save_bonus: None,
-                int_save_bonus: None,
-                wis_save_bonus: None,
-                cha_save_bonus: None,
-                con_save_advantage: None,
-                save_advantage: None,
-                initiative_bonus: 0.0,
-                initiative_advantage: false,
-                actions: Vec::new(),
-                triggers: Vec::new(),
-                spell_slots: None,
-                class_resources: None,
-                hit_dice: None,
-                con_modifier: None,
-                arrival: None,
-                mode: "monster".to_string(),
-            };
-    
-            let combatants = vec![
-                Combattant {
-                    id: "player1".to_string(),
-                    creature,
-                    initiative: 10.0,
-                    initial_state: CreatureState::default(),
-                    final_state: CreatureState::default(),
-                    actions: Vec::new(),
-                },
-            ];
-    
-            let mut context = TurnContext::new(
-                combatants,
-                Vec::new(),
-                None,
-                "Plains".to_string(),
-            );
-    
-            let costs = vec![ActionCost::Discrete {
-                resource_type: crate::resources::ResourceType::Action,
-                resource_val: None,
-                amount: 1.0
-            }];
-    
-            assert!(context.can_afford(&costs, "player1"));
-    
-            let result = context.pay_costs(&costs, "player1");
-            assert!(result.is_ok());
-    
-            assert!(!context.can_afford(&costs, "player1"));
-        }    #[test]
+    #[test]
+    fn test_resource_management() {
+        let creature = Creature {
+            id: "player1".to_string(),
+            name: "Player 1".to_string(),
+            count: 1.0,
+            hp: 30.0,
+            ac: 15.0,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "monster".to_string(),
+        };
+
+        let combatants = vec![Combattant {
+            id: "player1".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState::default(),
+            final_state: CreatureState::default(),
+            actions: Vec::new(),
+        }];
+
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
+
+        let costs = vec![ActionCost::Discrete {
+            resource_type: crate::resources::ResourceType::Action,
+            resource_val: None,
+            amount: 1.0,
+        }];
+
+        assert!(context.can_afford(&costs, "player1"));
+
+        let result = context.pay_costs(&costs, "player1");
+        assert!(result.is_ok());
+
+        assert!(!context.can_afford(&costs, "player1"));
+    }
+    #[test]
     fn test_effect_management() {
         let creature = Creature {
             id: "player1".to_string(),
@@ -707,7 +770,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: 0.0,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
@@ -719,23 +782,16 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![
-            Combattant {
-                id: "player1".to_string(),
-                creature,
-                initiative: 10.0,
-                initial_state: CreatureState::default(),
-                final_state: CreatureState::default(),
-                actions: Vec::new(),
-            },
-        ];
+        let combatants = vec![Combattant {
+            id: "player1".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState::default(),
+            final_state: CreatureState::default(),
+            actions: Vec::new(),
+        }];
 
-        let mut context = TurnContext::new(
-            combatants,
-            Vec::new(),
-            None,
-            "Plains".to_string(),
-        );
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
 
         let effect = ActiveEffect {
             id: "test_effect".to_string(),
@@ -759,4 +815,5 @@ mod tests {
         context.update_effects();
         let combatant = context.get_combatant("player1").unwrap();
         assert_eq!(combatant.current_hp, 25.0); // 30 - 5 = 25
-    }}
+    }
+}

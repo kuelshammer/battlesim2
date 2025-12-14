@@ -1,58 +1,167 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::enums::{CreatureCondition, TriggerCondition};
 use crate::model::Action;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Comprehensive event enum covering all combat interactions
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Event {
     // Combat Events
-    ActionStarted { actor_id: String, action_id: String },
-    AttackHit { attacker_id: String, target_id: String, damage: f64 },
-    AttackMissed { attacker_id: String, target_id: String },
-    DamageTaken { target_id: String, damage: f64, damage_type: String },
-    DamagePrevented { target_id: String, prevented_amount: f64 },
+    ActionStarted {
+        actor_id: String,
+        action_id: String,
+    },
+    AttackHit {
+        attacker_id: String,
+        target_id: String,
+        damage: f64,
+    },
+    AttackMissed {
+        attacker_id: String,
+        target_id: String,
+    },
+    DamageTaken {
+        target_id: String,
+        damage: f64,
+        damage_type: String,
+    },
+    DamagePrevented {
+        target_id: String,
+        prevented_amount: f64,
+    },
 
     // Spell Events
-    SpellCast { caster_id: String, spell_id: String, spell_level: u8 },
-    SpellSaved { target_id: String, spell_id: String },
-    SpellFailed { target_id: String, spell_id: String, reason: String },
-    ConcentrationBroken { caster_id: String, reason: String },
-    ConcentrationMaintained { caster_id: String, save_dc: f64 },
+    SpellCast {
+        caster_id: String,
+        spell_id: String,
+        spell_level: u8,
+    },
+    SpellSaved {
+        target_id: String,
+        spell_id: String,
+    },
+    SpellFailed {
+        target_id: String,
+        spell_id: String,
+        reason: String,
+    },
+    ConcentrationBroken {
+        caster_id: String,
+        reason: String,
+    },
+    ConcentrationMaintained {
+        caster_id: String,
+        save_dc: f64,
+    },
 
     // Status Events
-    BuffApplied { target_id: String, buff_id: String, source_id: String },
-    BuffExpired { target_id: String, buff_id: String },
-    BuffRemoved { target_id: String, buff_id: String, source_id: String },
-    ConditionAdded { target_id: String, condition: CreatureCondition, source_id: String },
-    ConditionRemoved { target_id: String, condition: CreatureCondition, source_id: String },
+    BuffApplied {
+        target_id: String,
+        buff_id: String,
+        source_id: String,
+    },
+    BuffExpired {
+        target_id: String,
+        buff_id: String,
+    },
+    BuffRemoved {
+        target_id: String,
+        buff_id: String,
+        source_id: String,
+    },
+    ConditionAdded {
+        target_id: String,
+        condition: CreatureCondition,
+        source_id: String,
+    },
+    ConditionRemoved {
+        target_id: String,
+        condition: CreatureCondition,
+        source_id: String,
+    },
 
     // Healing Events
-    HealingApplied { target_id: String, amount: f64, source_id: String },
-    TempHPGranted { target_id: String, amount: f64, source_id: String },
-    TempHPLost { target_id: String, amount: f64 },
+    HealingApplied {
+        target_id: String,
+        amount: f64,
+        source_id: String,
+    },
+    TempHPGranted {
+        target_id: String,
+        amount: f64,
+        source_id: String,
+    },
+    TempHPLost {
+        target_id: String,
+        amount: f64,
+    },
 
     // Life Cycle Events
-    UnitDied { unit_id: String, killer_id: Option<String>, damage_type: Option<String> },
-    TurnStarted { unit_id: String, round_number: u32 },
-    TurnEnded { unit_id: String, round_number: u32 },
-    RoundStarted { round_number: u32 },
-    RoundEnded { round_number: u32 },
-    EncounterStarted { combatant_ids: Vec<String> },
-    EncounterEnded { winner: Option<String>, reason: String },
+    UnitDied {
+        unit_id: String,
+        killer_id: Option<String>,
+        damage_type: Option<String>,
+    },
+    TurnStarted {
+        unit_id: String,
+        round_number: u32,
+    },
+    TurnEnded {
+        unit_id: String,
+        round_number: u32,
+    },
+    RoundStarted {
+        round_number: u32,
+    },
+    RoundEnded {
+        round_number: u32,
+    },
+    EncounterStarted {
+        combatant_ids: Vec<String>,
+    },
+    EncounterEnded {
+        winner: Option<String>,
+        reason: String,
+    },
 
     // Movement Events (future extensibility)
-    MovementStarted { unit_id: String, from_position: String, to_position: String },
-    MovementInterrupted { unit_id: String, reason: String },
-    OpportunityAttack { attacker_id: String, target_id: String, provoked_by: String },
+    MovementStarted {
+        unit_id: String,
+        from_position: String,
+        to_position: String,
+    },
+    MovementInterrupted {
+        unit_id: String,
+        reason: String,
+    },
+    OpportunityAttack {
+        attacker_id: String,
+        target_id: String,
+        provoked_by: String,
+    },
 
     // Resource Events
-    ResourceConsumed { unit_id: String, resource_type: String, amount: f64 },
-    ResourceRestored { unit_id: String, resource_type: String, amount: f64 },
-    ResourceDepleted { unit_id: String, resource_type: String },
+    ResourceConsumed {
+        unit_id: String,
+        resource_type: String,
+        amount: f64,
+    },
+    ResourceRestored {
+        unit_id: String,
+        resource_type: String,
+        amount: f64,
+    },
+    ResourceDepleted {
+        unit_id: String,
+        resource_type: String,
+    },
 
     // Custom Events for user-defined abilities
-    Custom { event_type: String, data: HashMap<String, String>, source_id: String },
+    Custom {
+        event_type: String,
+        data: HashMap<String, String>,
+        source_id: String,
+    },
 }
 
 impl Event {
@@ -106,8 +215,13 @@ impl Event {
 
     /// Check if this event involves a specific combatant
     pub fn involves_combatant(&self, combatant_id: &str) -> bool {
-        self.get_source_id().as_ref().is_some_and(|id| id == combatant_id) ||
-        self.get_target_id().as_ref().is_some_and(|id| id == combatant_id)
+        self.get_source_id()
+            .as_ref()
+            .is_some_and(|id| id == combatant_id)
+            || self
+                .get_target_id()
+                .as_ref()
+                .is_some_and(|id| id == combatant_id)
     }
 
     /// Get event type as string for filtering and logging
@@ -149,55 +263,110 @@ impl Event {
     }
 
     /// Format event for human-readable log output (CLI)
-    pub fn format_for_log(&self, combatant_names: &std::collections::HashMap<String, String>) -> Option<String> {
+    pub fn format_for_log(
+        &self,
+        combatant_names: &std::collections::HashMap<String, String>,
+    ) -> Option<String> {
         // Helper to get name from ID
-        let get_name = |id: &str| combatant_names.get(id).cloned().unwrap_or_else(|| id.to_string());
+        let get_name = |id: &str| {
+            combatant_names
+                .get(id)
+                .cloned()
+                .unwrap_or_else(|| id.to_string())
+        };
 
         match self {
-            Event::RoundStarted { round_number } => {
-                Some(format!("\n# Round {}\n", round_number))
-            }
+            Event::RoundStarted { round_number } => Some(format!("\n# Round {}\n", round_number)),
             Event::TurnStarted { unit_id, .. } => {
                 Some(format!("\n## {} starts turn", get_name(unit_id)))
             }
-            Event::ActionStarted { actor_id, action_id } => {
-                Some(format!("    - Uses Action: {}", action_id.split('-').next_back().unwrap_or(action_id)))
-            }
-            Event::AttackHit { attacker_id, target_id, damage } => {
-                Some(format!("* ⚔️ Attack vs **{}**: ✅ **HIT**\n  * 🩸 Damage: **{:.0}**", 
-                    get_name(target_id), damage))
-            }
-            Event::AttackMissed { attacker_id, target_id } => {
-                Some(format!("* ⚔️ Attack vs **{}**: ❌ **MISS**", get_name(target_id)))
-            }
-            Event::DamageTaken { target_id, damage, damage_type } => {
-                Some(format!("  * 💥 {} takes {:.0} {} damage", 
-                    get_name(target_id), damage, damage_type))
-            }
-            Event::HealingApplied { target_id, amount, source_id } => {
-                Some(format!("  * 💚 {} heals {} for {:.0} HP", 
-                    get_name(source_id), get_name(target_id), amount))
-            }
-            Event::UnitDied { unit_id, killer_id, .. } => {
+            Event::ActionStarted {
+                actor_id: _,
+                action_id,
+            } => Some(format!(
+                "    - Uses Action: {}",
+                action_id.split('-').next_back().unwrap_or(action_id)
+            )),
+            Event::AttackHit {
+                attacker_id: _,
+                target_id,
+                damage,
+            } => Some(format!(
+                "* ⚔️ Attack vs **{}**: ✅ **HIT**\n  * 🩸 Damage: **{:.0}**",
+                get_name(target_id),
+                damage
+            )),
+            Event::AttackMissed {
+                attacker_id: _,
+                target_id,
+            } => Some(format!(
+                "* ⚔️ Attack vs **{}**: ❌ **MISS**",
+                get_name(target_id)
+            )),
+            Event::DamageTaken {
+                target_id,
+                damage,
+                damage_type,
+            } => Some(format!(
+                "  * 💥 {} takes {:.0} {} damage",
+                get_name(target_id),
+                damage,
+                damage_type
+            )),
+            Event::HealingApplied {
+                target_id,
+                amount,
+                source_id,
+            } => Some(format!(
+                "  * 💚 {} heals {} for {:.0} HP",
+                get_name(source_id),
+                get_name(target_id),
+                amount
+            )),
+            Event::UnitDied {
+                unit_id, killer_id, ..
+            } => {
                 if let Some(killer) = killer_id {
-                    Some(format!("💀 **{}** was killed by **{}**", get_name(unit_id), get_name(killer)))
+                    Some(format!(
+                        "💀 **{}** was killed by **{}**",
+                        get_name(unit_id),
+                        get_name(killer)
+                    ))
                 } else {
                     Some(format!("💀 **{}** died", get_name(unit_id)))
                 }
             }
-            Event::BuffApplied { target_id, buff_id, source_id } => {
-                Some(format!("  * ✨ Buff '{}' applied to {} by {}", 
-                    buff_id, get_name(target_id), get_name(source_id)))
-            }
-            Event::ConditionAdded { target_id, condition, source_id } => {
-                Some(format!("  * 🔴 Condition '{:?}' added to {} by {}", 
-                    condition, get_name(target_id), get_name(source_id)))
-            }
-            Event::ResourceConsumed { unit_id, resource_type, amount } => {
-                Some(format!("  * 📉 {} consumed {:.0} {}", 
-                    get_name(unit_id), amount, resource_type))
-            }
-            Event::TurnEnded {  .. } => {
+            Event::BuffApplied {
+                target_id,
+                buff_id,
+                source_id,
+            } => Some(format!(
+                "  * ✨ Buff '{}' applied to {} by {}",
+                buff_id,
+                get_name(target_id),
+                get_name(source_id)
+            )),
+            Event::ConditionAdded {
+                target_id,
+                condition,
+                source_id,
+            } => Some(format!(
+                "  * 🔴 Condition '{:?}' added to {} by {}",
+                condition,
+                get_name(target_id),
+                get_name(source_id)
+            )),
+            Event::ResourceConsumed {
+                unit_id,
+                resource_type,
+                amount,
+            } => Some(format!(
+                "  * 📉 {} consumed {:.0} {}",
+                get_name(unit_id),
+                amount,
+                resource_type
+            )),
+            Event::TurnEnded { .. } => {
                 // Don't print turn end events to reduce noise
                 None
             }
@@ -207,9 +376,15 @@ impl Event {
             }
             Event::EncounterEnded { winner, reason } => {
                 if let Some(winner_name) = winner {
-                    Some(format!("\n🏆 **Encounter Ended** - Winner: {} ({})\n", winner_name, reason))
+                    Some(format!(
+                        "\n🏆 **Encounter Ended** - Winner: {} ({})\n",
+                        winner_name, reason
+                    ))
                 } else {
-                    Some(format!("\n⚔️ **Encounter Ended** - {} (No clear winner)\n", reason))
+                    Some(format!(
+                        "\n⚔️ **Encounter Ended** - {} (No clear winner)\n",
+                        reason
+                    ))
                 }
             }
             _ => {
@@ -219,7 +394,6 @@ impl Event {
         }
     }
 }
-
 
 /// Represents a listener that reacts to specific events
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -266,23 +440,23 @@ impl EventListener {
             (TriggerCondition::OnBeingAttacked, Event::AttackHit { target_id, .. }) => {
                 // Check if the listener's owner is the target
                 self.owner_id == *target_id
-            },
+            }
             (TriggerCondition::OnMiss, Event::AttackMissed { .. }) => true,
             (TriggerCondition::OnBeingDamaged, Event::DamageTaken { target_id, .. }) => {
                 self.owner_id == *target_id
-            },
+            }
             (TriggerCondition::OnAllyAttacked, Event::AttackHit { target_id: _, .. }) => {
                 // This would need to check if target is an ally - complex logic for later
                 false // Placeholder
-            },
+            }
             (TriggerCondition::OnEnemyDeath, Event::UnitDied { unit_id: _, .. }) => {
                 // This would need to check if unit is an enemy - complex logic for later
                 false // Placeholder
-            },
+            }
             (TriggerCondition::OnCriticalHit, Event::AttackHit { .. }) => {
                 // This would need to check if attack was a critical hit
                 false // Placeholder
-            },
+            }
             _ => false,
         }
     }
@@ -356,7 +530,11 @@ impl EventBus {
         // Sort reactions by priority (higher first) and by owner for consistency
         triggered_reactions.sort_by(|a, b| {
             // First sort by priority (descending)
-            let priority_cmp = b.1.base().action_slot.unwrap_or(0).cmp(&a.1.base().action_slot.unwrap_or(0));
+            let priority_cmp =
+                b.1.base()
+                    .action_slot
+                    .unwrap_or(0)
+                    .cmp(&a.1.base().action_slot.unwrap_or(0));
             if priority_cmp != std::cmp::Ordering::Equal {
                 return priority_cmp;
             }
@@ -447,12 +625,18 @@ impl EventBus {
 
     /// Get all listeners for a specific owner
     pub fn get_listeners_for_owner(&self, owner_id: &str) -> &[EventListener] {
-        self.listeners.get(owner_id).map_or(&[], |listeners| listeners.as_slice())
+        self.listeners
+            .get(owner_id)
+            .map_or(&[], |listeners| listeners.as_slice())
     }
 
     /// Get statistics about the event bus
     pub fn get_stats(&self) -> EventBusStats {
-        let total_listeners: usize = self.listeners.values().map(|listeners| listeners.len()).sum();
+        let total_listeners: usize = self
+            .listeners
+            .values()
+            .map(|listeners| listeners.len())
+            .sum();
         let pending_count = self.pending_events.len();
         let history_count = self.event_history.len();
 
@@ -478,7 +662,7 @@ pub struct EventBusStats {
 mod tests {
     use super::*;
     // Removed unused imports: ActionCost, ResourceType
-    // use crate::resources::{ActionCost, ResourceType}; 
+    // use crate::resources::{ActionCost, ResourceType};
 
     #[test]
     fn test_event_creation() {

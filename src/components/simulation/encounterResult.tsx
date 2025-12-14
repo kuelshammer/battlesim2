@@ -1,9 +1,9 @@
-import { FC, useState } from "react"
-import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula } from "../../model/model"
+import { FC, useState, memo, useMemo } from "react"
+import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import styles from './encounterResult.module.scss'
-import { Round } from "../../model/model"
-import { clone } from "../../model/utils"
+import { Round } from "@/model/model"
+import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
 
@@ -79,7 +79,7 @@ function getTargetPrefix(combattantAction: { action: FinalAction, targets: Map<s
 }
 
 
-const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onHighlight }) => {
+const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds, onHighlight }) => {
     function getTarget(combattantAction: { action: FinalAction, targets: Map<string, number> }) {
         if (combattantAction.action.target === 'self') return 'itself'
 
@@ -320,22 +320,27 @@ const TeamResults: FC<TeamPropType> = ({ round, team, stats, highlightedIds, onH
             ))}
         </div>
     )
-}
+})
 
 type PropType = {
     value: EncounterResultType,
 }
 
-const EncounterResult: FC<PropType> = ({ value }) => {
+const EncounterResult: FC<PropType> = memo(({ value }) => {
     if (!value.rounds.length) return <></>
-    const lastRound = clone(value.rounds[value.rounds.length - 1])
-    const [highlightedIds, setHighlightedIds] = useState<string[]>([])
-    const [highlightedRound, setHighlightedRound] = useState(0)
-
-        ; ([...lastRound.team1, ...lastRound.team2]).forEach(combattant => {
+    
+    // Memoize expensive clone operation
+    const lastRound = useMemo(() => {
+        const cloned = clone(value.rounds[value.rounds.length - 1])
+        ; ([...cloned.team1, ...cloned.team2]).forEach(combattant => {
             combattant.initialState = combattant.finalState
             combattant.actions = []
         })
+        return cloned
+    }, [value.rounds])
+    
+    const [highlightedIds, setHighlightedIds] = useState<string[]>([])
+    const [highlightedRound, setHighlightedRound] = useState(0)
 
     if (value.rounds.length === 1 && (!value.rounds[0].team1.length || !value.rounds[0].team2.length)) return <></>
 
@@ -371,6 +376,6 @@ const EncounterResult: FC<PropType> = ({ value }) => {
             </div>
         </div>
     )
-}
+})
 
 export default EncounterResult

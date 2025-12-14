@@ -1,0 +1,165 @@
+{
+  "players": [
+    {
+      "id": "player1",
+      "name": "Andreas",
+      "count": 1,
+      "hp": 54,
+      "AC": 18,
+      "saveBonus": 3,
+      "actions": [
+        {
+          "type": "atk",
+          "id": "atk_axe",
+          "name": "Battleaxe",
+          "action_slot": 0,
+          "targets": 1,
+          "dpr": "1d10+4",
+          "toHit": "1d20+6",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    },
+    {
+      "id": "player2",
+      "name": "Van",
+      "count": 1,
+      "hp": 54,
+      "AC": 20,
+      "saveBonus": 3,
+      "actions": [
+        {
+          "type": "atk",
+          "id": "atk_sword",
+          "name": "Longsword",
+          "action_slot": 0,
+          "targets": 1,
+          "dpr": "1d10+4",
+          "toHit": "1d20+7",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    },
+    {
+      "id": "player3",
+      "name": "Alestair",
+      "count": 1,
+      "hp": 54,
+      "AC": 20,
+      "saveBonus": 3,
+      "actions": [
+        {
+          "type": "atk",
+          "id": "atk_greatsword",
+          "name": "Greatsword",
+          "action_slot": 0,
+          "targets": 1,
+          "dpr": "1d10+4",
+          "toHit": "1d20+6",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    },
+    {
+      "id": "player4",
+      "name": "Valerius",
+      "count": 1,
+      "hp": 20,
+      "AC": 14,
+      "saveBonus": 2,
+      "actions": [
+        {
+          "type": "atk",
+          "id": "atk_dagger",
+          "name": "Dagger",
+          "action_slot": 0,
+          "targets": 1,
+          "dpr": "1d4+2",
+          "toHit": "1d20+3",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "monsters": [
+        {
+          "id": "monster1",
+          "name": "Goblin",
+          "count": 1,
+          "hp": 10,
+          "AC": 12,
+          "saveBonus": 0,
+          "actions": [
+            {
+              "type": "atk",
+              "id": "atk_club",
+              "name": "Club",
+              "action_slot": 0,
+              "targets": 1,
+              "dpr": "1d6+2",
+              "toHit": "1d20+5",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        },
+        {
+          "id": "monster2",
+          "name": "Orc",
+          "count": 1,
+          "hp": 15,
+          "AC": 13,
+          "saveBonus": 0,
+          "actions": [
+            {
+              "type": "atk",
+              "id": "atk_greataxe",
+              "name": "Greataxe",
+              "action_slot": 0,
+              "targets": 1,
+              "dpr": "1d12+3",
+              "toHit": "1d20+6",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        },
+        {
+          "id": "monster3",
+          "name": "Troll",
+          "count": 1,
+          "hp": 84,
+          "AC": 15,
+          "saveBonus": 2,
+          "actions": [
+            {
+              "type": "atk",
+              "id": "atk_club",
+              "name": "Club",
+              "action_slot": 0,
+              "targets": 1,
+              "dpr": "2d6+4",
+              "toHit": "1d20+7",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        }
+      ],
+      "short_rest": false
+    }
+  ]
+}

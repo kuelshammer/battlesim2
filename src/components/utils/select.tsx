@@ -32,7 +32,7 @@ const Select = <T,>({ value, options, onChange }: PropType<T>): JSX.Element => {
             classNames={SelectStyles}
             options={options}
             value={getEntry(options, value)}
-            onChange={(e: any) => !e ? null : onChange(e.value)}
+            onChange={(e: { value: T }) => !e ? null : onChange(e.value)}
             inputValue={search}
             onInputChange={setSearch}
         />

@@ -1,13 +1,13 @@
 import { FC, useContext, useEffect, useState } from "react"
-import { Creature } from "../../model/model"
+import { Creature } from "@/model/model"
 import styles from './playerForm.module.scss'
-import { Class, ClassesList } from "../../model/enums"
-import { capitalize, clone, range } from "../../model/utils"
-import { PlayerTemplates } from "../../data/data"
-import ClassOptions from "../../model/classOptions"
+import { Class, ClassesList } from "@/model/enums"
+import { capitalize, clone, range } from "@/model/utils"
+import { PlayerTemplates } from "@/data/data"
+import ClassOptions from "@/model/classOptions"
 import { z } from "zod"
-import Checkbox from "../utils/checkbox"
-import Range from "../utils/range"
+import Checkbox from "@/utils/checkbox"
+import Range from "@/utils/range"
 
 type PropType = {
     value?: Creature,

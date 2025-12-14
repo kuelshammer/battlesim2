@@ -1,11 +1,11 @@
 import { FC, } from "react"
-import { Creature, CreatureSchema } from "../../model/model"
+import { Creature, CreatureSchema } from "@/model/model"
 import styles from './monsterForm.module.scss'
-import { ChallengeRating, ChallengeRatingList, CreatureType, CreatureTypeList, numericCR } from "../../model/enums"
-import { capitalize, clone, sharedStateGenerator, useCalculatedState } from "../../model/utils"
-import { Monsters } from "../../data/monsters"
-import Range from "../utils/range"
-import SortTable from "../utils/sortTable"
+import { ChallengeRating, ChallengeRatingList, CreatureType, CreatureTypeList, numericCR } from "@/model/enums"
+import { capitalize, clone, sharedStateGenerator, useCalculatedState } from "@/model/utils"
+import { Monsters } from "@/data/monsters"
+import Range from "@/utils/range"
+import SortTable from "@/utils/sortTable"
 
 type PropType = {
     value: Creature,

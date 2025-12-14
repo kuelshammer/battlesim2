@@ -1,6 +1,6 @@
 // src/components/simulation/ResourcePanel.tsx
 import { FC } from 'react';
-import { Combattant } from '../../model/model';
+import { Combattant } from '@/model/model';
 import styles from './simulation.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt, faDiceD6, faHandPaper, faHatWizard, faHeart, faPlus, faShieldAlt, faStar, faShoePrints } from '@fortawesome/free-solid-svg-icons';

@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react"
-import { DiceFormula } from "../../model/model"
+import { DiceFormula } from "@/model/model"
 import styles from './diceFormulaInput.module.scss'
-import { evaluateDiceFormula, validateDiceFormula } from "../../model/dice"
+import { evaluateDiceFormula, validateDiceFormula } from "@/model/dice"
 
 type PropType = {
     value: DiceFormula|undefined,

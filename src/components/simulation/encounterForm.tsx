@@ -1,12 +1,12 @@
 import { FC, ReactNode, useState } from "react"
-import { Creature, Encounter } from "../../model/model"
+import { Creature, Encounter } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp, faPen, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons"
 import CreatureForm from "./../creatureForm/creatureForm"
-import { clone } from "../../model/utils"
-import Checkbox from "../utils/checkbox"
-import Range from "../utils/range"
+import { clone } from "@/model/utils"
+import Checkbox from "@/utils/checkbox"
+import Range from "@/utils/range"
 
 type PropType = {
     mode: 'player' | 'monster',
