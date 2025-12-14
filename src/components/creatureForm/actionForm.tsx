@@ -1,7 +1,7 @@
 import { FC, useState } from "react"
 import { Action, AllyTarget, AtkAction, Buff, BuffAction, DebuffAction, DiceFormula, EnemyTarget, FinalAction, Frequency, HealAction, TemplateAction } from "../../model/model"
 import styles from './actionForm.module.scss'
-import { clone } from "../../model/utils"
+import { clone, inDevEnvironment } from "../../model/utils"
 import { ActionType, BuffDuration, ActionCondition, CreatureConditionList, CreatureCondition, ActionSlots } from "../../model/enums"
 import Select from "../utils/select"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -612,32 +612,34 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 return targetForm
             })() : null}
 
-            {/* Backend Feature Feedback Panel */}
-            <div className={styles.backendFeedback}>
-                <div className={styles.feedbackTitle}>🔧 Backend Processing</div>
-                <div className={styles.feedbackItems}>
-                    {(() => {
-                        const feedback = getBackendFeedback()
-                        return [
-                            ...feedback.processors.map(processor => (
-                                <div key={processor} className={styles.feedbackItem}>
-                                    ⚙️ {processor}
-                                </div>
-                            )),
-                            ...feedback.reactions.map(reaction => (
-                                <div key={reaction} className={`${styles.feedbackItem} ${styles.reaction}`}>
-                                    ⚡ {reaction}
-                                </div>
-                            )),
-                            ...feedback.effects.map(effect => (
-                                <div key={effect} className={`${styles.feedbackItem} ${styles.effect}`}>
-                                    ✨ {effect}
-                                </div>
-                            ))
-                        ]
-                    })()}
+            {/* Backend Feature Feedback Panel - Only shown in dev mode */}
+            {inDevEnvironment ? (
+                <div className={styles.backendFeedback}>
+                    <div className={styles.feedbackTitle}>🔧 Backend Processing</div>
+                    <div className={styles.feedbackItems}>
+                        {(() => {
+                            const feedback = getBackendFeedback()
+                            return [
+                                ...feedback.processors.map(processor => (
+                                    <div key={processor} className={styles.feedbackItem}>
+                                        ⚙️ {processor}
+                                    </div>
+                                )),
+                                ...feedback.reactions.map(reaction => (
+                                    <div key={reaction} className={`${styles.feedbackItem} ${styles.reaction}`}>
+                                        ⚡ {reaction}
+                                    </div>
+                                )),
+                                ...feedback.effects.map(effect => (
+                                    <div key={effect} className={`${styles.feedbackItem} ${styles.effect}`}>
+                                        ✨ {effect}
+                                    </div>
+                                ))
+                            ]
+                        })()}
+                    </div>
                 </div>
-            </div>
+            ) : null}
         </div>
     )
 }
