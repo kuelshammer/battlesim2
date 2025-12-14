@@ -8,6 +8,8 @@ import ActionForm from "./actionForm"
 import ResourceEditor from "./ResourceEditor"
 import StrategyBuilder from "./StrategyBuilder"
 import DecimalInput from "../utils/DecimalInput"
+import DiceFormulaInput from "../utils/diceFormulaInput"
+import { DiceFormula } from "../../model/model"
 import Checkbox from "../utils/checkbox"
 import { v4 as uuid } from 'uuid'
 import LoadCreatureForm, { saveCreature } from "./loadCreatureForm"
@@ -114,7 +116,7 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
             </section>
             <section>
                 <h3>Initiative Bonus</h3>
-                <DecimalInput value={value.initiativeBonus || 0} onChange={init => update(v => { v.initiativeBonus = init || 0 })} />
+                <DiceFormulaInput value={value.initiativeBonus || 0} onChange={(init: DiceFormula | undefined) => update(v => { v.initiativeBonus = init || 0 })} />
             </section>
             <section>
                 <h3>Initiative Advantage</h3>

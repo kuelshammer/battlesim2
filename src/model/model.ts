@@ -220,7 +220,7 @@ export const CreatureSchema = z.object({
     conSaveAdvantage: z.boolean().optional(), // For Resilient (Con), War Caster, etc.
     saveAdvantage: z.boolean().optional(), // For Paladin Aura, advantage on ALL saves
 
-    initiativeBonus: z.number().optional(),
+    initiativeBonus: DiceFormulaSchema.optional(),
     initiativeAdvantage: z.boolean().optional(),
     actions: z.array(ActionSchema),
     triggers: z.array(z.object({

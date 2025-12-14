@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use crate::enums::*;
-use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType}; // Added ResourceType
+use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -430,9 +430,10 @@ pub struct Creature {
     #[serde(default, rename = "saveAdvantage", skip_serializing_if = "Option::is_none")]
     pub save_advantage: Option<bool>, // Advantage on ALL saves (e.g. Paladin Aura)
     
-    #[serde(default)]
+    #[serde(default = "default_initiative_bonus")]
     #[serde(rename = "initiativeBonus")]
-    pub initiative_bonus: f64,
+    pub initiative_bonus: DiceFormula,
+
     #[serde(default)]
     #[serde(rename = "initiativeAdvantage")]
     pub initiative_advantage: bool,
@@ -447,6 +448,10 @@ pub struct Creature {
     pub hit_dice: Option<String>, // Changed from DiceFormula
     #[serde(rename = "conModifier")]
     pub con_modifier: Option<f64>, // New field for constitution modifier to apply to hit dice rolls
+}
+
+fn default_initiative_bonus() -> DiceFormula {
+    DiceFormula::Value(0.0)
 }
 
 impl Creature {

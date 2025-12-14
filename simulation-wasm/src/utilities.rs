@@ -1,5 +1,6 @@
 use rand::Rng;
-use crate::model::Creature;
+use crate::model::{Creature, DiceFormula};
+use crate::dice; // Import the dice module
 
 pub fn roll_initiative(c: &Creature) -> f64 {
     let roll = if c.initiative_advantage {
@@ -10,5 +11,7 @@ pub fn roll_initiative(c: &Creature) -> f64 {
         rand::thread_rng().gen_range(1..=20) as f64
     };
 
-    roll + c.initiative_bonus as f64
+    let bonus = dice::evaluate(&c.initiative_bonus, 1); // Use dice::evaluate with multiplier 1
+
+    roll + bonus
 }
