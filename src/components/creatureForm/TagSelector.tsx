@@ -31,7 +31,8 @@ const TagSelector: FC<Props> = ({ value, onChange }) => {
                     <span 
                         key={tag} 
                         style={{ 
-                            background: '#e0e0e0', 
+                            background: '#445', 
+                            color: '#eee',
                             borderRadius: '12px', 
                             padding: '2px 8px', 
                             fontSize: '0.85em',
