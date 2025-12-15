@@ -1,11 +1,13 @@
-use simulation_wasm::execution;
-use simulation_wasm::*; // Add execution module import
+use simulation_wasm::model::*;
+use simulation_wasm::enums::{ActionCondition, AllyTarget, BuffDuration, EnemyTarget};
+use simulation_wasm::aggregation;
+use simulation_wasm::run_event_driven_simulation_rust;
 
 fn main() {
     // Simple test: Caster casts Bless on Target, then Caster dies
     // Expected: Bless should be removed from Target in aggregated results
 
-    let caster = model::Creature {
+    let caster = Creature {
         id: "caster-template".to_string(),
         name: "Acolyte Buff".to_string(),
         count: 1.0,
@@ -21,30 +23,30 @@ fn main() {
         cha_save_bonus: None,
         con_save_advantage: None,
         save_advantage: None,
-        initiative_bonus: model::DiceFormula::Value(0.0),
+        initiative_bonus: DiceFormula::Value(0.0),
         initiative_advantage: false,
-        actions: vec![model::Action::Buff(model::BuffAction {
+        actions: vec![Action::Buff(BuffAction {
             id: "bless".to_string(),
             name: "Bless".to_string(),
             action_slot: Some(1), // Bonus Action, ensure Some
             cost: vec![],         // Add new fields
             requirements: vec![], // Add new fields
             tags: vec![],         // Add new fields
-            freq: model::Frequency::Static("at will".to_string()),
-            condition: enums::ActionCondition::Default,
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
             targets: 3,
-            target: enums::AllyTarget::AllyWithMostHP,
-            buff: model::Buff {
+            target: AllyTarget::AllyWithMostHP,
+            buff: Buff {
                 display_name: Some("Bless".to_string()),
-                duration: enums::BuffDuration::EntireEncounter,
+                duration: BuffDuration::EntireEncounter,
                 ac: None,
-                to_hit: Some(model::DiceFormula::Expr("1d4".to_string())),
+                to_hit: Some(DiceFormula::Expr("1d4".to_string())),
                 damage: None,
                 damage_reduction: None,
                 damage_multiplier: None,
                 damage_taken_multiplier: None,
                 dc: None,
-                save: Some(model::DiceFormula::Expr("1d4".to_string())),
+                save: Some(DiceFormula::Expr("1d4".to_string())),
                 condition: None,
                 magnitude: None,
                 source: None, // Will be set during simulation
@@ -60,7 +62,7 @@ fn main() {
         arrival: None,
         mode: "monster".to_string(),
     };
-    let target = model::Creature {
+    let target = Creature {
         id: "target-template".to_string(),
         name: "Player Fighter".to_string(),
         count: 1.0,
@@ -76,7 +78,7 @@ fn main() {
         cha_save_bonus: None,
         con_save_advantage: None,
         save_advantage: None,
-        initiative_bonus: model::DiceFormula::Value(0.0),
+        initiative_bonus: DiceFormula::Value(0.0),
         initiative_advantage: false,
         actions: vec![],
         triggers: vec![],
@@ -88,7 +90,7 @@ fn main() {
         mode: "monster".to_string(),
     };
 
-    let enemy = model::Creature {
+    let enemy = Creature {
         id: "enemy-template".to_string(),
         name: "Goblin".to_string(),
         count: 1.0,
@@ -104,21 +106,21 @@ fn main() {
         cha_save_bonus: None,
         con_save_advantage: None,
         save_advantage: None,
-        initiative_bonus: model::DiceFormula::Value(2.0),
+        initiative_bonus: DiceFormula::Value(2.0),
         initiative_advantage: false,
-        actions: vec![model::Action::Atk(model::AtkAction {
+        actions: vec![Action::Atk(AtkAction {
             id: "shortsword".to_string(),
             name: "Shortsword".to_string(),
             action_slot: Some(0), // Ensure Some(0)
             cost: vec![],         // Add missing fields
             requirements: vec![], // Add missing fields
             tags: vec![],         // Add missing fields
-            freq: model::Frequency::Static("at will".to_string()),
-            condition: enums::ActionCondition::Default,
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
             targets: 1,
-            dpr: model::DiceFormula::Expr("1d6+2".to_string()),
-            to_hit: model::DiceFormula::Value(4.0),
-            target: enums::EnemyTarget::EnemyWithMostHP,
+            dpr: DiceFormula::Expr("1d6+2".to_string()),
+            to_hit: DiceFormula::Value(4.0),
+            target: EnemyTarget::EnemyWithMostHP,
             use_saves: None,
             half_on_save: None,
             rider_effect: None,
@@ -133,7 +135,7 @@ fn main() {
     };
 
     let players = vec![caster, target];
-    let encounter = model::Encounter {
+    let encounter = Encounter {
         monsters: vec![enemy],
         players_surprised: None,
         monsters_surprised: None,
@@ -143,7 +145,7 @@ fn main() {
     };
 
     println!("Running 10 simulations...");
-    let (results, _events) = crate::run_event_driven_simulation_rust(players, vec![encounter], 10, false);
+    let (results, _events) = run_event_driven_simulation_rust(players, vec![encounter], 10, false);
 
     println!("\nAggregating results...");
     let aggregated = aggregation::aggregate_results(&results);

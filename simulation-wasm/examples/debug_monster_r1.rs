@@ -1,6 +1,6 @@
-use simulation_wasm::enums::*;
-use simulation_wasm::execution;
-use simulation_wasm::model::*; // This is run_monte_carlo from simulation.rs
+use simulation_wasm::enums::{EnemyTarget, ActionCondition};
+use simulation_wasm::model::{Creature, Encounter, Action, AtkAction, Frequency, DiceFormula};
+use simulation_wasm::run_event_driven_simulation_rust;
 
 fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -> Creature {
     Creature {
@@ -19,7 +19,7 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
         cha_save_bonus: None,
         con_save_advantage: None,
         save_advantage: None,
-        initiative_bonus: model::DiceFormula::Value(init_bonus),
+        initiative_bonus: DiceFormula::Value(init_bonus),
         initiative_advantage: init_advantage,
         actions: vec![
             Action::Atk(AtkAction {
@@ -84,7 +84,7 @@ fn main() {
     let iterations = 1; // Single iteration for debugging
 
     println!("Running {} simulations...", iterations);
-    let results = simulation::run_monte_carlo(&players, &[encounter], iterations);
+    let (results, _) = run_event_driven_simulation_rust(players, vec![encounter], iterations, false);
 
     // This test is for debugging purposes, so we don't need extensive result processing
     // Just a single simulation trace.

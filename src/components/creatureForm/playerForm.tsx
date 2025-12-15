@@ -28,7 +28,7 @@ type ClassForm = { type: 'artificer', options: z.infer<typeof ClassOptions.artif
     | { type: 'warlock', options: z.infer<typeof ClassOptions.warlock> }
     | { type: 'wizard', options: z.infer<typeof ClassOptions.wizard> }
 
-const DefaultOptions: {[key in Class]: z.infer<typeof ClassOptions[key]>} = {
+const DefaultOptions: {[key in Class]: any} = {
     artificer: {},
     barbarian: { gwm: false, weaponBonus: 0 },
     bard: {},
@@ -71,9 +71,9 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
         setChosenClass(chosenClass as any)
     }
 
-    function setClassOptions<T extends Class>(callback: (classOptions: z.infer<typeof ClassOptions[T]>) => void) {
+    function setClassOptions(callback: (classOptions: any) => void) {
         if (!chosenClass) return
-        
+
         const chosenClassClone = clone(chosenClass)
         callback(chosenClassClone.options)
         setChosenClass(chosenClassClone)
@@ -137,7 +137,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions<'barbarian'>(options => { options.gwm = !options.gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -146,7 +146,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions<'barbarian'>(options => { options.weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
@@ -164,7 +164,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions<'fighter'>(options => { options.gwm = !options.gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -173,7 +173,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions<'fighter'>(options => { options.weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
@@ -187,7 +187,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions<'paladin'>(options => { options.gwm = !options.gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -196,55 +196,55 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions<'paladin'>(options => { options.weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
                         </section>
                     </>
-                ) : (chosenClass.type === 'ranger') ? (
-                    <>
-                        <h3>Ranger-specific Options</h3>
-                        <section className={styles.classOptions}>
-                            <Checkbox 
-                                value={chosenClass.options.ss} 
-                                onToggle={() => setClassOptions<'ranger'>(options => { options.ss = !options.ss })}>
-                                Use Sharpshooter
-                            </Checkbox>
-                            <div className={styles.option}>
-                                Weapon:
-                                <Range
-                                    min={0}
-                                    max={3}
-                                    value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions<'ranger'>(options => { options.weaponBonus = newValue })}
-                                    label={`+${chosenClass.options.weaponBonus}`}
-                                />
-                            </div>
-                        </section>
-                    </>
-                ) : (chosenClass.type === 'rogue') ? (
-                    <>
-                        <h3>Rogue-specific Options</h3>
-                        <section className={styles.classOptions}>
-                            <Checkbox 
-                                value={chosenClass.options.ss} 
-                                onToggle={() => setClassOptions<'ranger'>(options => { options.ss = !options.ss })}>
-                                Use Sharpshooter
-                            </Checkbox>
-                            <div className={styles.option}>
-                                Weapon:
-                                <Range
-                                    min={0}
-                                    max={3}
-                                    value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions<'ranger'>(options => { options.weaponBonus = newValue })}
-                                    label={`+${chosenClass.options.weaponBonus}`}
-                                />
-                            </div>
-                        </section>
-                    </>
-                ) : (chosenClass.type === 'sorcerer') ? (
+                 ) : (chosenClass.type === 'ranger') ? (
+                     <>
+                         <h3>Ranger-specific Options</h3>
+                         <section className={styles.classOptions}>
+                             <Checkbox 
+                                 value={chosenClass.options.ss} 
+                                 onToggle={() => setClassOptions(options => { (options as any).ss = !(options as any).ss })}>
+                                 Use Sharpshooter
+                             </Checkbox>
+                             <div className={styles.option}>
+                                 Weapon:
+                                 <Range
+                                     min={0}
+                                     max={3}
+                                     value={chosenClass.options.weaponBonus}
+                                     onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                     label={`+${chosenClass.options.weaponBonus}`}
+                                 />
+                             </div>
+                         </section>
+                     </>
+                 ) : (chosenClass.type === 'rogue') ? (
+                     <>
+                         <h3>Rogue-specific Options</h3>
+                         <section className={styles.classOptions}>
+                             <Checkbox 
+                                 value={chosenClass.options.ss} 
+                                 onToggle={() => setClassOptions(options => { (options as any).ss = !(options as any).ss })}>
+                                 Use Sharpshooter
+                             </Checkbox>
+                             <div className={styles.option}>
+                                 Weapon:
+                                 <Range
+                                     min={0}
+                                     max={3}
+                                     value={chosenClass.options.weaponBonus}
+                                     onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                     label={`+${chosenClass.options.weaponBonus}`}
+                                 />
+                             </div>
+                         </section>
+                     </>
+                 ) : (chosenClass.type === 'sorcerer') ? (
                     <></>
                 ) : (chosenClass.type === 'warlock') ? (
                     <></>

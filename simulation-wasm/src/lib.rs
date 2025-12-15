@@ -14,6 +14,7 @@ pub mod execution;
 pub mod action_resolver;
 pub mod validation; // New module for requirement validation
 pub mod utilities;
+pub mod quintile_analysis;
 
 
 use wasm_bindgen::prelude::*;
@@ -335,7 +336,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             };
 
             let mut combatant = state.base_combatant.clone();
-            combatant.creature.hp = state.current_hp; // Update creature HP to current value
+            // combatant.creature.hp = state.current_hp; // Removed: creature.hp should remain max HP
             combatant.final_state = final_creature_state;
 
             // Populate actions for this round
@@ -387,7 +388,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             };
 
             let mut combatant = state.base_combatant.clone();
-            combatant.creature.hp = state.current_hp; // Update creature HP to current value
+            // combatant.creature.hp = state.current_hp; // Removed: creature.hp should remain max HP
             combatant.final_state = final_creature_state;
             
             let is_player = state.base_combatant.creature.mode.as_str() == "player";
@@ -445,15 +446,31 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
 }
 
 #[wasm_bindgen]
-pub fn aggregate_simulation_results(results: JsValue) -> Result<JsValue, JsValue> {
-    let results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
+pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, party_size: usize) -> Result<JsValue, JsValue> {
+    let mut results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
-        
-    let aggregated = aggregation::aggregate_results(&results);
+    
+    // Sort results by score from worst to best performance
+    results.sort_by(|a, b| crate::aggregation::calculate_score(a).partial_cmp(&crate::aggregation::calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
+    
+    // Calculate party size from first result
+    let party_size = if let Some(first_result) = results.first() {
+        if let Some(first_encounter) = first_result.first() {
+            first_encounter.rounds.first()
+                .map(|first_round| first_round.team1.len())
+                .unwrap_or(0)
+        } else {
+            0
+        }
+    } else {
+        0
+    };
+    
+    let output = quintile_analysis::run_quintile_analysis(&results, scenario_name, party_size);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);
         
-    serde::Serialize::serialize(&aggregated, &serializer)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize aggregated results: {}", e)))
+    serde::Serialize::serialize(&output, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize quintile analysis: {}", e)))
 }

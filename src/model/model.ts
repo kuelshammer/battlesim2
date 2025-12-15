@@ -456,3 +456,36 @@ export const EventSchema = z.discriminatedUnion('type', [
 ])
 
 export type Event = z.infer<typeof EventSchema>
+
+// Quintile Analysis Types
+export const CombatantVisualizationSchema = z.object({
+    name: z.string(),
+    max_hp: z.number(),
+    current_hp: z.number(),
+    is_dead: z.boolean(),
+    is_player: z.boolean(),
+    hp_percentage: z.number(),
+})
+
+export const QuintileStatsSchema = z.object({
+    quintile: z.number(),
+    label: z.string(),
+    median_survivors: z.number(),
+    party_size: z.number(),
+    total_hp_lost: z.number(),
+    hp_lost_percent: z.number(),
+    win_rate: z.number(),
+    // New fields for 5-Timeline Dashboard
+    median_run_visualization: z.array(CombatantVisualizationSchema),
+    battle_duration_rounds: z.number(),
+})
+
+export const AggregateOutputSchema = z.object({
+    scenario_name: z.string(),
+    total_runs: z.number(),
+    quintiles: z.array(QuintileStatsSchema),
+})
+
+export type CombatantVisualization = z.infer<typeof CombatantVisualizationSchema>
+export type QuintileStats = z.infer<typeof QuintileStatsSchema>
+export type AggregateOutput = z.infer<typeof AggregateOutputSchema>

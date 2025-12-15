@@ -7,10 +7,10 @@ import Footer from '../components/utils/footer'
 
 const Simulation = dynamic(() => import('../components/simulation/simulation').catch(err => {
   console.error("Failed to load Simulation component:", err);
-  return () => <div className="text-red-500 p-8">Error loading simulation engine: {err.message}</div>;
+  return () => <div style={{color: "#ef4444", padding: "2rem", textAlign: "center"}}>Error loading simulation engine: {err.message}</div>;
 }), {
   ssr: false,
-  loading: () => <div className="animate-pulse text-center p-8">Loading Simulation Engine...</div>
+  loading: () => <div style={{textAlign: "center", padding: "2rem", animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"}}>Loading Simulation Engine...</div>
 })
 
 export default function Home() {

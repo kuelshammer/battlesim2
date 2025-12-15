@@ -51,7 +51,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    // Verify Score Formula (10 * HP - Monster HP)
+    // Verify Score Formula: (Survivors × 10,000) + Total Party HP - Total Monster HP
     // Pick median result
     let median_result = &results[iterations / 2];
     let score = calculate_score(median_result);
@@ -60,16 +60,20 @@ fn main() {
         if let Some(round) = encounter.rounds.last() {
             let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp).sum();
             let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp).sum();
-            let expected_score = 10.0 * player_hp - monster_hp;
+            let survivors: f64 = round.team1.iter()
+                .filter(|c| c.final_state.current_hp > 0.0)
+                .count() as f64;
+            let expected_score = (survivors * 10_000.0) + player_hp - monster_hp;
 
             println!("Median Result Check:");
             println!("  Player HP: {}", player_hp);
             println!("  Monster HP: {}", monster_hp);
+            println!("  Survivors: {}", survivors);
             println!("  Calculated Score: {}", score);
             println!("  Expected Score: {}", expected_score);
 
             if (score - expected_score).abs() < 0.001 {
-                println!("✅ Score formula matches (10 * PlayerHP - MonsterHP)");
+                println!("✅ Score formula matches ((Survivors × 10,000) + PlayerHP - MonsterHP)");
             } else {
                 println!("❌ Score formula mismatch!");
                 std::process::exit(1);

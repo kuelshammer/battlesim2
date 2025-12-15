@@ -1,0 +1,131 @@
+.battleCard {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #2a2a2a;
+    color: #eee;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #444;
+
+        .quintileInfo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            .quintileLabel {
+                font-weight: bold;
+                font-size: 1.1em;
+                color: #fff;
+            }
+
+            .outcomeBadge {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.9em;
+                font-weight: bold;
+
+                &.dangerBadge {
+                    background-color: #dc3545;
+                    color: #fff;
+                }
+
+                &.successBadge {
+                    background-color: #28a745;
+                    color: #fff;
+                }
+            }
+        }
+
+        .duration {
+            color: #ccc;
+            font-size: 0.9em;
+        }
+    }
+
+    .combatants {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 15px;
+
+        .combatant {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #444;
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .combatantName {
+                flex: 1;
+                font-weight: 500;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .deathIndicator {
+                    color: #dc3545;
+                    font-weight: bold;
+                    font-size: 0.9em;
+                }
+            }
+
+            .hpBar {
+                flex: 2;
+                font-family: 'Courier New', monospace;
+                font-size: 0.9em;
+
+                .hpText {
+                    margin-left: 10px;
+                    font-weight: bold;
+                }
+
+                .healthy {
+                    color: #28a745;
+                }
+
+                .bloodied {
+                    color: #ffc107;
+                }
+
+                .danger {
+                    color: #dc3545;
+                }
+
+                .dead {
+                    color: #6c757d;
+                }
+            }
+        }
+    }
+
+    .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 10px;
+        border-top: 1px solid #444;
+        font-size: 0.9em;
+        color: #ccc;
+
+        .winRate {
+            font-weight: bold;
+        }
+
+        .survivors {
+            color: #fff;
+        }
+    }
+}

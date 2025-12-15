@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
 import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult } from "@/model/model"
+import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult, AggregateOutput } from "@/model/model"
 import { parseEventString, SimulationEvent } from "@/model/events"
 import { clone, useStoredState } from "@/model/utils"
 import styles from './simulation.module.scss'
@@ -12,6 +12,7 @@ import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-i
 import { semiPersistentContext } from "@/model/simulationContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
+import QuintileAnalysis from "./quintileAnalysis"
 
 
 
@@ -33,6 +34,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
 
+    const [saving, setSaving] = useState(false)
+    const [loading, setLoading] = useState(false)
+    
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
         const hasPlayers = !!players.length
@@ -48,19 +52,15 @@ const Simulation: FC<PropType> = memo(({ }) => {
         return names
     }, [players, encounters])
 
-    const [saving, setSaving] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [canSave, setCanSave] = useState(false)
     
-    // Memoize canSave computation
-    const canSave = useMemo(() => (
-        !isEmptyResult
-        && (typeof window !== "undefined")
-        && !!localStorage
-        && !!localStorage.getItem('useLocalStorage')
-    ), [isEmptyResult])
+    useEffect(() => {
+        setCanSave(!isEmptyResult && (typeof window !== "undefined") && !!localStorage && !!localStorage.getItem('useLocalStorage'))
+    }, [isEmptyResult])
 
     const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
     const [allResults, setAllResults] = useState<SimulationResult[]>([])
+    const [quintileAnalysis, setQuintileAnalysis] = useState<AggregateOutput | null>(null)
     const wasmLoading = useRef(false)
 
     useEffect(() => {
@@ -124,6 +124,17 @@ const Simulation: FC<PropType> = memo(({ }) => {
                 }
 
                 setAllResults(results)
+
+                // Compute quintile analysis
+                try {
+                    const partySize = players.length
+                    const scenarioName = "Current Scenario" // Could be made configurable
+                    const analysis = wasm.run_quintile_analysis_wasm(results, scenarioName, partySize) as AggregateOutput
+                    setQuintileAnalysis(analysis)
+                } catch (analysisError) {
+                    console.error("Failed to compute quintile analysis:", analysisError)
+                    setQuintileAnalysis(null)
+                }
 
                 // Select single run based on luck
                 const total = results.length
@@ -268,6 +279,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     Add Encounter
                 </button>
 
+                {/* Quintile Analysis Display */}
+                {quintileAnalysis && (
+                    <QuintileAnalysis analysis={quintileAnalysis} />
+                )}
 
                 {/* Event Log Display */}
                 <EventLog

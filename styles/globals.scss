@@ -1,8 +1,18 @@
-@import '/styles/mixins';
+@import 'mixins';
 
 // General style & layout
 html { @include scrollable }
 html, body, #__next, main {min-height: 100vh; background: #433; color: #eee; margin: 0; padding:0;}
+
+// Pulse animation for loading states
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
 main {
     display: flex;
     flex-direction: column;
@@ -78,4 +88,12 @@ input {
             transform: translateX(-50%);
         }
     }
+}
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }

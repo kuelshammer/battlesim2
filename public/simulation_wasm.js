@@ -183,18 +183,6 @@ if (!('encodeInto' in cachedTextEncoder)) {
 let WASM_VECTOR_LEN = 0;
 
 /**
- * @param {any} results
- * @returns {any}
- */
-export function aggregate_simulation_results(results) {
-    const ret = wasm.aggregate_simulation_results(results);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return takeFromExternrefTable0(ret[0]);
-}
-
-/**
  * @returns {any}
  */
 export function get_last_simulation_events() {
@@ -220,14 +208,15 @@ export function run_event_driven_simulation(players, encounters, iterations) {
 }
 
 /**
- * @param {any} players_val
- * @param {any} encounters_val
- * @param {number} iterations
- * @param {boolean} log_enabled
+ * @param {any} results
+ * @param {string} scenario_name
+ * @param {number} party_size
  * @returns {any}
  */
-export function run_simulation(players_val, encounters_val, iterations, log_enabled) {
-    const ret = wasm.run_simulation(players_val, encounters_val, iterations, log_enabled);
+export function run_quintile_analysis_wasm(results, scenario_name, party_size) {
+    const ptr0 = passStringToWasm0(scenario_name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.run_quintile_analysis_wasm(results, ptr0, len0, party_size);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -450,9 +439,6 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_length_d45040a40c570362 = function(arg0) {
         const ret = arg0.length;
         return ret;
-    };
-    imports.wbg.__wbg_log_1d990106d99dacb7 = function(arg0) {
-        console.log(arg0);
     };
     imports.wbg.__wbg_msCrypto_0a36e2ec3a343d26 = function(arg0) {
         const ret = arg0.msCrypto;

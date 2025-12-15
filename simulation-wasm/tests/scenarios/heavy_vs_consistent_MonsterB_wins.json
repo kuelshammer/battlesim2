@@ -1,13 +1,13 @@
 {
-    "name": "Heavy vs Consistent",
+    "name": "Heavy vs Consistent - Modified Test",
     "players": [
         {
             "id": "player_heavy",
             "mode": "custom",
             "name": "PlayerHeavy",
             "count": 1,
-            "hp": 50,
-            "AC": 15,
+            "hp": 100,
+            "AC": 20,
             "saveBonus": 0,
             "initiativeBonus": 0,
             "initiativeAdvantage": false,
@@ -20,8 +20,8 @@
                     "condition": "default",
                     "targets": 1,
                     "type": "atk",
-                    "dpr": "8d1",
-                    "toHit": "4",
+                    "dpr": "20d1",
+                    "toHit": "5",
                     "target": "enemy with least HP"
                 }
             ]
@@ -35,8 +35,8 @@
                     "mode": "custom",
                     "name": "MonsterConsistent",
                     "count": 1,
-                    "hp": 50,
-                    "AC": 15,
+                    "hp": 100,
+                    "AC": 20,
                     "saveBonus": 0,
                     "actions": [
                         {
@@ -47,8 +47,8 @@
                             "condition": "default",
                             "targets": 1,
                             "type": "atk",
-                            "dpr": "5d1",
-                            "toHit": "10",
+                            "dpr": "10d1",
+                            "toHit": "11",
                             "target": "enemy with least HP"
                         }
                     ]

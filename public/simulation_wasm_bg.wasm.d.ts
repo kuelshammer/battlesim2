@@ -1,10 +1,9 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export const aggregate_simulation_results: (a: any) => [number, number, number];
 export const get_last_simulation_events: () => [number, number, number];
 export const run_event_driven_simulation: (a: any, b: any, c: number) => [number, number, number];
-export const run_simulation: (a: any, b: any, c: number, d: number) => [number, number, number];
+export const run_quintile_analysis_wasm: (a: any, b: number, c: number, d: number) => [number, number, number];
 export const run_simulation_wasm: (a: any, b: any, c: number) => [number, number, number];
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

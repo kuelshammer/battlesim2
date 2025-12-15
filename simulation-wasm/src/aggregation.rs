@@ -375,7 +375,14 @@ pub fn calculate_score(result: &SimulationResult) -> f64 {
         let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp).sum();
         let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp).sum();
 
-        return 10.0 * player_hp - monster_hp;
+        // Count survivors (creatures with HP > 0)
+        let survivors: f64 = round.team1.iter()
+            .filter(|c| c.final_state.current_hp > 0.0)
+            .count() as f64;
+
+        // Tiered scoring: (Survivors × 10,000) + Total Party HP - Total Monster HP
+        // This ensures that keeping players alive is mathematically more valuable than any amount of HP
+        return (survivors * 10_000.0) + player_hp - monster_hp;
     }
 
     0.0

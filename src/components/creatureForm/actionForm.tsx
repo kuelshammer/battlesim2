@@ -1,10 +1,10 @@
 import { FC, useState } from "react"
 import { Action, AllyTarget, AtkAction, Buff, BuffAction, DebuffAction, DiceFormula, EnemyTarget, FinalAction, Frequency, HealAction, TemplateAction } from "@/model/model"
-import actionForm from './actionForm.module.scss'
+import styles from './actionForm.module.scss'
 import { clone, inDevEnvironment } from "@/model/utils"
 import { ActionType, BuffDuration, ActionCondition, CreatureConditionList, CreatureCondition, ActionSlots } from "@/model/enums"
-import styles from './actionForm.module.scss'
 import { ActionTemplates, getFinalAction } from "@/data/actions"
+import { evaluateDiceFormula } from "@/model/dice"
 
 import ActionCostEditor from "./ActionCostEditor"
 import ActionRequirementEditor from "./ActionRequirementEditor"
@@ -345,7 +345,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                     feedback.effects.push('SaveSystem')
                     feedback.effects.push('EffectTracking')
                 }
-                if (value.dpr > 0) {
+                if (evaluateDiceFormula(value.dpr, 0.5) > 0) {
                     feedback.processors.push('DamageCalculation')
                 }
                 break

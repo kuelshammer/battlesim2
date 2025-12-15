@@ -1,9 +1,9 @@
 use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
 use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
 use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult};
+use simulation_wasm::quintile_analysis::run_quintile_analysis;
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
 use std::fs;
@@ -90,31 +90,6 @@ enum Commands {
     },
 }
 
-// --- Data Structures for Output ---
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CombatantStats {
-    id: String,
-    name: String,
-    avg_end_hp: f64,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct QuintileStats {
-    quintile: usize, // 1-5
-    label: String,   // "Worst 20%", "Below Average", "Median", "Above Average", "Best 20%"
-    win_rate: f64,
-    avg_rounds: f64,
-    combatants: Vec<CombatantStats>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct AggregateOutput {
-    scenario_name: String,
-    total_runs: usize,
-    quintiles: Vec<QuintileStats>,
-}
-
 // --- Main Entry Point ---
 
 fn main() {
@@ -172,106 +147,42 @@ fn main() {
 fn run_aggregate(scenario_path: &PathBuf, output_path: Option<&std::path::Path>) {
     let (players, encounters, scenario_name) = load_scenario(scenario_path);
 
+    // Get party size
+    let party_size = players.len();
+
     // Run 1005 iterations
     let iterations = 1005;
     println!("Running {} iterations...", iterations);
-    let (results, _) = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false).0;
 
-    // Results are already sorted by score (ascending: worst to best)
-    let quintile_labels = [
-        "Worst 20%",
-        "Below Average",
-        "Median",
-        "Above Average",
-        "Best 20%",
-    ];
-    let mut quintiles = Vec::new();
+    // Sort results by score from worst to best performance
+    results.sort_by(|a, b| calculate_score(a).partial_cmp(&calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
 
-    for q in 0..5 {
-        let start = q * 201;
-        let end = (q + 1) * 201;
-        let slice = &results[start..end];
+    // Use shared quintile analysis function
+    let output = run_quintile_analysis(&results, &scenario_name, party_size);
 
-        let stats = calculate_quintile_stats(slice, q + 1, quintile_labels[q]);
-        quintiles.push(stats);
+    // Output table format
+    println!("Quintile Analysis: {}", output.scenario_name);
+    println!("=====================================");
+    println!("{:>12} | {:>12} | {:>12} | {:>12} | {:>10}", 
+              "Quintile", "Survivors", "Damage", "HP Lost %", "Win Rate");
+    println!("-------------|--------------|--------------|------------|----------");
+    for quintile in &output.quintiles {
+        println!(
+            "{:>12} | {:>13} | {:>12.1} | {:>10.1}% | {:>8.1}%",
+            quintile.label, 
+            format!("{}/{}", quintile.median_survivors, quintile.party_size),
+            quintile.total_hp_lost, 
+            quintile.hp_lost_percent, 
+            quintile.win_rate
+        );
     }
 
-    let output = AggregateOutput {
-        scenario_name,
-        total_runs: iterations,
-        quintiles,
-    };
-
-    let json = serde_json::to_string_pretty(&output).expect("Failed to serialize output");
-
+    // If output path specified, also write JSON for programmatic use
     if let Some(path) = output_path {
+        let json = serde_json::to_string_pretty(&output).expect("Failed to serialize output");
         fs::write(path, &json).expect("Failed to write output file");
-        println!("Wrote output to {:?}", path);
-    } else {
-        println!("{}", json);
-    }
-}
-
-fn calculate_quintile_stats(
-    results: &[SimulationResult],
-    quintile_num: usize,
-    label: &str,
-) -> QuintileStats {
-    let count = results.len() as f64;
-    let mut wins = 0;
-    let mut total_rounds = 0;
-
-    // Track HP per combatant (id -> (name, total_hp, count))
-    let mut combatant_hp: std::collections::HashMap<String, (String, f64, usize)> =
-        std::collections::HashMap::new();
-
-    for result in results {
-        if let Some(encounter) = result.last() {
-            if let Some(last_round) = encounter.rounds.last() {
-                total_rounds += encounter.rounds.len();
-
-                // Check win condition
-                let team1_alive = last_round
-                    .team1
-                    .iter()
-                    .any(|c| c.final_state.current_hp > 0.0);
-                let team2_alive = last_round
-                    .team2
-                    .iter()
-                    .any(|c| c.final_state.current_hp > 0.0);
-                if team1_alive && !team2_alive {
-                    wins += 1;
-                }
-
-                // Accumulate HP stats for all combatants
-                for c in last_round.team1.iter().chain(last_round.team2.iter()) {
-                    let entry = combatant_hp.entry(c.id.clone()).or_insert((
-                        c.creature.name.clone(),
-                        0.0,
-                        0,
-                    ));
-                    entry.1 += c.final_state.current_hp;
-                    entry.2 += 1;
-                }
-            }
-        }
-    }
-
-    let combatants: Vec<CombatantStats> = combatant_hp
-        .into_iter()
-        .map(|(id, (name, total_hp, cnt))| CombatantStats {
-            id,
-            name,
-            avg_end_hp: total_hp / cnt as f64,
-        })
-        .collect();
-
-    QuintileStats {
-        quintile: quintile_num,
-        label: label.to_string(),
-        win_rate: (wins as f64 / count) * 100.0,
-        avg_rounds: total_rounds as f64 / count,
-        combatants,
+        println!("\nWrote detailed JSON output to {:?}", path);
     }
 }
 

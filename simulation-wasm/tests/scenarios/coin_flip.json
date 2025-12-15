@@ -1,0 +1,58 @@
+{
+  "name": "Coin Flip - Two Identical Fighters",
+  "players": [
+    {
+      "id": "PlayerA",
+      "name": "PlayerA",
+      "hp": 50.0,
+      "ac": 15.0,
+      "initiative_bonus": 0.0,
+      "actions": [
+        {
+          "id": "sword_attack",
+          "name": "Sword Attack",
+          "type": "atk",
+          "to_hit": 5.0,
+          "dpr": "1d8+3",
+          "damage_type": "slashing",
+          "target_type": "single",
+          "range": 5.0,
+          "cost": {},
+          "requirements": {}
+        }
+      ],
+      "mode": "player",
+      "count": 1.0
+    }
+  ],
+  "encounters": [
+    {
+      "name": "Duel",
+      "monsters": [
+        {
+          "id": "MonsterB",
+          "name": "MonsterB",
+          "hp": 50.0,
+          "ac": 15.0,
+          "initiative_bonus": 0.0,
+          "actions": [
+            {
+              "id": "sword_attack",
+              "name": "Sword Attack",
+              "type": "atk",
+              "to_hit": 5.0,
+              "dpr": "1d8+3",
+              "damage_type": "slashing",
+              "target_type": "single",
+              "range": 5.0,
+              "cost": {},
+              "requirements": {}
+            }
+          ],
+          "mode": "monster",
+          "count": 1.0
+        }
+      ]
+    }
+  ]
+}

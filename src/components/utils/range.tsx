@@ -31,17 +31,19 @@ const Range:FC<PropType> = ({ min, max, step, value, values, onChange, label, up
                 max={max}
                 step={step || 1}
                 onChange={(newValues) => values ? onChange(newValues) : onChange(newValues[0])}
-                renderThumb={({ props }) => (
-                    <div {...props} className={styles.thumb} />
-                )}
+                renderThumb={({ props }) => {
+                    const { key, ...restProps } = props;
+                    return <div key={key} {...restProps} className={styles.thumb} />
+                }}
                 renderTrack={({ props, children }) => (
                     <div {...props} className={styles.track}>
                         {children}
                     </div>
                 )}
-                renderMark={({ props }) => (
-                    <div {...props} className={styles.mark} />
-                )}
+                renderMark={({ props }) => {
+                    const { key, ...restProps } = props;
+                    return <div key={key} {...restProps} className={styles.mark} />
+                }}
             />
             { upperLabel ? <label>{upperLabel}</label> : null }
         </div>
