@@ -1,0 +1,56 @@
+{
+  "name": "Simple Test Scenario",
+  "players": [
+    {
+      "id": "player",
+      "name": "Player",
+      "count": 1,
+      "hp": 20,
+      "AC": 14,
+      "saveBonus": 2,
+      "actions": [
+        {
+          "type": "atk",
+          "id": "atk",
+          "name": "Attack",
+          "action_slot": 0,
+          "targets": 1,
+          "dpr": "8",
+          "toHit": 6,
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "monsters": [
+        {
+          "id": "goblin",
+          "name": "Goblin",
+          "count": 1,
+          "hp": 10,
+          "AC": 12,
+          "saveBonus": 2,
+          "actions": [
+            {
+              "type": "atk",
+              "id": "atk",
+              "name": "Attack",
+              "action_slot": 0,
+              "targets": 1,
+              "dpr": "5",
+              "toHit": 5,
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "short_rest": false
+}

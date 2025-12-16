@@ -1,0 +1,53 @@
+{
+  "name": "Simple Test",
+  "players": [
+    {
+      "name": "Fighter",
+      "hp": 50,
+      "ac": 15,
+      "initiative": 2,
+      "actions": [
+        {
+          "name": "Longsword",
+          "type": "Atk",
+          "base": {
+            "cost": [{"type": "Action", "amount": 1}],
+            "requirements": [],
+            "tags": ["Melee", "Weapon"]
+          },
+          "damage": "1d8+3",
+          "attackBonus": 5,
+          "damageBonus": 3,
+          "target": "Enemy",
+          "range": "Melee"
+        }
+      ]
+    }
+  ],
+  "monsters": [
+    {
+      "name": "Goblin",
+      "hp": 15,
+      "ac": 12,
+      "initiative": 2,
+      "count": 1,
+      "actions": [
+        {
+          "name": "Scimitar",
+          "type": "Atk",
+          "base": {
+            "cost": [{"type": "Action", "amount": 1}],
+            "requirements": [],
+            "tags": ["Melee", "Weapon"]
+          },
+          "damage": "1d6+1",
+          "attackBonus": 3,
+          "damageBonus": 1,
+          "target": "Player",
+          "range": "Melee"
+        }
+      ]
+    }
+  ],
+  "iterations": 505
+}

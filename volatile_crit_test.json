@@ -1,0 +1,116 @@
+{
+  "name": "Volatile Crit Test",
+  "description": "Test scenario to debug quintile analysis - PlayerA consistent damage vs PlayerB needs crit to hit",
+  "players": [
+    {
+      "id": "playerA",
+      "name": "PlayerA",
+      "mode": "player",
+      "type": "custom",
+      "cr": 20,
+      "hp": 50,
+      "AC": 15,
+      "saveBonus": 0,
+      "count": 1,
+      "initiativeBonus": 0,
+      "actions": [
+        {
+          "id": "playerA_attack",
+          "name": "Consistent Strike",
+          "type": "atk",
+          "toHit": 8,
+          "dpr": "2d8+4",
+          "targets": 1,
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    },
+    {
+      "id": "playerB", 
+      "name": "PlayerB",
+      "mode": "player",
+      "type": "custom",
+      "cr": 16,
+      "hp": 40,
+      "AC": 12,
+      "saveBonus": 0,
+      "count": 1,
+      "initiativeBonus": 0,
+      "actions": [
+        {
+          "id": "playerB_attack",
+          "name": "Critical Strike",
+          "type": "atk",
+          "toHit": 6,
+          "dpr": "1d12+6",
+          "targets": 1,
+          "target": "enemy with least HP",
+          "crit": 1,
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "monsterB",
+      "name": "MonsterB",
+      "mode": "monster",
+      "type": "custom",
+      "cr": 18,
+      "hp": 60,
+      "AC": 14,
+      "saveBonus": 0,
+      "count": 1,
+      "initiativeBonus": 0,
+      "actions": [
+        {
+          "id": "monsterB_attack",
+          "name": "Deadly Strike",
+          "type": "atk",
+          "toHit": 5,
+          "dpr": "3d10+5",
+          "targets": 1,
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default"
+        }
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "monsters": [
+        {
+          "id": "monsterB",
+          "mode": "monster",
+          "type": "custom",
+          "cr": 18,
+          "hp": 60,
+          "AC": 14,
+          "saveBonus": 0,
+          "count": 1,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "monsterB_attack",
+              "name": "Deadly Strike",
+              "type": "atk",
+              "toHit": 5,
+              "dpr": "3d10+5",
+              "targets": 1,
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        }
+      ],
+      "playersSurprised": false,
+      "monstersSurprised": false
+    }
+  ]
+}

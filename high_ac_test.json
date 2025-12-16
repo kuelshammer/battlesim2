@@ -1,0 +1,242 @@
+{
+  "name": "High AC Test",
+  "description": "EXTREME test scenario - 4 nearly-invulnerable fighters (AC 30, 500 HP, +14 to hit) vs 80 fragile goblins (AC 5, 7 HP, -10 to hit). Fighters only miss on nat 1, goblins only hit on nat 20. Should be trivially easy.",
+  "players": [
+    {
+      "id": "fighter1",
+      "name": "Fighter 1",
+      "mode": "player",
+      "type": "custom",
+      "cr": 16,
+      "count": 1,
+      "hp": 500,
+      "AC": 30,
+      "saveBonus": 0,
+      "initiative": 0,
+      "actions": [
+        {
+          "id": "fighter1_attack",
+          "name": "Greatsword Strike",
+          "type": "atk",
+          "toHit": "14",
+          "dpr": "2d6+4",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1
+        }
+      ]
+    },
+    {
+      "id": "fighter2", 
+      "name": "Fighter 2",
+      "mode": "player",
+      "type": "custom",
+      "cr": 16,
+      "count": 1,
+      "hp": 500,
+      "AC": 30,
+      "saveBonus": 0,
+      "initiative": 0,
+      "actions": [
+        {
+          "id": "fighter2_attack",
+          "name": "Greatsword Strike",
+          "type": "atk",
+          "toHit": "14",
+          "dpr": "2d6+4",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1
+        }
+      ]
+    },
+    {
+      "id": "fighter3",
+      "name": "Fighter 3",
+      "mode": "player",
+      "type": "custom",
+      "cr": 16,
+      "count": 1,
+      "hp": 500,
+      "AC": 30,
+      "saveBonus": 0,
+      "initiative": 0,
+      "actions": [
+        {
+          "id": "fighter3_attack",
+          "name": "Greatsword Strike",
+          "type": "atk",
+          "toHit": "14",
+          "dpr": "2d6+4",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1
+        }
+      ]
+    },
+    {
+      "id": "fighter4",
+      "name": "Fighter 4",
+      "mode": "player",
+      "type": "custom",
+      "cr": 16,
+      "count": 1,
+      "hp": 500,
+      "AC": 30,
+      "saveBonus": 0,
+      "initiative": 0,
+      "actions": [
+        {
+          "id": "fighter4_attack",
+          "name": "Greatsword Strike",
+          "type": "atk",
+          "toHit": "14",
+          "dpr": "2d6+4",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1
+        }
+      ]
+    }
+  ],
+  "encounters": [
+    {
+      "id": "encounter1",
+      "name": "High AC Test",
+      "players": [
+        {
+          "id": "fighter1",
+          "name": "Fighter 1",
+          "mode": "player",
+          "type": "custom",
+          "cr": 16,
+          "count": 1,
+          "hp": 500,
+          "AC": 30,
+          "saveBonus": 0,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "fighter1_attack",
+              "name": "Greatsword Strike",
+              "type": "atk",
+              "toHit": "14",
+              "dpr": "2d6+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        },
+        {
+          "id": "fighter2", 
+          "name": "Fighter 2",
+          "mode": "player",
+          "type": "custom",
+          "cr": 16,
+          "count": 1,
+          "hp": 500,
+          "AC": 30,
+          "saveBonus": 0,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "fighter2_attack",
+              "name": "Greatsword Strike",
+              "type": "atk",
+              "toHit": "14",
+              "dpr": "2d6+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        },
+        {
+          "id": "fighter3",
+          "name": "Fighter 3",
+          "mode": "player",
+          "type": "custom",
+          "cr": 16,
+          "count": 1,
+          "hp": 500,
+          "AC": 30,
+          "saveBonus": 0,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "fighter3_attack",
+              "name": "Greatsword Strike",
+              "type": "atk",
+              "toHit": "14",
+              "dpr": "2d6+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        },
+        {
+          "id": "fighter4",
+          "name": "Fighter 4",
+          "mode": "player",
+          "type": "custom",
+          "cr": 16,
+          "count": 1,
+          "hp": 500,
+          "AC": 30,
+          "saveBonus": 0,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "fighter4_attack",
+              "name": "Greatsword Strike",
+              "type": "atk",
+              "toHit": "14",
+              "dpr": "2d6+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        }
+      ],
+      "monsters": [
+        {
+          "id": "goblin1",
+          "name": "Goblin Warrior",
+          "mode": "monster",
+          "type": "custom",
+          "cr": 8,
+          "count": 80,
+          "hp": 7,
+          "AC": 5,
+          "saveBonus": 0,
+          "initiative": 0,
+          "actions": [
+            {
+              "id": "goblin1_attack",
+              "name": "Rusty Scimitar",
+              "type": "atk",
+              "toHit": "-10",
+              "dpr": "1d8+2",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        }
+      ],
+      "rounds": 20
+    }
+  ]
+}

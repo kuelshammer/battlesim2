@@ -4,14 +4,14 @@ use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum DiceFormula {
     Value(f64),
     Expr(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum Frequency {
     Static(String), // "at will", "1/fight", "1/day"
@@ -26,7 +26,7 @@ pub enum Frequency {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EffectTrigger {
     pub condition: TriggerCondition,
     #[serde(default)]
@@ -34,7 +34,7 @@ pub struct EffectTrigger {
     pub effect: TriggerEffect,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Buff {
     #[serde(rename = "displayName")]
     pub display_name: Option<String>,
@@ -63,13 +63,13 @@ pub struct Buff {
     pub triggers: Vec<EffectTrigger>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RiderEffect {
     pub dc: f64,
     pub buff: Buff,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AcKnowledge {
     pub min: i32,
     pub max: i32,
@@ -81,7 +81,7 @@ impl Default for AcKnowledge {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum Action {
     #[serde(rename = "atk")]
@@ -108,7 +108,7 @@ impl Action {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionBase {
     pub id: String,
     pub name: String,
@@ -130,7 +130,7 @@ pub struct ActionBase {
     pub targets: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AtkAction {
     pub id: String,
     pub name: String,
@@ -179,7 +179,7 @@ impl AtkAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct HealAction {
     pub id: String,
     pub name: String,
@@ -222,7 +222,7 @@ impl HealAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BuffAction {
     pub id: String,
     pub name: String,
@@ -263,7 +263,7 @@ impl BuffAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DebuffAction {
     pub id: String,
     pub name: String,
@@ -306,7 +306,7 @@ impl DebuffAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TemplateAction {
     pub id: String,
     #[serde(default, deserialize_with = "default_template_name")]
@@ -346,7 +346,7 @@ where
     Option::<String>::deserialize(deserializer).map(|opt| opt.unwrap_or_default())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TemplateOptions {
     #[serde(rename = "templateName")]
     pub template_name: String,
@@ -381,7 +381,7 @@ impl TemplateAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionTrigger {
     pub id: String,
     pub condition: TriggerCondition,
@@ -389,13 +389,13 @@ pub struct ActionTrigger {
     pub cost: Option<i32>, // e.g. Reaction (4)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum CleanupInstruction {
     RemoveAllBuffsFromSource(String), // Combatant ID of the source that died
     BreakConcentration(String, String), // (Combatant ID of concentrator, Buff ID)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Creature {
     pub id: String,
     pub arrival: Option<i32>,
@@ -614,7 +614,7 @@ fn register_hit_dice_term(ledger: &mut crate::resources::ResourceLedger, term: &
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CreatureState {
     #[serde(rename = "currentHP")]
     pub current_hp: f64,
@@ -649,7 +649,7 @@ fn default_serializable_resource_ledger() -> SerializableResourceLedger {
     SerializableResourceLedger::from(crate::resources::ResourceLedger::new())
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SerializableResourceLedger {
     pub current: HashMap<String, f64>,
     pub max: HashMap<String, f64>,
@@ -686,7 +686,7 @@ impl Default for CreatureState {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Combattant {
     pub id: String,
     pub creature: Creature,
@@ -703,13 +703,13 @@ pub struct Combattant {
     pub actions: Vec<CombattantAction>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CombattantAction {
     pub action: Action, // Should be FinalAction
     pub targets: HashMap<String, i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Encounter {
     pub monsters: Vec<Creature>,
     #[serde(rename = "playersSurprised")]
@@ -724,7 +724,7 @@ pub struct Encounter {
     pub monsters_precast: Option<bool>, // New field
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EncounterStats {
     #[serde(rename = "damageDealt")]
     pub damage_dealt: f64,
@@ -746,13 +746,13 @@ pub struct EncounterStats {
     pub times_unconscious: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Round {
     pub team1: Vec<Combattant>,
     pub team2: Vec<Combattant>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EncounterResult {
     pub stats: HashMap<String, EncounterStats>,
     pub rounds: Vec<Round>,

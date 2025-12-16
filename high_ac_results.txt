@@ -1,0 +1,33 @@
+warning: unused variable: `start_idx`
+   --> src/quintile_analysis.rs:132:5
+    |
+132 |     start_idx: usize,
+    |     ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_start_idx`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `difficulty`
+   --> src/quintile_analysis.rs:337:49
+    |
+337 | fn generate_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
+    |                                                 ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_difficulty`
+
+warning: unused variable: `quintiles`
+   --> src/quintile_analysis.rs:360:76
+    |
+360 | fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> Vec<String> {
+    |                                                                            ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_quintiles`
+
+warning: `simulation-wasm` (lib) generated 3 warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/sim_cli aggregate ../high_ac_test.json`
+Running 1005 iterations...
+Quintile Analysis: High AC Test
+=====================================
+    Quintile |    Survivors |       Damage |    HP Lost % |   Win Rate
+-------------|--------------|--------------|------------|----------
+   Worst 20% |           3/4 |        782.8 |       39.1% |    100.0%
+Below Average |           3/4 |        668.1 |       33.4% |    100.0%
+      Median |           3/4 |        601.7 |       30.1% |    100.0%
+Above Average |           4/4 |        527.1 |       26.4% |    100.0%
+    Best 20% |           4/4 |        453.2 |       22.7% |    100.0%

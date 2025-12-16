@@ -1,0 +1,101 @@
+{
+    "updated": 1764920713484,
+    "name": "Volatile Crit Test",
+    "players": [
+        {
+            "id": "playerA",
+            "mode": "custom",
+            "name": "PlayerA",
+            "count": 1,
+            "hp": 50,
+            "AC": 15,
+            "saveBonus": 0,
+            "initiativeBonus": 0,
+            "initiativeAdvantage": false,
+            "actions": [
+                {
+                    "id": "playerA_attack",
+                    "name": "Consistent Strike",
+                    "actionSlot": 0,
+                    "cost": [],
+                    "requirements": [],
+                    "tags": [],
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "type": "atk",
+                    "dpr": "2d8+4",
+                    "toHit": "8",
+                    "target": "enemy with least HP"
+                }
+            ]
+        },
+        {
+            "id": "playerB",
+            "mode": "custom",
+            "name": "PlayerB",
+            "count": 1,
+            "hp": 40,
+            "AC": 12,
+            "saveBonus": 0,
+            "initiativeBonus": 0,
+            "initiativeAdvantage": false,
+            "actions": [
+                {
+                    "id": "playerB_attack",
+                    "name": "Critical Strike",
+                    "actionSlot": 0,
+                    "cost": [],
+                    "requirements": [],
+                    "tags": [],
+                    "freq": "at will",
+                    "condition": "default",
+                    "targets": 1,
+                    "type": "atk",
+                    "dpr": "1d12+6",
+                    "toHit": "6",
+                    "target": "enemy with least HP"
+                }
+            ]
+        }
+    ],
+    "encounters": [
+        {
+            "monsters": [
+                {
+                    "id": "8c731fce-c353-4cb9-b1fb-fed5e5ea16be",
+                    "mode": "custom",
+                    "class": {
+                        "type": "cleric",
+                        "level": 3,
+                        "options": {}
+                    },
+                    "name": "MonsterB",
+                    "count": 1,
+                    "hp": 60,
+                    "AC": 14,
+                    "saveBonus": 0,
+                    "actions": [
+                        {
+                            "id": "monsterB_attack",
+                            "name": "Deadly Strike",
+                            "actionSlot": 0,
+                            "cost": [],
+                            "requirements": [],
+                            "tags": [],
+                            "freq": "at will",
+                            "condition": "default",
+                            "targets": 1,
+                            "type": "atk",
+                            "dpr": "3d10+5",
+                            "toHit": "5",
+                            "target": "enemy with least HP"
+                        }
+                    ]
+                }
+            ],
+            "playersSurprised": false,
+            "monstersSurprised": false
+        }
+    ]
+}

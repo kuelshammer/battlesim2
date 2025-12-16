@@ -16,12 +16,34 @@ pub mod validation; // New module for requirement validation
 pub mod utilities;
 pub mod quintile_analysis;
 pub mod combat_stats;
+pub mod error_handling; // Enhanced error handling system
+pub mod enhanced_validation; // Comprehensive validation
+pub mod recovery; // Error recovery mechanisms
+pub mod safe_aggregation; // Safe aggregation functions
+pub mod monitoring; // Success metrics and monitoring
+pub mod storage; // Dual-slot storage system
+pub mod storage_io; // File I/O and compression for storage
+pub mod storage_manager; // High-level storage management interface
+pub mod background_simulation; // Background simulation engine
+pub mod queue_manager; // Queue management system
+pub mod progress_communication; // Progress communication system
+pub mod storage_integration; // Integration layer between background processing and storage
+pub mod display_manager; // Display mode management
+pub mod progress_ui; // Progress UI components
+pub mod user_interaction; // User interaction flows
+pub mod config; // Configuration system
+pub mod phase3_gui_integration; // Phase 3 GUI Integration demonstration
+pub mod phase3_working; // Phase 3 GUI Integration working implementation
+
+#[cfg(test)]
+mod storage_test;
 
 
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
+use crate::storage_manager::StorageManager;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
@@ -122,7 +144,7 @@ pub fn run_event_driven_simulation_rust(
         }
     }
 
-    // Sort results by score (worst to best)
+    // Sort results by score (worst to best) with safe comparison
     results.sort_by(|a, b| {
         let score_a = crate::aggregation::calculate_score(a);
         let score_b = crate::aggregation::calculate_score(b);
@@ -447,6 +469,92 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
     updated_players
 }
 
+// Global storage manager for WASM interface
+static mut STORAGE_MANAGER: Option<StorageManager> = None;
+static STORAGE_MANAGER_INIT: std::sync::Once = std::sync::Once::new();
+
+/// Initialize or get the global storage manager
+fn get_storage_manager() -> &'static mut StorageManager {
+    unsafe {
+        STORAGE_MANAGER_INIT.call_once(|| {
+            STORAGE_MANAGER = Some(StorageManager::default());
+        });
+        STORAGE_MANAGER.as_mut().unwrap()
+    }
+}
+
+#[wasm_bindgen]
+pub fn run_simulation_with_storage_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+
+    let storage_manager = get_storage_manager();
+    
+    // Try to get cached results first
+    if let Some(cached_results) = storage_manager.get_cached_results(&players, &encounters, iterations) {
+        console::log_1(&"Using cached simulation results".into());
+        
+        let serializer = serde_wasm_bindgen::Serializer::new()
+            .serialize_maps_as_objects(false);
+        return serde::Serialize::serialize(&cached_results, &serializer)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize cached results: {}", e)));
+    }
+    
+    console::log_1(&"Running new simulation (cache miss)".into());
+    
+    // Run new simulation
+    let (results, _) = run_event_driven_simulation_rust(players.clone(), encounters.clone(), iterations, false);
+    
+    // Store results in cache
+    if let Err(e) = storage_manager.store_simulation_results(
+        &players,
+        &encounters,
+        iterations,
+        results.clone(),
+        None, // We don't track execution time in this simple version
+        crate::storage::SimulationStatus::Success,
+        vec![],
+    ) {
+        console::log_1(&format!("Failed to store simulation results: {}", e).into());
+    }
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&results, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
+}
+
+#[wasm_bindgen]
+pub fn clear_simulation_cache_wasm() -> Result<JsValue, JsValue> {
+    let storage_manager = get_storage_manager();
+    
+    match storage_manager.clear_cache() {
+        Ok(_) => {
+            console::log_1(&"Simulation cache cleared successfully".into());
+            Ok(JsValue::from_str("Cache cleared successfully"))
+        }
+        Err(e) => {
+            console::log_1(&format!("Failed to clear cache: {}", e).into());
+            Ok(JsValue::from_str(&format!("Failed to clear cache: {}", e)))
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub fn get_storage_stats_wasm() -> Result<JsValue, JsValue> {
+    let storage_manager = get_storage_manager();
+    let stats = storage_manager.get_storage_stats();
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&stats, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize storage stats: {}", e)))
+}
+
 #[wasm_bindgen]
 pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_size: usize) -> Result<JsValue, JsValue> {
     // Add debug logging
@@ -457,8 +565,12 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     
     console::log_1(&format!("Received {} simulation results", results.len()).into());
     
-    // Sort results by score from worst to best performance
-    results.sort_by(|a, b| crate::aggregation::calculate_score(a).partial_cmp(&crate::aggregation::calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
+    // Sort results by score from worst to best performance with safe comparison
+    results.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(a);
+        let score_b = crate::aggregation::calculate_score(b);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
     
     // Calculate party size from first result (use actual data instead of parameter)
     let actual_party_size = if let Some(first_result) = results.first() {
@@ -493,4 +605,491 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
         
     serde::Serialize::serialize(&output, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize quintile analysis: {}", e)))
+}
+
+// ===== PHASE 3: GUI INTEGRATION WASM BINDINGS =====
+
+use crate::display_manager::{DisplayManager, DisplayMode, DisplayConfig};
+use crate::progress_ui::{ProgressUIManager, ProgressUIConfig, ProgressInfo};
+use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteractionConfig};
+use crate::background_simulation::{BackgroundSimulationEngine, SimulationPriority};
+use crate::queue_manager::{QueueManager, QueueManagerConfig};
+use crate::storage_integration::StorageIntegration;
+use std::sync::Arc;
+
+// Global GUI integration state
+static mut GUI_INTEGRATION: Option<GuiIntegration> = None;
+static GUI_INTEGRATION_INIT: std::sync::Once = std::sync::Once::new();
+
+/// Combined GUI integration system
+struct GuiIntegration {
+    display_manager: Arc<Mutex<DisplayManager>>,
+    progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+    user_interaction_manager: Arc<Mutex<UserInteractionManager>>,
+    storage_integration: Arc<Mutex<StorageIntegration>>,
+}
+
+/// Initialize the GUI integration system
+#[wasm_bindgen]
+pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
+    GUI_INTEGRATION_INIT.call_once(|| {
+        let storage_manager = get_storage_manager();
+        
+        // Get storage manager reference
+        let storage_ref = get_storage_manager();
+        
+        // Create display manager
+        let display_config = DisplayConfig::default();
+        let display_manager = DisplayManager::new(
+            storage_ref.clone(),
+            display_config,
+        );
+        
+        // Create background simulation engine
+        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new(storage_ref.clone());
+        
+        // Create queue manager
+        let queue_config = QueueManagerConfig::default();
+        let queue_manager = QueueManager::new(queue_config);
+        
+        // Create simulation queue for storage integration (separate instance)
+        let storage_queue = crate::queue_manager::SimulationQueue::new(100); // max 100 items
+        
+        // Create progress communication
+        let progress_comm = crate::progress_communication::ProgressCommunication::default();
+        
+        // Create storage integration
+        let storage_integration = StorageIntegration::new(
+            storage_ref.clone(),
+            storage_queue,
+            progress_comm,
+            crate::storage_integration::StorageIntegrationConfig::default(),
+        );
+        
+        // Create progress UI manager
+        let progress_config = ProgressUIConfig::default();
+        let progress_ui_manager = ProgressUIManager::new(progress_config);
+        
+        // Create user interaction manager
+        let interaction_config = UserInteractionConfig::default();
+        let user_interaction_manager = UserInteractionManager::new(
+            display_manager,
+            progress_ui_manager,
+            storage_ref.clone(),
+            simulation_engine,
+            queue_manager,
+            storage_integration,
+            interaction_config,
+        );
+        
+        // Create progress UI manager
+        let progress_config = ProgressUIConfig::default();
+        let progress_ui_manager = ProgressUIManager::new(progress_config);
+        
+        // Create user interaction manager
+        let interaction_config = UserInteractionConfig::default();
+        let user_interaction_manager = UserInteractionManager::new(
+            display_manager,
+            progress_ui_manager,
+            storage_ref.clone(),
+            simulation_engine,
+            queue_manager,
+            storage_integration,
+            interaction_config,
+        );
+        
+        unsafe {
+            GUI_INTEGRATION = Some(GuiIntegration {
+                display_manager: Arc::new(Mutex::new(display_manager)),
+                progress_ui_manager: Arc::new(Mutex::new(progress_ui_manager)),
+                user_interaction_manager: Arc::new(Mutex::new(user_interaction_manager)),
+                storage_integration: Arc::new(Mutex::new(storage_integration)),
+            });
+        }
+    });
+    
+    Ok(JsValue::from_str("GUI integration initialized"))
+}
+
+/// Get the GUI integration system
+fn get_gui_integration() -> &'static mut GuiIntegration {
+    unsafe {
+        GUI_INTEGRATION.as_mut().unwrap()
+    }
+}
+
+/// Get display results for current parameters
+#[wasm_bindgen]
+pub fn get_display_results(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    
+    let display_result = {
+        let mut display_manager = gui.display_manager.lock().unwrap();
+        display_manager.get_display_results(&players, &encounters, iterations)
+    };
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&display_result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize display result: {}", e)))
+}
+
+/// Set display mode
+#[wasm_bindgen]
+pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let mode = match mode_str {
+        "ShowNewest" => DisplayMode::ShowNewest,
+        "ShowMostSimilar" => DisplayMode::ShowMostSimilar,
+        "LetUserChoose" => DisplayMode::LetUserChoose,
+        "PrimaryOnly" => DisplayMode::PrimaryOnly,
+        "SecondaryOnly" => DisplayMode::SecondaryOnly,
+        _ => return Err(JsValue::from_str(&format!("Invalid display mode: {}", mode_str))),
+    };
+    
+    let mut display_manager = gui.display_manager.lock().unwrap();
+    display_manager.set_display_mode(mode);
+    
+    Ok(JsValue::from_str(&format!("Display mode set to {:?}", mode)))
+}
+
+/// Get current display mode
+#[wasm_bindgen]
+pub fn get_display_mode() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let display_manager = gui.display_manager.lock().unwrap();
+    let mode = display_manager.get_display_mode();
+    
+    let mode_str = match mode {
+        DisplayMode::ShowNewest => "ShowNewest",
+        DisplayMode::ShowMostSimilar => "ShowMostSimilar",
+        DisplayMode::LetUserChoose => "LetUserChoose",
+        DisplayMode::PrimaryOnly => "PrimaryOnly",
+        DisplayMode::SecondaryOnly => "SecondaryOnly",
+    };
+    
+    Ok(JsValue::from_str(mode_str))
+}
+
+/// User selected a specific slot
+#[wasm_bindgen]
+pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let slot_selection = match slot_str {
+        "Primary" => crate::storage::SlotSelection::Primary,
+        "Secondary" => crate::storage::SlotSelection::Secondary,
+        _ => return Err(JsValue::from_str(&format!("Invalid slot: {}", slot_str))),
+    };
+    
+    let mut display_manager = gui.display_manager.lock().unwrap();
+    let display_result = display_manager.user_selected_slot(slot_selection);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&display_result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize display result: {}", e)))
+}
+
+/// Start a background simulation
+#[wasm_bindgen]
+pub fn start_background_simulation(
+    players: JsValue, 
+    encounters: JsValue, 
+    iterations: usize,
+    priority_str: &str
+) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    
+    let priority = match priority_str {
+        "Low" => SimulationPriority::Low,
+        "Normal" => SimulationPriority::Normal,
+        "High" => SimulationPriority::High,
+        "Critical" => SimulationPriority::Critical,
+        _ => return Err(JsValue::from_str(&format!("Invalid priority: {}", priority_str))),
+    };
+    
+    let event = UserEvent::RequestSimulation {
+        players,
+        encounters,
+        iterations,
+        priority,
+    };
+    
+    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let result = user_interaction.handle_event(event);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
+}
+
+/// Get progress information for all active simulations
+#[wasm_bindgen]
+pub fn get_all_progress() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_list = progress_ui.get_all_progress();
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&progress_list, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize progress list: {}", e)))
+}
+
+/// Get progress information for a specific simulation
+#[wasm_bindgen]
+pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
+    
+    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_info = progress_ui.get_progress(&sim_id);
+    
+    match progress_info {
+        Some(info) => {
+            let serializer = serde_wasm_bindgen::Serializer::new()
+                .serialize_maps_as_objects(false);
+            
+            serde::Serialize::serialize(&info, &serializer)
+                .map_err(|e| JsValue::from_str(&format!("Failed to serialize progress info: {}", e)))
+        },
+        None => Ok(JsValue::NULL),
+    }
+}
+
+/// Create HTML progress bar for a simulation
+#[wasm_bindgen]
+pub fn create_progress_bar(simulation_id: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
+    
+    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_info = progress_ui.get_progress(&sim_id);
+    
+    match progress_info {
+        Some(info) => {
+            let html = progress_ui.create_progress_bar_html(&info);
+            Ok(JsValue::from_str(&html))
+        },
+        None => Ok(JsValue::from_str("")),
+    }
+}
+
+/// Create compact progress indicator for a simulation
+#[wasm_bindgen]
+pub fn create_compact_indicator(simulation_id: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
+    
+    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_info = progress_ui.get_progress(&sim_id);
+    
+    match progress_info {
+        Some(info) => {
+            let html = progress_ui.create_compact_indicator(&info);
+            Ok(JsValue::from_str(&html))
+        },
+        None => Ok(JsValue::from_str("")),
+    }
+}
+
+/// Cancel a running simulation
+#[wasm_bindgen]
+pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
+    
+    let event = UserEvent::CancelSimulation {
+        simulation_id: sim_id,
+    };
+    
+    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let result = user_interaction.handle_event(event);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
+}
+
+/// Clear simulation cache
+#[wasm_bindgen]
+pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let event = UserEvent::ClearCache;
+    
+    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let result = user_interaction.handle_event(event);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
+}
+
+/// Get pending user confirmations
+#[wasm_bindgen]
+pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let confirmations = user_interaction.get_pending_confirmations();
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&confirmations, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize confirmations: {}", e)))
+}
+
+/// Answer a confirmation request
+#[wasm_bindgen]
+pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let result = user_interaction.answer_confirmation(confirmation_id, confirmed);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
+}
+
+/// Get current user interaction state
+#[wasm_bindgen]
+pub fn get_user_interaction_state() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let state = user_interaction.get_state();
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&state, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize state: {}", e)))
+}
+
+/// Update GUI configuration
+#[wasm_bindgen]
+pub fn update_gui_configuration(
+    display_config_json: Option<JsValue>,
+    progress_config_json: Option<JsValue>,
+    interaction_config_json: Option<JsValue>,
+) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    // Update display configuration
+    if let Some(config_js) = display_config_json {
+        let config: DisplayConfig = serde_wasm_bindgen::from_value(config_js)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse display config: {}", e)))?;
+        
+        let mut display_manager = gui.display_manager.lock().unwrap();
+        display_manager.update_config(config);
+    }
+    
+    // Update progress configuration
+    if let Some(config_js) = progress_config_json {
+        let config: ProgressUIConfig = serde_wasm_bindgen::from_value(config_js)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse progress config: {}", e)))?;
+        
+        let mut progress_ui = gui.progress_ui_manager.lock().unwrap();
+        progress_ui.update_config(config);
+    }
+    
+    // Update interaction configuration
+    if let Some(config_js) = interaction_config_json {
+        let config: UserInteractionConfig = serde_wasm_bindgen::from_value(config_js)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse interaction config: {}", e)))?;
+        
+        let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+        user_interaction.update_config(config);
+    }
+    
+    Ok(JsValue::from_str("Configuration updated"))
+}
+
+/// Get progress summary for dashboard
+#[wasm_bindgen]
+pub fn get_progress_summary() -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let summary = progress_ui.get_progress_summary();
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&summary, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize summary: {}", e)))
+}
+
+/// Handle parameter change event
+#[wasm_bindgen]
+pub fn handle_parameters_changed(
+    players: JsValue,
+    encounters: JsValue,
+    iterations: usize,
+) -> Result<JsValue, JsValue> {
+    let gui = get_gui_integration();
+    
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    
+    let event = UserEvent::ParametersChanged {
+        players,
+        encounters,
+        iterations,
+    };
+    
+    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let result = user_interaction.handle_event(event);
+    
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+    
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
+}
+
+// Phase 3 GUI Integration - Simple working interface
+#[wasm_bindgen]
+pub fn init_phase3_gui_integration() -> crate::phase3_gui_integration::Phase3Integration {
+    crate::phase3_gui_integration::init_phase3_gui_integration()
+}
+
+// Phase 3 GUI Integration - Working implementation
+#[wasm_bindgen]
+pub fn init_phase3_gui() -> crate::phase3_working::Phase3Gui {
+    crate::phase3_working::init_phase3_gui()
 }

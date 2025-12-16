@@ -1,0 +1,3434 @@
+{
+  "scenario_name": "High AC Test",
+  "total_runs": 1005,
+  "quintiles": [
+    {
+      "quintile": 1,
+      "label": "Worst 20%",
+      "median_survivors": 0,
+      "party_size": 4,
+      "total_hp_lost": 260.0,
+      "hp_lost_percent": 100.0,
+      "win_rate": 0.0,
+      "median_run_visualization": [
+        {
+          "name": "Fighter 4",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 3",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 1",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 2",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 56",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 31",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 47",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 57",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 16",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 50",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 26",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 32",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 5",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 69",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 44",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 1",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 58",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 19",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 62",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 30",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 36",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 28",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 39",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 46",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 73",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 77",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 27",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 42",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 68",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 45",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 74",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 79",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 18",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 14",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 65",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 54",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 64",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 76",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 10",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 24",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 29",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 66",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 75",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 80",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 11",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 25",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 13",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 22",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 41",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 72",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 2",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 48",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 67",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 20",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 6",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 60",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 12",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 8",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 9",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 71",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 37",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 15",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 23",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 53",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 61",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 40",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 35",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 43",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 52",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 55",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 3",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 59",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 38",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 70",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 4",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 34",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 7",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 51",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 63",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 17",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 49",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 78",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 21",
+          "max_hp": 12.0,
+          "current_hp": 1.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 8.333333333333332
+        },
+        {
+          "name": "Goblin Warrior 33",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        }
+      ],
+      "battle_duration_rounds": 2
+    },
+    {
+      "quintile": 2,
+      "label": "Below Average",
+      "median_survivors": 0,
+      "party_size": 4,
+      "total_hp_lost": 260.0,
+      "hp_lost_percent": 100.0,
+      "win_rate": 0.0,
+      "median_run_visualization": [
+        {
+          "name": "Fighter 4",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 3",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 1",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 2",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 31",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 78",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 56",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 79",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 40",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 54",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 3",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 7",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 36",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 34",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 71",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 24",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 51",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 1",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 47",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 64",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 65",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 69",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 26",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 32",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 18",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 37",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 46",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 53",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 58",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 76",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 50",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 30",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 73",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 21",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 72",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 43",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 77",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 62",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 27",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 2",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 60",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 29",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 13",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 4",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 42",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 66",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 68",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 33",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 70",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 52",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 44",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 17",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 16",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 22",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 8",
+          "max_hp": 12.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": false,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 45",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 6",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 48",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 14",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 5",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 25",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 49",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 11",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 12",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 35",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 10",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 15",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 41",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 59",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 38",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 57",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 67",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 74",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 75",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 80",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 20",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 55",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 19",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 23",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 61",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 63",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 28",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 39",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 9",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        }
+      ],
+      "battle_duration_rounds": 2
+    },
+    {
+      "quintile": 3,
+      "label": "Median",
+      "median_survivors": 0,
+      "party_size": 4,
+      "total_hp_lost": 260.0,
+      "hp_lost_percent": 100.0,
+      "win_rate": 0.0,
+      "median_run_visualization": [
+        {
+          "name": "Fighter 3",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 2",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 4",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 1",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 49",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 20",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 54",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 76",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 6",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 15",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 77",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 19",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 23",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 56",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 74",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 43",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 65",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 30",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 14",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 62",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 12",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 24",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 60",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 78",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 33",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 1",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 25",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 71",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 39",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 53",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 34",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 46",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 36",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 72",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 32",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 75",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 48",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 70",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 10",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 13",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 31",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 28",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 41",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 57",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 68",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 61",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 21",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 73",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 9",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 38",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 55",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 50",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 2",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 58",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 40",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 59",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 44",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 37",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 67",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 5",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 8",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 17",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 79",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 52",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 22",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 7",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 80",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 35",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 3",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 26",
+          "max_hp": 12.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": false,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 45",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 63",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 4",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 11",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 64",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 66",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 27",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 47",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 16",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 18",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 51",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 69",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 42",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 29",
+          "max_hp": 12.0,
+          "current_hp": 1.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 8.333333333333332
+        }
+      ],
+      "battle_duration_rounds": 2
+    },
+    {
+      "quintile": 4,
+      "label": "Above Average",
+      "median_survivors": 0,
+      "party_size": 4,
+      "total_hp_lost": 260.0,
+      "hp_lost_percent": 100.0,
+      "win_rate": 0.0,
+      "median_run_visualization": [
+        {
+          "name": "Fighter 3",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 2",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 1",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 4",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 69",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 18",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 79",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 49",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 31",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 53",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 9",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 42",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 59",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 60",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 7",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 20",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 38",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 11",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 34",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 35",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 30",
+          "max_hp": 12.0,
+          "current_hp": 1.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 8.333333333333332
+        },
+        {
+          "name": "Goblin Warrior 19",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 76",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 22",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 3",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 57",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 1",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 48",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 51",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 36",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 73",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 40",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 10",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 80",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 68",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 50",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 33",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 32",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 37",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 46",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 55",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 66",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 14",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 28",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 54",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 74",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 63",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 58",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 67",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 12",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 16",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 56",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 24",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 26",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 62",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 70",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 4",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 72",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 77",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 8",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 52",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 13",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 21",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 39",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 75",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 78",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 41",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 44",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 23",
+          "max_hp": 12.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": false,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 27",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 65",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 71",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 25",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 17",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 43",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 45",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 64",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 29",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 6",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 47",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 61",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 2",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 5",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 15",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        }
+      ],
+      "battle_duration_rounds": 2
+    },
+    {
+      "quintile": 5,
+      "label": "Best 20%",
+      "median_survivors": 0,
+      "party_size": 4,
+      "total_hp_lost": 260.0,
+      "hp_lost_percent": 100.0,
+      "win_rate": 0.0,
+      "median_run_visualization": [
+        {
+          "name": "Fighter 1",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 2",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 4",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Fighter 3",
+          "max_hp": 65.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": true,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 67",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 3",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 44",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 14",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 11",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 39",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 64",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 33",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 69",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 27",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 40",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 70",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 76",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 15",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 63",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 25",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 2",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 51",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 61",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 10",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 28",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 42",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 62",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 13",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 1",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 7",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 37",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 45",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 4",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 21",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 56",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 59",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 49",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 74",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 79",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 12",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 30",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 54",
+          "max_hp": 12.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": false,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 48",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 72",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 77",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 23",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 32",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 65",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 50",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 18",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 46",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 41",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 20",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 75",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 78",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 6",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 58",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 24",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 29",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 52",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 60",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 71",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 73",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 68",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 80",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 47",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 9",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 57",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 19",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 31",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 35",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 8",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 16",
+          "max_hp": 12.0,
+          "current_hp": 0.0,
+          "is_dead": true,
+          "is_player": false,
+          "hp_percentage": 0.0
+        },
+        {
+          "name": "Goblin Warrior 17",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 22",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 55",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 43",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 26",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 53",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 5",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 38",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 36",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 66",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        },
+        {
+          "name": "Goblin Warrior 34",
+          "max_hp": 12.0,
+          "current_hp": 12.0,
+          "is_dead": false,
+          "is_player": false,
+          "hp_percentage": 100.0
+        }
+      ],
+      "battle_duration_rounds": 2
+    }
+  ],
+  "risk_factor": "Suicidal",
+  "difficulty": "Grueling",
+  "encounter_label": "Catastrophic",
+  "analysis_summary": "Party loses more than 50% of the time even in typical scenarios.",
+  "tuning_suggestions": [
+    "Encounter is too difficult. Consider reducing monster stats or increasing player resources.",
+    "Encounter is very resource-intensive. Consider adding a short rest opportunity."
+  ]
+}

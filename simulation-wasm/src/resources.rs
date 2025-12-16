@@ -49,7 +49,7 @@ pub enum ResetType {
     Encounter,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ResourceLedger {
     pub current: HashMap<String, f64>,
     pub max: HashMap<String, f64>,
@@ -139,7 +139,7 @@ impl ResourceLedger {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum ActionCost {
     #[serde(rename = "Discrete")]
@@ -161,7 +161,7 @@ pub enum ActionCost {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum CombatCondition {
     EnemyInRange(f64),
     IsSurprised,
@@ -169,7 +169,7 @@ pub enum CombatCondition {
     // Add more as needed
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum ActionRequirement {
     #[serde(rename = "ResourceAvailable")]

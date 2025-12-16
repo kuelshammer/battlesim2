@@ -183,7 +183,7 @@ pub enum TriggerRequirement {
     ActionTag(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum TriggerEffect {
     #[serde(rename = "Damage")]
