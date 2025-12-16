@@ -5,8 +5,9 @@
       "id": "PlayerA",
       "name": "PlayerA",
       "hp": 50.0,
-      "ac": 15.0,
-      "initiative_bonus": 0.0,
+      "AC": 15.0,
+      "saveBonus": 0.0,
+      "initiativeBonus": 0,
       "actions": [
         {
           "id": "sword_attack",
@@ -33,7 +34,7 @@
           "id": "MonsterB",
           "name": "MonsterB",
           "hp": 50.0,
-          "ac": 15.0,
+          "AC": 15.0,
           "initiative_bonus": 0.0,
           "actions": [
             {

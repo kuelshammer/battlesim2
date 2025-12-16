@@ -1,6 +1,7 @@
 use crate::dice;
 use crate::enums::*;
 use crate::model::*;
+use crate::combat_stats::CombatantStats;
 use std::cmp::Ordering;
 
 pub fn get_targets(
@@ -339,6 +340,149 @@ pub fn select_enemy_target(
     best_target
 }
 
+/// Optimized enemy target selection using cached combat statistics
+/// Provides O(n) complexity instead of O(n²) for large battles
+pub fn select_enemy_target_cached(
+    attacker: &Combattant,
+    strategy: EnemyTarget,
+    enemies: &[Combattant],
+    excluded: &[(bool, usize)],
+    buff_check: Option<&str>,
+    combat_stats_cache: &mut crate::combat_stats::CombatStatsCache,
+) -> Option<usize> {
+    #[cfg(debug_assertions)]
+    eprintln!("            Selecting enemy target (CACHED - Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
+
+    // Collect valid candidates first, then get cached stats in separate step
+    let valid_indices: Vec<usize> = enemies.iter().enumerate()
+        .filter_map(|(i, e)| {
+            // Check exclusion (true = enemy)
+            if excluded.contains(&(true, i)) {
+                return None;
+            }
+
+            // Check buff
+            if let Some(bid) = buff_check {
+                if e.final_state.buffs.contains_key(bid) {
+                    return None;
+                }
+            }
+
+            if e.final_state.current_hp <= 0.0 {
+                return None;
+            }
+
+            Some(i)
+        })
+        .collect();
+
+    if valid_indices.is_empty() {
+        return None;
+    }
+
+    // Now get cached stats for valid candidates
+    let mut candidates: Vec<(usize, CombatantStats)> = Vec::new();
+    for &i in &valid_indices {
+        let e = &enemies[i];
+        let stats = combat_stats_cache.get_stats(e).clone();
+        candidates.push((i, stats));
+    }
+
+    if candidates.is_empty() {
+        return None;
+    }
+
+    // Sort candidates based on strategy and tie-breakers using cached stats
+    candidates.sort_by(|(idx1, stats1), (idx2, stats2)| {
+        let e1 = &enemies[*idx1];
+        let e2 = &enemies[*idx2];
+
+        let get_estimated_ac = |target: &Combattant| -> f64 {
+            if let Some(k) = attacker.final_state.known_ac.get(&target.id) {
+                (k.min + k.max) as f64 / 2.0
+            } else {
+                15.0 // Default assumption
+            }
+        };
+
+        let est_ac1 = get_estimated_ac(e1);
+        let est_ac2 = get_estimated_ac(e2);
+
+        // 1. Primary Strategy Comparison using cached stats
+        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp, e1.final_state.concentrating_on.is_some(), est_ac1);
+        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp, e2.final_state.concentrating_on.is_some(), est_ac2);
+
+        // Using partial_cmp for floats. We want strict ordering.
+        match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
+            Ordering::Equal => {} // Proceed to tie-breakers
+            ord => return ord,
+        }
+
+        // 2. Tie-Breaker: Concentration (Target Concentrating > Not Concentrating)
+        // Prefer breaking concentration!
+        let c1 = e1.final_state.concentrating_on.is_some();
+        let c2 = e2.final_state.concentrating_on.is_some();
+        if c1 && !c2 {
+            return Ordering::Less;
+        } // c1 comes first
+        if !c1 && c2 {
+            return Ordering::Greater;
+        }
+
+        // 3. Tie-Breaker: AC (Lower Estimated AC > Higher) "Easier to hit"
+        // Use KNOWLEDGE here!
+        if est_ac1 != est_ac2 {
+            return est_ac1.partial_cmp(&est_ac2).unwrap_or(Ordering::Equal);
+        }
+
+        // 4. Tie-Breaker: HP (Lower HP > Higher) "Execute weak targets"
+        if e1.final_state.current_hp != e2.final_state.current_hp {
+            return e1
+                .final_state
+                .current_hp
+                .partial_cmp(&e2.final_state.current_hp)
+                .unwrap_or(Ordering::Equal);
+        }
+
+        // 5. Tie-Breaker: DPR (Higher DPR > Lower) using cached stats
+        if stats1.total_dpr != stats2.total_dpr {
+            return stats2.total_dpr.partial_cmp(&stats1.total_dpr).unwrap_or(Ordering::Equal);
+        }
+
+        // 6. Tie-Breaker: Name (Alphabetical) - Deterministic fallback
+        e1.creature.name.cmp(&e2.creature.name)
+    });
+
+    if let Some((first_idx, _)) = candidates.first() {
+        let best = &enemies[*first_idx];
+        println!(
+            "DEBUG CACHED: Strategy '{:?}' selected {} (Index {})",
+            strategy, best.creature.name, first_idx
+        );
+        for (idx, stats) in &candidates {
+            let e = &enemies[*idx];
+            let val = match strategy {
+                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
+                EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
+                EnemyTarget::EnemyWithHighestDPR => -stats.total_dpr,
+                EnemyTarget::EnemyWithLowestAC => e.creature.ac,
+                EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
+            };
+            println!("  - Candidate {}: Score {:.1} (DPR: {:.1})", e.creature.name, val, stats.total_dpr);
+        }
+    }
+
+    let best_target = candidates.first().map(|(idx, _)| *idx);
+
+    #[cfg(debug_assertions)]
+    eprintln!(
+        "            Selected cached target: {:?}",
+        best_target.map(|idx| enemies[idx].creature.name.clone())
+    );
+
+    best_target
+}
+
 pub fn select_ally_target(
     strategy: AllyTarget,
     allies: &[Combattant],
@@ -493,6 +637,24 @@ fn select_injured_ally_target(
     best_target
 }
 
+/// Calculate target score using cached combat statistics for O(1) performance
+fn calculate_target_score_cached(
+    strategy: &EnemyTarget,
+    target_stats: &CombatantStats,
+    target_current_hp: f64,
+    _target_concentrating: bool,
+    attacker_estimated_ac: f64,
+) -> f64 {
+    match strategy {
+        EnemyTarget::EnemyWithLeastHP => target_current_hp,
+        EnemyTarget::EnemyWithMostHP => -target_current_hp,
+        EnemyTarget::EnemyWithHighestDPR => -target_stats.total_dpr,
+        EnemyTarget::EnemyWithLowestAC => attacker_estimated_ac,
+        EnemyTarget::EnemyWithHighestAC => -attacker_estimated_ac,
+    }
+}
+
+/// Legacy DPR estimation function - kept for compatibility
 fn estimate_dpr(c: &Combattant) -> f64 {
     const BASELINE_AC: f64 = 15.0;
 

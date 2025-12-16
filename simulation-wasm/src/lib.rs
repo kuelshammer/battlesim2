@@ -15,9 +15,11 @@ pub mod action_resolver;
 pub mod validation; // New module for requirement validation
 pub mod utilities;
 pub mod quintile_analysis;
+pub mod combat_stats;
 
 
 use wasm_bindgen::prelude::*;
+use web_sys::console;
 use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
 use std::collections::{HashMap, HashSet};
@@ -446,15 +448,20 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
 }
 
 #[wasm_bindgen]
-pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, party_size: usize) -> Result<JsValue, JsValue> {
+pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_size: usize) -> Result<JsValue, JsValue> {
+    // Add debug logging
+    console::log_1(&"=== Quintile Analysis WASM Debug ===".into());
+    
     let mut results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
+    
+    console::log_1(&format!("Received {} simulation results", results.len()).into());
     
     // Sort results by score from worst to best performance
     results.sort_by(|a, b| crate::aggregation::calculate_score(a).partial_cmp(&crate::aggregation::calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
     
-    // Calculate party size from first result
-    let party_size = if let Some(first_result) = results.first() {
+    // Calculate party size from first result (use actual data instead of parameter)
+    let actual_party_size = if let Some(first_result) = results.first() {
         if let Some(first_encounter) = first_result.first() {
             first_encounter.rounds.first()
                 .map(|first_round| first_round.team1.len())
@@ -466,7 +473,20 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, party_s
         0
     };
     
-    let output = quintile_analysis::run_quintile_analysis(&results, scenario_name, party_size);
+    console::log_1(&format!("Calculated party size: {}", actual_party_size).into());
+    
+    let output = quintile_analysis::run_quintile_analysis(&results, scenario_name, actual_party_size);
+    
+    console::log_1(&format!("Generated {} quintiles", output.quintiles.len()).into());
+    for (i, quintile) in output.quintiles.iter().enumerate() {
+        console::log_1(&format!(
+            "Quintile {}: {} combatants, {} survivors, {:.1}% win rate", 
+            i+1, 
+            quintile.median_run_visualization.len(), 
+            quintile.median_survivors,
+            quintile.win_rate
+        ).into());
+    }
     
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);

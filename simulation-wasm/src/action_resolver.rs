@@ -432,13 +432,19 @@ impl ActionResolver {
     /// Get SINGLE best target for an attack - re-called for each attack
     /// Allows same enemy to be targeted again if still alive
     /// Uses priority-based tie-breaking when primary strategy results in ties
+    /// Optimized version using cached combat statistics for O(1) DPR lookups
     fn get_single_attack_target(
         &self,
         attack: &AtkAction,
-        context: &TurnContext,
+        context: &mut TurnContext,
         actor_id: &str,
     ) -> Option<String> {
         use std::cmp::Ordering;
+
+        // Pre-calculate combat statistics if needed for performance
+        if context.get_cache_stats().is_dirty {
+            context.precalculate_combat_stats();
+        }
 
         // Get actor's team (mode)
         let actor_mode = context
@@ -459,23 +465,7 @@ impl ActionResolver {
             return None;
         }
 
-        // Helper: estimate DPR for a combatant
-        let estimate_dpr = |c: &crate::context::CombattantState| -> f64 {
-            c.base_combatant
-                .creature
-                .actions
-                .iter()
-                .filter_map(|action| {
-                    if let crate::model::Action::Atk(atk) = action {
-                        Some(crate::dice::average(&atk.dpr) * atk.targets as f64)
-                    } else {
-                        None
-                    }
-                })
-                .sum::<f64>()
-        };
-
-        // Sort with full priority-based tie-breaking
+        // Sort with full priority-based tie-breaking using cached stats
         enemies.sort_by(|a, b| {
             // 1. PRIMARY STRATEGY
             let primary = match &attack.target {
@@ -500,8 +490,9 @@ impl ActionResolver {
                     .partial_cmp(&a.base_combatant.creature.ac)
                     .unwrap_or(Ordering::Equal),
                 crate::enums::EnemyTarget::EnemyWithHighestDPR => {
-                    let dpr_a = estimate_dpr(a);
-                    let dpr_b = estimate_dpr(b);
+                    // Use cached DPR for O(1) lookup
+                    let dpr_a = a.cached_stats.as_ref().map(|s| s.total_dpr).unwrap_or(0.0);
+                    let dpr_b = b.cached_stats.as_ref().map(|s| s.total_dpr).unwrap_or(0.0);
                     dpr_b.partial_cmp(&dpr_a).unwrap_or(Ordering::Equal)
                 }
             };
@@ -529,9 +520,9 @@ impl ActionResolver {
                 return ac_cmp.unwrap_or(Ordering::Equal);
             }
 
-            // 4. TIE-BREAKER: Higher DPR (more dangerous enemy)
-            let dpr_a = estimate_dpr(a);
-            let dpr_b = estimate_dpr(b);
+            // 4. TIE-BREAKER: Higher DPR (more dangerous enemy) using cached stats
+            let dpr_a = a.cached_stats.as_ref().map(|s| s.total_dpr).unwrap_or(0.0);
+            let dpr_b = b.cached_stats.as_ref().map(|s| s.total_dpr).unwrap_or(0.0);
             let dpr_cmp = dpr_b.partial_cmp(&dpr_a); // Higher DPR first
             if dpr_cmp != Some(Ordering::Equal) {
                 return dpr_cmp.unwrap_or(Ordering::Equal);

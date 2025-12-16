@@ -1,4 +1,5 @@
 use crate::enums::*;
+pub use crate::enums::ActionCondition; // Explicitly re-export ActionCondition
 use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};

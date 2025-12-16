@@ -2,6 +2,7 @@ use crate::enums::CreatureCondition;
 use crate::events::{Event, EventBus};
 use crate::model::{Action, Combattant};
 use crate::resources::{ActionCost, ResetType, ResourceLedger, ResourceType};
+use crate::combat_stats::{CombatStatsCache, CombatantStats};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -20,6 +21,9 @@ pub struct TurnContext {
     // Combat State
     pub combatants: HashMap<String, CombattantState>,
     pub active_effects: HashMap<String, ActiveEffect>,
+
+    // Performance Optimization
+    pub combat_stats_cache: CombatStatsCache, // Cached combat statistics for targeting
 
     // Environmental Context
     pub battlefield_conditions: Vec<String>, // Simplified to string for now
@@ -40,6 +44,8 @@ pub struct CombattantState {
     pub resources: ResourceLedger,     // Per-combatant resource tracking
     #[serde(default)]
     pub arcane_ward_hp: Option<f64>,
+    #[serde(skip)]
+    pub cached_stats: Option<CombatantStats>, // Cached combat statistics
 }
 
 /// An active effect applied to a combatant
@@ -120,6 +126,7 @@ impl TurnContext {
                     base_combatant: c.clone(), // Clone to avoid borrow issues if c is used below? No, map takes ownership.
                     resources,
                     arcane_ward_hp: c.initial_state.arcane_ward_hp,
+                    cached_stats: None, // Will be populated by cache
                 };
                 (state.id.clone(), state)
             })
@@ -131,6 +138,7 @@ impl TurnContext {
             current_turn_owner: None,
             combatants: combatant_states,
             active_effects: HashMap::new(),
+            combat_stats_cache: CombatStatsCache::new(),
             battlefield_conditions,
             weather,
             terrain,
@@ -486,6 +494,9 @@ impl TurnContext {
 
                 // Immediately remove all buffs from the dead combatant
                 self.remove_all_buffs_from_source(target_id);
+                
+                // Remove from combat stats cache to optimize targeting
+                self.remove_combatant_from_cache(target_id);
             }
         }
 
@@ -580,6 +591,68 @@ impl TurnContext {
             total_effects: self.active_effects.len(),
             pending_events: self.event_bus.pending_count(),
         }
+    }
+
+    /// Get cached combat statistics for a combatant
+    pub fn get_combatant_stats(&mut self, combatant_id: &str) -> Option<&CombatantStats> {
+        if let Some(combatant_state) = self.combatants.get(combatant_id) {
+            // Get or calculate stats through the cache
+            let stats = self.combat_stats_cache.get_stats(&combatant_state.base_combatant);
+            
+            // Also cache in the combatant state for quick access
+            if let Some(state) = self.combatants.get_mut(combatant_id) {
+                state.cached_stats = Some(stats.clone());
+            }
+            
+            Some(stats)
+        } else {
+            None
+        }
+    }
+
+    /// Pre-calculate combat statistics for all combatants
+    pub fn precalculate_combat_stats(&mut self) {
+        let combatants: Vec<Combattant> = self.combatants
+            .values()
+            .map(|state| state.base_combatant.clone())
+            .collect();
+        
+        self.combat_stats_cache.precalculate_for_combatants(&combatants);
+        
+        // Update cached stats in each combatant state
+        for (_id, state) in &mut self.combatants {
+            if let Some(stats) = self.combat_stats_cache.get_stats_by_id(&state.base_combatant.creature.id) {
+                state.cached_stats = Some(stats.clone());
+            }
+        }
+    }
+
+    /// Invalidate combat stats cache (call when combatants die or state changes significantly)
+    pub fn invalidate_combat_stats_cache(&mut self) {
+        self.combat_stats_cache.mark_dirty();
+        
+        // Clear cached stats from all combatant states
+        for state in self.combatants.values_mut() {
+            state.cached_stats = None;
+        }
+    }
+
+    /// Remove combatant from stats cache (e.g., when combatant dies)
+    pub fn remove_combatant_from_cache(&mut self, combatant_id: &str) {
+        if let Some(combatant_state) = self.combatants.get(combatant_id) {
+            let creature_id = &combatant_state.base_combatant.creature.id;
+            self.combat_stats_cache.remove_creature(creature_id);
+        }
+        
+        // Clear cached stats from the combatant state
+        if let Some(state) = self.combatants.get_mut(combatant_id) {
+            state.cached_stats = None;
+        }
+    }
+
+    /// Get combat stats cache statistics
+    pub fn get_cache_stats(&self) -> crate::combat_stats::CacheStats {
+        self.combat_stats_cache.get_cache_stats()
     }
 }
 
