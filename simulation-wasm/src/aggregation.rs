@@ -365,7 +365,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
 
 pub fn calculate_score(result: &SimulationResult) -> f64 {
     if result.is_empty() {
-        return 0.0;
+        return -1_000_000.0; // Return extremely low score for empty/failed runs to sort them to the bottom
     }
 
     let last_encounter = result.last().unwrap();
@@ -382,10 +382,16 @@ pub fn calculate_score(result: &SimulationResult) -> f64 {
 
         // Tiered scoring: (Survivors × 10,000) + Total Party HP - Total Monster HP
         // This ensures that keeping players alive is mathematically more valuable than any amount of HP
-        return (survivors * 10_000.0) + player_hp - monster_hp;
+        let score = (survivors * 10_000.0) + player_hp - monster_hp;
+        
+        if score.is_nan() {
+            return -1_000_000.0; // Handle NaN results as failures
+        }
+        
+        return score;
     }
 
-    0.0
+    -1_000_000.0 // Fallback for result with no rounds
 }
 
 #[cfg(not(target_arch = "wasm32"))]
