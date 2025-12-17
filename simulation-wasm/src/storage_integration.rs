@@ -2,7 +2,7 @@ use crate::background_simulation::{BackgroundSimulationId, BackgroundSimulationR
 use crate::queue_manager::{SimulationQueue, SimulationRequest, QueueError};
 use crate::progress_communication::{ProgressCommunication, ProgressUpdate, ProgressUpdateType, ProgressError};
 use crate::storage_manager::StorageManager;
-use crate::storage::{ScenarioParameters, SimulationStatus, SimulationMetadata, generate_simulation_id};
+use crate::storage::{ScenarioParameters, SimulationStatus, generate_simulation_id};
 use crate::model::{Creature, Encounter, SimulationResult};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -129,7 +129,7 @@ impl StorageIntegration {
         // Check if we have cached results
         if self.config.auto_store_completed {
             if let Ok(storage_manager) = self.storage_manager.try_lock() {
-                if let Some(cached_results) = storage_manager.get_cached_results(
+                if let Some(_cached_results) = storage_manager.get_cached_results(
                     &parameters.players,
                     &parameters.encounters,
                     parameters.iterations,
@@ -391,7 +391,7 @@ impl StorageIntegration {
         // Check if it's an active simulation
         {
             let active = self.active_simulations.lock().unwrap();
-            for (sim_id, info) in active.iter() {
+            for (_sim_id, info) in active.iter() {
                 if info.request_id == request_id {
                     let elapsed = info.start_time.elapsed().as_millis() as u64;
                     let progress = if info.parameters.iterations > 0 {
@@ -548,7 +548,7 @@ impl std::error::Error for StorageIntegrationError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Action, AtkAction, ActionBase, DiceFormula};
+    use crate::model::{Creature, DiceFormula};
 
     fn create_test_creature(name: &str, hp: f64, ac: f64) -> Creature {
         Creature {
