@@ -4,7 +4,6 @@ mod tests {
     use crate::model::*;
     use crate::resources::{ActionCost, ResourceType};
     use crate::targeting::estimate_dpr;
-    use std::collections::HashMap;
 
     fn create_dummy_action(
         name: &str,
