@@ -23,7 +23,7 @@ serde-wasm-bindgen = "0.6.5"
 web-sys = { version = "0.3", features = ["console"] }
 clap = { version = "4", features = ["derive"] }
 uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
-lz4_flex = { version = "0.11", default-features = false }
+# lz4_flex removed as storage functionality is no longer needed
 
 [profile.release]
 opt-level = "z"

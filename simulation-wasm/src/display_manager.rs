@@ -165,7 +165,6 @@ impl DisplayManager {
             players: players.to_vec(),
             encounters: encounters.to_vec(),
             iterations,
-            config: Default::default(),
         };
 
         // Check if parameters have changed
@@ -196,149 +195,50 @@ impl DisplayManager {
     }
 
     /// Get the newest results (most recent timestamp)
-    fn get_newest_results(&self, parameters: &ScenarioParameters) -> DisplayResult {
-        let storage = self.storage_manager.lock().unwrap();
-        let memory_storage = &storage.memory_storage;
-
-        let primary_age = memory_storage.primary_slot.as_ref()
-            .map(|data| data.timestamp.0)
-            .unwrap_or(0);
-        let secondary_age = memory_storage.secondary_slot.as_ref()
-            .map(|data| data.timestamp.0)
-            .unwrap_or(0);
-
-        let slot_used = if primary_age >= secondary_age {
-            SlotSelection::Primary
-        } else {
-            SlotSelection::Secondary
-        };
-
-        let results = memory_storage.get_simulation(parameters)
-            .map(|data| data.results.clone());
-
+    fn get_newest_results(&self, _parameters: &ScenarioParameters) -> DisplayResult {
+        // Since storage is removed, return empty results
         DisplayResult {
-            results,
-            slot_used: Some(slot_used),
+            results: None,
+            slot_used: None,
             mode_used: DisplayMode::ShowNewest,
             user_interaction_required: false,
             available_slots: vec![],
-            messages: vec![format!("Showing newest results from {:?} slot", slot_used)],
+            messages: vec!["Storage functionality removed - no cached results available".to_string()],
         }
     }
 
     /// Get the most similar results to current parameters
-    fn get_most_similar_results(&self, parameters: &ScenarioParameters) -> DisplayResult {
-        let storage = self.storage_manager.lock().unwrap();
-        let memory_storage = &storage.memory_storage;
-
-        // Find most similar slot
-        let most_similar = self.find_most_similar_slot(parameters);
-
-        if let Some(slot_info) = most_similar {
-            let slot_selection = slot_info.slot_selection;
-            let results = memory_storage.get_simulation(parameters)
-                .map(|data| data.results.clone());
-
-            DisplayResult {
-                results,
-                slot_used: Some(slot_selection),
-                mode_used: DisplayMode::ShowMostSimilar,
-                user_interaction_required: false,
-                available_slots: vec![],
-                messages: vec![
-                    format!("Showing most similar results ({:.1}% match) from {:?} slot", 
-                           slot_info.similarity_score * 100.0, slot_selection)
-                ],
-            }
-        } else {
-            DisplayResult {
-                results: None,
-                slot_used: None,
-                mode_used: DisplayMode::ShowMostSimilar,
-                user_interaction_required: false,
-                available_slots: vec![],
-                messages: vec!["No similar results found".to_string()],
-            }
+    fn get_most_similar_results(&self, _parameters: &ScenarioParameters) -> DisplayResult {
+        // Since storage is removed, return empty results
+        DisplayResult {
+            results: None,
+            slot_used: None,
+            mode_used: DisplayMode::ShowMostSimilar,
+            user_interaction_required: false,
+            available_slots: vec![],
+            messages: vec!["Storage functionality removed - no cached results available".to_string()],
         }
     }
 
     /// Present user choice between available slots
-    fn present_user_choice(&self, parameters: &ScenarioParameters) -> DisplayResult {
-        let storage = self.storage_manager.lock().unwrap();
-        let memory_storage = &storage.memory_storage;
-
-        let mut available_slots = Vec::new();
-
-        // Check primary slot
-        if let Some(primary_data) = &memory_storage.primary_slot {
-            let similarity = self.calculate_similarity(parameters, &primary_data.parameters);
-            let differences = self.calculate_parameter_differences(parameters, &primary_data.parameters);
-            
-            available_slots.push(SlotInfo {
-                slot_selection: SlotSelection::Primary,
-                age_seconds: SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs()
-                    .saturating_sub(primary_data.timestamp.0),
-                similarity_score: similarity,
-                iterations: primary_data.parameters.iterations,
-                execution_time_ms: primary_data.metadata.execution_time_ms,
-                status: format!("{:?}", primary_data.metadata.status),
-                parameter_differences: differences,
-            });
-        }
-
-        // Check secondary slot
-        if let Some(secondary_data) = &memory_storage.secondary_slot {
-            let similarity = self.calculate_similarity(parameters, &secondary_data.parameters);
-            let differences = self.calculate_parameter_differences(parameters, &secondary_data.parameters);
-            available_slots.push(SlotInfo {                    slot_selection: SlotSelection::Secondary,
-                    age_seconds: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                        .saturating_sub(secondary_data.timestamp.0),
-                    similarity_score: similarity,
-                    iterations: secondary_data.parameters.iterations,
-                    execution_time_ms: secondary_data.metadata.execution_time_ms,
-                    status: format!("{:?}", secondary_data.metadata.status),
-                    parameter_differences: differences,
-                });
-        }
-
+    fn present_user_choice(&self, _parameters: &ScenarioParameters) -> DisplayResult {
+        // Since storage is removed, return empty results
         DisplayResult {
-            results: None, // User needs to choose
+            results: None,
             slot_used: None,
             mode_used: DisplayMode::LetUserChoose,
-            user_interaction_required: true,
-            available_slots,
-            messages: vec!["Please choose which simulation results to display".to_string()],
+            user_interaction_required: false,
+            available_slots: vec![],
+            messages: vec!["Storage functionality removed - no cached results available".to_string()],
         }
     }
 
     /// Get results from a specific slot
-    fn get_slot_results(&self, parameters: &ScenarioParameters, slot_selection: SlotSelection) -> DisplayResult {
-        let storage = self.storage_manager.lock().unwrap();
-        let memory_storage = &storage.memory_storage;
-
-        let results = memory_storage.get_simulation(parameters)
-            .map(|data| data.results.clone());
-
-        let slot_data = match slot_selection {
-            SlotSelection::Primary => &memory_storage.primary_slot,
-            SlotSelection::Secondary => &memory_storage.secondary_slot,
-        };
-
-        let messages = if slot_data.is_some() {
-            vec![format!("Showing results from {:?} slot", slot_selection)]
-        } else {
-            vec![format!("No data available in {:?} slot", slot_selection)]
-        };
-
+    fn get_slot_results(&self, _parameters: &ScenarioParameters, slot_selection: SlotSelection) -> DisplayResult {
+        // Since storage is removed, return empty results
         DisplayResult {
-            results,
-            slot_used: Some(slot_selection),
+            results: None,
+            slot_used: Some(slot_selection.clone()),
             mode_used: if slot_selection == SlotSelection::Primary {
                 DisplayMode::PrimaryOnly
             } else {
@@ -346,7 +246,7 @@ impl DisplayManager {
             },
             user_interaction_required: false,
             available_slots: vec![],
-            messages,
+            messages: vec![format!("Storage functionality removed - no data available in {:?} slot", slot_selection)],
         }
     }
 
@@ -456,57 +356,9 @@ impl DisplayManager {
     }
 
     /// Find the most similar slot to the given parameters
-    fn find_most_similar_slot(&self, parameters: &ScenarioParameters) -> Option<SlotInfo> {
-        let storage = self.storage_manager.lock().unwrap();
-        let memory_storage = &storage.memory_storage;
-
-        let mut best_slot: Option<SlotInfo> = None;
-        let mut best_similarity = 0.0;
-
-        // Check primary slot
-        if let Some(primary_data) = &memory_storage.primary_slot {
-            let similarity = self.calculate_similarity(parameters, &primary_data.parameters);
-            if similarity > best_similarity {
-                best_similarity = similarity;
-                let differences = self.calculate_parameter_differences(parameters, &primary_data.parameters);
-                best_slot = Some(SlotInfo {
-                    slot_selection: SlotSelection::Primary,
-                    age_seconds: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                        .saturating_sub(primary_data.timestamp.0),
-                    similarity_score: similarity,
-                    iterations: primary_data.parameters.iterations,
-                    execution_time_ms: primary_data.metadata.execution_time_ms,
-                    status: format!("{:?}", primary_data.metadata.status),
-                    parameter_differences: differences,
-                });
-            }
-        }
-
-        // Check secondary slot
-        if let Some(secondary_data) = &memory_storage.secondary_slot {
-            let similarity = self.calculate_similarity(parameters, &secondary_data.parameters);
-            if similarity > best_similarity {
-                let differences = self.calculate_parameter_differences(parameters, &secondary_data.parameters);
-                best_slot = Some(SlotInfo {
-                    slot_selection: SlotSelection::Secondary,
-                    age_seconds: SystemTime::now()
-                        .duration_since(UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                        .saturating_sub(secondary_data.timestamp.0),
-                    similarity_score: similarity,
-                    iterations: secondary_data.parameters.iterations,
-                    execution_time_ms: secondary_data.metadata.execution_time_ms,
-                    status: format!("{:?}", secondary_data.metadata.status),
-                    parameter_differences: differences,
-                });
-            }
-        }
-
-        best_slot
+    fn find_most_similar_slot(&self, _parameters: &ScenarioParameters) -> Option<SlotInfo> {
+        // Since storage is removed, return None
+        None
     }
 
     /// Calculate similarity between two parameter sets (0.0 to 1.0)
@@ -779,14 +631,12 @@ mod tests {
             players: vec![create_test_creature("Fighter", 50.0, 16.0)],
             encounters: vec![],
             iterations: 100,
-            config: Default::default(),
         };
 
         let params2 = ScenarioParameters {
             players: vec![create_test_creature("Fighter", 50.0, 16.0), create_test_creature("Cleric", 40.0, 14.0)],
             encounters: vec![],
             iterations: 200,
-            config: Default::default(),
         };
 
         let differences = manager.calculate_parameter_differences(&params1, &params2);

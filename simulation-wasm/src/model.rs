@@ -759,3 +759,10 @@ pub struct EncounterResult {
 }
 
 pub type SimulationResult = Vec<EncounterResult>;
+
+/// A complete simulation run with both results and events
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationRun {
+    pub result: SimulationResult,
+    pub events: Vec<crate::events::Event>,
+}

@@ -1,11 +1,15 @@
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
 use crate::background_simulation::{BackgroundSimulationId, SimulationPriority, BackgroundSimulationEngine};
 use crate::progress_ui::{ProgressUIManager, ProgressInfo};
-use crate::storage_manager::StorageManager;
 use crate::queue_manager::QueueManager;
-use crate::storage_integration::StorageIntegration;
 use crate::model::{Creature, Encounter};
-use crate::storage::ScenarioParameters;
+// Simple scenario parameters since storage module was removed
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ScenarioParameters {
+    pub players: Vec<Creature>,
+    pub encounters: Vec<Encounter>,
+    pub iterations: usize,
+}
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -15,15 +19,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub enum UserEvent {
     /// Parameters were changed
     ParametersChanged {
-        players: Vec<Creature>,
-        encounters: Vec<Encounter>,
-        iterations: usize,
+        parameters: ScenarioParameters,
     },
     /// User requested a new simulation
     RequestSimulation {
-        players: Vec<Creature>,
-        encounters: Vec<Encounter>,
-        iterations: usize,
+        parameters: ScenarioParameters,
         priority: SimulationPriority,
     },
     /// User selected a display mode
@@ -175,16 +175,12 @@ pub struct UserInteractionManager {
     display_manager: Arc<Mutex<DisplayManager>>,
     /// Progress UI manager
     progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-    /// Storage manager
-    storage_manager: Arc<Mutex<StorageManager>>,
-    /// Background simulation engine
+        /// Background simulation engine
 #[allow(dead_code)]
 simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Queue manager
     queue_manager: Arc<Mutex<QueueManager>>,
-    /// Storage integration manager
-    storage_integration: Arc<Mutex<StorageIntegration>>,
-    /// Configuration
+        /// Configuration
     config: UserInteractionConfig,
     /// Current state
     state: Arc<Mutex<UserInteractionState>>,
@@ -197,20 +193,15 @@ impl UserInteractionManager {
     pub fn new(
         display_manager: Arc<Mutex<DisplayManager>>,
         progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-        storage_manager: Arc<Mutex<StorageManager>>,
-#[allow(dead_code)]
-simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
+        simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         queue_manager: Arc<Mutex<QueueManager>>,
-        storage_integration: Arc<Mutex<StorageIntegration>>,
         config: UserInteractionConfig,
     ) -> Self {
         Self {
             display_manager,
             progress_ui_manager,
-            storage_manager,
             simulation_engine,
             queue_manager,
-            storage_integration,
             config,
             state: Arc::new(Mutex::new(UserInteractionState {
                 current_parameters: None,
@@ -236,11 +227,11 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         }
 
         match event {
-            UserEvent::ParametersChanged { players, encounters, iterations } => {
-                self.handle_parameters_changed(players, encounters, iterations)
+            UserEvent::ParametersChanged { parameters } => {
+                self.handle_parameters_changed(parameters)
             },
-            UserEvent::RequestSimulation { players, encounters, iterations, priority } => {
-                self.handle_simulation_request(players, encounters, iterations, priority)
+            UserEvent::RequestSimulation { parameters, priority } => {
+                self.handle_simulation_request(parameters, priority)
             },
             UserEvent::SetDisplayMode(mode) => {
                 self.handle_set_display_mode(mode)
@@ -266,9 +257,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Handle parameter changes
     fn handle_parameters_changed(
         &self,
-        players: Vec<Creature>,
-        encounters: Vec<Encounter>,
-        iterations: usize,
+        parameters: ScenarioParameters,
     ) -> UserEventResult {
         let mut messages = Vec::new();
         let requires_ui_refresh = true;
@@ -276,12 +265,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         // Update state
         {
             let mut state = self.state.lock().unwrap();
-            state.current_parameters = Some(ScenarioParameters {
-                players: players.clone(),
-                encounters: encounters.clone(),
-                iterations,
-                config: Default::default(),
-            });
+            state.current_parameters = Some(parameters.clone());
             state.last_parameter_change = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
@@ -291,7 +275,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         // Get display results
         let display_result = {
             let mut display_manager = self.display_manager.lock().unwrap();
-            display_manager.get_display_results(&players, &encounters, iterations)
+            display_manager.get_display_results(&parameters.players, &parameters.encounters, parameters.iterations)
         };
 
         // Auto-simulate if enabled and no cached results
@@ -301,7 +285,32 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
             if state.active_simulations.len() < self.config.max_concurrent_simulations {
                 drop(state);
                 
-                match self.start_background_simulation(&players, &encounters, iterations, SimulationPriority::Normal) {
+                match self.start_background_simulation(&parameters, SimulationPriority::Normal) {
+                    Ok(sim_id) => {
+                        messages.push("Background simulation started".to_string());
+                        Some(sim_id)
+                    },
+                    Err(e) => {
+                        messages.push(format!("Failed to start simulation: {}", e));
+                        None
+                    }
+                }
+            } else {
+                messages.push("Maximum concurrent simulations reached".to_string());
+                None
+            }
+        } else {
+            None
+        };
+
+        // Auto-simulate if enabled and no cached results
+        let simulation_id = if self.config.auto_simulate_on_change && display_result.results.is_none() {
+            // Check if we're under the concurrent limit
+            let state = self.state.lock().unwrap();
+            if state.active_simulations.len() < self.config.max_concurrent_simulations {
+                drop(state);
+                
+                match self.start_background_simulation(&parameters, SimulationPriority::Normal) {
                     Ok(sim_id) => {
                         messages.push("Background simulation started".to_string());
                         Some(sim_id)
@@ -332,9 +341,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Handle simulation request
     fn handle_simulation_request(
         &self,
-        players: Vec<Creature>,
-        encounters: Vec<Encounter>,
-        iterations: usize,
+        parameters: ScenarioParameters,
         priority: SimulationPriority,
     ) -> UserEventResult {
         let mut messages = Vec::new();
@@ -355,7 +362,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         }
 
         // Start simulation
-        match self.start_background_simulation(&players, &encounters, iterations, priority) {
+        match self.start_background_simulation(&parameters, priority) {
             Ok(simulation_id) => {
                 messages.push(format!("Simulation {} started with priority {:?}", simulation_id.0, priority));
                 
@@ -426,7 +433,7 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
 
         let display_result = {
             let mut display_manager = self.display_manager.lock().unwrap();
-            display_manager.user_selected_slot(slot_selection)
+            display_manager.user_selected_slot(slot_selection.clone())
         };
 
         messages.push(format!("Selected {:?} slot", slot_selection));
@@ -616,55 +623,35 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Start a background simulation
     fn start_background_simulation(
         &self,
-        players: &[Creature],
-        encounters: &[Encounter],
-        iterations: usize,
+        parameters: &ScenarioParameters,
         priority: SimulationPriority,
     ) -> Result<BackgroundSimulationId, String> {
-        let parameters = ScenarioParameters {
-            players: players.to_vec(),
-            encounters: encounters.to_vec(),
-            iterations,
-            config: Default::default(),
-        };
 
-        // Submit simulation request through storage integration
-        let submission_result = {
-            let storage_integration = self.storage_integration.lock().unwrap();
-            storage_integration.submit_simulation_request(parameters, priority)
-                .map_err(|e| format!("Failed to queue simulation: {}", e))?
-        };
+        // Start simulation directly
+        let mut engine = self.simulation_engine.lock().unwrap();
+        let simulation_id = engine.start_simulation(
+            parameters.clone(),
+            priority,
+        )?;
 
-        // If a simulation ID was actually started (not just queued)
-        if let Some(simulation_id) = submission_result.simulation_id {
-            // Add to active simulations
-            {
-                let mut state = self.state.lock().unwrap();
-                state.active_simulations.push(simulation_id.clone());
-            }
-
-            // Start progress tracking
-            {
-                let progress_ui = self.progress_ui_manager.lock().unwrap();
-                progress_ui.start_tracking(simulation_id.clone());
-            }
-
-            Ok(simulation_id)
-        } else {
-            // If the simulation was only queued, return an appropriate message or error.
-            // For now, we'll return an error if it was queued and no ID was provided.
-            // In a more complex system, this might return the request_id.
-            Err("Simulation request was queued, but no simulation ID was immediately available.".to_string())
+        // Add to active simulations
+        {
+            let mut state = self.state.lock().unwrap();
+            state.active_simulations.push(simulation_id.clone());
         }
+
+        // Start progress tracking
+        {
+            let progress_ui = self.progress_ui_manager.lock().unwrap();
+            progress_ui.start_tracking(simulation_id.clone());
+        }
+
+        Ok(simulation_id)
     }
 
     /// Clear cache internally
     fn clear_cache_internal(&self) -> Result<(), String> {
-        let mut storage_manager = self.storage_manager.lock().unwrap();
-        storage_manager.clear_cache()
-            .map_err(|e| format!("Storage error: {}", e))?;
-
-        // Clear progress tracking
+        // Since storage functionality is removed, just clear progress tracking
         {
             let progress_ui = self.progress_ui_manager.lock().unwrap();
             progress_ui.clear_all();
@@ -673,15 +660,13 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
         Ok(())
     }
 
-    /// Cleanup storage internally
+    /// Cleanup storage internally (stub since storage is removed)
     fn cleanup_storage_internal(&self) -> Result<(), String> {
-        let mut storage_manager = self.storage_manager.lock().unwrap();
-        storage_manager.cleanup()
-            .map_err(|e| format!("Storage error: {}", e))?;
-
+        // Since storage functionality is removed, this is a no-op
         Ok(())
     }
 
+    
     /// Answer a confirmation request
     pub fn answer_confirmation(&self, confirmation_id: &str, confirmed: bool) -> UserEventResult {
         let mut messages = Vec::new();

@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
-use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult};
+use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun};
 use simulation_wasm::quintile_analysis::run_quintile_analysis;
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
@@ -23,9 +23,6 @@ enum Commands {
     Aggregate {
         /// Path to the scenario JSON file
         scenario: PathBuf,
-        /// Output file path (optional, defaults to stdout)
-        #[arg(short, long)]
-        output: Option<PathBuf>,
     },
     /// Generate a detailed event log for a simulation run
     Log {
@@ -88,17 +85,6 @@ enum Commands {
         /// Path to the scenario JSON file
         scenario: PathBuf,
     },
-    /// Save all simulation runs with detailed events to files
-    SaveAll {
-        /// Path to the scenario JSON file
-        scenario: PathBuf,
-        /// Output directory for saved runs (optional, defaults to current directory)
-        #[arg(short, long)]
-        output: Option<PathBuf>,
-        /// Number of runs to save (optional, defaults to 1005)
-        #[arg(short, long)]
-        runs: Option<usize>,
-    },
 }
 
 // --- Main Entry Point ---
@@ -107,8 +93,8 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Aggregate { scenario, output } => {
-            run_aggregate(&scenario, output.as_deref());
+        Commands::Aggregate { scenario } => {
+            run_aggregate(&scenario);
         }
         Commands::Log {
             scenario,
@@ -150,19 +136,12 @@ fn main() {
         Commands::Validate { scenario } => {
             run_validate(&scenario);
         }
-        Commands::SaveAll {
-            scenario,
-            output,
-            runs,
-        } => {
-            run_save_all(&scenario, output.as_deref(), runs);
-        }
     }
 }
 
 // --- Aggregate Subcommand ---
 
-fn run_aggregate(scenario_path: &PathBuf, output_path: Option<&std::path::Path>) {
+fn run_aggregate(scenario_path: &PathBuf) {
     let (players, encounters, scenario_name) = load_scenario(scenario_path);
 
     // Get party size
@@ -171,13 +150,13 @@ fn run_aggregate(scenario_path: &PathBuf, output_path: Option<&std::path::Path>)
     // Run 1005 iterations
     let iterations = 1005;
     println!("Running {} iterations...", iterations);
-    let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false).0;
+    let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
     // Sort results by score from worst to best performance
-    results.sort_by(|a, b| calculate_score(a).partial_cmp(&calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal));
 
     // Use shared quintile analysis function
-    let output = run_quintile_analysis(&results, &scenario_name, party_size);
+    let output = run_quintile_analysis(&results.iter().map(|r| r.result.clone()).collect::<Vec<_>>(), &scenario_name, party_size);
 
     // Output table format
     println!("Quintile Analysis: {}", output.scenario_name);
@@ -195,13 +174,6 @@ fn run_aggregate(scenario_path: &PathBuf, output_path: Option<&std::path::Path>)
             quintile.win_rate
         );
     }
-
-    // If output path specified, also write JSON for programmatic use
-    if let Some(path) = output_path {
-        let json = serde_json::to_string_pretty(&output).expect("Failed to serialize output");
-        fs::write(path, &json).expect("Failed to write output file");
-        println!("\nWrote detailed JSON output to {:?}", path);
-    }
 }
 
 // --- Log Subcommand ---
@@ -211,20 +183,19 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
 
     // If run_index is provided, run that many + 1 and pick the specific one
     // Otherwise, run a single simulation with logging enabled
-    let (results, events) = if let Some(idx) = run_index {
-        let (res, _) = run_event_driven_simulation_rust(players, encounters, idx + 1, true);
-        // Pick the specific run's events (we'd need per-run events, but for now just use last)
-        (res, Vec::new()) // TODO: per-run event capture
+    let runs = if let Some(idx) = run_index {
+        run_event_driven_simulation_rust(players, encounters, idx + 1, true)
     } else {
         run_event_driven_simulation_rust(players, encounters, 1, true)
     };
 
-    if results.is_empty() {
+    if runs.is_empty() {
         println!("No simulation results!");
         return;
     }
 
-    let result = &results[run_index.unwrap_or(0).min(results.len() - 1)];
+    let run = &runs[run_index.unwrap_or(0).min(runs.len() - 1)];
+    let result = &run.result;
 
     // We need to rebuild the name map for formatting logs
     let mut combatant_names = HashMap::new();
@@ -240,6 +211,8 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
         "json" => {
             // TODO: Serialize raw events or formatted events?
             // Let's serialize formatted for now to match previous behavior roughly
+            // Since we now store events in SimulationRun, get events from the selected run
+            let events = &run.events;
             let formatted_events: Vec<String> = events
                 .iter()
                 .filter_map(|e| e.format_for_log(&combatant_names))
@@ -253,6 +226,8 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
         }
         "markdown" | _ => {
             // We need formatted events for markdown log
+            // Since we now store events in SimulationRun, get events from the selected run
+            let events = &run.events;
             let formatted_events: Vec<String> = events
                 .iter()
                 .filter_map(|e| e.format_for_log(&combatant_names))
@@ -328,18 +303,18 @@ fn run_find_median(scenario_path: &PathBuf) {
     // Run 1005 iterations
     let iterations = 1005;
     println!("Running {} iterations...", iterations);
-    let (results, _) = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
     // Results are sorted by score. Middle quintile is indices 402-602.
     // We want to find the run closest to the median of the MIDDLE quintile.
 
     let middle_start = 402;
     let middle_end = 603;
-    let middle_slice = &results[middle_start..middle_end];
+    let middle_slice = &runs[middle_start..middle_end];
 
     // Calculate median score of middle quintile
     let median_idx = middle_slice.len() / 2;
-    let median_score = calculate_score(&middle_slice[median_idx]);
+    let median_score = calculate_score(&middle_slice[median_idx].result);
 
     // Also calculate average HP spread (max_hp - min_hp) for winning team and avg rounds
     let (avg_hp_spread, avg_rounds) = calculate_averages(middle_slice);
@@ -348,9 +323,9 @@ fn run_find_median(scenario_path: &PathBuf) {
     let mut best_idx = middle_start;
     let mut best_distance = f64::MAX;
 
-    for (i, result) in results[middle_start..middle_end].iter().enumerate() {
-        let score = calculate_score(result);
-        let (hp_spread, rounds) = get_run_metrics(result);
+    for (i, run) in runs[middle_start..middle_end].iter().enumerate() {
+        let score = calculate_score(&run.result);
+        let (hp_spread, rounds) = get_run_metrics(&run.result);
 
         // Weighted distance: score is primary
         let score_diff = (score - median_score).abs();
@@ -366,17 +341,17 @@ fn run_find_median(scenario_path: &PathBuf) {
     }
 
     println!("Best match run index: {}", best_idx);
-    println!("  Score: {:.2}", calculate_score(&results[best_idx]));
+    println!("  Score: {:.2}", calculate_score(&runs[best_idx].result));
     println!("  Distance from median: {:.2}", best_distance);
 }
 
-fn calculate_averages(results: &[SimulationResult]) -> (f64, f64) {
+fn calculate_averages(runs: &[SimulationRun]) -> (f64, f64) {
     let mut total_hp_spread = 0.0;
     let mut total_rounds = 0.0;
-    let count = results.len() as f64;
+    let count = runs.len() as f64;
 
-    for result in results {
-        let (hp_spread, rounds) = get_run_metrics(result);
+    for run in runs {
+        let (hp_spread, rounds) = get_run_metrics(&run.result);
         total_hp_spread += hp_spread;
         total_rounds += rounds as f64;
     }
@@ -432,19 +407,16 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
 
     // Run simulation
     let _idx = run_index.unwrap_or(0);
-    let (results, events) = if let Some(idx) = run_index {
-        let (res, events) =
-            run_event_driven_simulation_rust(players.clone(), encounters.clone(), idx + 1, true);
-        // If we run multiple times, we might want events from the specific run?
-        // run_event_driven_simulation_rust returns events from the FIRST run.
-        // If we want events from run #5, we need to run it 6 times and discard the first 5?
-        // The current API only returns events for run 0.
-        // So providing run_index > 0 is misleading with current lib API.
-        // For now, we just run 1 simulation and analyze it.
-        (res, events)
+    let runs = if let Some(idx) = run_index {
+        run_event_driven_simulation_rust(players.clone(), encounters.clone(), idx + 1, true)
     } else {
         run_event_driven_simulation_rust(players.clone(), encounters.clone(), 1, true)
     };
+
+    // Extract results and events from the runs
+    let results: Vec<SimulationResult> = runs.iter().map(|run| run.result.clone()).collect();
+    let run_idx = run_index.unwrap_or(0).min(runs.len().saturating_sub(1));
+    let events = &runs[run_idx].events;
 
     if events.is_empty() {
         println!("No events generated.");
@@ -472,7 +444,7 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
     let mut breakdown: HashMap<String, HashMap<String, ActionStats>> = HashMap::new();
     let mut current_action: HashMap<String, String> = HashMap::new(); // Actor -> ActionID
 
-    for event in &events {
+    for event in events {
         match event {
             Event::ActionStarted {
                 actor_id,
@@ -491,7 +463,7 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
                 damage,
                 ..
             } => {
-                if let Some(action_id) = current_action.get(attacker_id) {
+                if let Some(action_id) = current_action.get(attacker_id.as_str()) {
                     let stats = breakdown
                         .entry(attacker_id.clone())
                         .or_default()
@@ -502,7 +474,7 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
                 }
             }
             Event::AttackMissed { attacker_id, .. } => {
-                if let Some(action_id) = current_action.get(attacker_id) {
+                if let Some(action_id) = current_action.get(attacker_id.as_str()) {
                     let stats = breakdown
                         .entry(attacker_id.clone())
                         .or_default()
@@ -753,12 +725,15 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
 
         // Run simulation (fewer runs for speed)
         let iterations = 201;
-        let (results, _) = run_event_driven_simulation_rust(
+        let runs = run_event_driven_simulation_rust(
             modified_players,
             modified_encounters,
             iterations,
             false,
         );
+
+        // Extract results from runs
+        let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
 
         // Calculate win rate for Team 1
         let mut wins = 0;
@@ -831,10 +806,12 @@ fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
     let iterations = 1005;
     println!("Running {} iterations for each scenario...\n", iterations);
 
-    let (results_a, _) =
-        run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);
-    let (results_b, _) =
-        run_event_driven_simulation_rust(players_b, encounters_b, iterations, false);
+    let runs_a = run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);
+    let runs_b = run_event_driven_simulation_rust(players_b, encounters_b, iterations, false);
+
+    // Extract results from runs
+    let results_a: Vec<SimulationResult> = runs_a.into_iter().map(|run| run.result).collect();
+    let results_b: Vec<SimulationResult> = runs_b.into_iter().map(|run| run.result).collect();
 
     // Calculate stats for each
     let stats_a = calculate_scenario_stats(&results_a);
@@ -1068,60 +1045,4 @@ fn validate_creature(
     }
 }
 
-// --- SaveAll Subcommand ---
 
-fn run_save_all(scenario_path: &PathBuf, output_dir: Option<&std::path::Path>, runs: Option<usize>) {
-    let (players, encounters, scenario_name) = load_scenario(scenario_path);
-    
-    let iterations = runs.unwrap_or(1005);
-    println!("Running {} iterations and saving all runs...", iterations);
-    
-    // Run simulation with events enabled
-    let start_time = std::time::Instant::now();
-    let (results, events) = run_event_driven_simulation_rust(players, encounters, iterations, true);
-    let duration = start_time.elapsed();
-    
-    // Verify we got the expected number of results
-    if results.len() != iterations {
-        println!("Warning: Expected {} runs but got {} results", iterations, results.len());
-    }
-    
-    // Create output directory
-    let output_path = output_dir.unwrap_or_else(|| std::path::Path::new("."));
-    let output_dir = output_path.join(format!("{}_runs", scenario_name.replace(' ', "_")));
-    fs::create_dir_all(&output_dir).expect("Failed to create output directory");
-    
-    println!("Saving {} runs to: {:?}", iterations, output_dir);
-    
-    // Save each run with its events
-    // Note: The simulation engine only returns events from the first run, so we'll use the same events for all runs
-    let mut total_size = 0;
-    for (i, result) in results.iter().enumerate() {
-        let run_file = output_dir.join(format!("run_{}.json", i));
-        
-        // Build the data structure to save
-        let run_data = serde_json::json!({
-            "run_index": i,
-            "result": result,
-            "events": &events, // Use the same events for all runs (from first run)
-        });
-        
-        let json_str = serde_json::to_string_pretty(&run_data).expect("Failed to serialize run data");
-        fs::write(&run_file, &json_str).expect("Failed to write run file");
-        total_size += json_str.len();
-        
-        // Progress reporting - show every 100 runs or at the end
-        if (i + 1) % 100 == 0 || i == iterations - 1 {
-            println!("Saved run {} of {}", i + 1, iterations);
-        }
-    }
-    
-    // Print statistics
-    println!("\n=== Save Statistics ===");
-    println!("Total runs saved: {}", iterations);
-    println!("Output directory: {:?}", output_dir);
-    println!("Total size: {:.2} MB", total_size as f64 / (1024.0 * 1024.0));
-    println!("Time taken: {:.2} seconds", duration.as_secs_f64());
-    println!("Average size per run: {:.2} KB", (total_size as f64 / iterations as f64) / 1024.0);
-    println!("Average time per run: {:.4} seconds", duration.as_secs_f64() / iterations as f64);
-}

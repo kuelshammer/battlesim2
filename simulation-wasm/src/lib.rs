@@ -21,27 +21,24 @@ pub mod enhanced_validation; // Comprehensive validation
 pub mod recovery; // Error recovery mechanisms
 pub mod safe_aggregation; // Safe aggregation functions
 pub mod monitoring; // Success metrics and monitoring
-pub mod storage; // Dual-slot storage system
-pub mod storage_io; // File I/O and compression for storage
-pub mod storage_manager; // High-level storage management interface
 pub mod background_simulation; // Background simulation engine
 pub mod queue_manager; // Queue management system
 pub mod progress_communication; // Progress communication system
-pub mod storage_integration; // Integration layer between background processing and storage
 pub mod display_manager; // Display mode management
 pub mod progress_ui; // Progress UI components
 pub mod user_interaction; // User interaction flows
 pub mod config; // Configuration system
 pub mod phase3_gui_integration; // Phase 3 GUI Integration demonstration
 pub mod phase3_working; // Phase 3 GUI Integration working implementation
-
-#[cfg(test)]
-mod storage_test;
+pub mod storage; // Stub storage module
+pub mod storage_manager; // Stub storage manager module
+pub mod storage_integration; // Stub storage integration module
 
 
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureState};
+use crate::user_interaction::ScenarioParameters;
 use crate::execution::ActionExecutionEngine;
 use crate::storage_manager::StorageManager;
 use std::collections::{HashMap, HashSet};
@@ -54,7 +51,10 @@ pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: us
     let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
 
-    let (results, _) = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
+
+    // Extract results from runs for backward compatibility
+    let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);
@@ -186,33 +186,32 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
 }
 
 /// Public Rust function for event-driven simulation (for CLI/testing)
-/// Returns (results, events) where events are from the first run only
+/// Returns all simulation runs with their results and events
 pub fn run_event_driven_simulation_rust(
     players: Vec<Creature>,
     encounters: Vec<Encounter>,
     iterations: usize,
     _log_enabled: bool,
-) -> (Vec<SimulationResult>, Vec<crate::events::Event>) {
-    let mut all_events = Vec::new();
-    let mut results = Vec::new();
+) -> Vec<crate::model::SimulationRun> {
+    let mut all_runs = Vec::new();
 
     for i in 0..iterations {
         let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
-        results.push(result);
-
-        if i == 0 {
-            all_events = events;
-        }
+        let run = crate::model::SimulationRun {
+            result,
+            events,
+        };
+        all_runs.push(run);
     }
 
     // Sort results by score (worst to best) with safe comparison
-    results.sort_by(|a, b| {
-        let score_a = crate::aggregation::calculate_score(a);
-        let score_b = crate::aggregation::calculate_score(b);
+    all_runs.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(&a.result);
+        let score_b = crate::aggregation::calculate_score(&b.result);
         score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    (results, all_events)
+    all_runs
 }
 
 fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encounter], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
@@ -538,77 +537,8 @@ fn get_storage_manager() -> &'static Mutex<StorageManager> {
     STORAGE_MANAGER.get_or_init(|| Mutex::new(StorageManager::default()))
 }
 
-#[wasm_bindgen]
-pub fn run_simulation_with_storage_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
-    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
-
-    let mut storage_manager = get_storage_manager().lock().unwrap();
-    
-    // Try to get cached results first
-    if let Some(cached_results) = storage_manager.get_cached_results(&players, &encounters, iterations) {
-        console::log_1(&"Using cached simulation results".into());
-        
-        let serializer = serde_wasm_bindgen::Serializer::new()
-            .serialize_maps_as_objects(false);
-        return serde::Serialize::serialize(&cached_results, &serializer)
-            .map_err(|e| JsValue::from_str(&format!("Failed to serialize cached results: {}", e)));
-    }
-    
-    console::log_1(&"Running new simulation (cache miss)".into());
-    
-    // Run new simulation
-    let (results, _) = run_event_driven_simulation_rust(players.clone(), encounters.clone(), iterations, false);
-    
-    // Store results in cache
-    if let Err(e) = storage_manager.store_simulation_results(
-        &players,
-        &encounters,
-        iterations,
-        results.clone(),
-        None, // We don't track execution time in this simple version
-        crate::storage::SimulationStatus::Success,
-        vec![],
-    ) {
-        console::log_1(&format!("Failed to store simulation results: {}", e).into());
-    }
-    
-    let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
-    
-    serde::Serialize::serialize(&results, &serializer)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
-}
-
-#[wasm_bindgen]
-pub fn clear_simulation_cache_wasm() -> Result<JsValue, JsValue> {
-    let mut storage_manager = get_storage_manager().lock().unwrap();
-    
-    match storage_manager.clear_cache() {
-        Ok(_) => {
-            console::log_1(&"Simulation cache cleared successfully".into());
-            Ok(JsValue::from_str("Cache cleared successfully"))
-        }
-        Err(e) => {
-            console::log_1(&format!("Failed to clear cache: {}", e).into());
-            Ok(JsValue::from_str(&format!("Failed to clear cache: {}", e)))
-        }
-    }
-}
-
-#[wasm_bindgen]
-pub fn get_storage_stats_wasm() -> Result<JsValue, JsValue> {
-    let storage_manager = get_storage_manager().lock().unwrap();
-    let stats = storage_manager.get_storage_stats();
-    
-    let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
-    
-    serde::Serialize::serialize(&stats, &serializer)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize storage stats: {}", e)))
-}
+// Disk storage functions removed as they are no longer needed
+// The system now operates purely in RAM
 
 #[wasm_bindgen]
 pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_size: usize) -> Result<JsValue, JsValue> {
@@ -699,7 +629,7 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
         let display_manager_arc = Arc::new(Mutex::new(display_manager));
         
         // Create background simulation engine
-        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new(storage_copy.clone());
+        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new();
         let simulation_engine_arc = Arc::new(Mutex::new(simulation_engine));
         
         // Create queue manager
@@ -734,10 +664,8 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
         let user_interaction_manager = UserInteractionManager::new(
             display_manager_arc.clone(),
             progress_ui_manager_arc.clone(),
-            storage_manager_arc,
             simulation_engine_arc.clone(),
             queue_manager_arc.clone(),
-            storage_integration_arc.clone(),
             interaction_config,
         );
         
@@ -863,9 +791,11 @@ pub fn start_background_simulation(
     };
     
     let event = UserEvent::RequestSimulation {
-        players,
-        encounters,
-        iterations,
+        parameters: ScenarioParameters {
+            players: players.clone(),
+            encounters: encounters.clone(),
+            iterations,
+        },
         priority,
     };
     
@@ -1106,9 +1036,11 @@ pub fn handle_parameters_changed(
         .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
     
     let event = UserEvent::ParametersChanged {
-        players,
-        encounters,
-        iterations,
+        parameters: ScenarioParameters {
+            players: players.clone(),
+            encounters: encounters.clone(),
+            iterations,
+        },
     };
     
     let user_interaction = gui.user_interaction_manager.lock().unwrap();

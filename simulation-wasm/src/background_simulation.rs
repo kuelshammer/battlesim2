@@ -1,6 +1,5 @@
-use crate::storage::{ScenarioParameters, SimulationStatus, SimulationMetadata};
-use crate::model::SimulationResult;
-use crate::storage_manager::StorageManager;
+use crate::model::{Creature, Encounter, SimulationResult};
+use crate::user_interaction::ScenarioParameters;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -137,8 +136,6 @@ impl BackgroundSimulation {
 
 /// Engine for managing and running background simulations
 pub struct BackgroundSimulationEngine {
-    /// Storage manager for persisting results
-    storage_manager: Arc<Mutex<StorageManager>>,
     /// Channel for sending progress updates
     progress_sender: mpsc::Sender<SimulationProgress>,
     /// Channel for receiving completed simulations
@@ -160,21 +157,17 @@ pub struct BackgroundSimulationResult {
     pub error: Option<String>,
     /// Execution time in milliseconds
     pub execution_time_ms: u64,
-    /// Final metadata
-    pub metadata: SimulationMetadata,
 }
 
 impl BackgroundSimulationEngine {
     /// Create a new background simulation engine
-    pub fn new(storage_manager: StorageManager) -> (Self, mpsc::Receiver<SimulationProgress>) {
+    pub fn new() -> (Self, mpsc::Receiver<SimulationProgress>) {
         let (progress_sender, progress_receiver) = mpsc::channel();
         let (_completion_sender, completion_receiver) = mpsc::channel();
-        
-        let storage_manager = Arc::new(Mutex::new(storage_manager));
+
         let completion_receiver = Arc::new(Mutex::new(completion_receiver));
 
         let engine = Self {
-            storage_manager: storage_manager.clone(),
             progress_sender,
             completion_receiver,
             worker_handle: None,
@@ -197,7 +190,6 @@ impl BackgroundSimulationEngine {
         let progress_clone = simulation.progress.clone();
         let cancellation_clone = simulation.cancellation_requested.clone();
         let progress_sender = self.progress_sender.clone();
-        let storage_manager = self.storage_manager.clone();
 
         // Spawn worker thread
         let handle = thread::spawn(move || {
@@ -207,7 +199,6 @@ impl BackgroundSimulationEngine {
                 progress_clone,
                 cancellation_clone,
                 progress_sender,
-                storage_manager,
             )
         });
 
@@ -218,12 +209,11 @@ impl BackgroundSimulationEngine {
 
     /// Worker function that runs the actual simulation
     fn run_simulation_worker(
-_simulation_id: BackgroundSimulationId,
+        _simulation_id: BackgroundSimulationId,
         parameters: ScenarioParameters,
         progress: Arc<Mutex<SimulationProgress>>,
         cancellation_requested: Arc<Mutex<bool>>,
         progress_sender: mpsc::Sender<SimulationProgress>,
-        storage_manager: Arc<Mutex<StorageManager>>,
     ) {
         let start_time = Instant::now();
         let mut results = Vec::new();
@@ -281,7 +271,7 @@ _simulation_id: BackgroundSimulationId,
             }
         }
 
-        // Finalize simulation
+        // Create final result
         let execution_time = start_time.elapsed().as_millis() as u64;
         
         if error_message.is_none() {
@@ -299,43 +289,8 @@ _simulation_id: BackgroundSimulationId,
                 let _ = progress_sender.send(prog.clone());
             }
 
-            // Store results in storage manager
-            let _metadata = SimulationMetadata {
-                execution_time_ms: Some(execution_time),
-                iterations_completed: parameters.iterations,
-                status: SimulationStatus::Success,
-                messages: vec!["Background simulation completed".to_string()],
-            };
-
-            if let Ok(mut manager) = storage_manager.lock() {
-                if let Err(e) = manager.store_simulation_results(
-                    &parameters.players,
-                    &parameters.encounters,
-                    parameters.iterations,
-                    results.clone(),
-                    Some(execution_time),
-                    SimulationStatus::Success,
-                    vec![],
-                ) {
-                    error_message = Some(format!("Failed to store results: {}", e));
-                    success = false;
-                }
-            }
+            // Simulation completed - no storage needed
         }
-
-        // Create final result
-        let _final_metadata = SimulationMetadata {
-            execution_time_ms: Some(execution_time),
-            iterations_completed: if success { parameters.iterations } else { results.len() },
-            status: if success { SimulationStatus::Success } else { 
-                SimulationStatus::Failed(error_message.clone().unwrap_or_default())
-            },
-            messages: if let Some(err) = &error_message {
-                vec![err.clone()]
-            } else {
-                vec!["Background simulation completed".to_string()]
-            },
-        };
 
         // Note: In a real implementation, we'd send this through a completion channel
         // For now, the progress updates and storage integration are the main focus
@@ -363,14 +318,16 @@ _simulation_id: BackgroundSimulationId,
     /// Run a single simulation iteration
     fn run_single_iteration(parameters: &ScenarioParameters) -> Result<SimulationResult, String> {
         // Use the existing simulation engine
-        crate::run_event_driven_simulation_rust(
+        let runs = crate::run_event_driven_simulation_rust(
             parameters.players.clone(),
             parameters.encounters.clone(),
             1, // Single iteration
-            parameters.config.log_enabled,
-        ).0
-            .into_iter()
+            false, // log_enabled
+        );
+        
+        runs.into_iter()
             .next()
+            .map(|run| run.result)
             .ok_or_else(|| "No simulation result generated".to_string())
     }
 
@@ -434,7 +391,6 @@ mod tests {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
             encounters: vec![],
             iterations: 100,
-            config: Default::default(),
         };
 
         let simulation = BackgroundSimulation::new(parameters, SimulationPriority::High);
@@ -464,7 +420,6 @@ mod tests {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
             encounters: vec![],
             iterations: 100,
-            config: Default::default(),
         };
 
         let simulation = BackgroundSimulation::new(parameters, SimulationPriority::Normal);

@@ -1,5 +1,5 @@
 use crate::background_simulation::{SimulationPriority};
-use crate::storage::ScenarioParameters;
+use crate::user_interaction::ScenarioParameters;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -517,7 +517,6 @@ mod tests {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
             encounters: vec![],
             iterations,
-            config: Default::default(),
         }
     }
 
