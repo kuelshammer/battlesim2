@@ -1,6 +1,5 @@
 use crate::model::*;
 use crate::error_handling::{SimulationError, ErrorContext, log_simulation_error, log_recovery_attempt};
-use crate::enhanced_validation::validate_simulation_results;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,7 +42,7 @@ impl Default for SimulationRecovery {
 }
 
 impl SimulationRecovery {
-    pub fn attempt_recovery(&self, error: &SimulationError, context: &ErrorContext) -> RecoveryAction {
+    pub fn attempt_recovery(&self, error: &SimulationError, _context: &ErrorContext) -> RecoveryAction {
         match error {
             SimulationError::EmptyResult(_) => RecoveryAction::Retry,
             SimulationError::InvalidCombatant(_) => RecoveryAction::UseFallback,
@@ -137,7 +136,6 @@ pub fn run_simulation_with_retry(
     
     for i in 0..iterations {
         let mut retry_count = 0;
-        let mut last_error = None;
         
         while retry_count <= max_retries {
             let context = ErrorContext::new("retry_simulation".to_string(), i, 0);
@@ -148,7 +146,6 @@ pub fn run_simulation_with_retry(
                     break;
                 }
                 Err(error) => {
-                    last_error = Some(error.clone());
                     retry_count += 1;
                     
                     // Log retry attempt
@@ -164,7 +161,7 @@ pub fn run_simulation_with_retry(
                                 break;
                             }
                         }
-                        Err(recovery_error) => {
+                        Err(_recovery_error) => {
                             // Recovery failed, skip this iteration
                             failed_iterations.push((i, error));
                             break;
@@ -188,12 +185,12 @@ pub fn run_simulation_with_retry(
 }
 
 fn run_single_simulation_safe(
-    players: &[Creature], 
-    encounters: &[Encounter], 
+    _players: &[Creature], 
+    _encounters: &[Encounter], 
     iteration: usize,
-    retry_seed: usize
+    _retry_seed: usize
 ) -> Result<SimulationResult, SimulationError> {
-    let context = ErrorContext::new("safe_simulation".to_string(), iteration, 0);
+    let _context = ErrorContext::new("safe_simulation".to_string(), iteration, 0);
     
     // Add validation before running simulation
     // This would integrate with the existing validation system
@@ -208,8 +205,8 @@ fn run_single_simulation_safe(
 
 pub fn apply_fallback_strategy(
     strategy: &RecoveryStrategy,
-    error: &SimulationError,
-    context: &ErrorContext
+    _error: &SimulationError,
+    _context: &ErrorContext
 ) -> Result<SimulationResult, SimulationError> {
     match strategy {
         RecoveryStrategy::RetryWithDifferentSeed => {
