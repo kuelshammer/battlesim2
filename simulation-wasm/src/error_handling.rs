@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::{Mutex, OnceLock};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SimulationError {
@@ -181,25 +182,22 @@ impl ErrorLogger {
 }
 
 // Global error logger instance
-static mut GLOBAL_ERROR_LOGGER: Option<ErrorLogger> = None;
-static mut LOGGER_INITIALIZED: bool = false;
+static GLOBAL_ERROR_LOGGER: OnceLock<Mutex<ErrorLogger>> = OnceLock::new();
 
-pub fn get_global_logger() -> &'static mut ErrorLogger {
-    unsafe {
-        if !LOGGER_INITIALIZED {
-            GLOBAL_ERROR_LOGGER = Some(ErrorLogger::new(1000));
-            LOGGER_INITIALIZED = true;
-        }
-        GLOBAL_ERROR_LOGGER.as_mut().unwrap()
-    }
+pub fn get_global_logger() -> &'static Mutex<ErrorLogger> {
+    GLOBAL_ERROR_LOGGER.get_or_init(|| Mutex::new(ErrorLogger::new(1000)))
 }
 
 pub fn log_simulation_error(error: SimulationError, context: ErrorContext) {
-    get_global_logger().log_error(error, context);
+    if let Ok(mut logger) = get_global_logger().lock() {
+        logger.log_error(error, context);
+    }
 }
 
 pub fn log_recovery_attempt(error: SimulationError, context: ErrorContext, successful: bool) {
-    get_global_logger().log_recovery_attempt(error, context, successful);
+    if let Ok(mut logger) = get_global_logger().lock() {
+        logger.log_recovery_attempt(error, context, successful);
+    }
 }
 
 // Convenience functions for common error scenarios
