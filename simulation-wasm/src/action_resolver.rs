@@ -748,7 +748,6 @@ mod tests {
             TriggerRequirement,
         };
         use crate::model::{Buff, Combattant, Creature, CreatureState, EffectTrigger};
-        use crate::resources::ResourceLedger;
 
         // 1. Setup Context with Attacker and Defender
         let attacker = Creature {
