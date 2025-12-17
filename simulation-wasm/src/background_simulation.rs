@@ -4,7 +4,6 @@ use crate::storage_manager::StorageManager;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use uuid::Uuid;
 
 /// Unique identifier for a background simulation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -18,8 +17,12 @@ impl BackgroundSimulationId {
             .as_nanos()))
     }
     
-    pub fn from_string(s: &str) -> Self {
-        Self(s.to_string())
+    pub fn from_string(s: &str) -> Result<Self, String> {
+        if s.is_empty() {
+            Err("Simulation ID string cannot be empty".to_string())
+        } else {
+            Ok(Self(s.to_string()))
+        }
     }
 }
 
@@ -165,7 +168,7 @@ impl BackgroundSimulationEngine {
     /// Create a new background simulation engine
     pub fn new(storage_manager: StorageManager) -> (Self, mpsc::Receiver<SimulationProgress>) {
         let (progress_sender, progress_receiver) = mpsc::channel();
-        let (completion_sender, completion_receiver) = mpsc::channel();
+        let (_completion_sender, completion_receiver) = mpsc::channel();
         
         let storage_manager = Arc::new(Mutex::new(storage_manager));
         let completion_receiver = Arc::new(Mutex::new(completion_receiver));
@@ -215,7 +218,7 @@ impl BackgroundSimulationEngine {
 
     /// Worker function that runs the actual simulation
     fn run_simulation_worker(
-        simulation_id: BackgroundSimulationId,
+_simulation_id: BackgroundSimulationId,
         parameters: ScenarioParameters,
         progress: Arc<Mutex<SimulationProgress>>,
         cancellation_requested: Arc<Mutex<bool>>,
@@ -297,7 +300,7 @@ impl BackgroundSimulationEngine {
             }
 
             // Store results in storage manager
-            let metadata = SimulationMetadata {
+            let _metadata = SimulationMetadata {
                 execution_time_ms: Some(execution_time),
                 iterations_completed: parameters.iterations,
                 status: SimulationStatus::Success,
@@ -321,7 +324,7 @@ impl BackgroundSimulationEngine {
         }
 
         // Create final result
-        let final_metadata = SimulationMetadata {
+        let _final_metadata = SimulationMetadata {
             execution_time_ms: Some(execution_time),
             iterations_completed: if success { parameters.iterations } else { results.len() },
             status: if success { SimulationStatus::Success } else { 
@@ -393,7 +396,7 @@ impl BackgroundSimulationEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Action, AtkAction, ActionBase, DiceFormula};
+    use crate::model::{Creature, DiceFormula};
 
     fn create_test_creature(name: &str, hp: f64, ac: f64) -> Creature {
         Creature {
