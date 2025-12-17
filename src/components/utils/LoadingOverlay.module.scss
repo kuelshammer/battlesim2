@@ -1,0 +1,181 @@
+@import '../../../styles/mixins';
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include fadeIn;
+
+  .content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    color: white;
+    position: relative;
+
+    .spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      height: 60px;
+
+      .spinnerRing {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 2px;
+
+        &:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+      }
+    }
+
+    .message {
+      h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .progressContainer {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+
+        .progressBar {
+          flex: 1;
+          height: 8px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+
+          .progressFill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+          }
+        }
+
+        .progressText {
+          font-weight: 600;
+          font-size: 0.9rem;
+          min-width: 3rem;
+          text-align: right;
+        }
+      }
+    }
+
+    .details {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+
+      .stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+
+        span {
+          background: rgba(255, 255, 255, 0.2);
+          padding: 0.25rem 0.5rem;
+          border-radius: 12px;
+          font-weight: 500;
+        }
+      }
+
+      .operations {
+        h4 {
+          margin: 0 0 0.5rem 0;
+          font-size: 0.9rem;
+          font-weight: 600;
+          text-align: left;
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          text-align: left;
+
+          li {
+            font-size: 0.8rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+            &:last-child {
+              border-bottom: none;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  .overlay {
+    .content {
+      padding: 1.5rem;
+      margin: 1rem;
+
+      .spinner {
+        height: 50px;
+
+        .spinnerRing {
+          width: 30px;
+          height: 30px;
+          border-width: 2px;
+        }
+      }
+
+      .message h3 {
+        font-size: 1.1rem;
+      }
+
+      .details {
+        .stats {
+          flex-direction: column;
+          gap: 0.5rem;
+
+          span {
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+}

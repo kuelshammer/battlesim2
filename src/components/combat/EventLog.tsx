@@ -12,8 +12,11 @@ import {
     faHourglassEnd,
     faExclamationTriangle,
     faRunning,
-    faBan
+    faBan,
+    faEye,
+    faEyeSlash
 } from '@fortawesome/free-solid-svg-icons';
+import { useUIToggle } from '@/model/uiToggleState';
 
 type Props = {
     events: Event[];
@@ -25,6 +28,7 @@ type EventFilter = 'all' | 'combat' | 'spell' | 'status' | 'lifecycle';
 
 const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
     const [filter, setFilter] = useState<EventFilter>('all');
+    const [combatLogVisible, setCombatLogVisible] = useUIToggle('combat-log');
 
     const getName = (id: string) => {
         if (combatantNames[id]) return combatantNames[id];
@@ -158,20 +162,64 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
         }
     };
 
+    if (!combatLogVisible) {
+        return (
+            <div className={styles.eventLogContainer}>
+                <div className={styles.header}>
+                    <h3>Combat Log</h3>
+                    <div className={styles.toggleContainer}>
+                        <button
+                            onClick={() => setCombatLogVisible(true)}
+                            className={styles.toggleButton}
+                            aria-label="Show combat log"
+                            title="Show combat log"
+                        >
+                            <FontAwesomeIcon icon={faEye} />
+                            <span>Show Log</span>
+                        </button>
+                    </div>
+                </div>
+                <div className={styles.emptyState}>
+                    <FontAwesomeIcon icon={faEyeSlash} className={styles.emptyIcon} />
+                    <p>Combat log is hidden</p>
+                    <p className={styles.emptyHint}>Click "Show Log" to view combat events</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.eventLogContainer}>
             <div className={styles.header}>
                 <h3>Combat Log</h3>
-                <div className={styles.filters}>
-                    <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>All</button>
-                    <button className={filter === 'combat' ? styles.active : ''} onClick={() => setFilter('combat')}>Combat</button>
-                    <button className={filter === 'spell' ? styles.active : ''} onClick={() => setFilter('spell')}>Magic</button>
-                    <button className={filter === 'status' ? styles.active : ''} onClick={() => setFilter('status')}>Status</button>
+                <div className={styles.controls}>
+                    <div className={styles.filters}>
+                        <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>All</button>
+                        <button className={filter === 'combat' ? styles.active : ''} onClick={() => setFilter('combat')}>Combat</button>
+                        <button className={filter === 'spell' ? styles.active : ''} onClick={() => setFilter('spell')}>Magic</button>
+                        <button className={filter === 'status' ? styles.active : ''} onClick={() => setFilter('status')}>Status</button>
+                    </div>
+                    <div className={styles.toggleContainer}>
+                        <button
+                            onClick={() => setCombatLogVisible(false)}
+                            className={styles.toggleButton}
+                            aria-label="Hide combat log"
+                            title="Hide combat log"
+                        >
+                            <FontAwesomeIcon icon={faEyeSlash} />
+                            <span>Hide Log</span>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div className={styles.logBody}>
                 {filteredEvents.length === 0 ? (
-                    <div className={styles.emptyState}>No events to display</div>
+                    <div className={styles.emptyState}>
+                        <p>No events to display</p>
+                        {filter !== 'all' && (
+                            <p className={styles.emptyHint}>Try changing the filter or running a simulation</p>
+                        )}
+                    </div>
                 ) : (
                     filteredEvents.map((e, i) => renderEvent(e, i))
                 )}

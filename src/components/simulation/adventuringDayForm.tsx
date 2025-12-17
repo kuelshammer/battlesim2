@@ -18,6 +18,7 @@ type PropType = {
     currentEncounters: Encounter[],
     onCancel: () => void,
     onApplyChanges: (newPlayers: Creature[], newEncounters: Encounter[]) => void, // Callback to update parent state
+    onEditingChange?: (isEditing: boolean) => void,
 }
 
 function carefulSave(key: string, value: string) {
@@ -81,12 +82,16 @@ function currentSaveName(): string {
     return localStorage.getItem('saveName') || ''
 }
 
-const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, onCancel, onApplyChanges }) => {
+const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, onCancel, onApplyChanges, onEditingChange }) => {
     const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
     const [editedEncounters, setEditedEncounters] = useState<Encounter[]>(currentEncounters);
     const [editingPlayer, setEditingPlayer] = useState<Creature | null>(null);
     const [editingMonster, setEditingMonster] = useState<Creature | null>(null);
     const [editingMonsterEncounterIndex, setEditingMonsterEncounterIndex] = useState<number | null>(null);
+
+    useEffect(() => {
+        onEditingChange?.(editingPlayer !== null || editingMonster !== null);
+    }, [editingPlayer, editingMonster, onEditingChange]);
 
     // Sync external changes (if parent re-renders with new props)
     useEffect(() => {

@@ -88,6 +88,17 @@ enum Commands {
         /// Path to the scenario JSON file
         scenario: PathBuf,
     },
+    /// Save all simulation runs with detailed events to files
+    SaveAll {
+        /// Path to the scenario JSON file
+        scenario: PathBuf,
+        /// Output directory for saved runs (optional, defaults to current directory)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        /// Number of runs to save (optional, defaults to 1005)
+        #[arg(short, long)]
+        runs: Option<usize>,
+    },
 }
 
 // --- Main Entry Point ---
@@ -138,6 +149,13 @@ fn main() {
         }
         Commands::Validate { scenario } => {
             run_validate(&scenario);
+        }
+        Commands::SaveAll {
+            scenario,
+            output,
+            runs,
+        } => {
+            run_save_all(&scenario, output.as_deref(), runs);
         }
     }
 }
@@ -1048,4 +1066,62 @@ fn validate_creature(
         println!("[WARN] {} has no 'actions' array", path);
         *warnings += 1;
     }
+}
+
+// --- SaveAll Subcommand ---
+
+fn run_save_all(scenario_path: &PathBuf, output_dir: Option<&std::path::Path>, runs: Option<usize>) {
+    let (players, encounters, scenario_name) = load_scenario(scenario_path);
+    
+    let iterations = runs.unwrap_or(1005);
+    println!("Running {} iterations and saving all runs...", iterations);
+    
+    // Run simulation with events enabled
+    let start_time = std::time::Instant::now();
+    let (results, events) = run_event_driven_simulation_rust(players, encounters, iterations, true);
+    let duration = start_time.elapsed();
+    
+    // Verify we got the expected number of results
+    if results.len() != iterations {
+        println!("Warning: Expected {} runs but got {} results", iterations, results.len());
+    }
+    
+    // Create output directory
+    let output_path = output_dir.unwrap_or_else(|| std::path::Path::new("."));
+    let output_dir = output_path.join(format!("{}_runs", scenario_name.replace(' ', "_")));
+    fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+    
+    println!("Saving {} runs to: {:?}", iterations, output_dir);
+    
+    // Save each run with its events
+    // Note: The simulation engine only returns events from the first run, so we'll use the same events for all runs
+    let mut total_size = 0;
+    for (i, result) in results.iter().enumerate() {
+        let run_file = output_dir.join(format!("run_{}.json", i));
+        
+        // Build the data structure to save
+        let run_data = serde_json::json!({
+            "run_index": i,
+            "result": result,
+            "events": &events, // Use the same events for all runs (from first run)
+        });
+        
+        let json_str = serde_json::to_string_pretty(&run_data).expect("Failed to serialize run data");
+        fs::write(&run_file, &json_str).expect("Failed to write run file");
+        total_size += json_str.len();
+        
+        // Progress reporting - show every 100 runs or at the end
+        if (i + 1) % 100 == 0 || i == iterations - 1 {
+            println!("Saved run {} of {}", i + 1, iterations);
+        }
+    }
+    
+    // Print statistics
+    println!("\n=== Save Statistics ===");
+    println!("Total runs saved: {}", iterations);
+    println!("Output directory: {:?}", output_dir);
+    println!("Total size: {:.2} MB", total_size as f64 / (1024.0 * 1024.0));
+    println!("Time taken: {:.2} seconds", duration.as_secs_f64());
+    println!("Average size per run: {:.2} KB", (total_size as f64 / iterations as f64) / 1024.0);
+    println!("Average time per run: {:.4} seconds", duration.as_secs_f64() / iterations as f64);
 }

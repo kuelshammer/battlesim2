@@ -1,0 +1,376 @@
+{
+  "events": [
+    {
+      "EncounterStarted": {
+        "combatant_ids": [
+          "fighter_1-0-0",
+          "goblin_1-0-0"
+        ]
+      }
+    },
+    {
+      "RoundStarted": {
+        "round_number": 1
+      }
+    },
+    {
+      "TurnStarted": {
+        "round_number": 1,
+        "unit_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "ActionStarted": {
+        "action_id": "atk_scimitar",
+        "actor_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "AttackHit": {
+        "attacker_id": "goblin_1-0-0",
+        "damage": 5.5,
+        "target_id": "fighter_1-0-0"
+      }
+    },
+    {
+      "DamageTaken": {
+        "damage": 5.5,
+        "damage_type": "Physical",
+        "target_id": "fighter_1-0-0"
+      }
+    },
+    {
+      "TurnEnded": {
+        "round_number": 1,
+        "unit_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "TurnStarted": {
+        "round_number": 1,
+        "unit_id": "fighter_1-0-0"
+      }
+    },
+    {
+      "ActionStarted": {
+        "action_id": "atk_sword",
+        "actor_id": "fighter_1-0-0"
+      }
+    },
+    {
+      "AttackHit": {
+        "attacker_id": "fighter_1-0-0",
+        "damage": 7.5,
+        "target_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "DamageTaken": {
+        "damage": 7.5,
+        "damage_type": "Physical",
+        "target_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "UnitDied": {
+        "damage_type": "Physical",
+        "killer_id": "fighter_1-0-0",
+        "unit_id": "goblin_1-0-0"
+      }
+    },
+    {
+      "TurnEnded": {
+        "round_number": 1,
+        "unit_id": "fighter_1-0-0"
+      }
+    }
+  ],
+  "result": [
+    {
+      "rounds": [
+        {
+          "team1": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d8+3",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_sword",
+                    "name": "Longsword",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "goblin_1-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d8+3",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_sword",
+                    "name": "Longsword",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "goblin_1-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 16.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d8+3",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_sword",
+                    "name": "Longsword",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 20.0,
+                "id": "fighter_1",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "player",
+                "name": "Fighter",
+                "saveBonus": 2.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 14.5,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "fighter_1-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 20.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 5.0
+            }
+          ],
+          "team2": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d6+2",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_scimitar",
+                    "name": "Scimitar",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+4",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "fighter_1-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d6+2",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_scimitar",
+                    "name": "Scimitar",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+4",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "fighter_1-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 15.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d6+2",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_scimitar",
+                    "name": "Scimitar",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+4",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 7.0,
+                "id": "goblin_1",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "monster",
+                "name": "Goblin",
+                "saveBonus": 0.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 0.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "goblin_1-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 7.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 17.0
+            }
+          ]
+        }
+      ],
+      "stats": {}
+    }
+  ],
+  "run_index": 125
+}

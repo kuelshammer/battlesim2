@@ -3,13 +3,15 @@
   "players": [
     {
       "name": "Fighter",
+      "id": "Fighter",
+      "count": 1,
       "hp": 50,
       "ac": 15,
       "initiative": 2,
       "actions": [
         {
           "name": "Longsword",
-          "type": "Atk",
+          "type": "atk",
           "base": {
             "cost": [{"type": "Action", "amount": 1}],
             "requirements": [],
@@ -18,7 +20,7 @@
           "damage": "1d8+3",
           "attackBonus": 5,
           "damageBonus": 3,
-          "target": "Enemy",
+          "target": "enemy with least HP",
           "range": "Melee"
         }
       ]
@@ -27,6 +29,7 @@
   "monsters": [
     {
       "name": "Goblin",
+      "id": "Goblin",
       "hp": 15,
       "ac": 12,
       "initiative": 2,
@@ -34,7 +37,7 @@
       "actions": [
         {
           "name": "Scimitar",
-          "type": "Atk",
+          "type": "atk",
           "base": {
             "cost": [{"type": "Action", "amount": 1}],
             "requirements": [],
@@ -43,7 +46,7 @@
           "damage": "1d6+1",
           "attackBonus": 3,
           "damageBonus": 1,
-          "target": "Player",
+          "target": "ally with the least HP",
           "range": "Melee"
         }
       ]

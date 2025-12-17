@@ -1,0 +1,290 @@
+.togglePanel {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  min-width: 280px;
+  max-width: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.togglePanelCollapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #007bff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+  }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.panelTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.panelActions {
+  display: flex;
+  gap: 8px;
+}
+
+.resetButton,
+.closeButton,
+.collapseButton,
+.expandButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #f7fafc;
+  }
+
+  &:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+  }
+}
+
+.panelContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.toggleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.toggleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggleControl {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: #f7fafc;
+    border-color: #e1e5e9;
+  }
+
+  &.enabled {
+    background: #f0f9ff;
+    border-color: #0ea5e9;
+  }
+
+  &:focus-within {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+  }
+}
+
+.toggleLabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+  margin: 0;
+}
+
+.toggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSwitch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #cbd5e0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  &.focused {
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+}
+
+.toggleInput:checked + .toggleSwitch {
+  background: #0ea5e9;
+
+  &::before {
+    transform: translateX(20px);
+  }
+}
+
+.toggleText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #2d3748;
+  flex: 1;
+  margin: 0;
+}
+
+.toggleDescription {
+  font-size: 12px;
+  color: #718096;
+  margin: 4px 0 0 56px;
+  line-height: 1.4;
+}
+
+.panelFooter {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e1e5e9;
+  text-align: center;
+}
+
+.footerText {
+  font-size: 12px;
+  color: #a0aec0;
+  margin: 0;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .togglePanel {
+    min-width: 250px;
+    max-width: 100%;
+    margin: 0 16px;
+  }
+
+  .toggleControl {
+    padding: 12px;
+  }
+
+  .toggleText {
+    font-size: 16px; // Larger touch targets on mobile
+  }
+}
+
+// Dark mode support (if needed in future)
+@media (prefers-color-scheme: dark) {
+  .togglePanel {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+  }
+
+  .panelHeader {
+    border-color: #4a5568;
+  }
+
+  .panelTitle {
+    color: #e2e8f0;
+  }
+
+  .sectionTitle {
+    color: #a0aec0;
+  }
+
+  .toggleControl {
+    &:hover {
+      background: #4a5568;
+      border-color: #718096;
+    }
+
+    &.enabled {
+      background: #2c5282;
+      border-color: #3182ce;
+    }
+  }
+
+  .toggleText {
+    color: #e2e8f0;
+  }
+
+  .toggleDescription {
+    color: #a0aec0;
+  }
+
+  .footerText {
+    color: #718096;
+  }
+
+  .resetButton,
+  .closeButton,
+  .collapseButton {
+    &:hover {
+      background: #4a5568;
+    }
+  }
+}
+
+// Animation for smooth transitions
+.toggleControl {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

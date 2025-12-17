@@ -182,11 +182,928 @@ if (!('encodeInto' in cachedTextEncoder)) {
 
 let WASM_VECTOR_LEN = 0;
 
+const ConfigManagerWrapperFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_configmanagerwrapper_free(ptr >>> 0, 1));
+
+const DisplayManagerWrapperFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_displaymanagerwrapper_free(ptr >>> 0, 1));
+
+const Phase3GuiFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_phase3gui_free(ptr >>> 0, 1));
+
+const Phase3IntegrationFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_phase3integration_free(ptr >>> 0, 1));
+
+const ProgressUIManagerWrapperFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_progressuimanagerwrapper_free(ptr >>> 0, 1));
+
+export class ConfigManagerWrapper {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        ConfigManagerWrapperFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_configmanagerwrapper_free(ptr, 0);
+    }
+    markClean() {
+        wasm.configmanagerwrapper_markClean(this.__wbg_ptr);
+    }
+    /**
+     * @returns {string}
+     */
+    exportToJson() {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.configmanagerwrapper_exportToJson(this.__wbg_ptr);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * @returns {any}
+     */
+    getPreferences() {
+        const ret = wasm.configmanagerwrapper_getPreferences(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} json
+     */
+    importFromJson(json) {
+        const ptr0 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.configmanagerwrapper_importFromJson(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    resetToDefaults() {
+        wasm.configmanagerwrapper_resetToDefaults(this.__wbg_ptr);
+    }
+    /**
+     * @param {any} preferences
+     */
+    updatePreferences(preferences) {
+        const ret = wasm.configmanagerwrapper_updatePreferences(this.__wbg_ptr, preferences);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @returns {any}
+     */
+    validatePreferences() {
+        const ret = wasm.configmanagerwrapper_validatePreferences(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    constructor() {
+        const ret = wasm.configmanagerwrapper_new();
+        this.__wbg_ptr = ret >>> 0;
+        ConfigManagerWrapperFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * @returns {boolean}
+     */
+    isDirty() {
+        const ret = wasm.configmanagerwrapper_isDirty(this.__wbg_ptr);
+        return ret !== 0;
+    }
+}
+if (Symbol.dispose) ConfigManagerWrapper.prototype[Symbol.dispose] = ConfigManagerWrapper.prototype.free;
+
+export class DisplayManagerWrapper {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        DisplayManagerWrapperFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_displaymanagerwrapper_free(ptr, 0);
+    }
+    /**
+     * @returns {string}
+     */
+    getStatusText() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.displaymanagerwrapper_getStatusText(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @returns {string}
+     */
+    getDisplayMode() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.displaymanagerwrapper_getDisplayMode(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @param {string} mode
+     */
+    setDisplayMode(mode) {
+        const ptr0 = passStringToWasm0(mode, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.displaymanagerwrapper_setDisplayMode(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @param {string} slot
+     * @returns {any}
+     */
+    userSelectedSlot(slot) {
+        const ptr0 = passStringToWasm0(slot, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.displaymanagerwrapper_userSelectedSlot(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {any} players
+     * @param {any} encounters
+     * @param {number} iterations
+     * @returns {any}
+     */
+    getDisplayResults(players, encounters, iterations) {
+        const ret = wasm.displaymanagerwrapper_getDisplayResults(this.__wbg_ptr, players, encounters, iterations);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} error
+     */
+    handleSimulationFailed(error) {
+        const ptr0 = passStringToWasm0(error, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.displaymanagerwrapper_handleSimulationFailed(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @param {string} slot
+     */
+    handleSimulationCompleted(slot) {
+        const ptr0 = passStringToWasm0(slot, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.displaymanagerwrapper_handleSimulationCompleted(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    constructor() {
+        const ret = wasm.displaymanagerwrapper_new();
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0] >>> 0;
+        DisplayManagerWrapperFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+}
+if (Symbol.dispose) DisplayManagerWrapper.prototype[Symbol.dispose] = DisplayManagerWrapper.prototype.free;
+
+/**
+ * Phase 3 GUI Integration - Working Implementation
+ *
+ * This demonstrates the core functionality:
+ * 1. Display Manager integration with storage
+ * 2. Progress UI with real-time updates
+ * 3. WASM bindings for JavaScript
+ * 4. Configuration management
+ */
+export class Phase3Gui {
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Phase3Gui.prototype);
+        obj.__wbg_ptr = ptr;
+        Phase3GuiFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        Phase3GuiFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_phase3gui_free(ptr, 0);
+    }
+    /**
+     * Get current GUI status
+     * @returns {any}
+     */
+    getGuiStatus() {
+        const ret = wasm.phase3gui_getGuiStatus(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Set display mode
+     * @param {string} mode
+     */
+    setDisplayMode(mode) {
+        const ptr0 = passStringToWasm0(mode, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3gui_setDisplayMode(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Handle user slot selection
+     * @param {string} slot
+     * @returns {any}
+     */
+    userSelectedSlot(slot) {
+        const ptr0 = passStringToWasm0(slot, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3gui_userSelectedSlot(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Complete simulation (for testing)
+     * @param {string} simulation_id
+     * @returns {any}
+     */
+    completeSimulation(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3gui_completeSimulation(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Create HTML progress bar
+     * @param {string} simulation_id
+     * @returns {string}
+     */
+    createProgressBar(simulation_id) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.phase3gui_createProgressBar(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * Get display results based on current mode
+     * @param {any} players
+     * @param {any} encounters
+     * @param {number} iterations
+     * @returns {any}
+     */
+    getDisplayResults(players, encounters, iterations) {
+        const ret = wasm.phase3gui_getDisplayResults(this.__wbg_ptr, players, encounters, iterations);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Update configuration
+     * @param {any} config
+     */
+    updateConfiguration(config) {
+        const ret = wasm.phase3gui_updateConfiguration(this.__wbg_ptr, config);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Get simulation progress
+     * @param {string} simulation_id
+     * @returns {any}
+     */
+    getSimulationProgress(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3gui_getSimulationProgress(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Start background simulation
+     * @param {any} players
+     * @param {any} encounters
+     * @param {number} iterations
+     * @param {string} priority
+     * @returns {any}
+     */
+    startBackgroundSimulation(players, encounters, iterations, priority) {
+        const ptr0 = passStringToWasm0(priority, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3gui_startBackgroundSimulation(this.__wbg_ptr, players, encounters, iterations, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    constructor() {
+        const ret = wasm.phase3gui_new();
+        this.__wbg_ptr = ret >>> 0;
+        Phase3GuiFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+}
+if (Symbol.dispose) Phase3Gui.prototype[Symbol.dispose] = Phase3Gui.prototype.free;
+
+/**
+ * Phase 3 GUI Integration Summary
+ *
+ * This implementation provides:
+ * 1. Display Manager - Integration with dual-slot storage system
+ * 2. Progress UI - Progress bars and status updates
+ * 3. WASM Integration - JavaScript interface functions
+ * 4. Configuration System - User preferences and settings
+ */
+export class Phase3Integration {
+    static __wrap(ptr) {
+        ptr = ptr >>> 0;
+        const obj = Object.create(Phase3Integration.prototype);
+        obj.__wbg_ptr = ptr;
+        Phase3IntegrationFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        Phase3IntegrationFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_phase3integration_free(ptr, 0);
+    }
+    /**
+     * Get current GUI status
+     * @returns {any}
+     */
+    getGuiStatus() {
+        const ret = wasm.phase3integration_getGuiStatus(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Set display mode for result presentation
+     * @param {string} mode
+     */
+    setDisplayMode(mode) {
+        const ptr0 = passStringToWasm0(mode, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3integration_setDisplayMode(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Handle user slot selection
+     * @param {string} slot
+     * @returns {any}
+     */
+    userSelectedSlot(slot) {
+        const ptr0 = passStringToWasm0(slot, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3integration_userSelectedSlot(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Create HTML progress bar for display
+     * @param {string} simulation_id
+     * @returns {string}
+     */
+    createProgressBar(simulation_id) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.phase3integration_createProgressBar(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * Get display results for current parameters
+     * @param {any} _players
+     * @param {any} _encounters
+     * @param {number} _iterations
+     * @returns {any}
+     */
+    getDisplayResults(_players, _encounters, _iterations) {
+        const ret = wasm.phase3integration_getDisplayResults(this.__wbg_ptr, _players, _encounters, _iterations);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Update GUI configuration
+     * @param {any} _config
+     */
+    updateConfiguration(_config) {
+        const ret = wasm.phase3integration_updateConfiguration(this.__wbg_ptr, _config);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Get progress information for active simulations
+     * @param {string} simulation_id
+     * @returns {any}
+     */
+    getSimulationProgress(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3integration_getSimulationProgress(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Initialize the complete GUI integration system
+     * @returns {any}
+     */
+    initializeGuiIntegration() {
+        const ret = wasm.phase3integration_initializeGuiIntegration(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * Start background simulation with progress tracking
+     * @param {any} _players
+     * @param {any} _encounters
+     * @param {number} _iterations
+     * @param {string} priority
+     * @returns {any}
+     */
+    startBackgroundSimulation(_players, _encounters, _iterations, priority) {
+        const ptr0 = passStringToWasm0(priority, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.phase3integration_startBackgroundSimulation(this.__wbg_ptr, _players, _encounters, _iterations, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    constructor() {
+        const ret = wasm.phase3integration_new();
+        this.__wbg_ptr = ret >>> 0;
+        Phase3IntegrationFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+}
+if (Symbol.dispose) Phase3Integration.prototype[Symbol.dispose] = Phase3Integration.prototype.free;
+
+export class ProgressUIManagerWrapper {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        ProgressUIManagerWrapperFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_progressuimanagerwrapper_free(ptr, 0);
+    }
+    /**
+     * @param {string} simulation_id
+     * @returns {any}
+     */
+    getProgress(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.progressuimanagerwrapper_getProgress(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} simulation_id
+     */
+    stopTracking(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.progressuimanagerwrapper_stopTracking(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @param {string} simulation_id
+     */
+    startTracking(simulation_id) {
+        const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.progressuimanagerwrapper_startTracking(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * @returns {any}
+     */
+    getAllProgress() {
+        const ret = wasm.progressuimanagerwrapper_getAllProgress(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @returns {any}
+     */
+    getProgressSummary() {
+        const ret = wasm.progressuimanagerwrapper_getProgressSummary(this.__wbg_ptr);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return takeFromExternrefTable0(ret[0]);
+    }
+    /**
+     * @param {string} simulation_id
+     * @returns {string}
+     */
+    createCompactIndicator(simulation_id) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.progressuimanagerwrapper_createCompactIndicator(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * @param {string} simulation_id
+     * @returns {string}
+     */
+    createProgressBarHtml(simulation_id) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.progressuimanagerwrapper_createProgressBarHtml(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    constructor() {
+        const ret = wasm.progressuimanagerwrapper_new();
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0] >>> 0;
+        ProgressUIManagerWrapperFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    clearAll() {
+        const ret = wasm.progressuimanagerwrapper_clearAll(this.__wbg_ptr);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+}
+if (Symbol.dispose) ProgressUIManagerWrapper.prototype[Symbol.dispose] = ProgressUIManagerWrapper.prototype.free;
+
+/**
+ * Answer a confirmation request
+ * @param {string} confirmation_id
+ * @param {boolean} confirmed
+ * @returns {any}
+ */
+export function answer_confirmation(confirmation_id, confirmed) {
+    const ptr0 = passStringToWasm0(confirmation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.answer_confirmation(ptr0, len0, confirmed);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Cancel a running simulation
+ * @param {string} simulation_id
+ * @returns {any}
+ */
+export function cancel_simulation(simulation_id) {
+    const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.cancel_simulation(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Clear simulation cache
+ * @returns {any}
+ */
+export function clear_simulation_cache_gui() {
+    const ret = wasm.clear_simulation_cache_gui();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @returns {any}
+ */
+export function clear_simulation_cache_wasm() {
+    const ret = wasm.clear_simulation_cache_wasm();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Create compact progress indicator for a simulation
+ * @param {string} simulation_id
+ * @returns {any}
+ */
+export function create_compact_indicator(simulation_id) {
+    const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.create_compact_indicator(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Create HTML progress bar for a simulation
+ * @param {string} simulation_id
+ * @returns {any}
+ */
+export function create_progress_bar(simulation_id) {
+    const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.create_progress_bar(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get progress information for all active simulations
+ * @returns {any}
+ */
+export function get_all_progress() {
+    const ret = wasm.get_all_progress();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get current display mode
+ * @returns {any}
+ */
+export function get_display_mode() {
+    const ret = wasm.get_display_mode();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get display results for current parameters
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @returns {any}
+ */
+export function get_display_results(players, encounters, iterations) {
+    const ret = wasm.get_display_results(players, encounters, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
 /**
  * @returns {any}
  */
 export function get_last_simulation_events() {
     const ret = wasm.get_last_simulation_events();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get pending user confirmations
+ * @returns {any}
+ */
+export function get_pending_confirmations() {
+    const ret = wasm.get_pending_confirmations();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get progress information for a specific simulation
+ * @param {string} simulation_id
+ * @returns {any}
+ */
+export function get_progress(simulation_id) {
+    const ptr0 = passStringToWasm0(simulation_id, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_progress(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get progress summary for dashboard
+ * @returns {any}
+ */
+export function get_progress_summary() {
+    const ret = wasm.get_progress_summary();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @returns {any}
+ */
+export function get_storage_stats_wasm() {
+    const ret = wasm.get_storage_stats_wasm();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Get current user interaction state
+ * @returns {any}
+ */
+export function get_user_interaction_state() {
+    const ret = wasm.get_user_interaction_state();
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Handle parameter change event
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @returns {any}
+ */
+export function handle_parameters_changed(players, encounters, iterations) {
+    const ret = wasm.handle_parameters_changed(players, encounters, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @returns {Phase3Gui}
+ */
+export function init_phase3_gui() {
+    const ret = wasm.init_phase3_gui();
+    return Phase3Gui.__wrap(ret);
+}
+
+/**
+ * @returns {Phase3Integration}
+ */
+export function init_phase3_gui_integration() {
+    const ret = wasm.init_phase3_gui_integration();
+    return Phase3Integration.__wrap(ret);
+}
+
+/**
+ * Initialize the GUI integration system
+ * @returns {any}
+ */
+export function initialize_gui_integration() {
+    const ret = wasm.initialize_gui_integration();
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -210,13 +1127,13 @@ export function run_event_driven_simulation(players, encounters, iterations) {
 /**
  * @param {any} results
  * @param {string} scenario_name
- * @param {number} party_size
+ * @param {number} _party_size
  * @returns {any}
  */
-export function run_quintile_analysis_wasm(results, scenario_name, party_size) {
+export function run_quintile_analysis_wasm(results, scenario_name, _party_size) {
     const ptr0 = passStringToWasm0(scenario_name, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.run_quintile_analysis_wasm(results, ptr0, len0, party_size);
+    const ret = wasm.run_quintile_analysis_wasm(results, ptr0, len0, _party_size);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -231,6 +1148,98 @@ export function run_quintile_analysis_wasm(results, scenario_name, party_size) {
  */
 export function run_simulation_wasm(players, encounters, iterations) {
     const ret = wasm.run_simulation_wasm(players, encounters, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @param {Function} callback
+ * @returns {any}
+ */
+export function run_simulation_with_callback(players, encounters, iterations, callback) {
+    const ret = wasm.run_simulation_with_callback(players, encounters, iterations, callback);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @returns {any}
+ */
+export function run_simulation_with_storage_wasm(players, encounters, iterations) {
+    const ret = wasm.run_simulation_with_storage_wasm(players, encounters, iterations);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Set display mode
+ * @param {string} mode_str
+ * @returns {any}
+ */
+export function set_display_mode(mode_str) {
+    const ptr0 = passStringToWasm0(mode_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.set_display_mode(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Start a background simulation
+ * @param {any} players
+ * @param {any} encounters
+ * @param {number} iterations
+ * @param {string} priority_str
+ * @returns {any}
+ */
+export function start_background_simulation(players, encounters, iterations, priority_str) {
+    const ptr0 = passStringToWasm0(priority_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.start_background_simulation(players, encounters, iterations, ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * Update GUI configuration
+ * @param {any | null} [display_config_json]
+ * @param {any | null} [progress_config_json]
+ * @param {any | null} [interaction_config_json]
+ * @returns {any}
+ */
+export function update_gui_configuration(display_config_json, progress_config_json, interaction_config_json) {
+    const ret = wasm.update_gui_configuration(isLikeNone(display_config_json) ? 0 : addToExternrefTable0(display_config_json), isLikeNone(progress_config_json) ? 0 : addToExternrefTable0(progress_config_json), isLikeNone(interaction_config_json) ? 0 : addToExternrefTable0(interaction_config_json));
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * User selected a specific slot
+ * @param {string} slot_str
+ * @returns {any}
+ */
+export function user_selected_slot(slot_str) {
+    const ptr0 = passStringToWasm0(slot_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.user_selected_slot(ptr0, len0);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -359,6 +1368,10 @@ function __wbg_get_imports() {
         const ret = arg0.call(arg1, arg2);
         return ret;
     }, arguments) };
+    imports.wbg.__wbg_call_78f94eb02ec7f9b2 = function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
+        const ret = arg0.call(arg1, arg2, arg3, arg4);
+        return ret;
+    }, arguments) };
     imports.wbg.__wbg_call_abb4ff46ce38be40 = function() { return handleError(function (arg0, arg1) {
         const ret = arg0.call(arg1);
         return ret;
@@ -439,6 +1452,9 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_length_d45040a40c570362 = function(arg0) {
         const ret = arg0.length;
         return ret;
+    };
+    imports.wbg.__wbg_log_1d990106d99dacb7 = function(arg0) {
+        console.log(arg0);
     };
     imports.wbg.__wbg_msCrypto_0a36e2ec3a343d26 = function(arg0) {
         const ret = arg0.msCrypto;
@@ -565,6 +1581,10 @@ function __wbg_get_imports() {
         table.set(offset + 1, null);
         table.set(offset + 2, true);
         table.set(offset + 3, false);
+    };
+    imports.wbg.__wbindgen_object_is_undefined = function(arg0) {
+        const ret = arg0 === undefined;
+        return ret;
     };
 
     return imports;

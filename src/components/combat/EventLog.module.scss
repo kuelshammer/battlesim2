@@ -47,6 +47,41 @@
                 }
             }
         }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggleContainer {
+            display: flex;
+            align-items: center;
+        }
+
+        .toggleButton {
+            background: #333;
+            border: none;
+            color: #aaa;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+
+            &:hover {
+                background: #444;
+                color: #fff;
+            }
+
+            svg {
+                width: 12px;
+                height: 12px;
+            }
+        }
     }
 
     .logBody {
@@ -60,8 +95,27 @@
         .emptyState {
             color: #666;
             text-align: center;
-            padding: 20px;
-            font-style: italic;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+
+            svg {
+                width: 32px;
+                height: 32px;
+                opacity: 0.5;
+            }
+
+            p {
+                margin: 0;
+                font-size: 0.9rem;
+            }
+
+            .emptyHint {
+                font-size: 0.8rem;
+                color: #888;
+            }
         }
 
         .event {

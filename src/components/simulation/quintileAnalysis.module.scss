@@ -29,5 +29,27 @@
         font-size: 0.9em;
         color: #ccc;
         text-align: center;
+
+        .visibilityNote {
+            color: #ffa;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    }
+
+    .emptyState {
+        text-align: center;
+        padding: 40px 20px;
+        color: #999;
+
+        p {
+            margin: 10px 0;
+            font-size: 1em;
+        }
+
+        .emptyHint {
+            font-size: 0.9em;
+            color: #777;
+        }
     }
 }

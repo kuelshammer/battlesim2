@@ -9,10 +9,13 @@ import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
-import { semiPersistentContext } from "@/model/simulationContext"
+import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
 import QuintileAnalysis from "./quintileAnalysis"
+import { UIToggleProvider } from "@/model/uiToggleState"
+import UiTogglePanel from "@/components/utils/UiTogglePanel"
+import { useSimulationWorker } from "@/model/useSimulationWorker"
 
 
 
@@ -36,6 +39,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    
+    // Web Worker Simulation
+    const worker = useSimulationWorker();
+    const [needsResimulation, setNeedsResimulation] = useState(false);
     
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
@@ -58,112 +66,38 @@ const Simulation: FC<PropType> = memo(({ }) => {
         setCanSave(!isEmptyResult && (typeof window !== "undefined") && !!localStorage && !!localStorage.getItem('useLocalStorage'))
     }, [isEmptyResult])
 
-    const [wasm, setWasm] = useState<typeof import('simulation-wasm') | null>(null)
-    const [allResults, setAllResults] = useState<SimulationResult[]>([])
-    const [quintileAnalysis, setQuintileAnalysis] = useState<AggregateOutput | null>(null)
-    const wasmLoading = useRef(false)
-
+    // Detect changes that need resimulation
     useEffect(() => {
-        // Load WASM module using the original working approach
-        const loadWasm = async () => {
-            if (wasmLoading.current) return
-            wasmLoading.current = true
+        setNeedsResimulation(true);
+    }, [players, encounters]);
 
-            try {
-            import('simulation-wasm').then(async (module) => {
-                    // Pass object to avoid deprecation warning
-                    await module.default({ module_or_path: '/simulation_wasm_bg.wasm' })
-                    setWasm(module)
-                }).catch(error => {
-                    wasmLoading.current = false
-                })
-
-            } catch (error) {
-                wasmLoading.current = false
-            }
-        }
-
-        if (!wasm) {
-            loadWasm()
-        }
-    }, [wasm])
-
-
+    // Trigger simulation when not editing and needs resimulation
     useEffect(() => {
-        if (!wasm) return
-
-        if (allResults.length === 0) {
-            // Run simulation if not cached
-            try {
-                const cleanPlayers = players.map(p => ({
-                    ...p,
-                    actions: p.actions.map(getFinalAction)
-                }))
-
-                const cleanEncounters = encounters.map(e => ({
-                    ...e,
-                    monsters: e.monsters.map(m => ({
-                        ...m,
-                        actions: m.actions.map(getFinalAction)
-                    }))
-                }))
-
-                let results: SimulationResult[]
-
-                console.log('Running event-driven simulation...')
-                results = wasm.run_event_driven_simulation(cleanPlayers, cleanEncounters, 1005) as SimulationResult[]
-
-                // Get events from the simulation
-                try {
-                    const rawEvents = wasm.get_last_simulation_events() as string[]
-                    const structuredEvents = rawEvents.map(parseEventString).filter((e): e is SimulationEvent => e !== null);
-                    setSimulationEvents(structuredEvents)
-                    console.log('Events collected and parsed:', structuredEvents.length)
-                } catch (eventError) {
-                    setSimulationEvents([])
-                }
-
-                setAllResults(results)
-
-                // Compute quintile analysis
-                try {
-                    const partySize = players.length
-                    const scenarioName = "Current Scenario" // Could be made configurable
-                    const analysis = wasm.run_quintile_analysis_wasm(results, scenarioName, partySize) as AggregateOutput
-                    setQuintileAnalysis(analysis)
-                } catch (analysisError) {
-                    console.error("Failed to compute quintile analysis:", analysisError)
-                    setQuintileAnalysis(null)
-                }
-
-                // Select single run based on luck
-                const total = results.length
-                const index = Math.min(total - 1, Math.floor(luck * total))
-                const selectedRun = results[index]
-
-                setSimulationResults(selectedRun)
-            } catch (e) {
-                setSimulationEvents([])
-            }
-        } else {
-            // Update selection based on new luck
-            try {
-                const total = allResults.length
-                const index = Math.min(total - 1, Math.floor(luck * total))
-                const selectedRun = allResults[index]
-
-                setSimulationResults(selectedRun)
-            } catch (e) {
-                console.error("Selection failed", e)
-            }
+        if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
+            console.log('Triggering background simulation...');
+            worker.runSimulation(players, encounters, 1005);
+            setNeedsResimulation(false);
         }
-    }, [players, encounters, luck, wasm]) // Removed allResults and useEventDriven to prevent loop
+    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker]);
 
-    // Reset results when inputs change
+    // Update display results when worker finishes or luck changes
     useEffect(() => {
-        setAllResults([])
-        setSimulationEvents([])
-    }, [players, encounters])
+        if (!worker.results) return;
+
+        const results = worker.results;
+        const total = results.length;
+        const index = Math.min(total - 1, Math.floor(luck * total));
+        const selectedRun = results[index];
+
+        setSimulationResults(selectedRun);
+
+        // Update events from the first run returned by the worker
+        if (worker.events) {
+            // events in worker are already structured objects, not strings
+            // But let's check if they need parsing
+            setSimulationEvents(worker.events as SimulationEvent[]);
+        }
+    }, [worker.results, worker.events, luck]);
 
 
     function createEncounter() {
@@ -210,102 +144,122 @@ const Simulation: FC<PropType> = memo(({ }) => {
     }, [players, encounters])
 
     return (
-        <div className={styles.simulation}>
-            <semiPersistentContext.Provider value={{ state, setState }}>
-                <h1 className={styles.header}>BattleSim</h1>
+        <UIToggleProvider>
+            <div className={styles.simulation}>
+                <semiPersistentContext.Provider value={{ state, setState }}>
+                    <h1 className={styles.header}>BattleSim</h1>
 
-                {/* Backend Features Status Panel */}
-                <div className={styles.backendStatus}>
-                    <h4>🔧 Event-Driven Backend Active</h4>
-                    <div className={styles.statusItems}>
-                        <span>✅ ActionResolution Engine</span>
-                        <span>✅ Event System</span>
-                        <span>✅ Reaction Processing</span>
-                        <span>✅ Effect Tracking</span>
-                        <span>📊 Events: {simulationEvents.length}</span>
+                    {/* UI Toggle Panel */}
+                    <UiTogglePanel className={styles.uiTogglePanel} />
+
+                    {/* Backend Features Status Panel */}
+                    <div className={styles.backendStatus}>
+                        <h4>🔧 Event-Driven Backend {worker.isRunning ? '(Processing...)' : 'Active'}</h4>
+                        <div className={styles.statusItems}>
+                            <span>✅ ActionResolution Engine</span>
+                            <span>✅ Event System</span>
+                            <span>✅ Reaction Processing</span>
+                            <span>✅ Effect Tracking</span>
+                            <span>📊 Events: {simulationEvents.length}</span>
+                        </div>
+                        {worker.isRunning && (
+                            <div className={styles.progressBar}>
+                                <div 
+                                    className={styles.progressFill} 
+                                    style={{ width: `${worker.progress}%` }}
+                                />
+                                <span className={styles.progressText}>
+                                    Simulating {worker.completed} / {worker.total} runs ({Math.round(worker.progress)}%)
+                                </span>
+                            </div>
+                        )}
+                        {isEditing && <div className={styles.editingNotice}>⚠️ Simulation paused while editing</div>}
                     </div>
-                </div>
 
-                <EncounterForm
-                    mode='player'
-                    encounter={{ monsters: players }}
-                    onUpdate={(newValue) => setPlayers(newValue.monsters)}
-                    luck={luck}
-                    setLuck={setLuck}>
-                    <>
-                        {!isEmptyResult ? (
-                            <button onClick={() => { setPlayers([]); setEncounters([emptyEncounter]) }}>
-                                <FontAwesomeIcon icon={faTrash} />
-                                Clear Adventuring Day
+                    <EncounterForm
+                        mode='player'
+                        encounter={{ monsters: players }}
+                        onUpdate={(newValue) => setPlayers(newValue.monsters)}
+                        luck={luck}
+                        setLuck={setLuck}
+                        onEditingChange={setIsEditing}>
+                        <>
+                            {!isEmptyResult ? (
+                                <button onClick={() => { setPlayers([]); setEncounters([emptyEncounter]) }}>
+                                    <FontAwesomeIcon icon={faTrash} />
+                                    Clear Adventuring Day
+                                </button>
+                            ) : null}
+                            {canSave ? (
+                                <button onClick={() => setSaving(true)}>
+                                    <FontAwesomeIcon icon={faSave} />
+                                    Save Adventuring Day
+                                </button>
+                            ) : null}
+                            <button onClick={() => setLoading(true)}>
+                                <FontAwesomeIcon icon={faFolder} />
+                                Load Adventuring Day
                             </button>
-                        ) : null}
-                        {canSave ? (
-                            <button onClick={() => setSaving(true)}>
-                                <FontAwesomeIcon icon={faSave} />
-                                Save Adventuring Day
-                            </button>
-                        ) : null}
-                        <button onClick={() => setLoading(true)}>
-                            <FontAwesomeIcon icon={faFolder} />
-                            Load Adventuring Day
-                        </button>
 
 
-                    </>
-                </EncounterForm>
+                        </>
+                    </EncounterForm>
 
-                {encounters.map((encounter, index) => (
-                    <div className={styles.encounter} key={index}>
-                        <EncounterForm
-                            mode='monster'
-                            encounter={encounter}
-                            onUpdate={(newValue) => updateEncounter(index, newValue)}
-                            onDelete={(index > 0) ? () => deleteEncounter(index) : undefined}
-                            onMoveUp={(!!encounters.length && !!index) ? () => swapEncounters(index, index - 1) : undefined}
-                            onMoveDown={(!!encounters.length && (index < encounters.length - 1)) ? () => swapEncounters(index, index + 1) : undefined}
-                            luck={luck}
-                            setLuck={setLuck}
-                        />
-                        {(!simulationResults[index] ? null : (
-                            <EncounterResult value={simulationResults[index]} />
-                        ))}
-                    </div>
-                ))}
+                    {encounters.map((encounter, index) => (
+                        <div className={styles.encounter} key={index}>
+                            <EncounterForm
+                                mode='monster'
+                                encounter={encounter}
+                                onUpdate={(newValue) => updateEncounter(index, newValue)}
+                                onDelete={(index > 0) ? () => deleteEncounter(index) : undefined}
+                                onMoveUp={(!!encounters.length && !!index) ? () => swapEncounters(index, index - 1) : undefined}
+                                onMoveDown={(!!encounters.length && (index < encounters.length - 1)) ? () => swapEncounters(index, index + 1) : undefined}
+                                luck={luck}
+                                setLuck={setLuck}
+                                onEditingChange={setIsEditing}
+                            />
+                            {(!simulationResults[index] ? null : (
+                                <EncounterResult value={simulationResults[index]} />
+                            ))}
+                        </div>
+                    ))}
 
-                <button
-                    onClick={createEncounter}
-                    className={styles.addEncounterBtn}>
-                    <FontAwesomeIcon icon={faPlus} />
-                    Add Encounter
-                </button>
+                    <button
+                        onClick={createEncounter}
+                        className={styles.addEncounterBtn}>
+                        <FontAwesomeIcon icon={faPlus} />
+                        Add Encounter
+                    </button>
 
-                {/* Quintile Analysis Display */}
-                {quintileAnalysis && (
-                    <QuintileAnalysis analysis={quintileAnalysis} />
-                )}
+                    {/* Quintile Analysis Display */}
+                    {worker.analysis && (
+                        <QuintileAnalysis analysis={worker.analysis} />
+                    )}
 
-                {/* Event Log Display */}
-                <EventLog
-                    events={simulationEvents}
-                    combatantNames={Object.fromEntries(combatantNames)}
-                    actionNames={Object.fromEntries(actionNames)}
-                />
-
-                {(saving || loading) ? (
-                    <AdventuringDayForm
-                        currentPlayers={players} // New prop name
-                        currentEncounters={encounters} // New prop name
-                        onCancel={() => { setSaving(false); setLoading(false) }}
-                        onApplyChanges={(newPlayers, newEncounters) => { // New prop name and logic
-                            setPlayers(newPlayers)
-                            setEncounters(newEncounters)
-                            setSaving(false)
-                            setLoading(false)
-                        }}
+                    {/* Event Log Display */}
+                    <EventLog
+                        events={simulationEvents}
+                        combatantNames={Object.fromEntries(combatantNames)}
+                        actionNames={Object.fromEntries(actionNames)}
                     />
-                ) : null}
-            </semiPersistentContext.Provider>
-        </div>
+
+                    {(saving || loading) ? (
+                        <AdventuringDayForm
+                            currentPlayers={players} // New prop name
+                            currentEncounters={encounters} // New prop name
+                            onCancel={() => { setSaving(false); setLoading(false) }}
+                            onApplyChanges={(newPlayers, newEncounters) => { // New prop name and logic
+                                setPlayers(newPlayers)
+                                setEncounters(newEncounters)
+                                setSaving(false)
+                                setLoading(false)
+                            }}
+                            onEditingChange={setIsEditing}
+                        />
+                    ) : null}
+                </semiPersistentContext.Provider>
+            </div>
+        </UIToggleProvider>
     )
 })
 

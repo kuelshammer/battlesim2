@@ -63,6 +63,67 @@ pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: us
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
 }
 
+#[wasm_bindgen]
+pub fn run_simulation_with_callback(
+    players: JsValue,
+    encounters: JsValue,
+    iterations: usize,
+    callback: &js_sys::Function,
+) -> Result<JsValue, JsValue> {
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+
+    let mut all_events = Vec::new();
+    let mut results = Vec::new();
+
+    let batch_size = (iterations / 20).max(1); // Report progress every 5%
+
+    for i in 0..iterations {
+        let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
+        results.push(result);
+
+        if i == 0 {
+            all_events = events;
+        }
+
+        if (i + 1) % batch_size == 0 || i == iterations - 1 {
+            let progress = (i + 1) as f64 / iterations as f64;
+            let this = JsValue::NULL;
+            let js_progress = JsValue::from_f64(progress);
+            let js_completed = JsValue::from_f64((i + 1) as f64);
+            let js_total = JsValue::from_f64(iterations as f64);
+            
+            let _ = callback.call3(&this, &js_progress, &js_completed, &js_total);
+        }
+    }
+
+    // Sort results by score (worst to best)
+    results.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(a);
+        let score_b = crate::aggregation::calculate_score(b);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    #[derive(serde::Serialize)]
+    struct FullSimulationOutput {
+        results: Vec<SimulationResult>,
+        first_run_events: Vec<crate::events::Event>,
+    }
+
+    let output = FullSimulationOutput {
+        results,
+        first_run_events: all_events,
+    };
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+
+    serde::Serialize::serialize(&output, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
+}
+
 // Store last simulation events for retrieval (thread-safe)
 static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
 

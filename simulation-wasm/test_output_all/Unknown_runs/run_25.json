@@ -1,0 +1,833 @@
+{
+  "events": [
+    {
+      "TurnEnded": {
+        "round_number": 2,
+        "unit_id": "strong_brute-1-0"
+      }
+    }
+  ],
+  "result": [
+    {
+      "rounds": [
+        {
+          "team1": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d10+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 2,
+                    "toHit": "1d20+7",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "strong_brute-1-0": 2,
+                    "weak_minion-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d10+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 2,
+                    "toHit": "1d20+7",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "strong_brute-1-0": 1,
+                    "weak_minion-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 18.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d10+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 2,
+                    "toHit": "1d20+7",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 25.0,
+                "id": "alistair",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "player",
+                "name": "Alistair",
+                "saveBonus": 3.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 9.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "alistair-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 25.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 2.0
+            }
+          ],
+          "team2": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_claw",
+                    "name": "Claw",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+2",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_claw",
+                    "name": "Claw",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+2",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 10.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_claw",
+                    "name": "Claw",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+2",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 8.0,
+                "id": "weak_minion",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "monster",
+                "name": "Weak Minion",
+                "saveBonus": 0.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 0.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "weak_minion-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 8.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 18.0
+            },
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 14.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 50.0,
+                "id": "strong_brute",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "monster",
+                "name": "Strong Brute",
+                "saveBonus": 2.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 40.5,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "strong_brute-1-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 50.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 9.0
+            }
+          ]
+        },
+        {
+          "team1": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d10+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 2,
+                    "toHit": "1d20+7",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "strong_brute-1-0": 2,
+                    "weak_minion-0-0": 2
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 18.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d10+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_multiattack",
+                    "name": "Multiattack (2x Longsword)",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 2,
+                    "toHit": "1d20+7",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 25.0,
+                "id": "alistair",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "player",
+                "name": "Alistair",
+                "saveBonus": 3.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 0.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "alistair-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 25.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 2.0
+            }
+          ],
+          "team2": [
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_claw",
+                    "name": "Claw",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+2",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 2
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 10.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "1d4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_claw",
+                    "name": "Claw",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+2",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 8.0,
+                "id": "weak_minion",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "monster",
+                "name": "Weak Minion",
+                "saveBonus": 0.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 0.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "weak_minion-0-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 8.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 18.0
+            },
+            {
+              "actions": [
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 2
+                  }
+                },
+                {
+                  "action": {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  },
+                  "targets": {
+                    "alistair-0-0": 1
+                  }
+                }
+              ],
+              "creature": {
+                "AC": 14.0,
+                "actions": [
+                  {
+                    "condition": "default",
+                    "cost": [],
+                    "dpr": "2d6+4",
+                    "freq": "at will",
+                    "halfOnSave": null,
+                    "id": "atk_club",
+                    "name": "Club",
+                    "requirements": [],
+                    "riderEffect": null,
+                    "tags": [],
+                    "target": "enemy with least HP",
+                    "targets": 1,
+                    "toHit": "1d20+5",
+                    "type": "atk",
+                    "useSaves": null
+                  }
+                ],
+                "arrival": null,
+                "classResources": null,
+                "conModifier": null,
+                "count": 1.0,
+                "hitDice": null,
+                "hp": 50.0,
+                "id": "strong_brute",
+                "initiativeAdvantage": false,
+                "initiativeBonus": 0.0,
+                "mode": "monster",
+                "name": "Strong Brute",
+                "saveBonus": 2.0,
+                "speed_fly": null,
+                "spellSlots": null,
+                "triggers": []
+              },
+              "finalState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 40.5,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": 0.0,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "id": "strong_brute-1-0",
+              "initialState": {
+                "actions_used_this_encounter": [],
+                "bonusActionUsed": false,
+                "buffs": {},
+                "concentratingOn": null,
+                "currentHP": 50.0,
+                "known_ac": {},
+                "resources": {
+                  "current": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  },
+                  "max": {
+                    "Action": 1.0,
+                    "BonusAction": 1.0,
+                    "Movement": 30.0,
+                    "Reaction": 1.0
+                  }
+                },
+                "tempHP": null,
+                "upcomingBuffs": {},
+                "usedActions": []
+              },
+              "initiative": 9.0
+            }
+          ]
+        }
+      ],
+      "stats": {}
+    }
+  ],
+  "run_index": 25
+}

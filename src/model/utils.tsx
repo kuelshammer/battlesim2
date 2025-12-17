@@ -1,5 +1,5 @@
 import { DependencyList, FC, ReactNode, createContext, useContext, useEffect, useState } from "react"
-import { semiPersistentContext } from "./simulationContext"
+import { semiPersistentContext } from "./semiPersistentContext"
 
 export function clone<T>(obj: T): T {
     return structuredClone(obj)

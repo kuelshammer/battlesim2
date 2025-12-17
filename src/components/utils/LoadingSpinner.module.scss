@@ -1,0 +1,165 @@
+@import '../../../styles/mixins';
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  &.block {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  &.inline {
+    flex-direction: row;
+    display: inline-flex;
+  }
+
+  // Size variants
+  &.small {
+    .spinner {
+      .spinnerRing {
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+      }
+    }
+
+    .label {
+      font-size: 0.75rem;
+    }
+  }
+
+  &.medium {
+    .spinner {
+      .spinnerRing {
+        width: 24px;
+        height: 24px;
+        border-width: 2px;
+      }
+    }
+
+    .label {
+      font-size: 0.875rem;
+    }
+  }
+
+  &.large {
+    .spinner {
+      .spinnerRing {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+      }
+    }
+
+    .label {
+      font-size: 1rem;
+    }
+  }
+
+  // Color variants
+  &.primary {
+    .spinnerRing {
+      border-color: rgba(79, 172, 254, 0.3);
+      border-top-color: #4facfe;
+    }
+
+    .label {
+      color: #4facfe;
+    }
+  }
+
+  &.secondary {
+    .spinnerRing {
+      border-color: rgba(102, 102, 102, 0.3);
+      border-top-color: #666;
+    }
+
+    .label {
+      color: #666;
+    }
+  }
+
+  &.white {
+    .spinnerRing {
+      border-color: rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+    }
+
+    .label {
+      color: white;
+    }
+  }
+
+  .spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    .spinnerRing {
+      border-style: solid;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      box-sizing: border-box;
+
+      &:nth-child(2) {
+        position: absolute;
+        animation-delay: 0.2s;
+        opacity: 0.7;
+      }
+
+      &:nth-child(3) {
+        position: absolute;
+        animation-delay: 0.4s;
+        opacity: 0.5;
+      }
+    }
+  }
+
+  .label {
+    font-weight: 500;
+    text-align: center;
+    user-select: none;
+  }
+
+  .srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  .container {
+    &.block {
+      padding: 0.75rem;
+    }
+
+    &.small .label {
+      font-size: 0.7rem;
+    }
+
+    &.medium .label {
+      font-size: 0.8rem;
+    }
+
+    &.large .label {
+      font-size: 0.9rem;
+    }
+  }
+}

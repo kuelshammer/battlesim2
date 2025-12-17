@@ -6,6 +6,7 @@ import { Round } from "@/model/model"
 import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
+import { useUIToggle } from "@/model/uiToggleState"
 
 type TeamPropType = {
     round: Round,
@@ -327,6 +328,7 @@ type PropType = {
 }
 
 const EncounterResult: FC<PropType> = memo(({ value }) => {
+    const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     if (!value.rounds.length) return <></>
     
     // Memoize expensive clone operation
@@ -346,27 +348,71 @@ const EncounterResult: FC<PropType> = memo(({ value }) => {
 
     return (
         <div className={styles.encounterResult}>
-            {value.rounds.map((round, roundIndex) => (
-                <div key={roundIndex} className={styles.round}>
-                    <h3>Round {roundIndex + 1}</h3>
+            {/* HP Bars Toggle Control */}
+            <div className={styles.toggleControl}>
+                <label className={styles.toggleLabel}>
+                    <input
+                        type="checkbox"
+                        checked={hpBarsVisible}
+                        onChange={(e) => setHpBarsVisible(e.target.checked)}
+                        className={styles.toggleInput}
+                    />
+                    <span className={styles.toggleSwitch}></span>
+                    <span className={styles.toggleText}>
+                        Show Round-by-Round HP Bars
+                    </span>
+                </label>
+            </div>
 
-                    <div className={styles.lifebars}>
-                        <TeamResults
-                            round={round}
-                            team={round.team1}
-                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
-                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
-                        <hr />
-                        <TeamResults
-                            round={round}
-                            team={round.team2}
-                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
-                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+            {hpBarsVisible ? (
+                // Show round-by-round HP bars when toggle is enabled
+                value.rounds.map((round, roundIndex) => (
+                    <div key={roundIndex} className={styles.round}>
+                        <h3>Round {roundIndex + 1}</h3>
+
+                        <div className={styles.lifebars}>
+                            <TeamResults
+                                round={round}
+                                team={round.team1}
+                                highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                                onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+                            <hr />
+                            <TeamResults
+                                round={round}
+                                team={round.team2}
+                                highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                                onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+                        </div>
+                    </div>
+                ))
+            ) : (
+                // Show simplified result view when HP bars are hidden
+                <div className={styles.round}>
+                    <h3>Encounter Result</h3>
+                    <div className={styles.resultSummary}>
+                        <div className={styles.summaryItem}>
+                            <strong>Duration:</strong> {value.rounds.length} rounds
+                        </div>
+                        <div className={styles.summaryItem}>
+                            <strong>Winner:</strong> {
+                                (() => {
+                                    const lastRound = value.rounds[value.rounds.length - 1]
+                                    const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
+                                    const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
+                                    
+                                    if (team1Alive > 0 && team2Alive === 0) return "Players"
+                                    if (team2Alive > 0 && team1Alive === 0) return "Monsters"
+                                    return "Draw"
+                                })()
+                            }
+                        </div>
                     </div>
                 </div>
-            ))}
+            )}
+
+            {/* Always show final result */}
             <div className={styles.round}>
-                <h3>Result</h3>
+                <h3>Final State</h3>
 
                 <div className={styles.lifebars}>
                     <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
