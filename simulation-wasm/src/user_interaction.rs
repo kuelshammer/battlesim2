@@ -1,13 +1,12 @@
-use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult, SlotInfo};
+use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
 use crate::background_simulation::{BackgroundSimulationId, SimulationPriority, BackgroundSimulationEngine};
-use crate::progress_ui::{ProgressUIManager, ProgressUIConfig, ProgressInfo};
+use crate::progress_ui::{ProgressUIManager, ProgressInfo};
 use crate::storage_manager::StorageManager;
-use crate::queue_manager::{QueueManager, QueueManagerConfig};
+use crate::queue_manager::QueueManager;
 use crate::storage_integration::StorageIntegration;
-use crate::model::{Creature, Encounter, SimulationResult};
-use crate::storage::{ScenarioParameters, SimulationStatus};
+use crate::model::{Creature, Encounter};
+use crate::storage::ScenarioParameters;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -179,7 +178,8 @@ pub struct UserInteractionManager {
     /// Storage manager
     storage_manager: Arc<Mutex<StorageManager>>,
     /// Background simulation engine
-    simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
+#[allow(dead_code)]
+simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Queue manager
     queue_manager: Arc<Mutex<QueueManager>>,
     /// Storage integration manager
@@ -195,21 +195,22 @@ pub struct UserInteractionManager {
 impl UserInteractionManager {
     /// Create a new user interaction manager
     pub fn new(
-        display_manager: DisplayManager,
-        progress_ui_manager: ProgressUIManager,
-        storage_manager: StorageManager,
-        simulation_engine: BackgroundSimulationEngine,
-        queue_manager: QueueManager,
-        storage_integration: StorageIntegration,
+        display_manager: Arc<Mutex<DisplayManager>>,
+        progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+        storage_manager: Arc<Mutex<StorageManager>>,
+#[allow(dead_code)]
+simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
+        queue_manager: Arc<Mutex<QueueManager>>,
+        storage_integration: Arc<Mutex<StorageIntegration>>,
         config: UserInteractionConfig,
     ) -> Self {
         Self {
-            display_manager: Arc::new(Mutex::new(display_manager)),
-            progress_ui_manager: Arc::new(Mutex::new(progress_ui_manager)),
-            storage_manager: Arc::new(Mutex::new(storage_manager)),
-            simulation_engine: Arc::new(Mutex::new(simulation_engine)),
-            queue_manager: Arc::new(Mutex::new(queue_manager)),
-            storage_integration: Arc::new(Mutex::new(storage_integration)),
+            display_manager,
+            progress_ui_manager,
+            storage_manager,
+            simulation_engine,
+            queue_manager,
+            storage_integration,
             config,
             state: Arc::new(Mutex::new(UserInteractionState {
                 current_parameters: None,
@@ -270,7 +271,7 @@ impl UserInteractionManager {
         iterations: usize,
     ) -> UserEventResult {
         let mut messages = Vec::new();
-        let mut requires_ui_refresh = true;
+        let requires_ui_refresh = true;
 
         // Update state
         {
@@ -627,26 +628,34 @@ impl UserInteractionManager {
             config: Default::default(),
         };
 
-        // Start simulation through storage integration
-        let simulation_id = {
-            let mut storage_integration = self.storage_integration.lock().unwrap();
+        // Submit simulation request through storage integration
+        let submission_result = {
+            let storage_integration = self.storage_integration.lock().unwrap();
             storage_integration.submit_simulation_request(parameters, priority)
                 .map_err(|e| format!("Failed to queue simulation: {}", e))?
         };
 
-        // Add to active simulations
-        {
-            let mut state = self.state.lock().unwrap();
-            state.active_simulations.push(simulation_id.clone());
-        }
+        // If a simulation ID was actually started (not just queued)
+        if let Some(simulation_id) = submission_result.simulation_id {
+            // Add to active simulations
+            {
+                let mut state = self.state.lock().unwrap();
+                state.active_simulations.push(simulation_id.clone());
+            }
 
-        // Start progress tracking
-        {
-            let progress_ui = self.progress_ui_manager.lock().unwrap();
-            progress_ui.start_tracking(simulation_id.clone());
-        }
+            // Start progress tracking
+            {
+                let progress_ui = self.progress_ui_manager.lock().unwrap();
+                progress_ui.start_tracking(simulation_id.clone());
+            }
 
-        Ok(simulation_id)
+            Ok(simulation_id)
+        } else {
+            // If the simulation was only queued, return an appropriate message or error.
+            // For now, we'll return an error if it was queued and no ID was provided.
+            // In a more complex system, this might return the request_id.
+            Err("Simulation request was queued, but no simulation ID was immediately available.".to_string())
+        }
     }
 
     /// Clear cache internally
@@ -773,37 +782,7 @@ impl UserInteractionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Action, AtkAction, ActionBase, DiceFormula};
-
-    fn create_test_creature(name: &str, hp: f64, ac: f64) -> Creature {
-        Creature {
-            id: name.to_string(),
-            arrival: None,
-            mode: "player".to_string(),
-            name: name.to_string(),
-            count: 1.0,
-            hp,
-            ac,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: vec![],
-            triggers: vec![],
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-        }
-    }
+    use crate::model::{Creature, DiceFormula};
 
     #[test]
     fn test_user_interaction_config_default() {
