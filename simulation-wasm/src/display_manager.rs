@@ -2,6 +2,7 @@ use crate::storage::{ScenarioParameters, SlotSelection};
 use crate::storage_manager::StorageManager;
 use crate::model::{Creature, Encounter, SimulationResult};
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -129,7 +130,11 @@ pub struct DisplayManager {
     /// Last parameters that were displayed
     last_parameters: Option<ScenarioParameters>,
     /// Progress communicator for background simulations
-    progress_communicator: Option<crate::progress_communication::ProgressCommunication>,
+    progress_communicator: Option<std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>>,
+    /// Receiver for progress updates
+    progress_receiver: Option<mpsc::Receiver<crate::progress_communication::ProgressUpdate>>,
+    /// Last received progress update
+    last_progress_update: Option<crate::progress_communication::ProgressUpdate>,
     /// Currently active slot for display
     active_slot: Option<SlotSelection>,
 }
@@ -143,6 +148,8 @@ impl DisplayManager {
             current_mode: config.default_mode,
             last_parameters: None,
             progress_communicator: None,
+            progress_receiver: None,
+            last_progress_update: None,
             active_slot: None,
         }
     }
@@ -286,20 +293,18 @@ impl DisplayManager {
         if let Some(secondary_data) = &memory_storage.secondary_slot {
             let similarity = self.calculate_similarity(parameters, &secondary_data.parameters);
             let differences = self.calculate_parameter_differences(parameters, &secondary_data.parameters);
-            
-            available_slots.push(SlotInfo {
-                slot_selection: SlotSelection::Secondary,
-                age_seconds: SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs()
-                    .saturating_sub(secondary_data.timestamp.0),
-                similarity_score: similarity,
-                iterations: secondary_data.parameters.iterations,
-                execution_time_ms: secondary_data.metadata.execution_time_ms,
-                status: format!("{:?}", secondary_data.metadata.status),
-                parameter_differences: differences,
-            });
+            available_slots.push(SlotInfo {                    slot_selection: SlotSelection::Secondary,
+                    age_seconds: SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs()
+                        .saturating_sub(secondary_data.timestamp.0),
+                    similarity_score: similarity,
+                    iterations: secondary_data.parameters.iterations,
+                    execution_time_ms: secondary_data.metadata.execution_time_ms,
+                    status: format!("{:?}", secondary_data.metadata.status),
+                    parameter_differences: differences,
+                });
         }
 
         DisplayResult {
@@ -387,17 +392,31 @@ impl DisplayManager {
     }
 
     /// Set progress communicator for background simulation updates
-    pub fn set_progress_communicator(&mut self, communicator: crate::progress_communication::ProgressCommunication) {
-        self.progress_communicator = Some(communicator);
+    pub fn set_progress_communicator(&mut self, communicator_arc: std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>) {
+        {
+            let communicator = communicator_arc.lock().unwrap();
+            // Create a unique subscription ID for this display manager
+            let subscription_id = format!("display_manager_sub_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos());
+            let subscription = crate::progress_communication::ProgressSubscription::new(subscription_id);
+
+            if let Ok(receiver) = communicator.subscribe(subscription) {
+                self.progress_receiver = Some(receiver);
+            } else {
+                console::error_1(&"Failed to subscribe DisplayManager to ProgressCommunication".into());
+            }
+        }
+        self.progress_communicator = Some(communicator_arc);
     }
 
     /// Get current progress from background simulations
-    pub fn get_current_progress(&self) -> Option<crate::progress_communication::ProgressUpdate> {
-        if let Some(communicator) = &self.progress_communicator {
-            communicator.get_latest_update()
-        } else {
-            None
+    pub fn get_current_progress(&mut self) -> Option<crate::progress_communication::ProgressUpdate> {
+        // Drain all available updates from the receiver and store the latest
+        if let Some(receiver) = self.progress_receiver.as_ref() {
+            while let Ok(update) = receiver.try_recv() {
+                self.last_progress_update = Some(update);
+            }
         }
+        self.last_progress_update.clone()
     }
 
     /// Handle simulation completion
@@ -419,7 +438,7 @@ impl DisplayManager {
     }
 
     /// Generate status text based on current state
-    pub fn generate_status_text(&self) -> String {
+    pub fn generate_status_text(&mut self) -> String {
         if let Some(progress) = self.get_current_progress() {
             match progress.update_type {
                 crate::progress_communication::ProgressUpdateType::Started => "Starting".to_string(),
@@ -470,7 +489,6 @@ impl DisplayManager {
         if let Some(secondary_data) = &memory_storage.secondary_slot {
             let similarity = self.calculate_similarity(parameters, &secondary_data.parameters);
             if similarity > best_similarity {
-                best_similarity = similarity;
                 let differences = self.calculate_parameter_differences(parameters, &secondary_data.parameters);
                 best_slot = Some(SlotInfo {
                     slot_selection: SlotSelection::Secondary,
