@@ -444,7 +444,7 @@ impl std::error::Error for ProgressError {}
 
 /// Utility functions for progress calculation and formatting
 pub mod progress_utils {
-    use super::*;
+    
 
     /// Calculate progress percentage with safe division
     pub fn calculate_percentage(completed: usize, total: usize) -> f64 {
@@ -582,7 +582,7 @@ mod tests {
 
         // Subscribe to all updates
         let subscription = ProgressSubscription::new("test".to_string());
-        let mut sub_receiver = comm.subscribe(subscription).unwrap();
+        let sub_receiver = comm.subscribe(subscription).unwrap();
 
         // Send an update
         let update = ProgressUpdate::new(
