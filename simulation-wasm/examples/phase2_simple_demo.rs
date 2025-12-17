@@ -2,12 +2,12 @@
 //! 
 //! This example shows the core functionality without complex model dependencies
 
-use simulation_wasm::queue_manager::{SimulationQueue, SimulationRequest};
-use simulation_wasm::progress_communication::{ProgressCommunication, ProgressSubscription, ProgressUpdateType};
+use simulation_wasm::queue_manager::SimulationQueue;
+use simulation_wasm::progress_communication::{ProgressCommunication, ProgressSubscription};
 use simulation_wasm::storage_integration::{StorageIntegration, StorageIntegrationConfig};
 use simulation_wasm::storage_manager::StorageManager;
 use simulation_wasm::storage::{ScenarioParameters, SimulationConfig};
-use simulation_wasm::background_simulation::{SimulationPriority};
+use simulation_wasm::background_simulation::SimulationPriority;
 use std::collections::HashMap;
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     println!("1. Initializing storage system...");
     let storage_manager = StorageManager::default();
     let queue = SimulationQueue::new(10);
-    let (progress_comm, mut progress_receiver) = ProgressCommunication::new();
+    let (progress_comm, progress_receiver) = ProgressCommunication::new();
     
     let config = StorageIntegrationConfig {
         max_concurrent_simulations: 2,
@@ -41,7 +41,7 @@ fn main() {
     let subscription = ProgressSubscription::new("demo_subscription".to_string())
         .completions_only();
     
-    let mut sub_receiver = storage_integration.progress_comm
+    let sub_receiver = storage_integration.progress_comm
         .subscribe(subscription)
         .expect("Failed to subscribe to progress updates");
     
@@ -183,6 +183,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use simulation_wasm::queue_manager::SimulationRequest;
+    use simulation_wasm::progress_communication::ProgressUpdateType;
 
     #[test]
     fn test_queue_priority_ordering() {
