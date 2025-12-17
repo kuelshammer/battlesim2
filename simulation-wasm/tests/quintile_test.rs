@@ -3,7 +3,7 @@ use simulation_wasm::model::{Creature, SimulationResult, DiceFormula};
 use simulation_wasm::quintile_analysis::run_quintile_analysis;
 
 // Helper to create a dummy SimulationResult for testing
-fn create_dummy_simulation_result(score: f64, player_hp: f64, monster_hp: f64, rounds: usize) -> SimulationResult {
+fn create_dummy_simulation_result(_score: f64, player_hp: f64, monster_hp: f64, rounds: usize) -> SimulationResult {
     // Simplified SimulationResult for testing purposes
     // In a real scenario, this would come from a full simulation run
     let mut result = Vec::new();
