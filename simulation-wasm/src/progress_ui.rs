@@ -1,4 +1,4 @@
-use crate::background_simulation::{BackgroundSimulationId, SimulationProgress};
+use crate::background_simulation::BackgroundSimulationId;
 use crate::progress_communication::{ProgressUpdate, ProgressUpdateType, ProgressCommunication};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

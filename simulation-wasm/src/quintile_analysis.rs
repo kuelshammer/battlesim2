@@ -129,7 +129,7 @@ fn calculate_quintile_stats(
     label: &str,
     median_survivors: usize,
     party_size: usize,
-    start_idx: usize,
+    _start_idx: usize, // Unused parameter, kept for API compatibility
 ) -> QuintileStats {
     // Validate input
     if results.is_empty() {
@@ -334,7 +334,7 @@ fn get_encounter_label(risk: &RiskFactor, difficulty: &Difficulty) -> EncounterL
 }
 
 /// Generate analysis summary based on ratings
-fn generate_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
+fn generate_analysis_summary(risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
     let disaster = &quintiles[0];
     let typical = &quintiles[2];
     
@@ -357,7 +357,7 @@ fn generate_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintil
 }
 
 /// Generate tuning suggestions based on encounter analysis
-fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> Vec<String> {
+fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, _quintiles: &[QuintileStats]) -> Vec<String> {
     let mut suggestions = Vec::new();
     
     match risk {

@@ -96,7 +96,7 @@ pub fn validate_simulation_results(results: &[SimulationResult]) -> Result<Valid
 }
 
 fn validate_single_result(result: &SimulationResult, iteration: usize) -> Result<(), SimulationError> {
-    let context = ErrorContext::new("validation".to_string(), iteration, 0);
+    let _context = ErrorContext::new("validation".to_string(), iteration, 0);
     
     // Check if result is empty
     if result.is_empty() {
@@ -114,7 +114,7 @@ fn validate_single_result(result: &SimulationResult, iteration: usize) -> Result
 }
 
 fn validate_encounter(encounter: &EncounterResult, iteration: usize, encounter_idx: usize) -> Result<(), SimulationError> {
-    let context = ErrorContext::new("validation".to_string(), iteration, encounter_idx);
+    let _context = ErrorContext::new("validation".to_string(), iteration, encounter_idx);
     
     // Check if encounter has rounds
     if encounter.rounds.is_empty() {
@@ -155,7 +155,7 @@ fn validate_round(round: &Round, iteration: usize, encounter_idx: usize, round_i
     Ok(())
 }
 
-fn validate_combatant(combatant: &Combattant, context: &ErrorContext) -> Result<(), SimulationError> {
+fn validate_combatant(combatant: &Combattant, _context: &ErrorContext) -> Result<(), SimulationError> {
     // Check if combatant has valid HP
     if combatant.creature.hp <= 0.0 {
         return Err(SimulationError::InvalidCombatant(

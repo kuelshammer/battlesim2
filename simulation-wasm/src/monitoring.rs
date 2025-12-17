@@ -60,7 +60,7 @@ impl SimulationMetrics {
         // Complex score considering success rate, retries, error types
         let base_score = self.success_rate();
         let retry_penalty = (self.retried_iterations as f64 / self.total_iterations as f64) * 0.1;
-        let error_penalty = (self.error_types.len() as f64 * 0.05);
+        let error_penalty = self.error_types.len() as f64 * 0.05;
         
         (base_score - retry_penalty - error_penalty).max(0.0)
     }

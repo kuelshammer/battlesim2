@@ -203,7 +203,7 @@ impl Phase3Integration {
 
     /// Update GUI configuration
     #[wasm_bindgen(js_name = updateConfiguration)]
-    pub fn update_configuration(&self, config: &JsValue) -> Result<(), JsValue> {
+    pub fn update_configuration(&self, _config: &JsValue) -> Result<(), JsValue> {
         console::log_1(&"Updating GUI configuration".into());
         
         // This would parse and apply user preferences:

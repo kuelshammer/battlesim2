@@ -45,7 +45,7 @@ use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureSt
 use crate::execution::ActionExecutionEngine;
 use crate::storage_manager::StorageManager;
 use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
@@ -470,17 +470,11 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
 }
 
 // Global storage manager for WASM interface
-static mut STORAGE_MANAGER: Option<StorageManager> = None;
-static STORAGE_MANAGER_INIT: std::sync::Once = std::sync::Once::new();
+static STORAGE_MANAGER: OnceLock<Mutex<StorageManager>> = OnceLock::new();
 
 /// Initialize or get the global storage manager
-fn get_storage_manager() -> &'static mut StorageManager {
-    unsafe {
-        STORAGE_MANAGER_INIT.call_once(|| {
-            STORAGE_MANAGER = Some(StorageManager::default());
-        });
-        STORAGE_MANAGER.as_mut().unwrap()
-    }
+fn get_storage_manager() -> &'static Mutex<StorageManager> {
+    STORAGE_MANAGER.get_or_init(|| Mutex::new(StorageManager::default()))
 }
 
 #[wasm_bindgen]
@@ -490,7 +484,7 @@ pub fn run_simulation_with_storage_wasm(players: JsValue, encounters: JsValue, i
     let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
 
-    let storage_manager = get_storage_manager();
+    let mut storage_manager = get_storage_manager().lock().unwrap();
     
     // Try to get cached results first
     if let Some(cached_results) = storage_manager.get_cached_results(&players, &encounters, iterations) {
@@ -529,7 +523,7 @@ pub fn run_simulation_with_storage_wasm(players: JsValue, encounters: JsValue, i
 
 #[wasm_bindgen]
 pub fn clear_simulation_cache_wasm() -> Result<JsValue, JsValue> {
-    let storage_manager = get_storage_manager();
+    let mut storage_manager = get_storage_manager().lock().unwrap();
     
     match storage_manager.clear_cache() {
         Ok(_) => {
@@ -545,7 +539,7 @@ pub fn clear_simulation_cache_wasm() -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn get_storage_stats_wasm() -> Result<JsValue, JsValue> {
-    let storage_manager = get_storage_manager();
+    let storage_manager = get_storage_manager().lock().unwrap();
     let stats = storage_manager.get_storage_stats();
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -610,18 +604,17 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
 // ===== PHASE 3: GUI INTEGRATION WASM BINDINGS =====
 
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayConfig};
-use crate::progress_ui::{ProgressUIManager, ProgressUIConfig, ProgressInfo};
+use crate::progress_ui::{ProgressUIManager, ProgressUIConfig};
 use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteractionConfig};
 use crate::background_simulation::{BackgroundSimulationEngine, SimulationPriority};
 use crate::queue_manager::{QueueManager, QueueManagerConfig};
 use crate::storage_integration::StorageIntegration;
 use std::sync::Arc;
 
-// Global GUI integration state
-static mut GUI_INTEGRATION: Option<GuiIntegration> = None;
-static GUI_INTEGRATION_INIT: std::sync::Once = std::sync::Once::new();
+static GUI_INTEGRATION: OnceLock<Mutex<GuiIntegration>> = OnceLock::new();
 
 /// Combined GUI integration system
+#[allow(dead_code)]
 struct GuiIntegration {
     display_manager: Arc<Mutex<DisplayManager>>,
     progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
@@ -632,25 +625,26 @@ struct GuiIntegration {
 /// Initialize the GUI integration system
 #[wasm_bindgen]
 pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
-    GUI_INTEGRATION_INIT.call_once(|| {
-        let storage_manager = get_storage_manager();
-        
-        // Get storage manager reference
-        let storage_ref = get_storage_manager();
+    GUI_INTEGRATION.get_or_init(|| {
+        // Get storage manager reference (clone for separate instances as in original code)
+        let storage_copy = get_storage_manager().lock().unwrap().clone();
         
         // Create display manager
         let display_config = DisplayConfig::default();
         let display_manager = DisplayManager::new(
-            storage_ref.clone(),
+            storage_copy.clone(),
             display_config,
         );
+        let display_manager_arc = Arc::new(Mutex::new(display_manager));
         
         // Create background simulation engine
-        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new(storage_ref.clone());
+        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new(storage_copy.clone());
+        let simulation_engine_arc = Arc::new(Mutex::new(simulation_engine));
         
         // Create queue manager
         let queue_config = QueueManagerConfig::default();
         let queue_manager = QueueManager::new(queue_config);
+        let queue_manager_arc = Arc::new(Mutex::new(queue_manager));
         
         // Create simulation queue for storage integration (separate instance)
         let storage_queue = crate::queue_manager::SimulationQueue::new(100); // max 100 items
@@ -660,68 +654,52 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
         
         // Create storage integration
         let storage_integration = StorageIntegration::new(
-            storage_ref.clone(),
+            storage_copy.clone(),
             storage_queue,
             progress_comm,
             crate::storage_integration::StorageIntegrationConfig::default(),
         );
+        let storage_integration_arc = Arc::new(Mutex::new(storage_integration));
         
         // Create progress UI manager
-        let progress_config = ProgressUIConfig::default();
-        let progress_ui_manager = ProgressUIManager::new(progress_config);
+        let progress_ui_manager = ProgressUIManager::new(ProgressUIConfig::default());
+        let progress_ui_manager_arc = Arc::new(Mutex::new(progress_ui_manager));
         
+        // Create storage manager arc for user interaction
+        let storage_manager_arc = Arc::new(Mutex::new(storage_copy.clone()));
+
         // Create user interaction manager
         let interaction_config = UserInteractionConfig::default();
         let user_interaction_manager = UserInteractionManager::new(
-            display_manager,
-            progress_ui_manager,
-            storage_ref.clone(),
-            simulation_engine,
-            queue_manager,
-            storage_integration,
+            display_manager_arc.clone(),
+            progress_ui_manager_arc.clone(),
+            storage_manager_arc,
+            simulation_engine_arc.clone(),
+            queue_manager_arc.clone(),
+            storage_integration_arc.clone(),
             interaction_config,
         );
         
-        // Create progress UI manager
-        let progress_config = ProgressUIConfig::default();
-        let progress_ui_manager = ProgressUIManager::new(progress_config);
-        
-        // Create user interaction manager
-        let interaction_config = UserInteractionConfig::default();
-        let user_interaction_manager = UserInteractionManager::new(
-            display_manager,
-            progress_ui_manager,
-            storage_ref.clone(),
-            simulation_engine,
-            queue_manager,
-            storage_integration,
-            interaction_config,
-        );
-        
-        unsafe {
-            GUI_INTEGRATION = Some(GuiIntegration {
-                display_manager: Arc::new(Mutex::new(display_manager)),
-                progress_ui_manager: Arc::new(Mutex::new(progress_ui_manager)),
-                user_interaction_manager: Arc::new(Mutex::new(user_interaction_manager)),
-                storage_integration: Arc::new(Mutex::new(storage_integration)),
-            });
-        }
+        Mutex::new(GuiIntegration {
+            display_manager: display_manager_arc,
+            progress_ui_manager: progress_ui_manager_arc,
+            user_interaction_manager: Arc::new(Mutex::new(user_interaction_manager)),
+            storage_integration: storage_integration_arc,
+        })
     });
     
     Ok(JsValue::from_str("GUI integration initialized"))
 }
 
 /// Get the GUI integration system
-fn get_gui_integration() -> &'static mut GuiIntegration {
-    unsafe {
-        GUI_INTEGRATION.as_mut().unwrap()
-    }
+fn get_gui_integration() -> &'static Mutex<GuiIntegration> {
+    GUI_INTEGRATION.get().expect("GUI Integration not initialized")
 }
 
 /// Get display results for current parameters
 #[wasm_bindgen]
 pub fn get_display_results(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -743,7 +721,7 @@ pub fn get_display_results(players: JsValue, encounters: JsValue, iterations: us
 /// Set display mode
 #[wasm_bindgen]
 pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let mode = match mode_str {
         "ShowNewest" => DisplayMode::ShowNewest,
@@ -763,7 +741,7 @@ pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
 /// Get current display mode
 #[wasm_bindgen]
 pub fn get_display_mode() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let display_manager = gui.display_manager.lock().unwrap();
     let mode = display_manager.get_display_mode();
@@ -782,7 +760,7 @@ pub fn get_display_mode() -> Result<JsValue, JsValue> {
 /// User selected a specific slot
 #[wasm_bindgen]
 pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let slot_selection = match slot_str {
         "Primary" => crate::storage::SlotSelection::Primary,
@@ -808,7 +786,7 @@ pub fn start_background_simulation(
     iterations: usize,
     priority_str: &str
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -830,7 +808,7 @@ pub fn start_background_simulation(
         priority,
     };
     
-    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -843,7 +821,7 @@ pub fn start_background_simulation(
 /// Get progress information for all active simulations
 #[wasm_bindgen]
 pub fn get_all_progress() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let progress_ui = gui.progress_ui_manager.lock().unwrap();
     let progress_list = progress_ui.get_all_progress();
@@ -858,7 +836,7 @@ pub fn get_all_progress() -> Result<JsValue, JsValue> {
 /// Get progress information for a specific simulation
 #[wasm_bindgen]
 pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
@@ -880,7 +858,7 @@ pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Create HTML progress bar for a simulation
 #[wasm_bindgen]
 pub fn create_progress_bar(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
@@ -899,7 +877,7 @@ pub fn create_progress_bar(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Create compact progress indicator for a simulation
 #[wasm_bindgen]
 pub fn create_compact_indicator(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
@@ -918,7 +896,7 @@ pub fn create_compact_indicator(simulation_id: &str) -> Result<JsValue, JsValue>
 /// Cancel a running simulation
 #[wasm_bindgen]
 pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
@@ -926,7 +904,7 @@ pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
         simulation_id: sim_id,
     };
     
-    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -939,11 +917,11 @@ pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Clear simulation cache
 #[wasm_bindgen]
 pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let event = UserEvent::ClearCache;
     
-    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -956,7 +934,7 @@ pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
 /// Get pending user confirmations
 #[wasm_bindgen]
 pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let confirmations = user_interaction.get_pending_confirmations();
@@ -971,9 +949,9 @@ pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
 /// Answer a confirmation request
 #[wasm_bindgen]
 pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
-    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let result = user_interaction.answer_confirmation(confirmation_id, confirmed);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -986,7 +964,7 @@ pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsV
 /// Get current user interaction state
 #[wasm_bindgen]
 pub fn get_user_interaction_state() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let state = user_interaction.get_state();
@@ -1005,7 +983,7 @@ pub fn update_gui_configuration(
     progress_config_json: Option<JsValue>,
     interaction_config_json: Option<JsValue>,
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     // Update display configuration
     if let Some(config_js) = display_config_json {
@@ -1040,7 +1018,7 @@ pub fn update_gui_configuration(
 /// Get progress summary for dashboard
 #[wasm_bindgen]
 pub fn get_progress_summary() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let progress_ui = gui.progress_ui_manager.lock().unwrap();
     let summary = progress_ui.get_progress_summary();
@@ -1059,7 +1037,7 @@ pub fn handle_parameters_changed(
     encounters: JsValue,
     iterations: usize,
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration();
+    let gui = get_gui_integration().lock().unwrap();
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -1072,7 +1050,7 @@ pub fn handle_parameters_changed(
         iterations,
     };
     
-    let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap();
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -1083,13 +1061,11 @@ pub fn handle_parameters_changed(
 }
 
 // Phase 3 GUI Integration - Simple working interface
-#[wasm_bindgen]
 pub fn init_phase3_gui_integration() -> crate::phase3_gui_integration::Phase3Integration {
     crate::phase3_gui_integration::init_phase3_gui_integration()
 }
 
 // Phase 3 GUI Integration - Working implementation
-#[wasm_bindgen]
 pub fn init_phase3_gui() -> crate::phase3_working::Phase3Gui {
     crate::phase3_working::init_phase3_gui()
 }

@@ -1,5 +1,5 @@
 use crate::model::*;
-use crate::error_handling::{SimulationError, ErrorContext, log_simulation_error};
+use crate::error_handling::SimulationError;
 use std::collections::{HashMap, HashSet};
 
 struct AggregationData {
