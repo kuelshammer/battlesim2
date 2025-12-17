@@ -1,17 +1,10 @@
 import Head from 'next/head'
 import React from 'react'
-import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import RGPD from '../components/utils/rgpd'
 import Logo from '../components/utils/logo'
 import Footer from '../components/utils/footer'
-
-const Simulation = dynamic(() => import('../components/simulation/simulation').catch(err => {
-  console.error("Failed to load Simulation component:", err);
-  return () => <div style={{color: "#ef4444", padding: "2rem", textAlign: "center"}}>Error loading simulation engine: {err.message}</div>;
-}), {
-  ssr: false,
-  loading: () => <div style={{textAlign: "center", padding: "2rem", animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"}}>Loading Simulation Engine...</div>
-})
+import SimulationPage from './simulation'
 
 export default function Home() {
   return (
@@ -23,7 +16,12 @@ export default function Home() {
       </Head>
 
       <main>
-        <Simulation />
+        <div style={{padding: "1rem", textAlign: "center", backgroundColor: "#f8f9fa", borderBottom: "1px solid #dee2e6"}}>
+          <Link href="/simulation" style={{color: "#007bff", textDecoration: "none", fontWeight: "bold"}}>
+            🚀 Try the New Simulation Dashboard
+          </Link>
+        </div>
+        <SimulationPage />
         <RGPD />
         <Logo />
         <Footer />
