@@ -23,11 +23,11 @@ pub fn get_targets(
 
     match action {
         Action::Atk(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
                     "          Attack {}/{} of {}. Attempting to select target.",
-                    i + 1,
+                    _i + 1,
                     count,
                     c.creature.name
                 );
@@ -45,7 +45,7 @@ pub fn get_targets(
                     eprintln!(
                         "            No target found for {}'s attack {}.",
                         c.creature.name,
-                        i + 1
+                        _i + 1
                     );
                 }
             }
@@ -65,11 +65,11 @@ pub fn get_targets(
                 return targets; // Return empty targets if no healing needed
             }
 
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
                     "          Heal {}/{} of {}. Attempting to select target.",
-                    i + 1,
+                    _i + 1,
                     count,
                     c.creature.name
                 );
@@ -88,17 +88,17 @@ pub fn get_targets(
                     eprintln!(
                         "            No target found for {}'s heal {}.",
                         c.creature.name,
-                        i + 1
+                        _i + 1
                     );
                 }
             }
         }
         Action::Buff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
                     "          Buff {}/{} of {}. Attempting to select target.",
-                    i + 1,
+                    _i + 1,
                     count,
                     c.creature.name
                 );
@@ -121,17 +121,17 @@ pub fn get_targets(
                     eprintln!(
                         "            No target found for {}'s buff {}.",
                         c.creature.name,
-                        i + 1
+                        _i + 1
                     );
                 }
             }
         }
         Action::Debuff(a) => {
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
                     "          Debuff {}/{} of {}. Attempting to select target.",
-                    i + 1,
+                    _i + 1,
                     count,
                     c.creature.name
                 );
@@ -149,23 +149,17 @@ pub fn get_targets(
                     eprintln!(
                         "            No target found for {}'s debuff {}.",
                         c.creature.name,
-                        i + 1
+                        _i + 1
                     );
                 }
             }
         }
         Action::Template(a) => {
-            // For templates, we need to determine the target based on the template type
-            // Since templates should be resolved to their final form, for now we'll treat them as buff actions
-            // targeting allies (like Hunter's Mark which targets enemies)
-            // TODO: Implement proper template resolution based on templateOptions.templateName
-
-            // For now, assume template targets enemies (like Hunter's Mark)
-            for i in 0..count {
+            for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
                     "          Template {}/{} of {}. Attempting to select target.",
-                    i + 1,
+                    _i + 1,
                     count,
                     c.creature.name
                 );
@@ -187,7 +181,7 @@ pub fn get_targets(
                     eprintln!(
                         "            No target found for {}'s template {}.",
                         c.creature.name,
-                        i + 1
+                        _i + 1
                     );
                 }
             }
