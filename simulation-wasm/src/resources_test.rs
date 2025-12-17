@@ -1,7 +1,5 @@
 use super::*;
 
-use super::*;
-
 #[test]
 fn test_ledger_basic_consumption() {
     let mut ledger = ResourceLedger::new();
