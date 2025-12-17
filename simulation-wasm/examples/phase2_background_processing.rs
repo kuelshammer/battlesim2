@@ -275,7 +275,7 @@ mod tests {
         
         // Subscribe to updates
         let subscription = ProgressSubscription::new("test".to_string());
-        let mut sub_receiver = comm.subscribe(subscription).unwrap();
+        let sub_receiver = comm.subscribe(subscription).unwrap();
         
         // Send an update
         let sim_id = BackgroundSimulationId::new();
