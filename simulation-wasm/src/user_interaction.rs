@@ -782,7 +782,6 @@ simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, DiceFormula};
 
     #[test]
     fn test_user_interaction_config_default() {
