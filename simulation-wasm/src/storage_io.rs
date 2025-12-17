@@ -181,7 +181,6 @@ impl SlotFile {
 mod tests {
     use super::*;
     use crate::storage::{SimulationDataSet, ScenarioParameters, SimulationConfig, SimulationMetadata, SimulationStatus, generate_simulation_id, SimulationTimestamp};
-    use crate::model::{Creature, Encounter};
     
     fn create_test_data() -> SimulationDataSet {
         SimulationDataSet {
