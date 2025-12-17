@@ -1,4 +1,4 @@
-@import '../../../styles/mixins';
+@use '../../../styles/mixins' as mixins;
 
 .overlay {
     position: fixed;
@@ -12,9 +12,9 @@
     display: flex;
 
     overflow-x: hidden;
-    @include scrollable;
+    @include mixins.scrollable;
 
-    @include fadeIn;
+    @include mixins.fadeIn;
 
     .closeBtn {
         position: absolute;

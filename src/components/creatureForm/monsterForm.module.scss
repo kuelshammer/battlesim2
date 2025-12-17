@@ -1,4 +1,4 @@
-@import '../../../styles/mixins';
+@use '../../../styles/mixins' as *;
 
 .monsterForm {
     section {
@@ -56,5 +56,4 @@
             @media (width < 600px) { display: none }
         }
     }
-
 }

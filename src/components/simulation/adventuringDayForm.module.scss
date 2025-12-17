@@ -1,4 +1,4 @@
-@import '../../../styles/mixins';
+@use '../../../styles/mixins' as mixins;
 
 .adventuringDay {
     display: flex;
@@ -42,7 +42,7 @@
         }
 
         label {
-            @include clickable;
+            @include mixins.clickable;
         }
     }
 

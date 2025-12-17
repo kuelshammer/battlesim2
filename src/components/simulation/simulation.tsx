@@ -219,7 +219,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 onEditingChange={setIsEditing}
                             />
                             {(!simulationResults[index] ? null : (
-                                <EncounterResult value={simulationResults[index]} />
+                                <EncounterResult value={simulationResults[index]} analysis={worker.analysis} />
                             ))}
                         </div>
                     ))}

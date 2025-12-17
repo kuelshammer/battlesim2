@@ -1,4 +1,4 @@
-@import '../../../styles/mixins';
+@use '../../../styles/mixins' as mixins;
 
 .searchResults {
     border-radius: 8px;
@@ -24,7 +24,7 @@
         height: 40vh;
         min-height: 200px;
         overflow-x: hidden;
-        @include scrollable;
+        @include mixins.scrollable;
 
         .placeholder { width: 100%; padding: 2em; text-align: center; color: #aaa; user-select: none; }
 

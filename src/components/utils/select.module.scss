@@ -1,4 +1,4 @@
-@import '../../../styles/mixins';
+@use '../../../styles/mixins' as mixins;
 
 .select { 
     .control {
@@ -33,7 +33,7 @@
 
     .menuList {
         max-height: 10em;
-        @include scrollable;
+        @include mixins.scrollable;
     }
     
     // Options

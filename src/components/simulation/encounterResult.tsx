@@ -1,5 +1,5 @@
 import { FC, useState, memo, useMemo } from "react"
-import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula } from "@/model/model"
+import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula, AggregateOutput } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import styles from './encounterResult.module.scss'
 import { Round } from "@/model/model"
@@ -7,6 +7,132 @@ import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
+
+// Encounter Rating Component
+const EncounterRating: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
+    const getEncounterRating = useMemo(() => {
+        if (!analysis || !analysis.quintiles.length) return null;
+
+        // Calculate overall win rate and average HP loss
+        const totalRuns = analysis.total_runs;
+        let totalWins = 0;
+        let totalHpLossPercent = 0;
+
+        analysis.quintiles.forEach(quintile => {
+            // Each quintile represents 20% of runs (for 5 quintiles)
+            const quintileRuns = totalRuns / 5;
+            totalWins += (quintile.win_rate / 100) * quintileRuns;
+            totalHpLossPercent += quintile.hp_lost_percent;
+        });
+
+        const overallWinRate = (totalWins / totalRuns) * 100;
+        const avgHpLossPercent = totalHpLossPercent / analysis.quintiles.length;
+
+        // Rating logic
+        if (overallWinRate < 20 || avgHpLossPercent > 80) return { rating: "Deadly", color: "#dc3545", icon: "🔴" };
+        if (overallWinRate < 40 || avgHpLossPercent > 60) return { rating: "Hard", color: "#fd7e14", icon: "🟠" };
+        if (overallWinRate < 60 || avgHpLossPercent > 40) return { rating: "Medium", color: "#ffc107", icon: "🟡" };
+        if (overallWinRate < 80 || avgHpLossPercent > 20) return { rating: "Easy", color: "#28a745", icon: "🟢" };
+        return { rating: "Trivial", color: "#20c997", icon: "🟢" };
+    }, [analysis]);
+
+    if (!getEncounterRating) return null;
+
+    const { rating, color, icon } = getEncounterRating;
+
+    return (
+        <div className={styles.encounterRating} style={{ backgroundColor: color }}>
+            <span className={styles.ratingIcon}>{icon}</span>
+            <span className={styles.ratingText}>{rating.toUpperCase()} ENCOUNTER</span>
+            <div className={styles.ratingDetails}>
+                {analysis && (
+                    <>
+                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + q.win_rate, 0) / analysis.quintiles.length)).toFixed(1)}%</span>
+                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + q.hp_lost_percent, 0) / analysis.quintiles.length).toFixed(1)}%</span>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+});
+
+// Best Quintile Display Component
+const BestQuintileDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
+    const bestQuintile = useMemo(() => {
+        if (!analysis || !analysis.quintiles.length) return null;
+        // Quintile 5 is the best (top 20%)
+        return analysis.quintiles.find(q => q.quintile === 5) || analysis.quintiles[analysis.quintiles.length - 1];
+    }, [analysis]);
+
+    if (!bestQuintile) return null;
+
+    const getHpBarColor = (hpPercentage: number, isDead: boolean): string => {
+        if (isDead) return styles.dead;
+        if (hpPercentage <= 20) return styles.danger;
+        if (hpPercentage <= 50) return styles.bloodied;
+        return styles.healthy;
+    };
+
+    const getHpBarFill = (hpPercentage: number): string => {
+        if (hpPercentage <= 0) return '░░░░░░░░░░';
+        if (hpPercentage <= 10) return '█░░░░░░░░░';
+        if (hpPercentage <= 20) return '██░░░░░░░░';
+        if (hpPercentage <= 30) return '███░░░░░░░';
+        if (hpPercentage <= 40) return '████░░░░░░';
+        if (hpPercentage <= 50) return '█████░░░░░';
+        if (hpPercentage <= 60) return '██████░░░░';
+        if (hpPercentage <= 70) return '███████░░░';
+        if (hpPercentage <= 80) return '████████░░';
+        if (hpPercentage <= 90) return '█████████░';
+        return '██████████';
+    };
+
+    const avgFinalHp = bestQuintile.median_run_visualization
+        ? (bestQuintile.median_run_visualization.reduce((sum, c) => sum + c.hp_percentage, 0) / bestQuintile.median_run_visualization.length).toFixed(1)
+        : '0.0';
+
+    return (
+        <div className={styles.bestQuintileDisplay}>
+            <h4>🏆 Best Performance (Top 20%)</h4>
+            <div className={styles.bestQuintileHeader}>
+                <span className={styles.survivorsBadge}>
+                    ✅ {bestQuintile.median_survivors}/{bestQuintile.party_size} Survivors
+                </span>
+                <span className={styles.winRateBadge}>
+                    {bestQuintile.win_rate.toFixed(1)}% Win Rate
+                </span>
+            </div>
+
+            <div className={styles.bestQuintileCombatants}>
+                {bestQuintile.median_run_visualization?.map((combatant, index) => (
+                    <div key={index} className={styles.bestQuintileCombatant}>
+                        <div className={styles.combatantName}>
+                            {combatant.name}
+                            {combatant.is_dead && <span className={styles.deathIndicator}> 💀 Dead</span>}
+                        </div>
+                        <div className={styles.hpBar}>
+                            <span className={getHpBarColor(combatant.hp_percentage, combatant.is_dead)}>
+                                [{getHpBarFill(combatant.hp_percentage)}]
+                                <span className={styles.hpText}>
+                                    {combatant.current_hp.toFixed(0)}/{combatant.max_hp.toFixed(0)} HP ({combatant.hp_percentage.toFixed(0)}%)
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className={styles.bestQuintileMetrics}>
+                <div className={styles.metric}>
+                    <strong>Average Final HP:</strong> {avgFinalHp}%
+                </div>
+                <div className={styles.metric}>
+                    <strong>Combat Duration:</strong> {bestQuintile.battle_duration_rounds} rounds
+                </div>
+            </div>
+        </div>
+    );
+});
 
 type TeamPropType = {
     round: Round,
@@ -325,10 +451,12 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
 
 type PropType = {
     value: EncounterResultType,
+    analysis?: AggregateOutput | null,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
+    const [detailsExpanded, setDetailsExpanded] = useState(false)
     if (!value.rounds.length) return <></>
     
     // Memoize expensive clone operation
@@ -348,77 +476,97 @@ const EncounterResult: FC<PropType> = memo(({ value }) => {
 
     return (
         <div className={styles.encounterResult}>
-            {/* HP Bars Toggle Control */}
-            <div className={styles.toggleControl}>
-                <label className={styles.toggleLabel}>
-                    <input
-                        type="checkbox"
-                        checked={hpBarsVisible}
-                        onChange={(e) => setHpBarsVisible(e.target.checked)}
-                        className={styles.toggleInput}
-                    />
-                    <span className={styles.toggleSwitch}></span>
-                    <span className={styles.toggleText}>
-                        Show Round-by-Round HP Bars
-                    </span>
-                </label>
-            </div>
+            {/* Encounter Rating - Always visible */}
+            <EncounterRating analysis={analysis || null} />
 
-            {hpBarsVisible ? (
-                // Show round-by-round HP bars when toggle is enabled
-                value.rounds.map((round, roundIndex) => (
-                    <div key={roundIndex} className={styles.round}>
-                        <h3>Round {roundIndex + 1}</h3>
+            {/* Best Quintile Display - Main focus */}
+            <BestQuintileDisplay analysis={analysis || null} />
 
-                        <div className={styles.lifebars}>
-                            <TeamResults
-                                round={round}
-                                team={round.team1}
-                                highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
-                                onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
-                            <hr />
-                            <TeamResults
-                                round={round}
-                                team={round.team2}
-                                highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
-                                onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+            {/* Collapsible Details Section */}
+            <div className={styles.detailsSection}>
+                <button
+                    className={styles.detailsToggle}
+                    onClick={() => setDetailsExpanded(!detailsExpanded)}
+                >
+                    {detailsExpanded ? '🔽' : '▶️'} {detailsExpanded ? 'Hide' : 'Show'} Detailed Analysis
+                </button>
+
+                {detailsExpanded && (
+                    <div className={styles.detailsContent}>
+                        {/* HP Bars Toggle Control */}
+                        <div className={styles.toggleControl}>
+                            <label className={styles.toggleLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={hpBarsVisible}
+                                    onChange={(e) => setHpBarsVisible(e.target.checked)}
+                                    className={styles.toggleInput}
+                                />
+                                <span className={styles.toggleSwitch}></span>
+                                <span className={styles.toggleText}>
+                                    Show Round-by-Round HP Bars
+                                </span>
+                            </label>
+                        </div>
+
+                        {hpBarsVisible ? (
+                            // Show round-by-round HP bars when toggle is enabled
+                            value.rounds.map((round, roundIndex) => (
+                                <div key={roundIndex} className={styles.round}>
+                                    <h3>Round {roundIndex + 1}</h3>
+
+                                    <div className={styles.lifebars}>
+                                        <TeamResults
+                                            round={round}
+                                            team={round.team1}
+                                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+                                        <hr />
+                                        <TeamResults
+                                            round={round}
+                                            team={round.team2}
+                                            highlightedIds={highlightedRound === roundIndex ? highlightedIds : undefined}
+                                            onHighlight={targetIds => { setHighlightedIds(targetIds); setHighlightedRound(roundIndex) }} />
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            // Show simplified result view when HP bars are hidden
+                            <div className={styles.round}>
+                                <h3>Encounter Result</h3>
+                                <div className={styles.resultSummary}>
+                                    <div className={styles.summaryItem}>
+                                        <strong>Duration:</strong> {value.rounds.length} rounds
+                                    </div>
+                                    <div className={styles.summaryItem}>
+                                        <strong>Winner:</strong> {
+                                            (() => {
+                                                const lastRound = value.rounds[value.rounds.length - 1]
+                                                const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
+                                                const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
+
+                                                if (team1Alive > 0 && team2Alive === 0) return "Players"
+                                                if (team2Alive > 0 && team1Alive === 0) return "Monsters"
+                                                return "Draw"
+                                            })()
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Always show final result */}
+                        <div className={styles.round}>
+                            <h3>Final State</h3>
+
+                            <div className={styles.lifebars}>
+                                <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
+                                <hr />
+                                <TeamResults round={lastRound} team={lastRound.team2} stats={value.stats} />
+                            </div>
                         </div>
                     </div>
-                ))
-            ) : (
-                // Show simplified result view when HP bars are hidden
-                <div className={styles.round}>
-                    <h3>Encounter Result</h3>
-                    <div className={styles.resultSummary}>
-                        <div className={styles.summaryItem}>
-                            <strong>Duration:</strong> {value.rounds.length} rounds
-                        </div>
-                        <div className={styles.summaryItem}>
-                            <strong>Winner:</strong> {
-                                (() => {
-                                    const lastRound = value.rounds[value.rounds.length - 1]
-                                    const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
-                                    const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
-                                    
-                                    if (team1Alive > 0 && team2Alive === 0) return "Players"
-                                    if (team2Alive > 0 && team1Alive === 0) return "Monsters"
-                                    return "Draw"
-                                })()
-                            }
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Always show final result */}
-            <div className={styles.round}>
-                <h3>Final State</h3>
-
-                <div className={styles.lifebars}>
-                    <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
-                    <hr />
-                    <TeamResults round={lastRound} team={lastRound.team2} stats={value.stats} />
-                </div>
+                )}
             </div>
         </div>
     )
