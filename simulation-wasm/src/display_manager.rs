@@ -711,7 +711,7 @@ impl DisplayManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Action, AtkAction, ActionBase, DiceFormula};
+    use crate::model::{Creature, DiceFormula};
 
     fn create_test_creature(name: &str, hp: f64, ac: f64) -> Creature {
         Creature {
