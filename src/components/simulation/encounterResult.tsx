@@ -56,15 +56,15 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null }> = memo(({ analys
     );
 });
 
-// Best Quintile Display Component
-const BestQuintileDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
-    const bestQuintile = useMemo(() => {
+// Median Performance Display Component
+const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
+    const medianQuintile = useMemo(() => {
         if (!analysis || !analysis.quintiles.length) return null;
-        // Quintile 5 is the best (top 20%)
-        return analysis.quintiles.find(q => q.quintile === 5) || analysis.quintiles[analysis.quintiles.length - 1];
+        // Quintile 3 is the Median (index 2)
+        return analysis.quintiles[2];
     }, [analysis]);
 
-    if (!bestQuintile) return null;
+    if (!medianQuintile) return null;
 
     const getHpBarColor = (hpPercentage: number, isDead: boolean): string => {
         if (isDead) return styles.dead;
@@ -87,24 +87,24 @@ const BestQuintileDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ an
         return '██████████';
     };
 
-    const avgFinalHp = bestQuintile.median_run_visualization
-        ? (bestQuintile.median_run_visualization.reduce((sum, c) => sum + c.hp_percentage, 0) / bestQuintile.median_run_visualization.length).toFixed(1)
+    const avgFinalHp = medianQuintile.median_run_visualization
+        ? (medianQuintile.median_run_visualization.reduce((sum, c) => sum + c.hp_percentage, 0) / medianQuintile.median_run_visualization.length).toFixed(1)
         : '0.0';
 
     return (
         <div className={styles.bestQuintileDisplay}>
-            <h4>🏆 Best Performance (Top 20%)</h4>
+            <h4>📊 Median Performance</h4>
             <div className={styles.bestQuintileHeader}>
                 <span className={styles.survivorsBadge}>
-                    ✅ {bestQuintile.median_survivors}/{bestQuintile.party_size} Survivors
+                    ✅ {medianQuintile.median_survivors}/{medianQuintile.party_size} Survivors
                 </span>
                 <span className={styles.winRateBadge}>
-                    {bestQuintile.win_rate.toFixed(1)}% Win Rate
+                    {medianQuintile.win_rate.toFixed(1)}% Win Rate
                 </span>
             </div>
 
             <div className={styles.bestQuintileCombatants}>
-                {bestQuintile.median_run_visualization?.map((combatant, index) => (
+                {medianQuintile.median_run_visualization?.map((combatant, index) => (
                     <div key={index} className={styles.bestQuintileCombatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
@@ -127,7 +127,7 @@ const BestQuintileDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ an
                     <strong>Average Final HP:</strong> {avgFinalHp}%
                 </div>
                 <div className={styles.metric}>
-                    <strong>Combat Duration:</strong> {bestQuintile.battle_duration_rounds} rounds
+                    <strong>Combat Duration:</strong> {medianQuintile.battle_duration_rounds} rounds
                 </div>
             </div>
         </div>
@@ -482,8 +482,8 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale }) => {
             {/* Encounter Rating - Always visible */}
             <EncounterRating analysis={analysis || null} />
 
-            {/* Best Quintile Display - Main focus */}
-            <BestQuintileDisplay analysis={analysis || null} />
+            {/* Median Performance Display - Main focus */}
+            <MedianPerformanceDisplay analysis={analysis || null} />
 
             {/* Collapsible Details Section */}
             <div className={styles.detailsSection}>
