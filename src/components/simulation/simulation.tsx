@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
@@ -40,6 +40,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+    const [showLogModal, setShowLogModal] = useState(false)
+    const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     
     // Web Worker Simulation
     const worker = useSimulationWorker();
@@ -221,42 +223,52 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             {(!simulationResults[index] ? null : (
                                 <EncounterResult value={simulationResults[index]} analysis={worker.analysis} />
                             ))}
+                            <button
+                                onClick={() => {
+                                    setSelectedEncounterIndex(index);
+                                    setShowLogModal(true);
+                                }}
+                                className={styles.showLogButton}>
+                                <FontAwesomeIcon icon={faEye} />
+                                Show Log
+                            </button>
                         </div>
                     ))}
 
-                    <button
+<button
                         onClick={createEncounter}
                         className={styles.addEncounterBtn}>
                         <FontAwesomeIcon icon={faPlus} />
                         Add Encounter
                     </button>
 
-                    {/* Quintile Analysis Display */}
+{/* Quintile Analysis Display */}
                     {worker.analysis && (
                         <QuintileAnalysis analysis={worker.analysis} />
                     )}
 
-                    {/* Event Log Display */}
-                    <EventLog
-                        events={simulationEvents}
-                        combatantNames={Object.fromEntries(combatantNames)}
-                        actionNames={Object.fromEntries(actionNames)}
-                    />
-
-                    {(saving || loading) ? (
-                        <AdventuringDayForm
-                            currentPlayers={players} // New prop name
-                            currentEncounters={encounters} // New prop name
-                            onCancel={() => { setSaving(false); setLoading(false) }}
-                            onApplyChanges={(newPlayers, newEncounters) => { // New prop name and logic
-                                setPlayers(newPlayers)
-                                setEncounters(newEncounters)
-                                setSaving(false)
-                                setLoading(false)
-                            }}
-                            onEditingChange={setIsEditing}
-                        />
-                    ) : null}
+                    {/* Event Log Modal */}
+                    {showLogModal && selectedEncounterIndex !== null && (
+                        <div className={styles.logModalOverlay}>
+                            <div className={styles.logModal}>
+                                <div className={styles.modalHeader}>
+                                    <h3>Combat Log - Encounter {selectedEncounterIndex + 1}</h3>
+                                    <button 
+                                        onClick={() => setShowLogModal(false)}
+                                        className={styles.closeButton}>
+                                        <FontAwesomeIcon icon={faTimes} />
+                                    </button>
+                                </div>
+                                <div className={styles.logBody}>
+                                    <EventLog
+                                        events={simulationEvents}
+                                        combatantNames={Object.fromEntries(combatantNames)}
+                                        actionNames={Object.fromEntries(actionNames)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </semiPersistentContext.Provider>
             </div>
         </UIToggleProvider>
