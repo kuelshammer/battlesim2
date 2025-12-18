@@ -915,17 +915,6 @@ export function clear_simulation_cache_gui() {
 }
 
 /**
- * @returns {any}
- */
-export function clear_simulation_cache_wasm() {
-    const ret = wasm.clear_simulation_cache_wasm();
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return takeFromExternrefTable0(ret[0]);
-}
-
-/**
  * Create compact progress indicator for a simulation
  * @param {string} simulation_id
  * @returns {any}
@@ -1045,17 +1034,6 @@ export function get_progress_summary() {
 }
 
 /**
- * @returns {any}
- */
-export function get_storage_stats_wasm() {
-    const ret = wasm.get_storage_stats_wasm();
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return takeFromExternrefTable0(ret[0]);
-}
-
-/**
  * Get current user interaction state
  * @returns {any}
  */
@@ -1163,20 +1141,6 @@ export function run_simulation_wasm(players, encounters, iterations) {
  */
 export function run_simulation_with_callback(players, encounters, iterations, callback) {
     const ret = wasm.run_simulation_with_callback(players, encounters, iterations, callback);
-    if (ret[2]) {
-        throw takeFromExternrefTable0(ret[1]);
-    }
-    return takeFromExternrefTable0(ret[0]);
-}
-
-/**
- * @param {any} players
- * @param {any} encounters
- * @param {number} iterations
- * @returns {any}
- */
-export function run_simulation_with_storage_wasm(players, encounters, iterations) {
-    const ret = wasm.run_simulation_with_storage_wasm(players, encounters, iterations);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }

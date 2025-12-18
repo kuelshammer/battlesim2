@@ -141,8 +141,6 @@ export function cancel_simulation(simulation_id: string): any;
  */
 export function clear_simulation_cache_gui(): any;
 
-export function clear_simulation_cache_wasm(): any;
-
 /**
  * Create compact progress indicator for a simulation
  */
@@ -185,8 +183,6 @@ export function get_progress(simulation_id: string): any;
  */
 export function get_progress_summary(): any;
 
-export function get_storage_stats_wasm(): any;
-
 /**
  * Get current user interaction state
  */
@@ -213,8 +209,6 @@ export function run_quintile_analysis_wasm(results: any, scenario_name: string, 
 export function run_simulation_wasm(players: any, encounters: any, iterations: number): any;
 
 export function run_simulation_with_callback(players: any, encounters: any, iterations: number, callback: Function): any;
-
-export function run_simulation_with_storage_wasm(players: any, encounters: any, iterations: number): any;
 
 /**
  * Set display mode
@@ -248,7 +242,6 @@ export interface InitOutput {
   readonly answer_confirmation: (a: number, b: number, c: number) => [number, number, number];
   readonly cancel_simulation: (a: number, b: number) => [number, number, number];
   readonly clear_simulation_cache_gui: () => [number, number, number];
-  readonly clear_simulation_cache_wasm: () => [number, number, number];
   readonly configmanagerwrapper_exportToJson: (a: number) => [number, number, number, number];
   readonly configmanagerwrapper_getPreferences: (a: number) => [number, number, number];
   readonly configmanagerwrapper_importFromJson: (a: number, b: number, c: number) => [number, number];
@@ -275,7 +268,6 @@ export interface InitOutput {
   readonly get_pending_confirmations: () => [number, number, number];
   readonly get_progress: (a: number, b: number) => [number, number, number];
   readonly get_progress_summary: () => [number, number, number];
-  readonly get_storage_stats_wasm: () => [number, number, number];
   readonly get_user_interaction_state: () => [number, number, number];
   readonly handle_parameters_changed: (a: any, b: any, c: number) => [number, number, number];
   readonly init_phase3_gui: () => number;
@@ -314,7 +306,6 @@ export interface InitOutput {
   readonly run_quintile_analysis_wasm: (a: any, b: number, c: number, d: number) => [number, number, number];
   readonly run_simulation_wasm: (a: any, b: any, c: number) => [number, number, number];
   readonly run_simulation_with_callback: (a: any, b: any, c: number, d: any) => [number, number, number];
-  readonly run_simulation_with_storage_wasm: (a: any, b: any, c: number) => [number, number, number];
   readonly set_display_mode: (a: number, b: number) => [number, number, number];
   readonly start_background_simulation: (a: any, b: any, c: number, d: number, e: number) => [number, number, number];
   readonly update_gui_configuration: (a: number, b: number, c: number) => [number, number, number];
