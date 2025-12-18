@@ -16,12 +16,10 @@ type PropType = {
     children?: ReactNode,
     onMoveUp?: () => void,
     onMoveDown?: () => void,
-    luck: number,
-    setLuck: (newValue: number) => void,
     onEditingChange?: (isEditing: boolean) => void,
 }
 
-const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, children, onMoveUp, onMoveDown, luck, setLuck, onEditingChange }) => {
+const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, children, onMoveUp, onMoveDown, onEditingChange }) => {
     const [updating, setUpdating] = useState<number | null>(null)
     const [creating, setCreating] = useState(false)
 
@@ -139,38 +137,6 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, chil
                     <FontAwesomeIcon icon={faPlus} />
                     Add {(mode === 'player') ? 'Player Character' : 'Enemy'}
                 </button>
-
-                {(mode === "player") && (
-                    <div className={`${styles.luckSlider} tooltipContainer`}>
-                        <label>
-                            Luck:
-                        </label>
-
-                        <div className="tooltip">
-                            <p>
-                                Changing this setting allows you to quickly visualize how <b>swingy</b> your encounter is,
-                                by simulating what happens if your players are slightly luckier or slightly more unlucky than average.
-                            </p>
-                            <p>
-                                A luck factor of +1 means instead of rolling 10 on average, the players will roll 11 on average, and their enemies will roll 9 on average.
-                            </p>
-                        </div>
-
-                        <Range
-                            value={luck * 100}
-                            onChange={v => setLuck(v / 100)}
-                            min={0}
-                            max={100}
-                            step={25}
-                            label={
-                                (luck < 0.2) ? "Bad Luck"
-                                    : (luck < 0.4) ? "Poor Luck"
-                                        : (luck < 0.6) ? "Average"
-                                            : (luck < 0.8) ? "Good Luck"
-                                                : "Great Luck"
-                            } />
-                    </div>
-                )}
             </div>
 
             {(updating === null) ? null : (

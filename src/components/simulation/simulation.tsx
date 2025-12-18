@@ -31,7 +31,6 @@ const emptyEncounter: Encounter = {
 const Simulation: FC<PropType> = memo(({ }) => {
     const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
     const [encounters, setEncounters] = useStoredState<Encounter[]>('encounters', [emptyEncounter], z.array(EncounterSchema).parse)
-    const [luck, setLuck] = useStoredState<number>('luck', 0.5, z.number().min(0).max(1).parse)
     const [simulationResults, setSimulationResults] = useState<SimulationResult>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
@@ -100,13 +99,14 @@ const Simulation: FC<PropType> = memo(({ }) => {
         }
     }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker, autoSimulate]);
 
-    // Update display results when worker finishes or luck changes
+    // Update display results when worker finishes
     useEffect(() => {
         if (!worker.results) return;
 
         const results = worker.results;
         const total = results.length;
-        const index = Math.min(total - 1, Math.floor(luck * total));
+        // Always show the median run (50th percentile)
+        const index = Math.min(total - 1, Math.floor(0.5 * total));
         const selectedRun = results[index];
 
         setSimulationResults(selectedRun);
@@ -120,7 +120,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
         // Clear stale state when new results are available
         setIsStale(false);
-    }, [worker.results, worker.events, luck]);
+    }, [worker.results, worker.events]);
 
 
     function createEncounter() {
@@ -216,8 +216,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         mode='player'
                         encounter={{ monsters: players }}
                         onUpdate={(newValue) => setPlayers(newValue.monsters)}
-                        luck={luck}
-                        setLuck={setLuck}
                         onEditingChange={setIsEditing}>
                         <>
                             {!isEmptyResult ? (
@@ -250,8 +248,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 onDelete={(index > 0) ? () => deleteEncounter(index) : undefined}
                                 onMoveUp={(!!encounters.length && !!index) ? () => swapEncounters(index, index - 1) : undefined}
                                 onMoveDown={(!!encounters.length && (index < encounters.length - 1)) ? () => swapEncounters(index, index + 1) : undefined}
-                                luck={luck}
-                                setLuck={setLuck}
                                 onEditingChange={setIsEditing}
                             />
                             {(!simulationResults[index] ? null : (
