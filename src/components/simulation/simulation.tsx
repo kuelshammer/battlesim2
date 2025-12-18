@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
@@ -223,6 +223,16 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 <EncounterResult value={simulationResults[index]} analysis={worker.analysis} />
                             ))}
                             <div className={styles.buttonGroup}>
+                                <button
+                                    onClick={() => {
+                                        // Rerun simulation for this encounter
+                                        console.log('Rerunning simulation for encounter', index);
+                                        // TODO: Implement rerun functionality
+                                    }}
+                                    className={styles.rerunButton}>
+                                    <FontAwesomeIcon icon={faRedo} />
+                                    Rerun
+                                </button>
                                 <button
                                     onClick={() => {
                                         setSelectedEncounterIndex(index);

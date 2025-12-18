@@ -53,6 +53,31 @@
 
     .addEncounterBtn { margin: 0 }
 
+    .rerunButton {
+        padding: 0.75em 1.5em;
+        background: rgba(150, 100, 50, 0.8);
+        border: 1px solid rgba(200, 150, 100, 0.5);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.75em;
+        transition: all 0.3s;
+        font-size: 1em;
+        font-weight: 500;
+
+        &:hover {
+            background: rgba(170, 120, 70, 0.9);
+            transform: translateY(-1px);
+        }
+
+        .icon {
+            width: 1.2em;
+            height: 1.2em;
+        }
+    }
+
     .showLogButton {
         padding: 0.75em 1.5em;
         background: rgba(100, 80, 80, 0.8);
