@@ -27,7 +27,7 @@
     }
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -35,15 +35,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,scss,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,scss,css}\"",
     "type-check": "tsc --noEmit",
-    "electron": "electron .",
-    "electron:pack": "electron-builder",
-    "electron:dev": "electron .",
-    "build:electron": "npm run build:wasm && npm run build && npx electron-builder --mac",
-    "build:wasm": "cd simulation-wasm && rm -rf pkg && export PATH=\"$HOME/.cargo/bin:$PATH\" && wasm-pack build --target web --out-dir pkg && cp pkg/* ../public/",
+    "build:wasm": "cd simulation-wasm && rm -rf pkg && export PATH=\"$HOME/.cargo/bin:$PATH\" && wasm-pack build --target web --out-dir pkg",
     "build:wasm:dev": "cd simulation-wasm && wasm-pack build --target web --out-dir pkg --dev",
-    "dev:wasm": "npm run build:wasm:dev && next dev",
-    "dist": "npm run build:wasm && npx electron-builder --mac",
-    "electron:start": "electron ."
+    "dev:wasm": "npm run build:wasm:dev && npm run dev"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -69,8 +63,6 @@
   },
   "devDependencies": {
     "@types/uuid": "^9.0.1",
-    "electron": "^39.2.4",
-    "electron-builder": "^26.0.12",
     "eslint-config-next": "16.0.8",
     "typescript": "^5.9.3"
   }

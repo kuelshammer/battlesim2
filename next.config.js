@@ -6,13 +6,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  assetPrefix: './',
-  turbopack: {},
   webpack: (config) => {
-    config.experiments = {
-      ...config.experiments,
-      asyncWebAssembly: true,
-    }
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'asset/resource',
+    });
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, 'src'),

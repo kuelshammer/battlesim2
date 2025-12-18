@@ -1,11 +1,12 @@
 
-import init, { run_simulation_with_callback, run_quintile_analysis_wasm } from '../../public/simulation_wasm.js';
+import init, { run_simulation_with_callback, run_quintile_analysis_wasm } from 'simulation-wasm';
+const wasmUrl = require('simulation-wasm/simulation_wasm_bg.wasm');
 
 let wasmInitialized = false;
 
 async function ensureWasmInitialized() {
     if (!wasmInitialized) {
-        await init();
+        await init({ module_or_path: wasmUrl });
         wasmInitialized = true;
     }
 }
