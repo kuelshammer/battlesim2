@@ -16,11 +16,7 @@ export default function Home() {
       </Head>
 
       <main>
-        <div style={{padding: "1rem", textAlign: "center", backgroundColor: "#f8f9fa", borderBottom: "1px solid #dee2e6"}}>
-          <Link href="/simulation" style={{color: "#007bff", textDecoration: "none", fontWeight: "bold"}}>
-            🚀 Try the Old Simulation Dashboard
-          </Link>
-        </div>
+
         <Simulation />
         <RGPD />
         <Logo />
