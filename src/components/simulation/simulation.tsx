@@ -46,8 +46,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
     // Web Worker Simulation
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
-    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
     const [isStale, setIsStale] = useState(false);
+    const [autoSimulate, setAutoSimulate] = useState(true);
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
@@ -72,31 +73,32 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     // Detect changes that need resimulation with debounce
     useEffect(() => {
+        if (!autoSimulate) return;
+
         // Clear previous timer
-        if (debounceTimer) clearTimeout(debounceTimer);
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         
         // Set new timer (500ms delay)
-        const timer = setTimeout(() => {
+        debounceTimerRef.current = setTimeout(() => {
             setNeedsResimulation(true);
             setIsStale(true);
         }, 500);
         
-        setDebounceTimer(timer);
-        
         return () => {
-            if (debounceTimer) clearTimeout(debounceTimer);
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
-    }, [players, encounters, debounceTimer]);
+    }, [players, encounters, autoSimulate]);
 
     // Trigger simulation when not editing and needs resimulation
     useEffect(() => {
+        if (!autoSimulate) return;
+        
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
             console.log('Triggering background simulation...');
             worker.runSimulation(players, encounters, 1005);
             setNeedsResimulation(false);
-            setIsStale(false);
         }
-    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker]);
+    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker, autoSimulate]);
 
     // Update display results when worker finishes or luck changes
     useEffect(() => {
@@ -193,6 +195,20 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </span>
                             </div>
                         )}
+                        <div className={styles.autoSimulateToggle}>
+                            <label className={styles.toggleLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={autoSimulate}
+                                    onChange={(e) => setAutoSimulate(e.target.checked)}
+                                    className={styles.toggleInput}
+                                />
+                                <span className={styles.toggleSwitch}></span>
+                                <span className={styles.toggleText}>
+                                    Auto-Simulate Changes
+                                </span>
+                            </label>
+                        </div>
                         {isEditing && <div className={styles.editingNotice}>⚠️ Simulation paused while editing</div>}
                     </div>
 
@@ -243,18 +259,18 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                     value={simulationResults[index]} 
                                     analysis={worker.analysis} 
                                     isStale={isStale}
-                                    setIsStale={setIsStale}
                                 />
                             ))}
                             <div className={styles.buttonGroup}>
                                 <button
                                     onClick={() => {
-                                        // Rerun simulation for this encounter
-                                        console.log('Rerunning simulation for encounter', index);
-                                        // TODO: Implement rerun functionality
+                                        console.log('Manually rerunning simulation...');
+                                        worker.runSimulation(players, encounters, 1005);
+                                        setIsStale(false);
                                     }}
-                                    className={styles.rerunButton}>
-                                    <FontAwesomeIcon icon={faRedo} />
+                                    className={styles.rerunButton}
+                                    disabled={worker.isRunning}>
+                                    <FontAwesomeIcon icon={faRedo} spin={worker.isRunning} />
                                     Rerun
                                 </button>
                                 <button

@@ -453,25 +453,12 @@ type PropType = {
     value: EncounterResultType,
     analysis?: AggregateOutput | null,
     isStale?: boolean,
-    setIsStale?: (stale: boolean) => void,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale: externalIsStale, setIsStale: setExternalIsStale }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
-    const [isStale, setIsStale] = useState(false)
 
-    // Sync internal stale state with external state
-    useEffect(() => {
-        setIsStale(externalIsStale || false);
-    }, [externalIsStale]);
-
-    // Update external stale state when internal state changes
-    useEffect(() => {
-        if (setExternalIsStale) {
-            setExternalIsStale(isStale);
-        }
-    }, [isStale, setExternalIsStale]);
     if (!value.rounds.length) return <></>
     
     // Memoize expensive clone operation

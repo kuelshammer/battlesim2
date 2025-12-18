@@ -27,10 +27,7 @@ export function useSimulationWorker() {
 
     const workerRef = useRef<Worker | null>(null);
 
-    useEffect(() => {
-        // Initialize worker
-        const worker = new Worker(new URL('../worker/simulation.worker.ts', import.meta.url));
-        
+    const setupWorkerListener = useCallback((worker: Worker) => {
         worker.onmessage = (e) => {
             const { type, progress, completed, total, results, analysis, events, error } = e.data;
 
@@ -63,17 +60,37 @@ export function useSimulationWorker() {
                     break;
             }
         };
+    }, []);
 
+    useEffect(() => {
+        // Initialize worker
+        const worker = new Worker(new URL('../worker/simulation.worker.ts', import.meta.url));
+        setupWorkerListener(worker);
         workerRef.current = worker;
 
         return () => {
             worker.terminate();
         };
-    }, []);
+    }, [setupWorkerListener]);
+
+    const terminateAndRestart = useCallback(() => {
+        if (workerRef.current) {
+            workerRef.current.terminate();
+            workerRef.current = null;
+        }
+        
+        // Re-initialize worker
+        const worker = new Worker(new URL('../worker/simulation.worker.ts', import.meta.url));
+        setupWorkerListener(worker);
+        workerRef.current = worker;
+        
+        return worker;
+    }, [setupWorkerListener]);
 
     const runSimulation = useCallback((players: Creature[], encounters: Encounter[], iterations: number = 1005) => {
-        if (!workerRef.current) return;
-
+        // Terminate existing worker if running
+        terminateAndRestart();
+        
         setState(prev => ({
             ...prev,
             isRunning: true,
@@ -97,16 +114,17 @@ export function useSimulationWorker() {
             }))
         }));
 
-        workerRef.current.postMessage({
+        workerRef.current?.postMessage({
             type: 'START_SIMULATION',
             players: cleanPlayers,
             encounters: cleanEncounters,
             iterations
         });
-    }, []);
+    }, [terminateAndRestart]);
 
     return {
         ...state,
-        runSimulation
+        runSimulation,
+        terminateAndRestart
     };
 }
