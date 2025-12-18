@@ -253,7 +253,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             {(!simulationResults[index] ? null : (
                                 <EncounterResult 
                                     value={simulationResults[index]} 
-                                    analysis={worker.analysis} 
+                                    analysis={worker.analysis?.encounters?.[index] ?? null} 
                                     isStale={isStale}
                                 />
                             ))}
@@ -300,7 +300,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
 {/* Quintile Analysis Display */}
                     {worker.analysis && (
-                        <QuintileAnalysis analysis={worker.analysis} />
+                        <QuintileAnalysis analysis={worker.analysis.overall} />
                     )}
 
                     {/* Event Log Modal */}
@@ -339,7 +339,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                     </button>
                                 </div>
                                 <div className={styles.logBody}>
-                                    <QuintileAnalysis analysis={worker.analysis} />
+                                    <QuintileAnalysis analysis={worker.analysis?.encounters?.[selectedEncounterIndex] ?? null} />
                                 </div>
                             </div>
                         </div>

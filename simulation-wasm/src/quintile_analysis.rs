@@ -386,108 +386,256 @@ fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, _quin
         _ => {}
     }
     
-    suggestions
-}
-
-/// Run quintile analysis on simulation results
-pub fn run_quintile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
-    // Validate input
-    if results.is_empty() {
-        return AggregateOutput {
-            scenario_name: scenario_name.to_string(),
-            total_runs: 0,
-            quintiles: Vec::new(),
-            risk_factor: RiskFactor::Safe,
-            difficulty: Difficulty::Medium,
-            encounter_label: EncounterLabel::Standard,
-            analysis_summary: "No simulation data available.".to_string(),
-            tuning_suggestions: Vec::new(),
-        };
-    }
-
-    let quintile_labels = [
-        "Worst 20%",
-        "Below Average", 
-        "Median",
-        "Above Average",
-        "Best 20%",
-    ];
-    let mut quintiles = Vec::new();
-
-    // Calculate dynamic quintile sizes based on actual number of results
-    let total_runs = results.len();
-    let quintile_size = total_runs / 5;
-    let remainder = total_runs % 5;
+        suggestions
     
-    // Calculate median survivors for each quintile (middle run of each quintile)
-    let mut median_survivors = Vec::new();
-    for q in 0..5 {
-        // Calculate start and end indices for this quintile
-        let start = q * quintile_size + std::cmp::min(q, remainder);
-        let end = start + quintile_size + if q < remainder { 1 } else { 0 };
-        
-        // Calculate middle index within this quintile
-        let middle_idx = if end > start {
-            start + (end - start) / 2
-        } else {
-            start
-        };
-        
-        // Bounds checking
-        if middle_idx >= results.len() {
-            median_survivors.push(0);
-            continue;
+    }
+    
+    
+    
+    /// Run analysis on a set of results (helper function)
+    
+    fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    
+        // Validate input
+    
+        if results.is_empty() {
+    
+            return AggregateOutput {
+    
+                scenario_name: scenario_name.to_string(),
+    
+                total_runs: 0,
+    
+                quintiles: Vec::new(),
+    
+                risk_factor: RiskFactor::Safe,
+    
+                difficulty: Difficulty::Medium,
+    
+                encounter_label: EncounterLabel::Standard,
+    
+                analysis_summary: "No simulation data available.".to_string(),
+    
+                tuning_suggestions: Vec::new(),
+    
+            };
+    
         }
+    
+    
+    
+        let quintile_labels = [
+    
+            "Worst 20%",
+    
+            "Below Average", 
+    
+            "Median",
+    
+            "Above Average",
+    
+            "Best 20%",
+    
+        ];
+    
+        let mut quintiles = Vec::new();
+    
+    
+    
+        // Calculate dynamic quintile sizes based on actual number of results
+    
+        let total_runs = results.len();
+    
+        let quintile_size = total_runs / 5;
+    
+        let remainder = total_runs % 5;
+    
         
-        let score = crate::aggregation::calculate_score(&results[middle_idx]);
-        let survivors = ((score / 10000.0).floor() as usize).min(party_size);
-        median_survivors.push(survivors);
-    }
-
-    // Process each quintile using dynamic sizing
-    for q in 0..5 {
-        // Calculate start and end indices for this quintile
-        let start = q * quintile_size + std::cmp::min(q, remainder);
-        let end = start + quintile_size + if q < remainder { 1 } else { 0 };
-        
-        // Bounds checking for slice
-        if start >= results.len() || end > results.len() {
-            // Add empty quintile stats for invalid range
-            quintiles.push(QuintileStats {
-                quintile: q + 1,
-                label: quintile_labels[q].to_string(),
-                median_survivors: 0,
-                party_size,
-                total_hp_lost: 0.0,
-                hp_lost_percent: 0.0,
-                win_rate: 0.0,
-                median_run_visualization: Vec::new(),
-                battle_duration_rounds: 0,
-            });
-            continue;
+    
+        // Calculate median survivors for each quintile (middle run of each quintile)
+    
+        let mut median_survivors = Vec::new();
+    
+        for q in 0..5 {
+    
+            // Calculate start and end indices for this quintile
+    
+            let start = q * quintile_size + std::cmp::min(q, remainder);
+    
+            let end = start + quintile_size + if q < remainder { 1 } else { 0 };
+    
+            
+    
+            // Calculate middle index within this quintile
+    
+            let middle_idx = if end > start {
+    
+                start + (end - start) / 2
+    
+            } else {
+    
+                start
+    
+            };
+    
+            
+    
+            // Bounds checking
+    
+            if middle_idx >= results.len() {
+    
+                median_survivors.push(0);
+    
+                continue;
+    
+            }
+    
+            
+    
+            let score = crate::aggregation::calculate_score(&results[middle_idx]);
+    
+            let survivors = ((score / 10000.0).floor() as usize).min(party_size);
+    
+            median_survivors.push(survivors);
+    
         }
-        
-        let slice = &results[start..end];
-
-        let stats = calculate_quintile_stats(slice, q + 1, quintile_labels[q], median_survivors[q], party_size, start);
-        quintiles.push(stats);
+    
+    
+    
+        // Process each quintile using dynamic sizing
+    
+        for q in 0..5 {
+    
+            // Calculate start and end indices for this quintile
+    
+            let start = q * quintile_size + std::cmp::min(q, remainder);
+    
+            let end = start + quintile_size + if q < remainder { 1 } else { 0 };
+    
+            
+    
+            // Bounds checking for slice
+    
+            if start >= results.len() || end > results.len() {
+    
+                // Add empty quintile stats for invalid range
+    
+                quintiles.push(QuintileStats {
+    
+                    quintile: q + 1,
+    
+                    label: quintile_labels[q].to_string(),
+    
+                    median_survivors: 0,
+    
+                    party_size,
+    
+                    total_hp_lost: 0.0,
+    
+                    hp_lost_percent: 0.0,
+    
+                    win_rate: 0.0,
+    
+                    median_run_visualization: Vec::new(),
+    
+                    battle_duration_rounds: 0,
+    
+                });
+    
+                continue;
+    
+            }
+    
+            
+    
+            let slice = &results[start..end];
+    
+    
+    
+            let stats = calculate_quintile_stats(slice, q + 1, quintile_labels[q], median_survivors[q], party_size, start);
+    
+            quintiles.push(stats);
+    
+        }
+    
+    
+    
+        // Calculate encounter ratings
+    
+        let risk_factor = assess_risk_factor(&quintiles);
+    
+        let difficulty = assess_difficulty(&quintiles);
+    
+        let encounter_label = get_encounter_label(&risk_factor, &difficulty);
+    
+        let analysis_summary = generate_analysis_summary(&risk_factor, &difficulty, &quintiles);
+    
+        let tuning_suggestions = generate_tuning_suggestions(&risk_factor, &difficulty, &quintiles);
+    
+    
+    
+        AggregateOutput {
+    
+            scenario_name: scenario_name.to_string(),
+    
+            total_runs: results.len(),
+    
+            quintiles,
+    
+            risk_factor,
+    
+            difficulty,
+    
+            encounter_label,
+    
+            analysis_summary,
+    
+            tuning_suggestions,
+    
+        }
+    
     }
-
-    // Calculate encounter ratings
-    let risk_factor = assess_risk_factor(&quintiles);
-    let difficulty = assess_difficulty(&quintiles);
-    let encounter_label = get_encounter_label(&risk_factor, &difficulty);
-    let analysis_summary = generate_analysis_summary(&risk_factor, &difficulty, &quintiles);
-    let tuning_suggestions = generate_tuning_suggestions(&risk_factor, &difficulty, &quintiles);
-
-    AggregateOutput {
-        scenario_name: scenario_name.to_string(),
-        total_runs: results.len(),
-        quintiles,
-        risk_factor,
-        difficulty,
-        encounter_label,
-        analysis_summary,
-        tuning_suggestions,
+    
+    
+    
+    /// Run quintile analysis on simulation results (Overall Adventure)
+    
+    pub fn run_quintile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    
+        analyze_results(results, scenario_name, party_size)
+    
     }
-}
+    
+    
+    
+    /// Run quintile analysis for a specific encounter
+    
+    pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
+    
+        // Filter results to only include the specific encounter
+    
+        let encounter_results: Vec<SimulationResult> = results.iter()
+    
+            .filter_map(|run| {
+    
+                if encounter_idx < run.len() {
+    
+                    Some(vec![run[encounter_idx].clone()])
+    
+                } else {
+    
+                    None
+    
+                }
+    
+            })
+    
+            .collect();
+    
+    
+    
+        analyze_results(&encounter_results, scenario_name, party_size)
+    
+    }
+    
+    

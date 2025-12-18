@@ -572,18 +572,32 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     
     console::log_1(&format!("Calculated party size: {}", actual_party_size).into());
     
-    let output = quintile_analysis::run_quintile_analysis(&results, scenario_name, actual_party_size);
+    // 1. Run Overall Analysis (Adventure-wide)
+    let overall = quintile_analysis::run_quintile_analysis(&results, scenario_name, actual_party_size);
     
-    console::log_1(&format!("Generated {} quintiles", output.quintiles.len()).into());
-    for (i, quintile) in output.quintiles.iter().enumerate() {
-        console::log_1(&format!(
-            "Quintile {}: {} combatants, {} survivors, {:.1}% win rate", 
-            i+1, 
-            quintile.median_run_visualization.len(), 
-            quintile.median_survivors,
-            quintile.win_rate
-        ).into());
+    // 2. Run Per-Encounter Analysis
+    // Determine number of encounters from the first result
+    let num_encounters = results.first().map(|r| r.len()).unwrap_or(0);
+    let mut encounters = Vec::new();
+    
+    for i in 0..num_encounters {
+        let encounter_name = format!("Encounter {}", i + 1);
+        let analysis = quintile_analysis::run_encounter_analysis(&results, i, &encounter_name, actual_party_size);
+        encounters.push(analysis);
     }
+    
+    console::log_1(&format!("Generated overall analysis + {} encounter analyses", encounters.len()).into());
+
+    #[derive(serde::Serialize)]
+    struct FullAnalysisOutput {
+        overall: crate::quintile_analysis::AggregateOutput,
+        encounters: Vec<crate::quintile_analysis::AggregateOutput>,
+    }
+
+    let output = FullAnalysisOutput {
+        overall,
+        encounters,
+    };
     
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);

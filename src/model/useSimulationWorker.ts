@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { SimulationResult, AggregateOutput, Creature, Encounter } from '@/model/model';
+import { SimulationResult, FullAnalysisOutput, Creature, Encounter } from '@/model/model';
 import { getFinalAction } from "@/data/actions";
 
 export interface SimulationWorkerState {
@@ -8,7 +8,7 @@ export interface SimulationWorkerState {
     completed: number;
     total: number;
     results: SimulationResult[] | null;
-    analysis: AggregateOutput | null;
+    analysis: FullAnalysisOutput | null;
     events: any[] | null;
     error: string | null;
 }

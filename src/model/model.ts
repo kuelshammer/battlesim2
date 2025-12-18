@@ -481,11 +481,31 @@ export const QuintileStatsSchema = z.object({
 })
 
 export const AggregateOutputSchema = z.object({
+
     scenario_name: z.string(),
+
     total_runs: z.number(),
+
     quintiles: z.array(QuintileStatsSchema),
+
+}).passthrough()
+
+
+
+export const FullAnalysisOutputSchema = z.object({
+
+    overall: AggregateOutputSchema,
+
+    encounters: z.array(AggregateOutputSchema),
+
 })
 
+
+
 export type CombatantVisualization = z.infer<typeof CombatantVisualizationSchema>
+
 export type QuintileStats = z.infer<typeof QuintileStatsSchema>
+
 export type AggregateOutput = z.infer<typeof AggregateOutputSchema>
+
+export type FullAnalysisOutput = z.infer<typeof FullAnalysisOutputSchema>
