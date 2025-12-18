@@ -14,7 +14,6 @@ import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
 import QuintileAnalysis from "./quintileAnalysis"
 import { UIToggleProvider } from "@/model/uiToggleState"
-import UiTogglePanel from "@/components/utils/UiTogglePanel"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 
 
@@ -151,8 +150,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                 <semiPersistentContext.Provider value={{ state, setState }}>
                     <h1 className={styles.header}>BattleSim</h1>
 
-                    {/* UI Toggle Panel */}
-                    <UiTogglePanel className={styles.uiTogglePanel} />
+                    
 
                     {/* Backend Features Status Panel */}
                     <div className={styles.backendStatus}>
