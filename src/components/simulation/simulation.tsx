@@ -46,6 +46,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
     // Web Worker Simulation
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
+    const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+    const [isStale, setIsStale] = useState(false);
     
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
@@ -68,10 +70,23 @@ const Simulation: FC<PropType> = memo(({ }) => {
         setCanSave(!isEmptyResult && (typeof window !== "undefined") && !!localStorage && !!localStorage.getItem('useLocalStorage'))
     }, [isEmptyResult])
 
-    // Detect changes that need resimulation
+    // Detect changes that need resimulation with debounce
     useEffect(() => {
-        setNeedsResimulation(true);
-    }, [players, encounters]);
+        // Clear previous timer
+        if (debounceTimer) clearTimeout(debounceTimer);
+        
+        // Set new timer (500ms delay)
+        const timer = setTimeout(() => {
+            setNeedsResimulation(true);
+            setIsStale(true);
+        }, 500);
+        
+        setDebounceTimer(timer);
+        
+        return () => {
+            if (debounceTimer) clearTimeout(debounceTimer);
+        };
+    }, [players, encounters, debounceTimer]);
 
     // Trigger simulation when not editing and needs resimulation
     useEffect(() => {
@@ -79,6 +94,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
             console.log('Triggering background simulation...');
             worker.runSimulation(players, encounters, 1005);
             setNeedsResimulation(false);
+            setIsStale(false);
         }
     }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker]);
 
@@ -99,6 +115,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
             // But let's check if they need parsing
             setSimulationEvents(worker.events as SimulationEvent[]);
         }
+
+        // Clear stale state when new results are available
+        setIsStale(false);
     }, [worker.results, worker.events, luck]);
 
 
@@ -220,7 +239,12 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 onEditingChange={setIsEditing}
                             />
                             {(!simulationResults[index] ? null : (
-                                <EncounterResult value={simulationResults[index]} analysis={worker.analysis} />
+                                <EncounterResult 
+                                    value={simulationResults[index]} 
+                                    analysis={worker.analysis} 
+                                    isStale={isStale}
+                                    setIsStale={setIsStale}
+                                />
                             ))}
                             <div className={styles.buttonGroup}>
                                 <button

@@ -452,11 +452,26 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
 type PropType = {
     value: EncounterResultType,
     analysis?: AggregateOutput | null,
+    isStale?: boolean,
+    setIsStale?: (stale: boolean) => void,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale: externalIsStale, setIsStale: setExternalIsStale }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
+    const [isStale, setIsStale] = useState(false)
+
+    // Sync internal stale state with external state
+    useEffect(() => {
+        setIsStale(externalIsStale || false);
+    }, [externalIsStale]);
+
+    // Update external stale state when internal state changes
+    useEffect(() => {
+        if (setExternalIsStale) {
+            setExternalIsStale(isStale);
+        }
+    }, [isStale, setExternalIsStale]);
     if (!value.rounds.length) return <></>
     
     // Memoize expensive clone operation
@@ -475,7 +490,8 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis }) => {
     if (value.rounds.length === 1 && (!value.rounds[0].team1.length || !value.rounds[0].team2.length)) return <></>
 
     return (
-        <div className={styles.encounterResult}>
+        <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`}>
+            {isStale && <div className={styles.staleBadge}>Out of Date</div>}{/* Stale state indicator */}
             {/* Encounter Rating - Always visible */}
             <EncounterRating analysis={analysis || null} />
 
