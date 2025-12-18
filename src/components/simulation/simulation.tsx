@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine } from "@fortawesome/free-solid-svg-icons"
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
@@ -40,6 +40,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [loading, setLoading] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [showLogModal, setShowLogModal] = useState(false)
+    const [showQuintileModal, setShowQuintileModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     
     // Web Worker Simulation
@@ -221,15 +222,26 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             {(!simulationResults[index] ? null : (
                                 <EncounterResult value={simulationResults[index]} analysis={worker.analysis} />
                             ))}
-                            <button
-                                onClick={() => {
-                                    setSelectedEncounterIndex(index);
-                                    setShowLogModal(true);
-                                }}
-                                className={styles.showLogButton}>
-                                <FontAwesomeIcon icon={faEye} />
-                                Show Log
-                            </button>
+                            <div className={styles.buttonGroup}>
+                                <button
+                                    onClick={() => {
+                                        setSelectedEncounterIndex(index);
+                                        setShowLogModal(true);
+                                    }}
+                                    className={styles.showLogButton}>
+                                    <FontAwesomeIcon icon={faEye} />
+                                    Show Log
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedEncounterIndex(index);
+                                        setShowQuintileModal(true);
+                                    }}
+                                    className={styles.showQuintileButton}>
+                                    <FontAwesomeIcon icon={faChartLine} />
+                                    Show Quintile Analysis
+                                </button>
+                            </div>
                         </div>
                     ))}
 
@@ -263,6 +275,25 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                         combatantNames={Object.fromEntries(combatantNames)}
                                         actionNames={Object.fromEntries(actionNames)}
                                     />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quintile Analysis Modal */}
+                    {showQuintileModal && selectedEncounterIndex !== null && (
+                        <div className={styles.logModalOverlay}>
+                            <div className={styles.logModal}>
+                                <div className={styles.modalHeader}>
+                                    <h3>Quintile Analysis - Encounter {selectedEncounterIndex + 1}</h3>
+                                    <button 
+                                        onClick={() => setShowQuintileModal(false)}
+                                        className={styles.closeButton}>
+                                        <FontAwesomeIcon icon={faTimes} />
+                                    </button>
+                                </div>
+                                <div className={styles.logBody}>
+                                    <QuintileAnalysis analysis={worker.analysis} />
                                 </div>
                             </div>
                         </div>
