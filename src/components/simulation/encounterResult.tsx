@@ -9,7 +9,7 @@ import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
 
 // Encounter Rating Component
-const EncounterRating: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
+const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
     const getEncounterRating = useMemo(() => {
         if (!analysis || !analysis.quintiles.length) return null;
 
@@ -43,7 +43,10 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null }> = memo(({ analys
     return (
         <div className={styles.encounterRating} style={{ backgroundColor: color }}>
             <span className={styles.ratingIcon}>{icon}</span>
-            <span className={styles.ratingText}>{rating.toUpperCase()} ENCOUNTER</span>
+            <span className={styles.ratingText}>
+                {rating.toUpperCase()} ENCOUNTER
+                {isPreliminary && <span className={styles.preliminaryNotice}> (ESTIMATING...)</span>}
+            </span>
             <div className={styles.ratingDetails}>
                 {analysis && (
                     <>
@@ -57,7 +60,7 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null }> = memo(({ analys
 });
 
 // Median Performance Display Component
-const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null }> = memo(({ analysis }) => {
+const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
     const medianQuintile = useMemo(() => {
         if (!analysis || !analysis.quintiles.length) return null;
         // Quintile 3 is the Median (index 2)
@@ -92,8 +95,8 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null }> = memo(
         : '0.0';
 
     return (
-        <div className={styles.bestQuintileDisplay}>
-            <h4>📊 Median Performance</h4>
+        <div className={`${styles.bestQuintileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
+            <h4>📊 Median Performance {isPreliminary && <small>(Updating...)</small>}</h4>
             <div className={styles.bestQuintileHeader}>
                 <span className={styles.survivorsBadge}>
                     ✅ {medianQuintile.median_survivors}/{medianQuintile.party_size} Survivors
@@ -453,9 +456,10 @@ type PropType = {
     value: EncounterResultType,
     analysis?: AggregateOutput | null,
     isStale?: boolean,
+    isPreliminary?: boolean,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPreliminary }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -480,10 +484,10 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale }) => {
         <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`}>
             {isStale && <div className={styles.staleBadge}>Out of Date</div>}{/* Stale state indicator */}
             {/* Encounter Rating - Always visible */}
-            <EncounterRating analysis={analysis || null} />
+            <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} />
 
             {/* Median Performance Display - Main focus */}
-            <MedianPerformanceDisplay analysis={analysis || null} />
+            <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
             {/* Collapsible Details Section */}
             <div className={styles.detailsSection}>

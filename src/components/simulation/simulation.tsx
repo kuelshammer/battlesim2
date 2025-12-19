@@ -256,12 +256,14 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                     value={worker.analysis.encounters[index].quintiles[2].median_run_data || simulationResults[index]} 
                                     analysis={worker.analysis.encounters[index]} 
                                     isStale={isStale}
+                                    isPreliminary={worker.isRunning && worker.progress < 100}
                                 />
                             ) : (!simulationResults[index] ? null : (
                                 <EncounterResult 
                                     value={simulationResults[index]} 
                                     analysis={null} 
                                     isStale={isStale}
+                                    isPreliminary={worker.isRunning && worker.progress < 100}
                                 />
                             )))}
                             <div className={styles.buttonGroup}>

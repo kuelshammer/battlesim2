@@ -194,6 +194,17 @@
         letter-spacing: 1px;
     }
 
+    .preliminaryNotice {
+        font-size: 0.7em;
+        vertical-align: middle;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 8px;
+        font-weight: normal;
+        animation: pulse 2s infinite;
+    }
+
     .ratingDetails {
         font-size: 0.8em;
         font-weight: normal;
@@ -239,8 +250,28 @@
     border-radius: 8px;
     padding: 1em;
     margin-bottom: 1em;
+    transition: all 0.3s ease;
+
+    &.isEstimating {
+        opacity: 0.85;
+        border-style: dashed;
+        border-color: rgba(255, 255, 255, 0.4);
+
+        h4 small {
+            color: #4a90e2;
+            animation: pulse 1.5s infinite;
+            margin-left: 0.5em;
+        }
+    }
 
     @media (width < 600px) {
+// ...
+// ...
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
         padding: 0.75em;
     }
 
