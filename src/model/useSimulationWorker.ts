@@ -37,7 +37,9 @@ export function useSimulationWorker() {
                         ...prev,
                         progress: progress * 100,
                         completed,
-                        total
+                        total,
+                        results: results || prev.results,
+                        analysis: analysis || prev.analysis
                     }));
                     break;
                 case 'SIMULATION_COMPLETE':

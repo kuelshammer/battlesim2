@@ -268,11 +268,23 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         };
     }
 
-    let disaster_run_idx = 125;
-    let struggle_run_idx = 627;
-    let typical_run_idx = 1255;
-    let heroic_run_idx = 1882;
-    let legend_run_idx = 2384;
+    let total_runs = results.len();
+    if total_runs == 0 {
+        return AggregateOutput {
+            scenario_name: scenario_name.to_string(), total_runs: 0, quintiles: Vec::new(),
+            risk_factor: RiskFactor::Safe, difficulty: Difficulty::Medium, encounter_label: EncounterLabel::Standard,
+            analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(),
+        };
+    }
+
+    // Calculate dynamic indices based on current total_runs
+    // We want the medians of deciles 1, 3, 5 (global median), 8, and 10.
+    let decile_size = total_runs as f64 / 10.0;
+    let disaster_run_idx = (decile_size * 0.5) as usize;
+    let struggle_run_idx = (decile_size * 2.5) as usize;
+    let typical_run_idx = (total_runs / 2) as usize;
+    let heroic_run_idx = (decile_size * 7.5) as usize;
+    let legend_run_idx = (decile_size * 9.5) as usize;
 
     let battle_card_indices = [
         (1, "Disaster", disaster_run_idx), (2, "Struggle", struggle_run_idx),

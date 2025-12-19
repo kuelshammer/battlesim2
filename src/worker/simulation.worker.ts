@@ -18,12 +18,14 @@ self.onmessage = async (e: MessageEvent) => {
         try {
             await ensureWasmInitialized();
 
-            const progressCallback = (progress: number, completed: number, total: number) => {
+            const progressCallback = (progress: number, completed: number, total: number, partialData?: any) => {
                 self.postMessage({
                     type: 'SIMULATION_PROGRESS',
                     progress,
                     completed,
-                    total
+                    total,
+                    results: partialData?.results,
+                    analysis: partialData?.analysis
                 });
             };
 
