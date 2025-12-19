@@ -101,12 +101,13 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     // Update display results when worker finishes
     useEffect(() => {
-        if (!worker.results) return;
+        if (!worker.results || worker.results.length === 0) return;
 
         const results = worker.results;
-        const total = results.length;
-        // Always show the median run (50th percentile)
-        const index = Math.min(total - 1, Math.floor(0.5 * total));
+        // The backend now only returns 5 representative runs:
+        // [Disaster, Struggle, Typical, Heroic, Legend]
+        // Index 2 is the 'Typical' (Median) run.
+        const index = results.length >= 3 ? 2 : 0;
         const selectedRun = results[index];
 
         setSimulationResults(selectedRun);

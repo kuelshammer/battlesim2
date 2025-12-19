@@ -119,6 +119,17 @@ pub fn run_simulation_with_callback(
         encounters_analysis.push(analysis);
     }
 
+    // 3. Filter results to only keep the 5 representative runs for the UI
+    // Indices: 125, 627, 1255, 1882, 2384
+    let representative_indices = [125, 627, 1255, 1882, 2384];
+    let mut reduced_results = Vec::new();
+    
+    for &idx in &representative_indices {
+        if idx < results.len() {
+            reduced_results.push(results[idx].clone());
+        }
+    }
+
     #[derive(serde::Serialize)]
     struct FullAnalysisOutput {
         overall: crate::quintile_analysis::AggregateOutput,
@@ -127,13 +138,13 @@ pub fn run_simulation_with_callback(
 
     #[derive(serde::Serialize)]
     struct FullSimulationOutput {
-        results: Vec<SimulationResult>,
+        results: Vec<SimulationResult>, // Now only contains 5 representative runs
         analysis: FullAnalysisOutput,
         first_run_events: Vec<crate::events::Event>,
     }
 
     let output = FullSimulationOutput {
-        results,
+        results: reduced_results,
         analysis: FullAnalysisOutput {
             overall,
             encounters: encounters_analysis,
