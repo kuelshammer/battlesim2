@@ -69,7 +69,7 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                         let entry = team1_map
                             .entry(c.id.clone())
                             .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
+                        entry.total_hp += c.final_state.current_hp as f64;
 
                         let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
@@ -97,7 +97,7 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                         let entry = team2_map
                             .entry(c.id.clone())
                             .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
+                        entry.total_hp += c.final_state.current_hp as f64;
 
                         let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
@@ -151,7 +151,7 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                     serde_json::from_str(best_action_json).unwrap_or_default();
 
                 let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp;
+                c.final_state.current_hp = avg_hp.round() as u32;
                 c.actions = actions;
 
                 // Reconstruct Buffs
@@ -206,7 +206,7 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                     serde_json::from_str(best_action_json).unwrap_or_default();
 
                 let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp;
+                c.final_state.current_hp = avg_hp.round() as u32;
                 c.actions = actions;
 
                 // Reconstruct Buffs
@@ -248,10 +248,10 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
 
         // 1. Identify effectively dead combatants and clear their concentration
         for c in t1.iter_mut().chain(t2.iter_mut()) {
-            if c.final_state.current_hp < 0.5 {
+            if c.final_state.current_hp == 0 {
                 #[cfg(debug_assertions)]
                 eprintln!(
-                    "AGGREGATION: {} is dead (HP: {:.1}). Clearing concentration.",
+                    "AGGREGATION: {} is dead (HP: {}). Clearing concentration.",
                     c.creature.name, c.final_state.current_hp
                 );
 
@@ -379,12 +379,12 @@ pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, Simulation
     let last_round = last_encounter.rounds.last();
 
     if let Some(round) = last_round {
-        let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp).sum();
-        let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp).sum();
+        let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
+        let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
 
         // Count survivors (creatures with HP > 0)
         let survivors: f64 = round.team1.iter()
-            .filter(|c| c.final_state.current_hp > 0.0)
+            .filter(|c| c.final_state.current_hp > 0)
             .count() as f64;
 
         // Tiered scoring: (Survivors × 10,000) + Total Party HP - Total Monster HP
@@ -429,20 +429,20 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
             });
 
             for c in all_combatants {
-                if c.final_state.current_hp <= 0.0 && c.initial_state.current_hp <= 0.0 {
+                if c.final_state.current_hp == 0 && c.initial_state.current_hp == 0 {
                     continue;
                 } // Skip dead
 
                 writeln!(
                     &mut log,
-                    "{}: (HP: {:.1} -> {:.1})",
+                    "{}: (HP: {} -> {})",
                     c.creature.name, c.initial_state.current_hp, c.final_state.current_hp
                 )
                 .map_err(|e| {
                     SimulationError::SerializationError(format!("Failed to write to log: {}", e))
                 })?;
 
-                if c.actions.is_empty() && c.final_state.current_hp > 0.0 {
+                if c.actions.is_empty() && c.final_state.current_hp > 0 {
                     writeln!(&mut log, "  - No actions taken.").map_err(|e| {
                         SimulationError::SerializationError(format!("Failed to write to log: {}", e))
                     })?;

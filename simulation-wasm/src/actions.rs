@@ -12,19 +12,19 @@ pub fn check_action_condition(
 ) -> bool {
     match &action.base().condition {
         ActionCondition::Default => true,
-        ActionCondition::AllyAt0HP => allies.iter().any(|c| c.final_state.current_hp <= 0.0),
+        ActionCondition::AllyAt0HP => allies.iter().any(|c| c.final_state.current_hp == 0),
         ActionCondition::AllyUnderHalfHP => allies
             .iter()
-            .any(|c| c.final_state.current_hp < c.creature.hp / 2.0),
+            .any(|c| c.final_state.current_hp < c.creature.hp / 2),
         ActionCondition::AllyBelow25PercentHP => allies
             .iter()
-            .any(|c| c.final_state.current_hp < c.creature.hp * 0.25),
+            .any(|c| c.final_state.current_hp < c.creature.hp / 4),
         ActionCondition::AllyBelow50PercentHP => allies
             .iter()
-            .any(|c| c.final_state.current_hp < c.creature.hp * 0.5),
+            .any(|c| c.final_state.current_hp < c.creature.hp / 2),
         ActionCondition::AllyBelow75PercentHP => allies
             .iter()
-            .any(|c| c.final_state.current_hp < c.creature.hp * 0.75),
+            .any(|c| c.final_state.current_hp < (c.creature.hp * 3) / 4),
         ActionCondition::AnyAllyInjured => allies
             .iter()
             .any(|c| c.final_state.current_hp < c.creature.hp),
@@ -32,15 +32,15 @@ pub fn check_action_condition(
             // More specific - check if any ally is significantly injured (more than 50% HP lost)
             allies
                 .iter()
-                .any(|c| c.final_state.current_hp < c.creature.hp * 0.5)
+                .any(|c| c.final_state.current_hp < c.creature.hp / 2)
         }
         ActionCondition::AnyAllyBelow50PercentHP => allies
             .iter()
-            .any(|c| c.final_state.current_hp < c.creature.hp * 0.5),
+            .any(|c| c.final_state.current_hp < c.creature.hp / 2),
         ActionCondition::IsAvailable => true, // Always available
-        ActionCondition::IsUnderHalfHP => actor.final_state.current_hp < actor.creature.hp / 2.0,
+        ActionCondition::IsUnderHalfHP => actor.final_state.current_hp < actor.creature.hp / 2,
         ActionCondition::HasNoTHP => {
-            actor.final_state.temp_hp.is_none() || actor.final_state.temp_hp == Some(0.0)
+            actor.final_state.temp_hp.is_none() || actor.final_state.temp_hp == Some(0)
         }
         ActionCondition::NotUsedYet => {
             // Check if this specific action has been used in the current encounter
@@ -52,14 +52,14 @@ pub fn check_action_condition(
         ActionCondition::EnemyCountOne => {
             enemies
                 .iter()
-                .filter(|c| c.final_state.current_hp > 0.0)
+                .filter(|c| c.final_state.current_hp > 0)
                 .count()
                 == 1
         }
         ActionCondition::EnemyCountMultiple => {
             enemies
                 .iter()
-                .filter(|c| c.final_state.current_hp > 0.0)
+                .filter(|c| c.final_state.current_hp > 0)
                 .count()
                 > 1
         }

@@ -408,7 +408,7 @@ fn apply_single_effect(
                         .sum::<f64>(),
                 )
             };
-            let total_ac_before_trigger = target_ac + target_buff_ac;
+            let total_ac_before_trigger = target_ac as f64 + target_buff_ac;
 
             // Trigger processing requires mutable access to target
             // We need to be careful not to borrow attacker if target IS attacker
@@ -646,10 +646,10 @@ fn apply_single_effect(
                     let mut _thp_absorbed_amount = 0.0;
 
                     // 1. Arcane Ward Absorption
-                    let ward_hp = t.final_state.arcane_ward_hp.unwrap_or(0.0);
-                    if ward_hp > 0.0 {
-                        let absorbed = remaining_damage.min(ward_hp);
-                        t.final_state.arcane_ward_hp = Some(ward_hp - absorbed);
+                    let ward_hp = t.final_state.arcane_ward_hp.unwrap_or(0);
+                    if ward_hp > 0 {
+                        let absorbed = remaining_damage.min(ward_hp as f64);
+                        t.final_state.arcane_ward_hp = Some((ward_hp as f64 - absorbed).round() as u32);
                         remaining_damage -= absorbed;
                         ward_absorbed_amount = absorbed;
 
@@ -657,7 +657,7 @@ fn apply_single_effect(
                             log.push(format!(
                                 "         (Arcane Ward absorbs {:.0} damage, {:.0} remaining)",
                                 absorbed,
-                                t.final_state.arcane_ward_hp.unwrap_or(0.0)
+                                t.final_state.arcane_ward_hp.unwrap_or(0)
                             ));
                         }
                     }
@@ -665,12 +665,12 @@ fn apply_single_effect(
                     // 2. Temp HP Absorption (only if damage remains)
                     if remaining_damage > 0.0 {
                         if let Some(mut thp) = t.final_state.temp_hp {
-                            if thp > 0.0 {
-                                let absorbed = remaining_damage.min(thp);
-                                thp -= absorbed;
+                            if thp > 0 {
+                                let absorbed = remaining_damage.min(thp as f64);
+                                thp = (thp as f64 - absorbed).round() as u32;
                                 remaining_damage -= absorbed;
                                 _thp_absorbed_amount = absorbed;
-                                t.final_state.temp_hp = if thp > 0.0 { Some(thp) } else { None };
+                                t.final_state.temp_hp = if thp > 0 { Some(thp) } else { None };
 
                                 if log_enabled && absorbed > 0.0 {
                                     log.push(format!(
@@ -684,17 +684,16 @@ fn apply_single_effect(
 
                     // 3. Real HP Damage
                     if remaining_damage > 0.0 {
-                        t.final_state.current_hp -= remaining_damage;
-                        if t.final_state.current_hp < 0.0 {
-                            t.final_state.current_hp = 0.0;
-                        }
+                        let current = t.final_state.current_hp as f64;
+                        let new_hp = (current - remaining_damage).max(0.0).round() as u32;
+                        t.final_state.current_hp = new_hp;
                     }
 
                     // Log total effective damage taken by creature (ignoring ward/thp absorption implies logical impact)
                     // But usually logs show "Taken X Damage". Here we might want to clarify.
                     if log_enabled {
                         log.push(format!(
-                            "   * 💥 {} takes {:.0} damage (HP: {:.0})",
+                            "   * 💥 {} takes {:.0} damage (HP: {})",
                             target_name,
                             damage - ward_absorbed_amount,
                             t.final_state.current_hp
@@ -725,7 +724,7 @@ fn apply_single_effect(
 
                     let damage_taken_by_creature = damage - ward_absorbed_amount;
 
-                    if t.final_state.current_hp <= 0.0 {
+                    if t.final_state.current_hp == 0 {
                         cleanup_instructions
                             .push(CleanupInstruction::RemoveAllBuffsFromSource(t.id.clone()));
                         if log_enabled {
@@ -760,10 +759,10 @@ fn apply_single_effect(
                     let mut _thp_absorbed_amount = 0.0;
 
                     // 1. Arcane Ward Absorption
-                    let ward_hp = attacker.final_state.arcane_ward_hp.unwrap_or(0.0);
-                    if ward_hp > 0.0 {
-                        let absorbed = remaining_damage.min(ward_hp);
-                        attacker.final_state.arcane_ward_hp = Some(ward_hp - absorbed);
+                    let ward_hp = attacker.final_state.arcane_ward_hp.unwrap_or(0);
+                    if ward_hp > 0 {
+                        let absorbed = remaining_damage.min(ward_hp as f64);
+                        attacker.final_state.arcane_ward_hp = Some((ward_hp as f64 - absorbed).round() as u32);
                         remaining_damage -= absorbed;
                         ward_absorbed_amount = absorbed;
                         if log_enabled && absorbed > 0.0 {
@@ -774,22 +773,21 @@ fn apply_single_effect(
                     // 2. Temp HP Absorption
                     if remaining_damage > 0.0 {
                         if let Some(mut thp) = attacker.final_state.temp_hp {
-                            if thp > 0.0 {
-                                let absorbed = remaining_damage.min(thp);
-                                thp -= absorbed;
+                            if thp > 0 {
+                                let absorbed = remaining_damage.min(thp as f64);
+                                thp = (thp as f64 - absorbed).round() as u32;
                                 remaining_damage -= absorbed;
                                 _thp_absorbed_amount = absorbed;
                                 attacker.final_state.temp_hp =
-                                    if thp > 0.0 { Some(thp) } else { None };
+                                    if thp > 0 { Some(thp) } else { None };
                             }
                         }
                     }
 
                     if remaining_damage > 0.0 {
-                        attacker.final_state.current_hp -= remaining_damage;
-                        if attacker.final_state.current_hp < 0.0 {
-                            attacker.final_state.current_hp = 0.0;
-                        }
+                        let current = attacker.final_state.current_hp as f64;
+                        let new_hp = (current - remaining_damage).max(0.0).round() as u32;
+                        attacker.final_state.current_hp = new_hp;
                     }
 
                     let damage_taken_by_creature = damage - ward_absorbed_amount;
@@ -837,32 +835,34 @@ fn apply_single_effect(
             if let Some(t) = target_opt {
                 // Check if target actually needs healing
                 if t.final_state.current_hp < t.creature.hp {
-                    t.final_state.current_hp += amount;
-                    if t.final_state.current_hp > t.creature.hp {
-                        t.final_state.current_hp = t.creature.hp;
-                    }
+                    let max_hp = t.creature.hp as f64;
+                    let old_hp = t.final_state.current_hp as f64;
+                    let new_hp = (old_hp + amount).min(max_hp).round() as u32;
+                    t.final_state.current_hp = new_hp;
+
                     update_stats(stats, &attacker.id, &t.id, 0.0, amount);
                     if log_enabled {
-                        let hp_before = (t.final_state.current_hp - amount).max(0.0);
+                        // Recalculate based on integer change if needed, but simplistic view:
                         log.push(format!(
-                            "      -> Heals {} for {:.0} HP (was at {:.0}/{:.0})",
-                            target_name, amount, hp_before, t.creature.hp
+                            "      -> Heals {} for {:.0} HP (was at {}/{})",
+                            target_name, amount, old_hp as u32, t.creature.hp
                         ));
                     }
                 } else {
                     // Target doesn't need healing, waste action
                     if log_enabled {
                         log.push(format!(
-                            "      -> Skips healing on {} - already at full HP ({:.0}/{:.0})",
+                            "      -> Skips healing on {} - already at full HP ({}/{})",
                             target_name, t.final_state.current_hp, t.creature.hp
                         ));
                     }
                 }
             } else {
-                attacker.final_state.current_hp += amount;
-                if attacker.final_state.current_hp > attacker.creature.hp {
-                    attacker.final_state.current_hp = attacker.creature.hp;
-                }
+                let max_hp = attacker.creature.hp as f64;
+                let old_hp = attacker.final_state.current_hp as f64;
+                let new_hp = (old_hp + amount).min(max_hp).round() as u32;
+                attacker.final_state.current_hp = new_hp;
+
                 update_stats(stats, &attacker.id, &attacker.id, 0.0, amount);
                 if log_enabled {
                     log.push(format!("      -> Heals self for {:.0} HP", amount));
@@ -1251,7 +1251,7 @@ pub fn resolve_action_execution(
     for (is_target_enemy, mut target_idx) in raw_targets.iter().copied() {
         if is_target_enemy {
             // Verify target is still alive (might have died in previous iteration)
-            if enemies[target_idx].final_state.current_hp <= 0.0 {
+            if enemies[target_idx].final_state.current_hp == 0 {
                 // Target died - try to find a new one
                 if let Action::Atk(atk_action) = action {
                     if let Some(new_idx) = crate::targeting::select_enemy_target(

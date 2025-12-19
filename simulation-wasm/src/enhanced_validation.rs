@@ -156,24 +156,19 @@ fn validate_round(round: &Round, iteration: usize, encounter_idx: usize, round_i
 }
 
 fn validate_combatant(combatant: &Combattant, _context: &ErrorContext) -> Result<(), SimulationError> {
-    // Check if combatant has valid HP
-    if combatant.creature.hp <= 0.0 {
+    // Check if combatant has valid HP (creature.hp)
+    if combatant.creature.hp == 0 {
         return Err(SimulationError::InvalidCombatant(
-            format!("Combatant '{}' has invalid HP: {}", combatant.creature.name, combatant.creature.hp)
+            format!("Combatant '{}' has invalid base HP: {}", combatant.creature.name, combatant.creature.hp)
         ));
     }
     
-    // Check if current HP is reasonable (not negative beyond reasonable bounds)
-    if combatant.final_state.current_hp < -1000.0 {
-        return Err(SimulationError::InvalidCombatant(
-            format!("Combatant '{}' has extremely negative HP: {}", 
-                   combatant.creature.name, combatant.final_state.current_hp)
-        ));
-    }
-    
+    // Final state current_hp cannot be negative due to u32, but it can be 0.
+    // No specific check needed for "extremely negative HP" as it's impossible with u32.
+
     // Validate actions
     for action in &combatant.actions {
-        if action.targets.is_empty() && combatant.final_state.current_hp > 0.0 {
+        if action.targets.is_empty() && combatant.final_state.current_hp > 0 {
             // Living combatant with actions but no targets might be an issue
             // This is a warning, not an error
         }

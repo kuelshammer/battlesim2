@@ -177,7 +177,7 @@ impl ActionExecutionEngine {
             .context
             .get_combatant(combatant_id)
             .map(|c| c.current_hp)
-            .unwrap_or(0.0);
+            .unwrap_or(0);
 
         self.context.start_new_turn(combatant_id.to_string());
 
@@ -210,7 +210,7 @@ impl ActionExecutionEngine {
             .context
             .get_combatant(combatant_id)
             .map(|c| c.current_hp)
-            .unwrap_or(0.0);
+            .unwrap_or(0);
 
         TurnResult {
             combatant_id: combatant_id.to_string(),
@@ -560,7 +560,7 @@ impl ActionExecutionEngine {
                     .into_iter()
                     .filter(|c| c.base_combatant.creature.mode != actor_mode)
                     .collect();
-                let strong_enemies = enemies.iter().filter(|e| e.current_hp > 20.0).count();
+                let strong_enemies = enemies.iter().filter(|e| e.current_hp > 20).count();
 
                 if strong_enemies > 0 {
                     30.0 * strong_enemies as f64
@@ -703,13 +703,13 @@ impl ActionExecutionEngine {
         }
 
         // Determine winner based on team HP sums
-        if player_total_hp > 0.0 && monster_total_hp == 0.0 {
+        if player_total_hp > 0 && monster_total_hp == 0 {
             // All monsters are dead, players win
             return Some("Players".to_string());
-        } else if monster_total_hp > 0.0 && player_total_hp == 0.0 {
+        } else if monster_total_hp > 0 && player_total_hp == 0 {
             // All players are dead, monsters win  
             return Some("Monsters".to_string());
-        } else if player_total_hp == 0.0 && monster_total_hp == 0.0 {
+        } else if player_total_hp == 0 && monster_total_hp == 0 {
             // Everyone is dead, draw
             return None;
         } else {

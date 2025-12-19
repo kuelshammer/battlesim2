@@ -91,7 +91,7 @@ impl CombatantStats {
         
         Self {
             creature_id: creature.id.clone(),
-            ac: creature.ac,
+            ac: creature.ac as f64,
             dpr: total_dpr,
             hit_probability: if attack_count > 0 {
                 // Average hit probability across all attacks

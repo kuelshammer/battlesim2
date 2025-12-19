@@ -12,7 +12,7 @@ struct AggregationData {
 impl AggregationData {
     fn new() -> Self {
         Self {
-            total_hp: 0,
+            total_hp: 0.0,
             action_counts: HashMap::new(),
             buff_counts: HashMap::new(),
             buff_definitions: HashMap::new(),
@@ -70,7 +70,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         let entry = team1_map
                             .entry(c.id.clone())
                             .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
+                        entry.total_hp += c.final_state.current_hp as f64;
 
                         let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
@@ -98,7 +98,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                         let entry = team2_map
                             .entry(c.id.clone())
                             .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp;
+                        entry.total_hp += c.final_state.current_hp as f64;
 
                         let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                         *entry.action_counts.entry(action_key).or_insert(0) += 1;
@@ -137,7 +137,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t1 = Vec::new();
         for c_template in &template_round.team1 {
             if let Some(data) = team1_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count;
+                let avg_hp = data.total_hp / count as f64;
                 let best_action_json = data
                     .action_counts
                     .iter()
@@ -148,7 +148,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     serde_json::from_str(best_action_json).unwrap_or_default();
 
                 let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp;
+                c.final_state.current_hp = avg_hp.round() as u32;
                 c.actions = actions;
 
                 // Reconstruct Buffs
@@ -190,7 +190,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t2 = Vec::new();
         for c_template in &template_round.team2 {
             if let Some(data) = team2_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count;
+                let avg_hp = data.total_hp / count as f64;
                 let best_action_json = data
                     .action_counts
                     .iter()
@@ -201,7 +201,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     serde_json::from_str(best_action_json).unwrap_or_default();
 
                 let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp;
+                c.final_state.current_hp = avg_hp.round() as u32;
                 c.actions = actions;
 
                 // Reconstruct Buffs
@@ -243,10 +243,10 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
 
         // 1. Identify effectively dead combatants and clear their concentration
         for c in t1.iter_mut().chain(t2.iter_mut()) {
-            if c.final_state.current_hp < 0.5 {
+            if c.final_state.current_hp == 0 {
                 #[cfg(debug_assertions)]
                 eprintln!(
-                    "AGGREGATION: {} is dead (HP: {:.1}). Clearing concentration.",
+                    "AGGREGATION: {} is dead (HP: {}). Clearing concentration.",
                     c.creature.name, c.final_state.current_hp
                 );
 
@@ -397,18 +397,18 @@ pub fn generate_combat_log(result: &SimulationResult) -> String {
             });
 
             for c in all_combatants {
-                if c.final_state.current_hp <= 0.0 && c.initial_state.current_hp <= 0.0 {
+                if c.final_state.current_hp == 0 && c.initial_state.current_hp == 0 {
                     continue;
                 } // Skip dead
 
                 writeln!(
                     &mut log,
-                    "{}: (HP: {:.1} -> {:.1})",
+                    "{}: (HP: {} -> {})",
                     c.creature.name, c.initial_state.current_hp, c.final_state.current_hp
                 )
                 .unwrap();
 
-                if c.actions.is_empty() && c.final_state.current_hp > 0.0 {
+                if c.actions.is_empty() && c.final_state.current_hp > 0 {
                     writeln!(&mut log, "  - No actions taken.").unwrap();
                 }
 

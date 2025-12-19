@@ -341,7 +341,7 @@ impl ActionResolver {
                             match req {
                                 crate::enums::TriggerRequirement::HasTempHP => {
                                     if let Some(c) = context.combatants.get(reactor_id) {
-                                        c.temp_hp > 0.0
+                                        c.temp_hp > 0
                                     } else {
                                         false
                                     }
@@ -589,7 +589,7 @@ impl ActionResolver {
     fn get_target_ac(&self, target_id: &str, context: &TurnContext) -> f64 {
         context
             .get_combatant(target_id)
-            .map(|c| c.base_combatant.creature.ac)
+            .map(|c| c.base_combatant.creature.ac as f64)
             .unwrap_or(10.0) // Default AC if not found
     }
 

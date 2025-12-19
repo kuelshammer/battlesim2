@@ -98,8 +98,8 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
     if let Some(final_encounter) = result.last() {
         if let Some(last_round) = final_encounter.rounds.last() {
             for combatant in &last_round.team1 {
-                let hp_percentage = if combatant.creature.hp > 0.0 {
-                    (combatant.final_state.current_hp / combatant.creature.hp) * 100.0
+                let hp_percentage = if combatant.creature.hp > 0 {
+                    (combatant.final_state.current_hp as f64 / combatant.creature.hp as f64) * 100.0
                 } else {
                     0.0
                 };
@@ -108,15 +108,15 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
                     current_hp: combatant.final_state.current_hp,
-                    is_dead: combatant.final_state.current_hp <= 0.0,
+                    is_dead: combatant.final_state.current_hp == 0,
                     is_player: true,
                     hp_percentage,
                 });
             }
 
             for combatant in &last_round.team2 {
-                let hp_percentage = if combatant.creature.hp > 0.0 {
-                    (combatant.final_state.current_hp / combatant.creature.hp) * 100.0
+                let hp_percentage = if combatant.creature.hp > 0 {
+                    (combatant.final_state.current_hp as f64 / combatant.creature.hp as f64) * 100.0
                 } else {
                     0.0
                 };
@@ -125,7 +125,7 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
                     current_hp: combatant.final_state.current_hp,
-                    is_dead: combatant.final_state.current_hp <= 0.0,
+                    is_dead: combatant.final_state.current_hp == 0,
                     is_player: false,
                     hp_percentage,
                 });
@@ -312,12 +312,12 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         let mut party_max_hp = 0.0;
         if let Some(enc) = single_run.first() {
             if let Some(round) = enc.rounds.first() {
-                for c in &round.team1 { party_max_hp += c.creature.hp; }
+                for c in &round.team1 { party_max_hp += c.creature.hp as f64; }
             }
         }
 
-        let hp_lost = (party_max_hp - (score - (survivors as u32 * 10000))).max(0.0);
-        let hp_lost_percent = if party_max_hp > 0 { (hp_lost as f64 / party_max_hp as f64) * 100.0 } else { 0.0 };
+        let hp_lost = (party_max_hp - (score - (survivors as f64 * 10000.0))).max(0.0);
+        let hp_lost_percent = if party_max_hp > 0.0 { (hp_lost as f64 / party_max_hp as f64) * 100.0 } else { 0.0 };
 
         // For encounter analysis, we want to capture the specific encounter's round data
         let median_run_data = if !single_run.is_empty() && results[0].len() == 1 {

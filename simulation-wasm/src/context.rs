@@ -119,7 +119,7 @@ impl TurnContext {
                 let state = CombattantState {
                     id: c.id.clone(),
                     current_hp: c.creature.hp,
-                    temp_hp: c.initial_state.temp_hp.unwrap_or(0.0),
+                    temp_hp: c.initial_state.temp_hp.unwrap_or(0),
                     conditions: Vec::new(),
                     concentration: None,
                     position: None,
@@ -458,9 +458,9 @@ impl TurnContext {
 
             // 1. Arcane Ward Absorption
             if let Some(ward) = combatant.arcane_ward_hp {
-                if ward > 0.0 {
-                    let absorbed = ward.min(remaining_damage);
-                    combatant.arcane_ward_hp = Some(ward - absorbed);
+                if ward > 0 {
+                    let absorbed = (ward as f64).min(remaining_damage);
+                    combatant.arcane_ward_hp = Some(((ward as f64) - absorbed).round() as u32);
                     remaining_damage = (remaining_damage - absorbed).max(0.0);
 
                     // Could emit WardAbsorbed event here if Event enum supported it
@@ -468,15 +468,15 @@ impl TurnContext {
             }
 
             // 2. Temporary HP Absorption
-            if combatant.temp_hp > 0.0 {
-                let absorbed = combatant.temp_hp.min(remaining_damage);
-                combatant.temp_hp -= absorbed;
+            if combatant.temp_hp > 0 {
+                let absorbed = (combatant.temp_hp as f64).min(remaining_damage);
+                combatant.temp_hp = ((combatant.temp_hp as f64) - absorbed).round() as u32;
                 remaining_damage = (remaining_damage - absorbed).max(0.0);
             }
 
             // 3. Apply remaining damage to HP
             let actual_damage = remaining_damage;
-            combatant.current_hp = (combatant.current_hp - actual_damage).max(0.0);
+            combatant.current_hp = ((combatant.current_hp as f64) - actual_damage).max(0.0).round() as u32;
 
             events.push(Event::DamageTaken {
                 target_id: target_id.to_string(),
@@ -484,8 +484,8 @@ impl TurnContext {
                 damage_type: damage_type.to_string(),
             });
 
-            // Check if combatant died (using standardized threshold < 0.5)
-            if combatant.current_hp < 0.5 {
+            // Check if combatant died (using standardized threshold == 0)
+            if combatant.current_hp == 0 {
                 events.push(Event::UnitDied {
                     unit_id: target_id.to_string(),
                     killer_id: Some(source_id.to_string()),
@@ -519,17 +519,21 @@ impl TurnContext {
     ) -> Event {
         if let Some(combatant) = self.combatants.get_mut(target_id) {
             let event = if is_temp_hp {
-                combatant.temp_hp += amount;
+                combatant.temp_hp = ((combatant.temp_hp as f64) + amount).round() as u32;
                 Event::TempHPGranted {
                     target_id: target_id.to_string(),
                     amount,
                     source_id: source_id.to_string(),
                 }
             } else {
-                let max_hp = combatant.base_combatant.creature.hp;
-                let actual_healing =
-                    (combatant.current_hp + amount).min(max_hp) - combatant.current_hp;
-                combatant.current_hp += actual_healing;
+                let max_hp = combatant.base_combatant.creature.hp as f64;
+                let current_hp = combatant.current_hp as f64;
+                // Calculate healing amount, capping at max HP
+                let actual_healing = (current_hp + amount).min(max_hp) - current_hp;
+                
+                // Update HP
+                combatant.current_hp = (current_hp + actual_healing).round() as u32;
+                
                 Event::HealingApplied {
                     target_id: target_id.to_string(),
                     amount: actual_healing,

@@ -405,7 +405,7 @@ pub struct Creature {
     pub count: f64, // TS uses number, but usually integer.
     pub hp: u32,
     #[serde(rename = "AC")]
-    pub ac: f64,
+    pub ac: u32,
     #[serde(rename = "speed_fly")]
     pub speed_fly: Option<f64>,
 
@@ -671,7 +671,7 @@ impl From<crate::resources::ResourceLedger> for SerializableResourceLedger {
 impl Default for CreatureState {
     fn default() -> Self {
         CreatureState {
-            current_hp: 0.0,
+            current_hp: 0,
             temp_hp: None,
             buffs: HashMap::new(),
             resources: default_serializable_resource_ledger(),

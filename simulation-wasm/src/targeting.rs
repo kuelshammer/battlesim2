@@ -253,19 +253,19 @@ pub fn select_enemy_target(
 
         // 1. Primary Strategy Comparison
         let v1 = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp,
-            EnemyTarget::EnemyWithMostHP => -e1.final_state.current_hp,
+            EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp as f64,
+            EnemyTarget::EnemyWithMostHP => -(e1.final_state.current_hp as f64),
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
-            EnemyTarget::EnemyWithLowestAC => est_ac1,
-            EnemyTarget::EnemyWithHighestAC => -est_ac1,
+            EnemyTarget::EnemyWithLowestAC => e1.creature.ac as f64,
+            EnemyTarget::EnemyWithHighestAC => -(e1.creature.ac as f64),
         };
 
         let v2 = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e2.final_state.current_hp,
-            EnemyTarget::EnemyWithMostHP => -e2.final_state.current_hp,
+            EnemyTarget::EnemyWithLeastHP => e2.final_state.current_hp as f64,
+            EnemyTarget::EnemyWithMostHP => -(e2.final_state.current_hp as f64),
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
-            EnemyTarget::EnemyWithLowestAC => est_ac2,
-            EnemyTarget::EnemyWithHighestAC => -est_ac2,
+            EnemyTarget::EnemyWithLowestAC => e2.creature.ac as f64,
+            EnemyTarget::EnemyWithHighestAC => -(e2.creature.ac as f64),
         };
 
         // Using partial_cmp for floats. We want strict ordering.
@@ -313,11 +313,11 @@ pub fn select_enemy_target(
         for idx in &candidates {
             let e = &enemies[*idx];
             let val = match strategy {
-                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
-                EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
+                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp as f64,
+                EnemyTarget::EnemyWithMostHP => -(e.final_state.current_hp as f64),
                 EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
-                EnemyTarget::EnemyWithLowestAC => e.creature.ac,
-                EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
+                EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
+                EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
             };
             println!("  - Candidate {}: Score {:.1}", e.creature.name, val);
         }
@@ -403,8 +403,8 @@ pub fn select_enemy_target_cached(
         let est_ac2 = get_estimated_ac(e2);
 
         // 1. Primary Strategy Comparison using cached stats
-        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp, e1.final_state.concentrating_on.is_some(), est_ac1);
-        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp, e2.final_state.concentrating_on.is_some(), est_ac2);
+        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp as f64, e1.final_state.concentrating_on.is_some(), est_ac1);
+        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp as f64, e2.final_state.concentrating_on.is_some(), est_ac2);
 
         // Using partial_cmp for floats. We want strict ordering.
         match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
@@ -456,11 +456,11 @@ pub fn select_enemy_target_cached(
         for (idx, stats) in &candidates {
             let e = &enemies[*idx];
             let val = match strategy {
-                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp,
-                EnemyTarget::EnemyWithMostHP => -e.final_state.current_hp,
+                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp as f64,
+                EnemyTarget::EnemyWithMostHP => -(e.final_state.current_hp as f64),
                 EnemyTarget::EnemyWithHighestDPR => -stats.total_dpr,
-                EnemyTarget::EnemyWithLowestAC => e.creature.ac,
-                EnemyTarget::EnemyWithHighestAC => -e.creature.ac,
+                EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
+                EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
             };
             println!("  - Candidate {}: Score {:.1} (DPR: {:.1})", e.creature.name, val, stats.total_dpr);
         }
@@ -539,11 +539,11 @@ pub fn select_ally_target(
         }
 
         let val = match strategy {
-            AllyTarget::AllyWithLeastHP => a.final_state.current_hp,
-            AllyTarget::AllyWithMostHP => -a.final_state.current_hp,
+            AllyTarget::AllyWithLeastHP => a.final_state.current_hp as f64,
+            AllyTarget::AllyWithMostHP => -(a.final_state.current_hp as f64),
             AllyTarget::AllyWithHighestDPR => -estimate_dpr(a),
-            AllyTarget::AllyWithLowestAC => a.creature.ac,
-            AllyTarget::AllyWithHighestAC => -a.creature.ac,
+            AllyTarget::AllyWithLowestAC => a.creature.ac as f64,
+            AllyTarget::AllyWithHighestAC => -(a.creature.ac as f64),
             AllyTarget::Self_ => f64::MAX, // Should be handled above
         };
 
@@ -609,11 +609,11 @@ fn select_injured_ally_target(
         );
 
         let val = match strategy {
-            AllyTarget::AllyWithLeastHP => a.final_state.current_hp,
-            AllyTarget::AllyWithMostHP => -a.final_state.current_hp,
+            AllyTarget::AllyWithLeastHP => a.final_state.current_hp as f64,
+            AllyTarget::AllyWithMostHP => -(a.final_state.current_hp as f64),
             AllyTarget::AllyWithHighestDPR => -estimate_dpr(a),
-            AllyTarget::AllyWithLowestAC => a.creature.ac,
-            AllyTarget::AllyWithHighestAC => -a.creature.ac,
+            AllyTarget::AllyWithLowestAC => a.creature.ac as f64,
+            AllyTarget::AllyWithHighestAC => -(a.creature.ac as f64),
             AllyTarget::Self_ => f64::MAX, // Should not happen for healing
         };
 

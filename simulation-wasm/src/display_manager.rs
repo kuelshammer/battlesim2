@@ -450,14 +450,14 @@ impl DisplayManager {
         factors += 1;
 
         // HP similarity
-        let hp_diff = (c1.hp - c2.hp).abs();
-        let hp_similarity = 1.0 - (hp_diff / c1.hp.max(c2.hp)).min(1.0);
+        let hp_diff = c1.hp.abs_diff(c2.hp) as f64;
+        let hp_similarity = 1.0 - (hp_diff / (c1.hp.max(c2.hp) as f64)).min(1.0);
         similarity += hp_similarity;
         factors += 1;
 
         // AC similarity
-        let ac_diff = (c1.ac - c2.ac).abs();
-        let ac_similarity = 1.0 - (ac_diff / c1.ac.max(c2.ac)).min(1.0);
+        let ac_diff = c1.ac.abs_diff(c2.ac) as f64;
+        let ac_similarity = 1.0 - (ac_diff / (c1.ac.max(c2.ac) as f64)).min(1.0);
         similarity += ac_similarity;
         factors += 1;
 

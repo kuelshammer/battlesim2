@@ -68,8 +68,8 @@ impl SimulationRequest {
         // Hash player characteristics
         for player in &self.parameters.players {
             player.name.hash(&mut hasher);
-            player.hp.to_bits().hash(&mut hasher);
-            player.ac.to_bits().hash(&mut hasher);
+            player.hp.hash(&mut hasher); // hp is u32
+            player.ac.hash(&mut hasher); // ac is u32
         }
         
         // Hash encounter characteristics
@@ -77,8 +77,8 @@ impl SimulationRequest {
             encounter.monsters.len().hash(&mut hasher);
             for monster in &encounter.monsters {
                 monster.name.hash(&mut hasher);
-                monster.hp.to_bits().hash(&mut hasher);
-                monster.ac.to_bits().hash(&mut hasher);
+                monster.hp.hash(&mut hasher); // hp is u32
+                monster.ac.hash(&mut hasher); // ac is u32
             }
         }
         

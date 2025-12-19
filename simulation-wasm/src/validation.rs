@@ -81,7 +81,7 @@ fn check_combat_condition(
         }
         crate::resources::CombatCondition::HasTempHP => {
             if let Some(combatant) = _context.combatants.get(_combatant_id) {
-                combatant.temp_hp > 0.0
+                combatant.temp_hp > 0
             } else {
                 false
             }
