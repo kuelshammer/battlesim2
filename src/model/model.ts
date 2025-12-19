@@ -460,8 +460,8 @@ export type Event = z.infer<typeof EventSchema>
 // Quintile Analysis Types
 export const CombatantVisualizationSchema = z.object({
     name: z.string(),
-    max_hp: z.number(),
-    current_hp: z.number(),
+    max_hp: z.number().int(),
+    current_hp: z.number().int(),
     is_dead: z.boolean(),
     is_player: z.boolean(),
     hp_percentage: z.number(),

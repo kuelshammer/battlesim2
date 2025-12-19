@@ -36,8 +36,8 @@ pub struct TurnContext {
 pub struct CombattantState {
     pub id: String,
     pub base_combatant: Combattant,
-    pub current_hp: f64,
-    pub temp_hp: f64,
+    pub current_hp: u32,
+    pub temp_hp: u32,
     pub conditions: Vec<CreatureCondition>,
     pub concentration: Option<String>, // ID of spell/concentration source
     pub position: Option<String>,      // Simplified position for future expansion

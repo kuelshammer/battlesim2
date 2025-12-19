@@ -45,8 +45,8 @@ pub enum EncounterLabel {
 #[serde(rename_all = "camelCase")]
 pub struct CombatantVisualization {
     pub name: String,           // "Aragorn", "Gandalf", "Adult Red Dragon"
-    pub max_hp: f64,           // 65, 35, 300
-    pub current_hp: f64,        // 0, 13, 0
+    pub max_hp: u32,           // 65, 35, 300
+    pub current_hp: u32,        // 0, 13, 0
     pub is_dead: bool,         // true, false, true
     pub is_player: bool,       // true, true, false
     pub hp_percentage: f64,    // 0.0, 20.0, 100.0

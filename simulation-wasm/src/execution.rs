@@ -621,12 +621,12 @@ impl ActionExecutionEngine {
         let alive_combatants = self.context.get_alive_combatants();
         
         // Calculate total HP for each team
-        let mut player_total_hp = 0.0;
-        let mut monster_total_hp = 0.0;
+        let mut player_total_hp = 0;
+        let mut monster_total_hp = 0;
 
         for combatant in &alive_combatants {
             let hp = combatant.current_hp;
-            if hp <= 0.0 {
+            if hp == 0 {
                 continue; // Skip dead combatants
             }
             
@@ -637,8 +637,9 @@ impl ActionExecutionEngine {
             }
         }
 
-        // If product of team HP sums is zero, combat is ended
-        if player_total_hp * monster_total_hp == 0.0 {
+        // If product of team HP sums is effectively zero (very close to zero), combat is ended
+
+        if player_total_hp * monster_total_hp == 0 {
             return true;
         }
 
@@ -685,12 +686,12 @@ impl ActionExecutionEngine {
         let alive_combatants = self.context.get_alive_combatants();
         
         // Calculate total HP for each team
-        let mut player_total_hp = 0.0;
-        let mut monster_total_hp = 0.0;
+        let mut player_total_hp = 0;
+        let mut monster_total_hp = 0;
 
         for combatant in &alive_combatants {
             let hp = combatant.current_hp;
-            if hp <= 0.0 {
+            if hp == 0 {
                 continue; // Skip dead combatants
             }
             
