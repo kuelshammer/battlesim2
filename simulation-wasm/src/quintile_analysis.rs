@@ -316,8 +316,8 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             }
         }
 
-        let hp_lost = (party_max_hp - (score - (survivors as f64 * 10000.0))).max(0.0);
-        let hp_lost_percent = if party_max_hp > 0.0 { (hp_lost / party_max_hp) * 100.0 } else { 0.0 };
+        let hp_lost = (party_max_hp - (score - (survivors as u32 * 10000))).max(0.0);
+        let hp_lost_percent = if party_max_hp > 0 { (hp_lost as f64 / party_max_hp as f64) * 100.0 } else { 0.0 };
 
         // For encounter analysis, we want to capture the specific encounter's round data
         let median_run_data = if !single_run.is_empty() && results[0].len() == 1 {

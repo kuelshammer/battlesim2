@@ -43,7 +43,7 @@ pub struct CombattantState {
     pub position: Option<String>,      // Simplified position for future expansion
     pub resources: ResourceLedger,     // Per-combatant resource tracking
     #[serde(default)]
-    pub arcane_ward_hp: Option<f64>,
+    pub arcane_ward_hp: Option<u32>,
     #[serde(skip)]
     pub cached_stats: Option<CombatantStats>, // Cached combat statistics
 }

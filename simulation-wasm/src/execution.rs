@@ -48,8 +48,8 @@ pub struct TurnResult {
     pub round_number: u32,
     pub action_results: Vec<ActionResult>,
     pub effects_applied: Vec<String>, // Effect IDs applied during this turn
-    pub start_hp: f64,
-    pub end_hp: f64,
+    pub start_hp: u32,
+    pub end_hp: u32,
 }
 
 /// Result of a complete encounter
@@ -533,7 +533,7 @@ impl ActionExecutionEngine {
                     .collect();
                 let injured_allies = allies
                     .iter()
-                    .filter(|c| c.current_hp < c.base_combatant.creature.hp * 0.5)
+                    .filter(|c| c.current_hp < c.base_combatant.creature.hp / 2)
                     .count();
 
                 if injured_allies > 0 {

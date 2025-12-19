@@ -12,7 +12,7 @@ struct AggregationData {
 impl AggregationData {
     fn new() -> Self {
         Self {
-            total_hp: 0.0,
+            total_hp: 0,
             action_counts: HashMap::new(),
             buff_counts: HashMap::new(),
             buff_definitions: HashMap::new(),
@@ -137,7 +137,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t1 = Vec::new();
         for c_template in &template_round.team1 {
             if let Some(data) = team1_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count as f64;
+                let avg_hp = data.total_hp / count;
                 let best_action_json = data
                     .action_counts
                     .iter()
@@ -190,7 +190,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let mut t2 = Vec::new();
         for c_template in &template_round.team2 {
             if let Some(data) = team2_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count as f64;
+                let avg_hp = data.total_hp / count;
                 let best_action_json = data
                     .action_counts
                     .iter()

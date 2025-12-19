@@ -203,7 +203,7 @@ export const CreatureSchema = z.object({
     // Properties of the creature, which are used by the simulator
     name: z.string(),
     count: z.number(),
-    hp: z.number(),
+    hp: z.number().int(),
     AC: z.number(),
     speed_fly: z.number().optional(),
 

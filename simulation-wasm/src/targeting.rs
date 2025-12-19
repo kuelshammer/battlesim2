@@ -224,7 +224,7 @@ pub fn select_enemy_target(
             }
         }
 
-        if e.final_state.current_hp <= 0.0 {
+        if e.final_state.current_hp == 0 {
             continue;
         }
 
@@ -362,7 +362,7 @@ pub fn select_enemy_target_cached(
                 }
             }
 
-            if e.final_state.current_hp <= 0.0 {
+            if e.final_state.current_hp == 0 {
                 return None;
             }
 
@@ -500,7 +500,7 @@ pub fn select_ally_target(
 
     if strategy == AllyTarget::Self_ {
         // Only exclude if the self target is explicitly dead (which shouldn't happen for self-buffs)
-        if allies[self_idx].final_state.current_hp <= 0.0 {
+        if allies[self_idx].final_state.current_hp == 0 {
             #[cfg(debug_assertions)]
             eprintln!("              Self target is dead, skipping.");
             return None;
@@ -529,7 +529,7 @@ pub fn select_ally_target(
             "              Considering ally {}. HP: {:.1}",
             a.creature.name, a.final_state.current_hp
         );
-        if a.final_state.current_hp <= 0.0 {
+        if a.final_state.current_hp == 0 {
             #[cfg(debug_assertions)]
             eprintln!(
                 "                Ally {} is dead, skipping.",

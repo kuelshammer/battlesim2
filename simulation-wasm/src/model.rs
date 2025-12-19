@@ -403,7 +403,7 @@ pub struct Creature {
     pub mode: String, // "player", "monster", "custom"
     pub name: String,
     pub count: f64, // TS uses number, but usually integer.
-    pub hp: f64,
+    pub hp: u32,
     #[serde(rename = "AC")]
     pub ac: f64,
     #[serde(rename = "speed_fly")]
@@ -617,9 +617,9 @@ fn register_hit_dice_term(ledger: &mut crate::resources::ResourceLedger, term: &
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CreatureState {
     #[serde(rename = "currentHP")]
-    pub current_hp: f64,
+    pub current_hp: u32,
     #[serde(rename = "tempHP")]
-    pub temp_hp: Option<f64>,
+    pub temp_hp: Option<u32>,
     pub buffs: HashMap<String, Buff>,
 
     // Use SerializableResourceLedger for frontend compatibility
@@ -642,7 +642,7 @@ pub struct CreatureState {
         default,
         skip_serializing_if = "Option::is_none"
     )]
-    pub arcane_ward_hp: Option<f64>,
+    pub arcane_ward_hp: Option<u32>,
 }
 
 fn default_serializable_resource_ledger() -> SerializableResourceLedger {
