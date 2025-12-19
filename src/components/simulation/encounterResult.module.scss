@@ -24,7 +24,7 @@
             .lifebar {
                 position: relative;
 
-                .lifebarBackground {
+.lifebarBackground {
                     position: relative;
                     width: 100%;
                     height: 2em;
@@ -35,13 +35,21 @@
                     &.highlighted {
                         outline: 4px solid #f88;
                     }
-    
-                    .lifebarForeground, .lifebarTHP {
+
+                    .lifebarForeground, .lifebarTHP, .lifebarPreviousLoss {
                         position: absolute;
                         top: 0;
-                        left: 0;
                         height: 100%;
-                        background: #5a5;
+                    }
+
+                    .lifebarForeground {
+                        left: 0;
+                        background: #5a5; /* Green for remaining HP */
+                    }
+
+                    .lifebarPreviousLoss {
+                        left: 0;
+                        background: #666; /* Grey for previously lost HP */
                     }
 
                     .lifebarTHP {
@@ -345,41 +353,74 @@
         }
 
         .hpBar {
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            line-height: 1.2;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.2;
+
+        @media (width < 600px) {
+            font-size: 0.8em;
+        }
+
+        .dead {
+            color: #666;
+        }
+
+        .danger {
+            color: #ff4444;
+        }
+
+        .bloodied {
+            color: #ffaa44;
+        }
+
+        .healthy {
+            color: #44ff44;
+        }
+
+        .hpBarContainer {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+
+        .hpBarVisual {
+            font-family: monospace;
+            font-size: 1em;
+            padding: 0.1em 0.3em;
+            background: #333;
+            border-radius: 4px;
+            color: #fff;
+            min-width: 8em;
+            text-align: center;
+        }
+
+        .hpBarSegment {
+            display: inline-block;
+        }
+
+        .segmentGrey {
+            color: #666; /* Previously lost HP */
+        }
+
+        .segmentRed {
+            color: #ff4444; /* Newly lost HP in current battle */
+        }
+
+        .segmentGreen {
+            color: #44ff44; /* Remaining HP */
+        }
+
+        .hpText {
+            margin-left: 0.5em;
+            font-family: inherit;
+            color: #fff;
 
             @media (width < 600px) {
+                margin-left: 0.25em;
                 font-size: 0.8em;
             }
-
-            .dead {
-                color: #666;
-            }
-
-            .danger {
-                color: #ff4444;
-            }
-
-            .bloodied {
-                color: #ffaa44;
-            }
-
-            .healthy {
-                color: #44ff44;
-            }
-
-            .hpText {
-                margin-left: 0.5em;
-                font-family: inherit;
-                color: #fff;
-
-                @media (width < 600px) {
-                    margin-left: 0.25em;
-                    font-size: 0.8em;
-                }
-            }
         }
+    }
     }
 
     .bestQuintileMetrics {

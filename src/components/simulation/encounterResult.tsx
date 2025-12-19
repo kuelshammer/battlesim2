@@ -76,18 +76,24 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
         return styles.healthy;
     };
 
-    const getHpBarFill = (hpPercentage: number): string => {
-        if (hpPercentage <= 0) return '░░░░░░░░░░';
-        if (hpPercentage <= 10) return '█░░░░░░░░░';
-        if (hpPercentage <= 20) return '██░░░░░░░░';
-        if (hpPercentage <= 30) return '███░░░░░░░';
-        if (hpPercentage <= 40) return '████░░░░░░';
-        if (hpPercentage <= 50) return '█████░░░░░';
-        if (hpPercentage <= 60) return '██████░░░░';
-        if (hpPercentage <= 70) return '███████░░░';
-        if (hpPercentage <= 80) return '████████░░';
-        if (hpPercentage <= 90) return '█████████░';
-        return '██████████';
+    const renderHpBar = (currentHp: number, maxHp: number) => {
+        // Calculate segments (10 total)
+        const totalSegments = 10;
+        const ratio = currentHp / maxHp;
+        const greenCount = Math.ceil(ratio * totalSegments);
+        const lostCount = totalSegments - greenCount;
+        
+        // Note: Without 'initial_hp' in the visualization data, we cannot distinguish 
+        // "previously lost" vs "newly lost" HP. We assume all lost HP is red/missing.
+        
+        const segments = [];
+        for (let i = 0; i < greenCount; i++) {
+            segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
+        }
+        for (let i = 0; i < lostCount; i++) {
+            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>░</span>);
+        }
+        return segments;
     };
 
     const avgFinalHp = medianQuintile.median_run_visualization
@@ -115,10 +121,14 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
                         </div>
                         <div className={styles.hpBar}>
                             <span className={getHpBarColor(combatant.hp_percentage, combatant.is_dead)}>
-                                [{getHpBarFill(combatant.hp_percentage)}]
-                                <span className={styles.hpText}>
-                                    {combatant.current_hp.toFixed(0)}/{combatant.max_hp.toFixed(0)} HP ({combatant.hp_percentage.toFixed(0)}%)
-                                </span>
+                                <div className={styles.hpBarContainer}>
+                                    <div className={styles.hpBarVisual}>
+                                        [{renderHpBar(combatant.current_hp, combatant.max_hp)}]
+                                    </div>
+                                    <span className={styles.hpText}>
+                                        {combatant.current_hp}/{combatant.max_hp} HP ({combatant.hp_percentage.toFixed(0)}%)
+                                    </span>
+                                </div>
                             </span>
                         </div>
                     </div>
@@ -366,8 +376,8 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
                             />
                         ) : null}
                         <div className={styles.lifebarLabel}>
-                            {combattant.initialState.currentHP.toFixed(1)}/{combattant.creature.hp}
-                            {combattant.initialState.tempHP ? `+${combattant.initialState.tempHP.toFixed(1)}` : null}
+                            {combattant.initialState.currentHP}/{combattant.creature.hp}
+                            {combattant.initialState.tempHP ? `+${combattant.initialState.tempHP}` : null}
                         </div>
                     </div>
                     <div className={styles.creatureName}>
