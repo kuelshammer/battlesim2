@@ -45,11 +45,40 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
         return styles.successBadge
     }
 
+    // Map quintile labels to methodology labels
+    const getQuintileLabel = (quintileNum: number): string => {
+        switch (quintileNum) {
+            case 1: return 'Disaster'
+            case 2: return 'Struggle'
+            case 3: return 'Typical'
+            case 4: return 'Heroic'
+            case 5: return 'Legend'
+            default: return `Quintile ${quintileNum}`
+        }
+    }
+
+    // Map quintile number to statistical meaning
+    const getStatisticalMeaning = (quintileNum: number): string => {
+        switch (quintileNum) {
+            case 1: return '5th Percentile (Worst 10% Median)'
+            case 2: return '25th Percentile (Bad Luck Median)'
+            case 3: return '50th Percentile (Global Median)'
+            case 4: return '75th Percentile (Good Luck Median)'
+            case 5: return '95th Percentile (Best 10% Median)'
+            default: return 'Unknown'
+        }
+    }
+
     return (
         <div className={styles.battleCard}>
             <div className={styles.header}>
                 <div className={styles.quintileInfo}>
-                    <span className={styles.quintileLabel}>{quintile.label}</span>
+                    <div className={styles.quintileLabel}>
+                        {getQuintileLabel(quintile.quintile)}
+                        <span className={styles.statisticalMeaning}>
+                            {getStatisticalMeaning(quintile.quintile)}
+                        </span>
+                    </div>
                     <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(quintile.win_rate)}`}>
                         {getOutcomeIcon(quintile.win_rate)} {getOutcomeLabel(quintile.win_rate)}
                     </span>

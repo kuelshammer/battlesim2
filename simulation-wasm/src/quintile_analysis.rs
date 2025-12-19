@@ -253,134 +253,187 @@ fn calculate_quintile_stats(
     }
 }
 
-/// Assess risk factor based on quintile analysis
+/// Assess risk factor based on quintile analysis - implements Safety Grade system (A-F)
 fn assess_risk_factor(quintiles: &[QuintileStats]) -> RiskFactor {
-    let disaster = &quintiles[0];  // Worst 20%
-    let typical = &quintiles[2];   // Median (40-60%)
-    
-    // Check Suicidal first
-    if typical.median_survivors < typical.party_size {
-        return RiskFactor::Suicidal;
+    let disaster = &quintiles[0];  // Disaster run (#125) - 5th Percentile
+    let struggle = &quintiles[1]; // Struggle run (#627) - 25th Percentile
+    let typical = &quintiles[2];  // Typical run (#1255) - 50th Percentile
+
+    // Check for Safety Grade F (Broken) - Typical run is TPK
+    if typical.median_survivors == 0 {
+        return RiskFactor::Suicidal; // Equivalent to Safety Grade F
     }
-    
-    // Check TPK Risk
-    if disaster.win_rate == 0.0 {
-        return RiskFactor::TPKRisk;
+
+    // Check for Safety Grade D (Unstable) - Struggle run is TPK
+    if struggle.median_survivors == 0 {
+        return RiskFactor::TPKRisk; // Equivalent to Safety Grade D
     }
-    
-    // Check Lethal
-    if disaster.median_survivors < disaster.party_size {
-        return RiskFactor::Lethal;
+
+    // Check for Safety Grade C (Risky) - Disaster run is TPK but Struggle run is alive
+    if disaster.median_survivors == 0 && struggle.median_survivors > 0 {
+        return RiskFactor::Lethal; // Equivalent to Safety Grade C
     }
-    
-    // Check Volatile (near death but no deaths)
-    let lowest_hp = disaster.median_run_visualization
+
+    // Check for Safety Grade B (Fair) - Disaster run is alive but has <5% HP remaining
+    let disaster_lowest_hp = disaster.median_run_visualization
         .iter()
         .filter(|c| c.is_player && !c.is_dead)
         .map(|c| c.hp_percentage)
         .fold(100.0_f64, |acc, hp| acc.min(hp));
-    
-    if lowest_hp < 10.0 {
-        return RiskFactor::Volatile;
+
+    if disaster.median_survivors > 0 && disaster_lowest_hp < 5.0 {
+        return RiskFactor::Volatile; // Equivalent to Safety Grade B
     }
-    
-    // Otherwise Safe
+
+    // Safety Grade A (Secure) - Disaster run has >10% HP remaining
     RiskFactor::Safe
 }
 
-/// Assess difficulty based on typical quintile HP remaining
+/// Assess difficulty based on typical quintile HP remaining - implements Intensity Tier system (1-5)
 fn assess_difficulty(quintiles: &[QuintileStats]) -> Difficulty {
-    let typical = &quintiles[2]; // Median quintile
-    
-    // Calculate average HP percentage for surviving players
+    let typical = &quintiles[2]; // Typical run (#1255) - 50th Percentile
+
+    // Calculate total resources remaining (HP + Spell Slots proxy)
+    // For simplicity, we'll use HP percentage as the primary resource indicator
     let surviving_players: Vec<_> = typical.median_run_visualization
         .iter()
         .filter(|c| c.is_player && !c.is_dead)
         .collect();
-    
+
     if surviving_players.is_empty() {
         return Difficulty::Grueling; // All dead = hardest difficulty
     }
-    
+
     let avg_hp_percent = surviving_players
         .iter()
         .map(|c| c.hp_percentage)
-        .sum::<f64>() 
+        .sum::<f64>()
         / surviving_players.len() as f64;
-    
-    if avg_hp_percent > 85.0 {
+
+    // Intensity Tier 1: Trivial (> 90% Resources Left)
+    if avg_hp_percent > 90.0 {
         Difficulty::Easy
-    } else if avg_hp_percent >= 60.0 {
+    }
+    // Intensity Tier 2: Light (70% – 90% Resources Left)
+    else if avg_hp_percent >= 70.0 {
         Difficulty::Medium
-    } else if avg_hp_percent >= 30.0 {
+    }
+    // Intensity Tier 3: Moderate (40% – 70% Resources Left)
+    else if avg_hp_percent >= 40.0 {
         Difficulty::Hard
-    } else {
+    }
+    // Intensity Tier 4: Heavy (10% – 40% Resources Left)
+    else if avg_hp_percent >= 10.0 {
+        Difficulty::Grueling
+    }
+    // Intensity Tier 5: Extreme (< 10% Resources Left)
+    else {
         Difficulty::Grueling
     }
 }
 
-/// Get combined encounter label based on risk and difficulty
+/// Get combined encounter label based on risk and difficulty - implements Sweet Spot labels
 fn get_encounter_label(risk: &RiskFactor, difficulty: &Difficulty) -> EncounterLabel {
     match (risk, difficulty) {
+        // The Epic Challenge: B + 4 (Fair + Heavy)
+        (RiskFactor::Volatile, Difficulty::Grueling) => EncounterLabel::Deadly, // B + 4
+
+        // The Tactical Grinder: A + 3 (Secure + Moderate)
+        (RiskFactor::Safe, Difficulty::Hard) => EncounterLabel::Grinder, // A + 3
+
+        // The Action Movie: B + 2 (Fair + Light)
+        (RiskFactor::Volatile, Difficulty::Medium) => EncounterLabel::Spicy, // B + 2
+
+        // The Trap: C + 2 (Risky + Light)
+        (RiskFactor::Lethal, Difficulty::Medium) => EncounterLabel::Catastrophic, // C + 2
+
+        // The Slog: A + 5 (Secure + Extreme)
+        (RiskFactor::Safe, Difficulty::Grueling) => EncounterLabel::Grinder, // A + 5
+
+        // Default mappings for other combinations
         (RiskFactor::Safe, Difficulty::Easy) => EncounterLabel::Trivial,
         (RiskFactor::Safe, Difficulty::Medium) => EncounterLabel::Standard,
-        (RiskFactor::Safe, Difficulty::Hard) => EncounterLabel::Grinder,
         (RiskFactor::Volatile, Difficulty::Easy) => EncounterLabel::GlassCannon,
-        (RiskFactor::Volatile, Difficulty::Medium) => EncounterLabel::Spicy,
         (RiskFactor::Lethal, Difficulty::Hard) => EncounterLabel::Deadly,
         (RiskFactor::TPKRisk, _) => EncounterLabel::Catastrophic,
-        // Fallback combinations
-        (RiskFactor::Volatile, Difficulty::Hard) => EncounterLabel::Deadly,
-        (RiskFactor::Volatile, Difficulty::Grueling) => EncounterLabel::Deadly,
-        (RiskFactor::Lethal, Difficulty::Grueling) => EncounterLabel::Catastrophic,
         (RiskFactor::Suicidal, _) => EncounterLabel::Catastrophic,
         _ => EncounterLabel::Standard, // Default fallback
     }
 }
 
-/// Generate analysis summary based on ratings
-fn generate_analysis_summary(risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
+/// Generate analysis summary based on ratings - includes Safety Grade and Intensity Tier
+fn generate_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
     let disaster = &quintiles[0];
+    let struggle = &quintiles[1];
     let typical = &quintiles[2];
-    
-    match risk {
-        RiskFactor::Safe => format!(
-            "Stable encounter. Party survives even in worst cases ({} survivors in disaster timeline).",
-            disaster.median_survivors
-        ),
-        RiskFactor::Volatile => format!(
-            "High variance encounter. Worst case: {} survivors, Typical case: {} survivors.",
-            disaster.median_survivors, typical.median_survivors
-        ),
-        RiskFactor::Lethal => format!(
-            "Dangerous encounter. Worst case guarantees deaths ({} survivors), typical case: {} survivors.",
-            disaster.median_survivors, typical.median_survivors
-        ),
-        RiskFactor::TPKRisk => "Total Party Kill possible in worst case scenarios.".to_string(),
-        RiskFactor::Suicidal => "Party loses more than 50% of the time even in typical scenarios.".to_string(),
-    }
+
+    // Determine Safety Grade
+    let safety_grade = if disaster.median_survivors == 0 && struggle.median_survivors == 0 {
+        "F (Broken)"
+    } else if struggle.median_survivors == 0 {
+        "D (Unstable)"
+    } else if disaster.median_survivors == 0 {
+        "C (Risky)"
+    } else if disaster.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .fold(100.0_f64, |acc, hp| acc.min(hp)) < 5.0 {
+        "B (Fair)"
+    } else {
+        "A (Secure)"
+    };
+
+    // Determine Intensity Tier
+    let intensity_tier = if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 > 90.0 {
+        "1 (Trivial)"
+    } else if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 >= 70.0 {
+        "2 (Light)"
+    } else if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 >= 40.0 {
+        "3 (Moderate)"
+    } else if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 >= 10.0 {
+        "4 (Heavy)"
+    } else {
+        "5 (Extreme)"
+    };
+
+    format!(
+        "Safety Grade: {} | Intensity Tier: {} | Disaster: {} survivors | Typical: {} survivors",
+        safety_grade, intensity_tier, disaster.median_survivors, typical.median_survivors
+    )
 }
 
-/// Generate tuning suggestions based on encounter analysis
+/// Generate tuning suggestions based on encounter analysis - matches methodology
 fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, _quintiles: &[QuintileStats]) -> Vec<String> {
     let mut suggestions = Vec::new();
-    
+
     match risk {
         RiskFactor::Volatile => {
-            suggestions.push("Consider increasing monster HP and decreasing damage to reduce swinginess.".to_string());
+            suggestions.push("High variance encounter. Consider reducing monster burst damage to make outcomes more consistent.".to_string());
         }
         RiskFactor::Lethal => {
-            suggestions.push("Reduce monster burst damage or increase player survivability.".to_string());
+            suggestions.push("Dangerous encounter. Consider reducing monster damage or increasing player survivability to prevent TPKs.".to_string());
         }
         RiskFactor::TPKRisk => {
-            suggestions.push("Significant nerfing required. Consider reducing monster damage or increasing party power.".to_string());
+            suggestions.push("Total Party Kill risk. Significant nerfing required. Consider reducing monster damage or increasing party power.".to_string());
         }
         RiskFactor::Suicidal => {
-            suggestions.push("Encounter is too difficult. Consider reducing monster stats or increasing player resources.".to_string());
+            suggestions.push("Encounter is mathematically impossible. Consider reducing monster stats or increasing player resources.".to_string());
         }
         _ => {}
     }
-    
+
     match difficulty {
         Difficulty::Easy => {
             suggestions.push("Encounter may be too easy for the party's power level.".to_string());
@@ -390,7 +443,7 @@ fn generate_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, _quin
         }
         _ => {}
     }
-    
+
     suggestions
 }
 
@@ -410,57 +463,52 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         };
     }
 
-    let quintile_labels = [
-        "Worst 20%",
-        "Below Average", 
-        "Median",
-        "Above Average",
-        "Best 20%",
-    ];
-    let mut quintiles = Vec::new();
-
-    // Calculate dynamic quintile sizes based on actual number of results
+    // The methodology requires exactly 2,510 runs for proper quintile mapping
     let total_runs = results.len();
-    let quintile_size = total_runs / 5;
-    let remainder = total_runs % 5;
-    
-    // Calculate median survivors for each quintile (middle run of each quintile)
-    let mut median_survivors = Vec::new();
-    for q in 0..5 {
-        // Calculate start and end indices for this quintile
-        let start = q * quintile_size + std::cmp::min(q, remainder);
-        let end = start + quintile_size + if q < remainder { 1 } else { 0 };
-        
-        // Calculate middle index within this quintile
-        let middle_idx = if end > start {
-            start + (end - start) / 2
-        } else {
-            start
-        };
-        
-        // Bounds checking
-        if middle_idx >= results.len() {
-            median_survivors.push(0);
-            continue;
-        }
-        
-        let score = crate::aggregation::calculate_score(&results[middle_idx]);
-        let survivors = ((score / 10000.0).floor() as usize).min(party_size);
-        median_survivors.push(survivors);
+    let required_runs = 2510;
+
+    // If we have fewer than required runs, use what we have but warn
+    if total_runs < required_runs {
+        eprintln!("WARNING: Only {} runs available, but methodology requires 2,510 for precise quintile mapping", total_runs);
     }
 
-    // Process each quintile using dynamic sizing
-    for q in 0..5 {
-        // Calculate start and end indices for this quintile
-        let start = q * quintile_size + std::cmp::min(q, remainder);
-        let end = start + quintile_size + if q < remainder { 1 } else { 0 };
-        
-        // Bounds checking for slice
-        if start >= results.len() || end > results.len() {
-            // Add empty quintile stats for invalid range
+    let mut quintiles = Vec::new();
+
+    // Calculate slice sizes for 10 deciles (251 runs each)
+    let decile_size = total_runs / 10;
+    let remainder = total_runs % 10;
+
+    // Define the specific run indices for the 5 Battle Cards according to methodology
+    // UI Row Label | Statistical Meaning | Which Slice? | Run Index (0-2509)
+    // 1. Disaster   | 5th Percentile      | Slice 1      | #125
+    // 2. Struggle   | 25th Percentile     | Slice 3      | #627
+    // 3. Typical    | 50th Percentile     | (Global)     | #1,255
+    // 4. Heroic     | 75th Percentile     | Slice 8      | #1,882
+    // 5. Legend     | 95th Percentile     | Slice 10     | #2,384
+
+    // Calculate the specific run indices for each Battle Card
+    let disaster_run_idx = 125;
+    let struggle_run_idx = 627;
+    let typical_run_idx = 1255;
+    let heroic_run_idx = 1882;
+    let legend_run_idx = 2384;
+
+    // Process each of the 5 Battle Cards using the specific run indices
+    let battle_card_indices = [
+        (1, "Disaster", disaster_run_idx),
+        (2, "Struggle", struggle_run_idx),
+        (3, "Typical", typical_run_idx),
+        (4, "Heroic", heroic_run_idx),
+        (5, "Legend", legend_run_idx),
+    ];
+
+    for (quintile_num, label, run_idx) in battle_card_indices {
+        // Bounds checking for the specific run index
+        if run_idx >= results.len() {
+            // Add empty quintile stats for invalid index
             quintiles.push(QuintileStats {
-                quintile: q + 1,
-                label: quintile_labels[q].to_string(),
+                quintile: quintile_num,
+                label: label.to_string(),
                 median_survivors: 0,
                 party_size,
                 total_hp_lost: 0.0,
@@ -471,14 +519,54 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             });
             continue;
         }
-        
-        let slice = &results[start..end];
 
-        let stats = calculate_quintile_stats(slice, q + 1, quintile_labels[q], median_survivors[q], party_size, start);
-        quintiles.push(stats);
+        let single_run = &results[run_idx];
+        let score = crate::aggregation::calculate_score(single_run);
+        let survivors = ((score / 10000.0).floor() as usize).min(party_size);
+
+        // Extract visualization data for this specific run
+        let (visualization_data, battle_duration) = extract_combatant_visualization(single_run);
+
+        // Calculate HP lost for this specific run
+        let mut total_hp_lost = 0.0;
+        let mut party_max_hp = 0.0;
+
+        if let Some(encounter) = single_run.first() {
+            if let Some(first_round) = encounter.rounds.first() {
+                for c in first_round.team1.iter() {
+                    if c.creature.hp > 0.0 {
+                        party_max_hp += c.creature.hp;
+                    }
+                }
+            }
+        }
+
+        let remaining_party_hp = score - (survivors as f64 * 10000.0);
+        let hp_lost = party_max_hp - remaining_party_hp;
+        if hp_lost >= 0.0 {
+            total_hp_lost = hp_lost;
+        }
+
+        let hp_lost_percent = if party_max_hp > 0.0 {
+            (total_hp_lost / party_max_hp) * 100.0
+        } else {
+            0.0
+        };
+
+        quintiles.push(QuintileStats {
+            quintile: quintile_num,
+            label: label.to_string(),
+            median_survivors: survivors,
+            party_size,
+            total_hp_lost,
+            hp_lost_percent,
+            win_rate: if survivors > 0 { 100.0 } else { 0.0 }, // Single run has 100% win or 0% win
+            median_run_visualization: visualization_data,
+            battle_duration_rounds: battle_duration,
+        });
     }
 
-    // Calculate encounter ratings
+    // Calculate encounter ratings using the specific Battle Card data
     let risk_factor = assess_risk_factor(&quintiles);
     let difficulty = assess_difficulty(&quintiles);
     let encounter_label = get_encounter_label(&risk_factor, &difficulty);
@@ -500,6 +588,220 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
 /// Run quintile analysis on simulation results (Overall Adventure)
 pub fn run_quintile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
     analyze_results(results, scenario_name, party_size)
+}
+
+/// Run day analysis on simulation results (Adventuring Day)
+pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    // The methodology requires exactly 2,510 runs for proper quintile mapping
+    let total_runs = results.len();
+    let required_runs = 2510;
+
+    // If we have fewer than required runs, use what we have but warn
+    if total_runs < required_runs {
+        eprintln!("WARNING: Only {} runs available, but methodology requires 2,510 for precise day rating", total_runs);
+    }
+
+    let mut quintiles = Vec::new();
+
+    // Calculate slice sizes for 10 deciles (251 runs each)
+    let decile_size = total_runs / 10;
+    let remainder = total_runs % 10;
+
+    // Define the specific run indices for the 5 Battle Cards according to methodology
+    // UI Row Label | Statistical Meaning | Which Slice? | Run Index (0-2509)
+    // 1. Disaster   | 5th Percentile      | Slice 1      | #125
+    // 2. Struggle   | 25th Percentile     | Slice 3      | #627
+    // 3. Typical    | 50th Percentile     | (Global)     | #1,255
+    // 4. Heroic     | 75th Percentile     | Slice 8      | #1,882
+    // 5. Legend     | 95th Percentile     | Slice 10     | #2,384
+
+    // Calculate the specific run indices for each Battle Card
+    let disaster_run_idx = 125;
+    let struggle_run_idx = 627;
+    let typical_run_idx = 1255;
+    let heroic_run_idx = 1882;
+    let legend_run_idx = 2384;
+
+    // Process each of the 5 Battle Cards using the specific run indices
+    let battle_card_indices = [
+        (1, "Disaster", disaster_run_idx),
+        (2, "Struggle", struggle_run_idx),
+        (3, "Typical", typical_run_idx),
+        (4, "Heroic", heroic_run_idx),
+        (5, "Legend", legend_run_idx),
+    ];
+
+    for (quintile_num, label, run_idx) in battle_card_indices {
+        // Bounds checking for the specific run index
+        if run_idx >= results.len() {
+            // Add empty quintile stats for invalid index
+            quintiles.push(QuintileStats {
+                quintile: quintile_num,
+                label: label.to_string(),
+                median_survivors: 0,
+                party_size,
+                total_hp_lost: 0.0,
+                hp_lost_percent: 0.0,
+                win_rate: 0.0,
+                median_run_visualization: Vec::new(),
+                battle_duration_rounds: 0,
+            });
+            continue;
+        }
+
+        let single_run = &results[run_idx];
+        let score = crate::aggregation::calculate_score(single_run);
+        let survivors = ((score / 10000.0).floor() as usize).min(party_size);
+
+        // Extract visualization data for this specific run
+        let (visualization_data, battle_duration) = extract_combatant_visualization(single_run);
+
+        // Calculate HP lost for this specific run
+        let mut total_hp_lost = 0.0;
+        let mut party_max_hp = 0.0;
+
+        if let Some(encounter) = single_run.first() {
+            if let Some(first_round) = encounter.rounds.first() {
+                for c in first_round.team1.iter() {
+                    if c.creature.hp > 0.0 {
+                        party_max_hp += c.creature.hp;
+                    }
+                }
+            }
+        }
+
+        let remaining_party_hp = score - (survivors as f64 * 10000.0);
+        let hp_lost = party_max_hp - remaining_party_hp;
+        if hp_lost >= 0.0 {
+            total_hp_lost = hp_lost;
+        }
+
+        let hp_lost_percent = if party_max_hp > 0.0 {
+            (total_hp_lost / party_max_hp) * 100.0
+        } else {
+            0.0
+        };
+
+        quintiles.push(QuintileStats {
+            quintile: quintile_num,
+            label: label.to_string(),
+            median_survivors: survivors,
+            party_size,
+            total_hp_lost,
+            hp_lost_percent,
+            win_rate: if survivors > 0 { 100.0 } else { 0.0 }, // Single run has 100% win or 0% win
+            median_run_visualization: visualization_data,
+            battle_duration_rounds: battle_duration,
+        });
+    }
+
+    // Calculate day ratings using the specific Battle Card data
+    let risk_factor = assess_risk_factor(&quintiles);
+    let difficulty = assess_difficulty(&quintiles);
+    let encounter_label = get_encounter_label(&risk_factor, &difficulty);
+
+    // Calculate day rating
+    let day_rating = calculate_day_rating(&quintiles);
+
+    let analysis_summary = generate_day_analysis_summary(&risk_factor, &difficulty, &quintiles, &day_rating);
+    let tuning_suggestions = generate_day_tuning_suggestions(&risk_factor, &difficulty, &day_rating);
+
+    AggregateOutput {
+        scenario_name: scenario_name.to_string(),
+        total_runs: results.len(),
+        quintiles,
+        risk_factor,
+        difficulty,
+        encounter_label,
+        analysis_summary,
+        tuning_suggestions,
+    }
+}
+
+/// Calculate day rating based on methodology
+fn calculate_day_rating(quintiles: &[QuintileStats]) -> String {
+    let disaster = &quintiles[0];  // Disaster run (#125) - 5th Percentile
+    let typical = &quintiles[2];  // Typical run (#1255) - 50th Percentile
+
+    // Check for Safety: If Run #125 is TPK -> Grade C/D
+    if disaster.median_survivors == 0 {
+        return "Grade C/D".to_string();
+    }
+
+    // If Run #125 is Alive but <5% HP -> Grade B
+    let disaster_lowest_hp = disaster.median_run_visualization
+        .iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .fold(100.0_f64, |acc, hp| acc.min(hp));
+
+    if disaster_lowest_hp < 5.0 {
+        return "Grade B".to_string();
+    }
+
+    // Otherwise -> Grade A
+    "Grade A".to_string()
+}
+
+/// Generate day analysis summary based on ratings
+fn generate_day_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats], day_rating: &str) -> String {
+    let disaster = &quintiles[0];
+    let typical = &quintiles[2];
+
+    // Determine Intensity based on Typical run resources
+    let intensity = if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 > 60.0 {
+        "Under-tuned"
+    } else if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 >= 30.0 {
+        "Standard Day"
+    } else if typical.median_run_visualization.iter()
+        .filter(|c| c.is_player && !c.is_dead)
+        .map(|c| c.hp_percentage)
+        .sum::<f64>() / typical.median_run_visualization.len() as f64 >= 5.0 {
+        "Perfect Challenge"
+    } else {
+        "Overwhelming"
+    };
+
+    format!(
+        "Day Rating: {} | Safety: {} | Intensity: {} | Disaster: {} survivors | Typical: {} survivors",
+        day_rating, risk.to_string(), intensity, disaster.median_survivors, typical.median_survivors
+    )
+}
+
+/// Generate day tuning suggestions based on analysis
+fn generate_day_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, day_rating: &str) -> Vec<String> {
+    let mut suggestions = Vec::new();
+
+    match day_rating {
+        "Grade C/D" => {
+            suggestions.push("Day is too dangerous. Consider reducing encounter difficulty or adding more short rests.".to_string());
+        }
+        "Grade B" => {
+            suggestions.push("Day has good balance. Party survives worst case but may need resources for next encounters.".to_string());
+        }
+        "Grade A" => {
+            suggestions.push("Day is very safe. Consider increasing encounter difficulty to provide better challenge.".to_string());
+        }
+        _ => {}
+    }
+
+    match difficulty {
+        Difficulty::Easy => {
+            suggestions.push("Day may be too easy for the party's power level.".to_string());
+        }
+        Difficulty::Grueling => {
+            suggestions.push("Day is very resource-intensive. Consider adding a short rest opportunity.".to_string());
+        }
+        _ => {}
+    }
+
+    suggestions
 }
 
 /// Run quintile analysis for a specific encounter

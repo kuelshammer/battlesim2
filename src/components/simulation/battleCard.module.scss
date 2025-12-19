@@ -24,6 +24,15 @@
                 font-weight: bold;
                 font-size: 1.1em;
                 color: #fff;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .statisticalMeaning {
+                font-size: 0.7em;
+                color: #aaa;
+                font-style: italic;
             }
 
             .outcomeBadge {
