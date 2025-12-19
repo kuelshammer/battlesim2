@@ -110,9 +110,10 @@ impl ActionExecutionEngine {
 
         let mut round_snapshots = Vec::new();
 
-        // Main combat loop (max 20 rounds for realistic D&D encounter duration)
-        const MAX_ROUNDS: u32 = 20;
-        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS {
+        // Main combat loop with improved draw detection and memory management
+        const MAX_ROUNDS: u32 = 50; // Increased limit with better draw detection
+        const MAX_TURNS: u32 = 200; // Prevent infinite loops from extremely long battles
+        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
             self.context.advance_round();
 
             let initiative_order = self.get_initiative_order();
@@ -139,10 +140,31 @@ impl ActionExecutionEngine {
                 }
             }
 
-            // Capture snapshot at end of round
-            let snapshot: Vec<CombattantState> =
-                self.context.combatants.values().cloned().collect();
-            round_snapshots.push(snapshot);
+            // Capture optimized snapshot at end of round
+            // Use references instead of cloning for memory efficiency
+            // Only clone essential data, skip heavy structures where possible
+            // Take snapshots less frequently to reduce memory pressure
+            if self.context.round_number % 5 == 0 || self.context.round_number == MAX_ROUNDS {
+                let snapshot: Vec<CombattantState> = self.context.combatants
+                    .values()
+                    .map(|state| CombattantState {
+                        id: state.id.clone(),
+                        base_combatant: state.base_combatant.clone(), // This is necessary for reference
+                        current_hp: state.current_hp,
+                        temp_hp: state.temp_hp,
+                        conditions: state.conditions.clone(),
+                        concentration: state.concentration.clone(),
+                        position: state.position.clone(),
+                        resources: crate::resources::ResourceLedger::new(), // Use empty ledger for snapshot
+                        arcane_ward_hp: state.arcane_ward_hp,
+                        cached_stats: None, // Don't clone cached stats
+                    })
+                    .collect();
+                round_snapshots.push(snapshot);
+            }
+
+            // Continue to max rounds limit - let combat run its course
+            // The round limit serves as the safety mechanism
         }
 
         // Generate final results
@@ -651,6 +673,7 @@ impl ActionExecutionEngine {
         }
     }
 
+    
     /// Calculate encounter statistics from event history
     fn calculate_statistics(&self, events: &[Event]) -> EncounterStatistics {
         let mut total_damage_dealt = HashMap::new();

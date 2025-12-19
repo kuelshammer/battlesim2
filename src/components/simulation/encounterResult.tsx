@@ -548,17 +548,19 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
                                         <strong>Duration:</strong> {value.rounds.length} rounds
                                     </div>
                                     <div className={styles.summaryItem}>
-                                        <strong>Winner:</strong> {
-                                            (() => {
-                                                const lastRound = value.rounds[value.rounds.length - 1]
-                                                const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
-                                                const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
+<strong>Winner:</strong> {
+                                        (() => {
+                                            const lastRound = value.rounds[value.rounds.length - 1]
+                                            const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
+                                            const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
+                                            const maxRounds = 50; // Match the Rust simulation max rounds
 
-                                                if (team1Alive > 0 && team2Alive === 0) return "Players"
-                                                if (team2Alive > 0 && team1Alive === 0) return "Monsters"
-                                                return "Draw"
-                                            })()
-                                        }
+                                            if (team1Alive > 0 && team2Alive === 0) return "Players"
+                                            if (team2Alive > 0 && team1Alive === 0) return "Monsters"
+                                            if (value.rounds.length >= maxRounds) return "Draw"
+                                            return "In Progress" // Don't declare draw until max rounds reached
+                                        })()
+                                    }
                                     </div>
                                 </div>
                             </div>
