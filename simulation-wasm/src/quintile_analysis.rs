@@ -1,6 +1,5 @@
 use crate::model::*;
 use serde::{Deserialize, Serialize};
-use web_sys::console;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum RiskFactor {
@@ -9,6 +8,18 @@ pub enum RiskFactor {
     Lethal,         // Worst case = guaranteed death
     TPKRisk,        // Worst case = total party kill
     Suicidal,       // Typical case = party loses >50%
+}
+
+impl std::fmt::Display for RiskFactor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RiskFactor::Safe => write!(f, "Safe"),
+            RiskFactor::Volatile => write!(f, "Volatile"),
+            RiskFactor::Lethal => write!(f, "Lethal"),
+            RiskFactor::TPKRisk => write!(f, "TPKRisk"),
+            RiskFactor::Suicidal => write!(f, "Suicidal"),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -362,7 +373,7 @@ fn get_encounter_label(risk: &RiskFactor, difficulty: &Difficulty) -> EncounterL
 }
 
 /// Generate analysis summary based on ratings - includes Safety Grade and Intensity Tier
-fn generate_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
+fn generate_analysis_summary(_risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
     let disaster = &quintiles[0];
     let struggle = &quintiles[1];
     let typical = &quintiles[2];
@@ -473,10 +484,6 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     }
 
     let mut quintiles = Vec::new();
-
-    // Calculate slice sizes for 10 deciles (251 runs each)
-    let decile_size = total_runs / 10;
-    let remainder = total_runs % 10;
 
     // Define the specific run indices for the 5 Battle Cards according to methodology
     // UI Row Label | Statistical Meaning | Which Slice? | Run Index (0-2509)
@@ -602,10 +609,6 @@ pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party
     }
 
     let mut quintiles = Vec::new();
-
-    // Calculate slice sizes for 10 deciles (251 runs each)
-    let decile_size = total_runs / 10;
-    let remainder = total_runs % 10;
 
     // Define the specific run indices for the 5 Battle Cards according to methodology
     // UI Row Label | Statistical Meaning | Which Slice? | Run Index (0-2509)
@@ -744,7 +747,7 @@ fn calculate_day_rating(quintiles: &[QuintileStats]) -> String {
 }
 
 /// Generate day analysis summary based on ratings
-fn generate_day_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, quintiles: &[QuintileStats], day_rating: &str) -> String {
+fn generate_day_analysis_summary(_risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats], day_rating: &str) -> String {
     let disaster = &quintiles[0];
     let typical = &quintiles[2];
 
@@ -770,12 +773,12 @@ fn generate_day_analysis_summary(risk: &RiskFactor, difficulty: &Difficulty, qui
 
     format!(
         "Day Rating: {} | Safety: {} | Intensity: {} | Disaster: {} survivors | Typical: {} survivors",
-        day_rating, risk.to_string(), intensity, disaster.median_survivors, typical.median_survivors
+        day_rating, disaster.median_survivors, intensity, disaster.median_survivors, typical.median_survivors
     )
 }
 
 /// Generate day tuning suggestions based on analysis
-fn generate_day_tuning_suggestions(risk: &RiskFactor, difficulty: &Difficulty, day_rating: &str) -> Vec<String> {
+fn generate_day_tuning_suggestions(_risk: &RiskFactor, difficulty: &Difficulty, day_rating: &str) -> Vec<String> {
     let mut suggestions = Vec::new();
 
     match day_rating {
