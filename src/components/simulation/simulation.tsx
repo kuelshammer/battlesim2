@@ -94,7 +94,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
         
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
             console.log('Triggering background simulation...');
-            worker.runSimulation(players, encounters, 1005);
+            worker.runSimulation(players, encounters, 2510);
             setNeedsResimulation(false);
         }
     }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker, autoSimulate]);
@@ -250,18 +250,24 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 onMoveDown={(!!encounters.length && (index < encounters.length - 1)) ? () => swapEncounters(index, index + 1) : undefined}
                                 onEditingChange={setIsEditing}
                             />
-                            {(!simulationResults[index] ? null : (
+                            {(worker.analysis?.encounters?.[index] ? (
                                 <EncounterResult 
-                                    value={simulationResults[index]} 
-                                    analysis={worker.analysis?.encounters?.[index] ?? null} 
+                                    value={worker.analysis.encounters[index].quintiles[2].median_run_data || simulationResults[index]} 
+                                    analysis={worker.analysis.encounters[index]} 
                                     isStale={isStale}
                                 />
-                            ))}
+                            ) : (!simulationResults[index] ? null : (
+                                <EncounterResult 
+                                    value={simulationResults[index]} 
+                                    analysis={null} 
+                                    isStale={isStale}
+                                />
+                            )))}
                             <div className={styles.buttonGroup}>
                                 <button
                                     onClick={() => {
                                         console.log('Manually rerunning simulation...');
-                                        worker.runSimulation(players, encounters, 1005);
+                                        worker.runSimulation(players, encounters, 2510);
                                         setIsStale(false);
                                     }}
                                     className={styles.rerunButton}

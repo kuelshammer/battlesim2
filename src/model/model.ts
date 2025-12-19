@@ -477,6 +477,7 @@ export const QuintileStatsSchema = z.object({
     win_rate: z.number(),
     // New fields for 5-Timeline Dashboard
     median_run_visualization: z.array(CombatantVisualizationSchema),
+    median_run_data: EncounterResultSchema.optional().nullable(),
     battle_duration_rounds: z.number(),
 })
 
