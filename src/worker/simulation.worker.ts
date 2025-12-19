@@ -34,12 +34,7 @@ self.onmessage = async (e: MessageEvent) => {
                 progressCallback
             );
 
-            const { results, first_run_events } = output;
-
-            // Run quintile analysis
-            const partySize = players.length;
-            const scenarioName = "Current Scenario";
-            const analysis = run_quintile_analysis_wasm(results, scenarioName, partySize);
+            const { results, analysis, first_run_events } = output;
 
             self.postMessage({
                 type: 'SIMULATION_COMPLETE',

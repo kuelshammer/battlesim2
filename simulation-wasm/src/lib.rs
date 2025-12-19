@@ -106,14 +106,38 @@ pub fn run_simulation_with_callback(
         score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
     });
 
+    // 1. Run Overall Analysis (Adventure-wide)
+    let overall = quintile_analysis::run_quintile_analysis(&results, "Current Scenario", players.len());
+    
+    // 2. Run Per-Encounter Analysis
+    let num_encounters = results.first().map(|r| r.len()).unwrap_or(0);
+    let mut encounters_analysis = Vec::new();
+    
+    for i in 0..num_encounters {
+        let encounter_name = format!("Encounter {}", i + 1);
+        let analysis = quintile_analysis::run_encounter_analysis(&results, i, &encounter_name, players.len());
+        encounters_analysis.push(analysis);
+    }
+
+    #[derive(serde::Serialize)]
+    struct FullAnalysisOutput {
+        overall: crate::quintile_analysis::AggregateOutput,
+        encounters: Vec<crate::quintile_analysis::AggregateOutput>,
+    }
+
     #[derive(serde::Serialize)]
     struct FullSimulationOutput {
         results: Vec<SimulationResult>,
+        analysis: FullAnalysisOutput,
         first_run_events: Vec<crate::events::Event>,
     }
 
     let output = FullSimulationOutput {
         results,
+        analysis: FullAnalysisOutput {
+            overall,
+            encounters: encounters_analysis,
+        },
         first_run_events: all_events,
     };
 

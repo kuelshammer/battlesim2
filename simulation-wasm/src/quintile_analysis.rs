@@ -1,6 +1,5 @@
 use crate::model::*;
 use serde::{Deserialize, Serialize};
-use web_sys::console;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum RiskFactor {
@@ -85,20 +84,16 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
     let mut combatants = Vec::new();
     let mut battle_duration = 0;
 
-    // Validate result is not empty
     if result.is_empty() {
         return (combatants, battle_duration);
     }
     
-    // Calculate total duration across all encounters
     for encounter in result {
         battle_duration += encounter.rounds.len();
     }
 
-    // Only visualize the final state of the last encounter
     if let Some(final_encounter) = result.last() {
         if let Some(last_round) = final_encounter.rounds.last() {
-            // Process team 1 (players)
             for combatant in &last_round.team1 {
                 let hp_percentage = if combatant.creature.hp > 0.0 {
                     (combatant.final_state.current_hp / combatant.creature.hp) * 100.0
@@ -116,7 +111,6 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
                 });
             }
 
-            // Process team 2 (monsters)
             for combatant in &last_round.team2 {
                 let hp_percentage = if combatant.creature.hp > 0.0 {
                     (combatant.final_state.current_hp / combatant.creature.hp) * 100.0
@@ -141,6 +135,7 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
 
 /// Assess risk factor based on quintile analysis - implements Safety Grade system (A-F)
 fn assess_risk_factor(quintiles: &[QuintileStats]) -> RiskFactor {
+    if quintiles.len() < 3 { return RiskFactor::Safe; }
     let disaster = &quintiles[0];  // Disaster run (#125) - 5th Percentile
     let struggle = &quintiles[1]; // Struggle run (#627) - 25th Percentile
     let typical = &quintiles[2];  // Typical run (#1255) - 50th Percentile
@@ -172,6 +167,7 @@ fn assess_risk_factor(quintiles: &[QuintileStats]) -> RiskFactor {
 
 /// Assess difficulty based on typical quintile HP remaining - implements Intensity Tier system (1-5)
 fn assess_difficulty(quintiles: &[QuintileStats]) -> Difficulty {
+    if quintiles.len() < 3 { return Difficulty::Medium; }
     let typical = &quintiles[2];
 
     let surviving_players: Vec<_> = typical.median_run_visualization
@@ -220,6 +216,7 @@ fn get_encounter_label(risk: &RiskFactor, difficulty: &Difficulty) -> EncounterL
 
 /// Generate analysis summary based on ratings
 fn generate_analysis_summary(_risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
+    if quintiles.len() < 3 { return "Insufficient data".to_string(); }
     let disaster = &quintiles[0];
     let struggle = &quintiles[1];
     let typical = &quintiles[2];
@@ -308,7 +305,6 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         let hp_lost_percent = if party_max_hp > 0.0 { (hp_lost / party_max_hp) * 100.0 } else { 0.0 };
 
         // For encounter analysis, we want to capture the specific encounter's round data
-        // If results[0].len() == 1, it's a per-encounter analysis.
         let median_run_data = if !single_run.is_empty() && results[0].len() == 1 {
             Some(single_run[0].clone())
         } else {
