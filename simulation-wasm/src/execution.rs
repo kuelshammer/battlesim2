@@ -619,6 +619,28 @@ impl ActionExecutionEngine {
     /// Check if encounter is complete (all alive combatants are on the same team)
     fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
+        
+        // Calculate total HP for each team
+        let mut player_total_hp = 0.0;
+        let mut monster_total_hp = 0.0;
+
+        for combatant in &alive_combatants {
+            let hp = combatant.current_hp;
+            if hp <= 0.0 {
+                continue; // Skip dead combatants
+            }
+            
+            match combatant.base_combatant.creature.mode.as_str() {
+                "player" => player_total_hp += hp,
+                "monster" => monster_total_hp += hp,
+                _ => {} // Ignore other modes
+            }
+        }
+
+        // If product of team HP sums is zero, combat is ended
+        if player_total_hp * monster_total_hp == 0.0 {
+            return true;
+        }
 
         // If no one is alive, encounter is complete
         if alive_combatants.is_empty() {
@@ -661,13 +683,36 @@ impl ActionExecutionEngine {
     /// Determine the winner of the encounter
     fn determine_winner(&self) -> Option<String> {
         let alive_combatants = self.context.get_alive_combatants();
+        
+        // Calculate total HP for each team
+        let mut player_total_hp = 0.0;
+        let mut monster_total_hp = 0.0;
 
-        if alive_combatants.is_empty() {
-            None // Draw - everyone died
-        } else if alive_combatants.len() == 1 {
-            Some(alive_combatants[0].id.clone())
+        for combatant in &alive_combatants {
+            let hp = combatant.current_hp;
+            if hp <= 0.0 {
+                continue; // Skip dead combatants
+            }
+            
+            match combatant.base_combatant.creature.mode.as_str() {
+                "player" => player_total_hp += hp,
+                "monster" => monster_total_hp += hp,
+                _ => {} // Ignore other modes
+            }
+        }
+
+        // Determine winner based on team HP sums
+        if player_total_hp > 0.0 && monster_total_hp == 0.0 {
+            // All monsters are dead, players win
+            return Some("Players".to_string());
+        } else if monster_total_hp > 0.0 && player_total_hp == 0.0 {
+            // All players are dead, monsters win  
+            return Some("Monsters".to_string());
+        } else if player_total_hp == 0.0 && monster_total_hp == 0.0 {
+            // Everyone is dead, draw
+            return None;
         } else {
-            // Multiple survivors - for now return None (draw)
+            // Multiple survivors on both teams - for now return None (draw)
             // TODO: In a full implementation, check team composition when teams are added
             None
         }

@@ -555,8 +555,13 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
                                             const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
                                             const maxRounds = 50; // Match the Rust simulation max rounds
 
-                                            if (team1Alive > 0 && team2Alive === 0) return "Players"
-                                            if (team2Alive > 0 && team1Alive === 0) return "Monsters"
+                                            // Check if encounter is complete based on team HP sums
+                                            const team1HasHp = lastRound.team1.some(c => c.finalState.currentHP > 0)
+                                            const team2HasHp = lastRound.team2.some(c => c.finalState.currentHP > 0)
+
+                                            if (team1HasHp && !team2HasHp) return "Players"
+                                            if (team2HasHp && !team1HasHp) return "Monsters"
+                                            if (!team1HasHp && !team2HasHp) return "Draw"
                                             if (value.rounds.length >= maxRounds) return "Draw"
                                             return "In Progress" // Don't declare draw until max rounds reached
                                         })()
