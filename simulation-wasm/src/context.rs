@@ -431,14 +431,14 @@ impl TurnContext {
     pub fn is_combatant_alive(&self, combatant_id: &str) -> bool {
         self.combatants
             .get(combatant_id)
-            .is_some_and(|c| c.current_hp >= 0.5)
+            .is_some_and(|c| c.current_hp > 0)
     }
 
     /// Get all alive combatants (using standardized HP threshold >= 0.5)
     pub fn get_alive_combatants(&self) -> Vec<&CombattantState> {
         self.combatants
             .values()
-            .filter(|c| c.current_hp >= 0.5)
+            .filter(|c| c.current_hp > 0)
             .collect()
     }
 

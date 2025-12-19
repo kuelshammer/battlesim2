@@ -637,9 +637,9 @@ impl ActionExecutionEngine {
             }
         }
 
-        // If product of team HP sums is effectively zero (very close to zero), combat is ended
-
+// If product of team HP sums is effectively zero (very close to zero), combat is ended
         if player_total_hp * monster_total_hp == 0 {
+            eprintln!("COMBAT TERMINATION: player_total_hp={}, monster_total_hp={}, product={}", player_total_hp, monster_total_hp, player_total_hp * monster_total_hp);
             return true;
         }
 
