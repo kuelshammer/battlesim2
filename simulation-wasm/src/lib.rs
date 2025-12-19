@@ -44,6 +44,28 @@ use crate::storage_manager::StorageManager;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, OnceLock};
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FullAnalysisOutput {
+    overall: crate::quintile_analysis::AggregateOutput,
+    encounters: Vec<crate::quintile_analysis::AggregateOutput>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FullSimulationOutput {
+    results: Vec<SimulationResult>,
+    analysis: FullAnalysisOutput,
+    first_run_events: Vec<crate::events::Event>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PartialOutput {
+    results: Vec<SimulationResult>,
+    analysis: FullAnalysisOutput,
+}
+
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
@@ -80,12 +102,6 @@ pub fn run_simulation_with_callback(
 
     let batch_size = (iterations / 20).max(1); // Report progress every 5%
 
-    #[derive(serde::Serialize)]
-    struct FullAnalysisOutput {
-        overall: crate::quintile_analysis::AggregateOutput,
-        encounters: Vec<crate::quintile_analysis::AggregateOutput>,
-    }
-
     for i in 0..iterations {
         let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
         results.push(result);
@@ -94,16 +110,20 @@ pub fn run_simulation_with_callback(
             all_events = events;
         }
 
-        if (i + 1) % batch_size == 0 || i == iterations - 1 {
+        let is_last_iteration = i == iterations - 1;
+        let should_report_progress = (i + 1) % batch_size == 0 || is_last_iteration;
+        let should_report_analysis = (i + 1) % 251 == 0 || is_last_iteration;
+
+        if should_report_progress || should_report_analysis {
             let progress = (i + 1) as f64 / iterations as f64;
             let this = JsValue::NULL;
             let js_progress = JsValue::from_f64(progress);
             let js_completed = JsValue::from_f64((i + 1) as f64);
             let js_total = JsValue::from_f64(iterations as f64);
             
-            // Perform intermediate analysis every 10% (251 runs) or at the very end
+            // Perform intermediate analysis if scheduled
             let mut js_partial_data = JsValue::NULL;
-            if (i + 1) % 251 == 0 || i == iterations - 1 {
+            if should_report_analysis {
                 let mut temp_results = results.clone();
                 temp_results.sort_by(|a, b| {
                     let score_a = crate::aggregation::calculate_score(a);
@@ -119,19 +139,12 @@ pub fn run_simulation_with_callback(
                     encounters_analysis.push(analysis);
                 }
 
-                // Filter 5 representative runs for the current partial set
                 let tr_len = temp_results.len();
                 let decile = tr_len as f64 / 10.0;
                 let rep_indices = [(decile * 0.5) as usize, (decile * 2.5) as usize, (tr_len / 2) as usize, (decile * 7.5) as usize, (decile * 9.5) as usize];
                 let mut reduced_results = Vec::new();
                 for &idx in &rep_indices {
                     if idx < tr_len { reduced_results.push(temp_results[idx].clone()); }
-                }
-
-                #[derive(serde::Serialize)]
-                struct PartialOutput {
-                    results: Vec<SimulationResult>,
-                    analysis: FullAnalysisOutput,
                 }
 
                 let partial = PartialOutput {
@@ -149,17 +162,14 @@ pub fn run_simulation_with_callback(
         }
     }
 
-    // Sort final results
+    // FINAL ANALYSIS
     results.sort_by(|a, b| {
         let score_a = crate::aggregation::calculate_score(a);
         let score_b = crate::aggregation::calculate_score(b);
         score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    // 1. Run Final Overall Analysis
     let overall = quintile_analysis::run_quintile_analysis(&results, "Current Scenario", players.len());
-    
-    // 2. Run Final Per-Encounter Analysis
     let num_encounters = results.first().map(|r| r.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
@@ -167,20 +177,12 @@ pub fn run_simulation_with_callback(
         encounters_analysis.push(analysis);
     }
 
-    // 3. Filter final representative results
     let total_runs = results.len();
     let decile = total_runs as f64 / 10.0;
     let representative_indices = [(decile * 0.5) as usize, (decile * 2.5) as usize, (total_runs / 2) as usize, (decile * 7.5) as usize, (decile * 9.5) as usize];
     let mut reduced_results = Vec::new();
     for &idx in &representative_indices {
         if idx < total_runs { reduced_results.push(results[idx].clone()); }
-    }
-
-    #[derive(serde::Serialize)]
-    struct FullSimulationOutput {
-        results: Vec<SimulationResult>,
-        analysis: FullAnalysisOutput,
-        first_run_events: Vec<crate::events::Event>,
     }
 
     let output = FullSimulationOutput {
@@ -662,12 +664,6 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     }
     
     console::log_1(&format!("Generated overall analysis + {} encounter analyses", encounters.len()).into());
-
-    #[derive(serde::Serialize)]
-    struct FullAnalysisOutput {
-        overall: crate::quintile_analysis::AggregateOutput,
-        encounters: Vec<crate::quintile_analysis::AggregateOutput>,
-    }
 
     let output = FullAnalysisOutput {
         overall,

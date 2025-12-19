@@ -21,8 +21,8 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
         analysis.quintiles.forEach(quintile => {
             // Each quintile represents 20% of runs (for 5 quintiles)
             const quintileRuns = totalRuns / 5;
-            totalWins += (quintile.win_rate / 100) * quintileRuns;
-            totalHpLossPercent += quintile.hp_lost_percent;
+            totalWins += ((quintile.win_rate || 0) / 100) * quintileRuns;
+            totalHpLossPercent += (quintile.hp_lost_percent || 0);
         });
 
         const overallWinRate = (totalWins / totalRuns) * 100;
@@ -50,8 +50,8 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
             <div className={styles.ratingDetails}>
                 {analysis && (
                     <>
-                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + q.win_rate, 0) / analysis.quintiles.length)).toFixed(1)}%</span>
-                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + q.hp_lost_percent, 0) / analysis.quintiles.length).toFixed(1)}%</span>
+                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + (q.win_rate || 0), 0) / analysis.quintiles.length)).toFixed(1)}%</span>
+                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + (q.hp_lost_percent || 0), 0) / analysis.quintiles.length).toFixed(1)}%</span>
                     </>
                 )}
             </div>
@@ -102,7 +102,7 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
                     ✅ {medianQuintile.median_survivors}/{medianQuintile.party_size} Survivors
                 </span>
                 <span className={styles.winRateBadge}>
-                    {medianQuintile.win_rate.toFixed(1)}% Win Rate
+                    {(medianQuintile.win_rate || 0).toFixed(1)}% Win Rate
                 </span>
             </div>
 
@@ -453,7 +453,7 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
 })
 
 type PropType = {
-    value: EncounterResultType,
+    value?: EncounterResultType,
     analysis?: AggregateOutput | null,
     isStale?: boolean,
     isPreliminary?: boolean,
@@ -463,22 +463,24 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
-    if (!value.rounds.length) return <></>
-    
     // Memoize expensive clone operation
     const lastRound = useMemo(() => {
+        if (!value || !value.rounds.length) return null
         const cloned = clone(value.rounds[value.rounds.length - 1])
-        ; ([...cloned.team1, ...cloned.team2]).forEach(combattant => {
-            combattant.initialState = combattant.finalState
-            combattant.actions = []
-        })
+            ; ([...cloned.team1, ...cloned.team2]).forEach(combattant => {
+                combattant.initialState = combattant.finalState
+                combattant.actions = []
+            })
         return cloned
-    }, [value.rounds])
-    
+    }, [value])
+
     const [highlightedIds, setHighlightedIds] = useState<string[]>([])
     const [highlightedRound, setHighlightedRound] = useState(0)
 
-    if (value.rounds.length === 1 && (!value.rounds[0].team1.length || !value.rounds[0].team2.length)) return <></>
+    // If we have neither value nor analysis, there's nothing to show
+    if ((!value || !value.rounds.length) && !analysis) return <></>
+
+    const hasRounds = value && value.rounds.length > 0 && (value.rounds.length > 1 || (value.rounds[0].team1.length && value.rounds[0].team2.length))
 
     return (
         <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`}>
@@ -498,7 +500,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
                     {detailsExpanded ? '🔽' : '▶️'} {detailsExpanded ? 'Hide' : 'Show'} Detailed Analysis
                 </button>
 
-                {detailsExpanded && (
+                {detailsExpanded && hasRounds && value && lastRound && (
                     <div className={styles.detailsContent}>
                         {/* HP Bars Toggle Control */}
                         <div className={styles.toggleControl}>

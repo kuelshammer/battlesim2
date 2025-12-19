@@ -130,7 +130,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         let template_round = if round_idx < template_encounter.rounds.len() {
             &template_encounter.rounds[round_idx]
         } else {
-            template_encounter.rounds.last().unwrap()
+            template_encounter.rounds.last().unwrap_or(&template_encounter.rounds[0]) // Fallback to first round if last is missing (shouldn't happen given previous checks)
         };
 
         // Reconstruct Team 1
@@ -142,8 +142,8 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     .action_counts
                     .iter()
                     .max_by_key(|entry| entry.1)
-                    .map(|(k, _)| k)
-                    .unwrap();
+                    .map(|(k, _)| k.as_str())
+                    .unwrap_or("[]"); // Default to empty actions if none found
                 let actions: Vec<CombattantAction> =
                     serde_json::from_str(best_action_json).unwrap_or_default();
 
@@ -195,8 +195,8 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
                     .action_counts
                     .iter()
                     .max_by_key(|entry| entry.1)
-                    .map(|(k, _)| k)
-                    .unwrap();
+                    .map(|(k, _)| k.as_str())
+                    .unwrap_or("[]"); // Default to empty actions if none found
                 let actions: Vec<CombattantAction> =
                     serde_json::from_str(best_action_json).unwrap_or_default();
 

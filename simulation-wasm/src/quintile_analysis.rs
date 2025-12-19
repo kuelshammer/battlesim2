@@ -42,6 +42,7 @@ pub enum EncounterLabel {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct CombatantVisualization {
     pub name: String,           // "Aragorn", "Gandalf", "Adult Red Dragon"
     pub max_hp: f64,           // 65, 35, 300
@@ -52,6 +53,7 @@ pub struct CombatantVisualization {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct QuintileStats {
     pub quintile: usize, // 1-5
     pub label: String,   // "Worst 20%", "Below Average", "Median", "Above Average", "Best 20%"
@@ -67,6 +69,7 @@ pub struct QuintileStats {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregateOutput {
     pub scenario_name: String,
     pub total_runs: usize,
