@@ -1,4 +1,23 @@
 .decileAnalysis {
+    width: 100%;
+    margin-top: 2em;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1.5em;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    .adventuringDayHeader {
+        margin-bottom: 1.5em;
+        padding-bottom: 0.5em;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+        
+        h2 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.5em;
+            text-align: center;
+        }
+    }
     margin: 20px 0;
     padding: 20px;
     border: 1px solid #555;

@@ -89,7 +89,7 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], encounters: Encounter[], iterations: number = 2510) => {
+    const runSimulation = useCallback((players: Creature[], encounters: Encounter[], iterations: number = 2511) => {
         // Terminate existing worker if running
         terminateAndRestart();
         

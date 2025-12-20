@@ -3,12 +3,14 @@ import { AggregateOutput } from "@/model/model"
 import BattleCard from "./battleCard"
 import styles from './decileAnalysis.module.scss'
 import { useUIToggles, UIToggleType } from "@/model/uiToggleState"
+import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
 
 type PropType = {
-    analysis: AggregateOutput | null
+    analysis: AggregateOutput | null,
+    isPreliminary?: boolean
 }
 
-const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
+const DecileAnalysis: FC<PropType> = memo(({ analysis, isPreliminary }) => {
     const { getToggleState } = useUIToggles()
     const [isExpanded, setIsExpanded] = useState(false)
 
@@ -21,20 +23,26 @@ const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
         )
     }
 
-    // Filter deciles based on toggle states
     const visibleDeciles = (analysis.deciles || []).filter(decile => {
-        const toggleId = `quintile-${decile.decile}` as UIToggleType // We keep quintile-* toggle IDs for now to avoid massive refactor of toggle state
+        const toggleId = `quintile-${decile.decile}` as UIToggleType
         return getToggleState(toggleId)
     })
 
     return (
         <div className={styles.decileAnalysis}>
+            <div className={styles.adventuringDayHeader}>
+                <h2>📊 Adventuring Day Summary</h2>
+            </div>
+            
+            <EncounterRating analysis={analysis} isPreliminary={isPreliminary} label="Day Rating" />
+            <MedianPerformanceDisplay analysis={analysis} isPreliminary={isPreliminary} />
+
             <div className={styles.analysisHeader}>
                 <button
                     className={styles.expandToggle}
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
-                    {isExpanded ? '🔽' : '▶️'} {isExpanded ? 'Hide' : 'Show'} Full Decile Analysis
+                    {isExpanded ? '🔽' : '▶️'} {isExpanded ? 'Hide' : 'Show'} Full 10-Timeline Dashboard
                 </button>
                 <div className={styles.analysisSummary}>
                     <span>Based on {analysis.totalRuns} simulation runs</span>
