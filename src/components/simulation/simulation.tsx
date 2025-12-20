@@ -208,6 +208,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             </label>
                         </div>
                         {isEditing && <div className={styles.editingNotice}>⚠️ Simulation paused while editing</div>}
+                        {worker.error && <div className={styles.errorNotice}>❌ Simulation Error: {worker.error}</div>}
                     </div>
 
                     <EncounterForm

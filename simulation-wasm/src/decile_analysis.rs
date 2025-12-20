@@ -75,28 +75,27 @@ impl std::fmt::Display for EncounterLabel {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CombatantVisualization {
-    pub name: String,           // "Aragorn", "Gandalf", "Adult Red Dragon"
-    pub max_hp: u32,           // 65, 35, 300
-    pub start_hp: u32,         // HP at the start of this encounter
-    pub current_hp: u32,        // 0, 13, 0
-    pub is_dead: bool,         // true, false, true
-    pub is_player: bool,       // true, true, false
-    pub hp_percentage: f64,    // 0.0, 20.0, 100.0
+    pub name: String,
+    pub max_hp: u32,
+    pub start_hp: u32,
+    pub current_hp: u32,
+    pub is_dead: bool,
+    pub is_player: bool,
+    pub hp_percentage: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DecileStats {
-    pub decile: usize, // 1-10 (using Deciles)
-    pub label: String,   // "Decile 1", etc.
-    pub median_survivors: usize, // Median number of survivors in slice
-    pub party_size: usize,       // Total party size
-    pub total_hp_lost: f64,     // Average HP lost by party per run in slice
-    pub hp_lost_percent: f64,   // HP lost as percentage of total possible HP
-    pub win_rate: f64,          // Win rate in this slice
-    // Visualization from the median run of the slice
+    pub decile: usize,
+    pub label: String,
+    pub median_survivors: usize,
+    pub party_size: usize,
+    pub total_hp_lost: f64,
+    pub hp_lost_percent: f64,
+    pub win_rate: f64,
     pub median_run_visualization: Vec<CombatantVisualization>,
-    pub median_run_data: Option<EncounterResult>, // Full round-by-round data
+    pub median_run_data: Option<EncounterResult>,
     pub battle_duration_rounds: usize,
 }
 
@@ -106,8 +105,7 @@ pub struct AggregateOutput {
     pub scenario_name: String,
     pub total_runs: usize,
     pub deciles: Vec<DecileStats>,
-    pub global_median: Option<DecileStats>, // The absolute middle run (50th percentile)
-    // NEW: Encounter rating fields
+    pub global_median: Option<DecileStats>,
     pub safety_grade: SafetyGrade,
     pub intensity_tier: IntensityTier,
     pub encounter_label: EncounterLabel,
@@ -116,22 +114,16 @@ pub struct AggregateOutput {
     pub is_good_design: bool,
 }
 
-/// Extract combatant visualization data from a single simulation result
 fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantVisualization>, usize) {
     let mut combatants = Vec::new();
     let mut battle_duration = 0;
 
-    if result.encounters.is_empty() {
-        return (combatants, battle_duration);
-    }
-    
     for encounter in &result.encounters {
         battle_duration += encounter.rounds.len();
     }
 
     if let Some(final_encounter) = result.encounters.last() {
         if let (Some(first_round), Some(last_round)) = (final_encounter.rounds.first(), final_encounter.rounds.last()) {
-            // Map starting HP by ID for lookup (from first round initial state)
             let start_hps: std::collections::HashMap<String, u32> = first_round.team1.iter().chain(first_round.team2.iter())
                 .map(|c| (c.id.clone(), c.initial_state.current_hp))
                 .collect();
@@ -177,28 +169,17 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
     (combatants, battle_duration)
 }
 
-/// Assess safety grade based on decile analysis
 fn assess_safety_grade(deciles: &[DecileStats], global_median: &Option<DecileStats>) -> SafetyGrade {
-    if deciles.len() < 5 { return SafetyGrade::A; }
-    let disaster = &deciles[0];  // Decile 1 (Worst case)
-    let struggle = &deciles[2]; // Decile 3 (Bad luck)
+    if deciles.is_empty() { return SafetyGrade::A; }
     
-    // Use global_median if available, otherwise typical decile 5
-    let typical = global_median.as_ref().unwrap_or(&deciles[4]);
+    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
+    let disaster = &deciles[0];
+    let struggle = deciles.get(deciles.len() / 4).unwrap_or(&deciles[0]);
 
-    if typical.median_survivors == 0 {
-        return SafetyGrade::F; // Broken
-    }
+    if typical.median_survivors == 0 { return SafetyGrade::F; }
+    if struggle.median_survivors == 0 { return SafetyGrade::D; }
+    if disaster.median_survivors == 0 { return SafetyGrade::C; }
 
-    if struggle.median_survivors == 0 {
-        return SafetyGrade::D; // Unstable
-    }
-
-    if disaster.median_survivors == 0 {
-        return SafetyGrade::C; // Risky
-    }
-
-    // Check if Disaster has > 10% HP remaining
     let disaster_lowest_hp = disaster.median_run_visualization
         .iter()
         .filter(|c| c.is_player && !c.is_dead)
@@ -206,35 +187,25 @@ fn assess_safety_grade(deciles: &[DecileStats], global_median: &Option<DecileSta
         .fold(100.0_f64, |acc, hp| acc.min(hp));
 
     if disaster_lowest_hp > 10.0 {
-        SafetyGrade::A // Secure
+        SafetyGrade::A
     } else {
-        SafetyGrade::B // Fair
+        SafetyGrade::B
     }
 }
 
-/// Assess intensity tier based on typical resources remaining
 fn assess_intensity_tier(deciles: &[DecileStats], global_median: &Option<DecileStats>) -> IntensityTier {
-    if deciles.len() < 5 { return IntensityTier::Tier1; }
+    if deciles.is_empty() { return IntensityTier::Tier1; }
     
-    // Use global_median if available, otherwise typical decile 5
-    let typical = global_median.as_ref().unwrap_or(&deciles[4]);
-    
+    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
     let resources_left = 100.0 - typical.hp_lost_percent;
 
-    if resources_left > 90.0 {
-        IntensityTier::Tier1 // Trivial
-    } else if resources_left >= 70.0 {
-        IntensityTier::Tier2 // Light
-    } else if resources_left >= 40.0 {
-        IntensityTier::Tier3 // Moderate
-    } else if resources_left >= 10.0 {
-        IntensityTier::Tier4 // Heavy
-    } else {
-        IntensityTier::Tier5 // Extreme
-    }
+    if resources_left > 90.0 { IntensityTier::Tier1 }
+    else if resources_left >= 70.0 { IntensityTier::Tier2 }
+    else if resources_left >= 40.0 { IntensityTier::Tier3 }
+    else if resources_left >= 10.0 { IntensityTier::Tier4 }
+    else { IntensityTier::Tier5 }
 }
 
-/// Get combined encounter label based on grade and tier
 fn get_encounter_label(grade: &SafetyGrade, tier: &IntensityTier) -> EncounterLabel {
     match (grade, tier) {
         (SafetyGrade::B, IntensityTier::Tier4) => EncounterLabel::EpicChallenge,
@@ -242,23 +213,18 @@ fn get_encounter_label(grade: &SafetyGrade, tier: &IntensityTier) -> EncounterLa
         (SafetyGrade::B, IntensityTier::Tier2) => EncounterLabel::ActionMovie,
         (SafetyGrade::C, IntensityTier::Tier2) => EncounterLabel::TheTrap,
         (SafetyGrade::A, IntensityTier::Tier5) => EncounterLabel::TheSlog,
-        
         (SafetyGrade::F, _) => EncounterLabel::Broken,
         (SafetyGrade::D, _) => EncounterLabel::TPKRisk,
-        
         (SafetyGrade::A, IntensityTier::Tier1) => EncounterLabel::TrivialMinions,
         (SafetyGrade::A, IntensityTier::Tier2) => EncounterLabel::Standard,
-        
         _ => EncounterLabel::Standard,
     }
 }
 
-/// Generate analysis summary based on ratings
 fn generate_analysis_summary(grade: &SafetyGrade, tier: &IntensityTier, deciles: &[DecileStats], global_median: &Option<DecileStats>) -> String {
-    if deciles.len() < 5 { return "Insufficient data".to_string(); }
+    if deciles.is_empty() { return "Insufficient data".to_string(); }
     
-    // Use global_median if available, otherwise typical decile 5
-    let typical = global_median.as_ref().unwrap_or(&deciles[4]);
+    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
 
     let safety_desc = match grade {
         SafetyGrade::A => "Party is secure even with terrible luck.",
@@ -280,7 +246,6 @@ fn generate_analysis_summary(grade: &SafetyGrade, tier: &IntensityTier, deciles:
         grade, safety_desc, tier, intensity_desc, typical.median_survivors, typical.party_size)
 }
 
-/// Generate tuning suggestions based on encounter analysis
 fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _deciles: &[DecileStats]) -> Vec<String> {
     let mut suggestions = Vec::new();
     match grade {
@@ -297,11 +262,9 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
     suggestions
 }
 
-/// Helper function to calculate stats for a single run
 fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, usize, usize) {
     let score = crate::aggregation::calculate_score(run);
     let survivors = ((score / 10000.0).floor() as usize).min(party_size);
-    let win = if survivors > 0 { 1 } else { 0 };
     
     let mut run_party_max_hp = 0.0;
     if let Some(enc) = run.encounters.first() {
@@ -315,7 +278,6 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, 
     (hp_lost, run_party_max_hp, survivors, duration)
 }
 
-/// Run analysis on a set of results (helper function)
 fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
     if results.is_empty() {
         return AggregateOutput {
@@ -326,58 +288,13 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     }
 
     let total_runs = results.len();
-    
-    // Generalized methodology: 5 slices of N + 1 median + 5 slices of N
-    // This works for any length where (total_runs - 1) is divisible by 10 (e.g., 251, 2511)
     let is_perfect = total_runs > 0 && (total_runs - 1) % 10 == 0;
-    let slice_size = if is_perfect { (total_runs - 1) / 10 } else { total_runs / 10 };
+    let slice_size = if is_perfect { (total_runs - 1) / 10 } else { (total_runs / 10).max(1) };
     
     let mut deciles = Vec::with_capacity(10);
     let mut global_median = None;
 
-    if is_perfect && total_runs > 0 {
-        // Absolute Median at the exact center
-        let median_idx = total_runs / 2;
-        let median_run = &results[median_idx];
-        let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
-        let (visualization_data, _) = extract_combatant_visualization(median_run);
-        
-        global_median = Some(DecileStats {
-            decile: 0, // Special marker for global median
-            label: "Global Median".to_string(),
-            median_survivors: survivors,
-            party_size,
-            total_hp_lost: hp_lost,
-            hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
-            win_rate: if survivors > 0 { 100.0 } else { 0.0 },
-            median_run_visualization: visualization_data,
-            median_run_data: Some(median_run.encounters[0].clone()),
-            battle_duration_rounds: duration,
-        });
-
-        // 10 Deciles of equal size N
-        for i in 0..10 {
-            // Slices before median: [0..N], [N..2N]...
-            // Slices after median: Skip the middle index
-            let start_idx = if i < 5 { i * slice_size } else { i * slice_size + 1 };
-            let end_idx = start_idx + slice_size;
-            let slice = &results[start_idx..end_idx];
-            
-            deciles.push(calculate_decile_stats(slice, i + 1, party_size));
-        }
-    } else {
-        // Fallback for non-2511 results
-        let decile_size = total_runs as f64 / 10.0;
-        for i in 0..10 {
-            let start_idx = (i as f64 * decile_size).floor() as usize;
-            let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
-            let slice = &results[start_idx..end_idx.min(total_runs)];
-            if !slice.is_empty() {
-                deciles.push(calculate_decile_stats(slice, i + 1, party_size));
-            }
-        }
-        
-        // Pick median run for global_median fallback
+    if is_perfect && total_runs >= 11 {
         let median_idx = total_runs / 2;
         let median_run = &results[median_idx];
         let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
@@ -392,9 +309,47 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
             win_rate: if survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
-            median_run_data: Some(median_run.encounters[0].clone()),
+            median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
             battle_duration_rounds: duration,
         });
+
+        for i in 0..10 {
+            let start_idx = if i < 5 { i * slice_size } else { i * slice_size + 1 };
+            let end_idx = start_idx + slice_size;
+            if start_idx < total_runs && end_idx <= total_runs {
+                let slice = &results[start_idx..end_idx];
+                deciles.push(calculate_decile_stats(slice, i + 1, party_size));
+            }
+        }
+    } else {
+        let decile_size = total_runs as f64 / 10.0;
+        for i in 0..10 {
+            let start_idx = (i as f64 * decile_size).floor() as usize;
+            let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
+            let slice = &results[start_idx..end_idx.min(total_runs)];
+            if !slice.is_empty() {
+                deciles.push(calculate_decile_stats(slice, i + 1, party_size));
+            }
+        }
+        
+        let median_idx = total_runs / 2;
+        if let Some(median_run) = results.get(median_idx) {
+            let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
+            let (visualization_data, _) = extract_combatant_visualization(median_run);
+            
+            global_median = Some(DecileStats {
+                decile: 0,
+                label: "Global Median".to_string(),
+                median_survivors: survivors,
+                party_size,
+                total_hp_lost: hp_lost,
+                hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
+                win_rate: if survivors > 0 { 100.0 } else { 0.0 },
+                median_run_visualization: visualization_data,
+                median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
+                battle_duration_rounds: duration,
+            });
+        }
     }
 
     let safety_grade = assess_safety_grade(&deciles, &global_median);
@@ -429,10 +384,9 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
     }
 
     let count = slice.len() as f64;
-    let avg_hp_lost = total_hp_lost / count;
-    let avg_party_max_hp = total_party_max_hp / count;
+    let avg_hp_lost = if count > 0.0 { total_hp_lost / count } else { 0.0 };
+    let avg_party_max_hp = if count > 0.0 { total_party_max_hp / count } else { 0.0 };
 
-    // Pick the TRUE median run of this slice for visualization (126th run for 251 runs)
     let median_in_slice_idx = slice.len() / 2;
     let median_run = &slice[median_in_slice_idx];
     let (visualization_data, _) = extract_combatant_visualization(median_run);
@@ -446,14 +400,14 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
     DecileStats {
         decile: decile_num,
         label: format!("{} {}", label, decile_num),
-        median_survivors: (total_survivors as f64 / count).round() as usize,
+        median_survivors: if count > 0.0 { (total_survivors as f64 / count).round() as usize } else { 0 },
         party_size,
         total_hp_lost: avg_hp_lost,
         hp_lost_percent: if avg_party_max_hp > 0.0 { (avg_hp_lost / avg_party_max_hp) * 100.0 } else { 0.0 },
-        win_rate: (total_wins / count) * 100.0,
+        win_rate: if count > 0.0 { (total_wins / count) * 100.0 } else { 0.0 },
         median_run_visualization: visualization_data,
-        median_run_data: Some(median_run.encounters[0].clone()),
-        battle_duration_rounds: (total_duration as f64 / count).round() as usize,
+        median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
+        battle_duration_rounds: if count > 0.0 { (total_duration as f64 / count).round() as usize } else { 0 },
     }
 }
 
