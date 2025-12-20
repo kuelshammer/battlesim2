@@ -140,29 +140,25 @@ impl ActionExecutionEngine {
                 }
             }
 
-            // Capture optimized snapshot at end of round
-            // Use references instead of cloning for memory efficiency
-            // Only clone essential data, skip heavy structures where possible
-            // Take snapshots less frequently to reduce memory pressure
-            if self.context.round_number % 5 == 0 || self.context.round_number == MAX_ROUNDS {
-                let snapshot: Vec<CombattantState> = self.context.combatants
-                    .values()
-                    .map(|state| CombattantState {
-                        id: state.id.clone(),
-                        side: state.side,
-                        base_combatant: state.base_combatant.clone(), // This is necessary for reference
-                        current_hp: state.current_hp,
-                        temp_hp: state.temp_hp,
-                        conditions: state.conditions.clone(),
-                        concentration: state.concentration.clone(),
-                        position: state.position.clone(),
-                        resources: crate::resources::ResourceLedger::new(), // Use empty ledger for snapshot
-                        arcane_ward_hp: state.arcane_ward_hp,
-                        cached_stats: None, // Don't clone cached stats
-                    })
-                    .collect();
-                round_snapshots.push(snapshot);
-            }
+            // Capture snapshot at end of every round
+            // This ensures round-by-round visualization and final state are accurate
+            let snapshot: Vec<CombattantState> = self.context.combatants
+                .values()
+                .map(|state| CombattantState {
+                    id: state.id.clone(),
+                    side: state.side,
+                    base_combatant: state.base_combatant.clone(), // This is necessary for reference
+                    current_hp: state.current_hp,
+                    temp_hp: state.temp_hp,
+                    conditions: state.conditions.clone(),
+                    concentration: state.concentration.clone(),
+                    position: state.position.clone(),
+                    resources: crate::resources::ResourceLedger::new(), // Use empty ledger for snapshot
+                    arcane_ward_hp: state.arcane_ward_hp,
+                    cached_stats: None, // Don't clone cached stats
+                })
+                .collect();
+            round_snapshots.push(snapshot);
 
             // Continue to max rounds limit - let combat run its course
             // The round limit serves as the safety mechanism

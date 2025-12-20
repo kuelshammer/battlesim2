@@ -21,14 +21,10 @@ type PropType = {
     onEditingChange?: (isEditing: boolean) => void,
 }
 
-function carefulSave(key: string, value: string) {
-    if (!localStorage.getItem('useLocalStorage')) return
-    localStorage.setItem(key, value)
-}
-
 const SaveFileSchema = z.object({
     updated: z.number(),
     name: z.string(),
+    filename: z.string().optional(),
     players: z.array(CreatureSchema),
     encounters: z.array(EncounterSchema),
 })
@@ -37,51 +33,6 @@ type SaveFile = z.infer<typeof SaveFileSchema>
 const SaveCollectionSchema = z.array(SaveFileSchema)
 type SaveCollection = z.infer<typeof SaveCollectionSchema>
 
-const ExampleAdventuringDay: SaveFile = {
-    updated: Date.now(),
-    name: 'Example',
-    players: [
-        PlayerTemplates.barbarian(3, { gwm: false, weaponBonus: 0 }),
-        PlayerTemplates.cleric(3, {}),
-        PlayerTemplates.rogue(3, { ss: false, weaponBonus: 0 }),
-        PlayerTemplates.wizard(3, {}),
-    ],
-    encounters: [
-        {
-            monsters: [
-                getMonster('Bandit Captain')!,
-                { ...getMonster('Bandit')!, count: 5 },
-            ],
-            playersSurprised: false,
-            monstersSurprised: false,
-            shortRest: false,
-            playersPrecast: false,
-            monstersPrecast: false,
-        },
-    ]
-}
-
-function loadSaves(): SaveCollection {
-    if (typeof localStorage === undefined) return []
-
-    const json = localStorage.getItem('saveFiles')
-    if (!json) return [ExampleAdventuringDay]
-
-    const obj = JSON.parse(json)
-    const parsed = SaveCollectionSchema.safeParse(obj)
-
-    if (parsed.success) {
-        return parsed.data
-    }
-    return []
-}
-
-function currentSaveName(): string {
-    if (typeof localStorage === undefined) return ''
-
-    return localStorage.getItem('saveName') || ''
-}
-
 const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, onCancel, onApplyChanges, onEditingChange }) => {
     const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
     const [editedEncounters, setEditedEncounters] = useState<Encounter[]>(currentEncounters);
@@ -89,9 +40,31 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
     const [editingMonster, setEditingMonster] = useState<Creature | null>(null);
     const [editingMonsterEncounterIndex, setEditingMonsterEncounterIndex] = useState<number | null>(null);
 
+    const [saveName, setSaveName] = useState('')
+    const [savedDays, setSavedDays] = useState<SaveFile[]>([])
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+
     useEffect(() => {
         onEditingChange?.(editingPlayer !== null || editingMonster !== null);
     }, [editingPlayer, editingMonster, onEditingChange]);
+
+    useEffect(() => {
+        fetchSaves()
+    }, [])
+
+    async function fetchSaves() {
+        setLoading(true)
+        try {
+            const response = await fetch('/api/adventuring-days')
+            const data = await response.json()
+            setSavedDays(data)
+        } catch (e) {
+            setError('Failed to fetch saves')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     // Sync external changes (if parent re-renders with new props)
     useEffect(() => {
@@ -177,62 +150,47 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
         setEditedEncounters(updatedEncounters);
     }
 
-    // Adapt existing save/load logic to work with edited state
-    const useSharedContext = sharedStateGenerator('adventuringDayForm')
-    const [saveName, setSaveName] = useSharedContext(currentSaveName())
-    const [deleted, setDeleted] = useState(0)
-    const [error, setError] = useState<string | null>(null)
+    const isValidSaveName = !!saveName
 
-    const isValidSaveName = useCalculatedState(() => !!saveName, [saveName])
-    const searchResults = useCalculatedState(loadSaves, [saveName, deleted])
-
-
-    function saveEditedDay() {
+    async function saveEditedDay() {
         if (!isValidSaveName) return;
 
-        const newSaveFile: SaveFile = {
-            updated: Date.now(),
-            name: saveName,
-            players: editedPlayers, // Use edited state
-            encounters: editedEncounters, // Use edited state
+        try {
+            const response = await fetch('/api/adventuring-days', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: saveName,
+                    players: editedPlayers,
+                    encounters: editedEncounters,
+                })
+            })
+            if (response.ok) {
+                fetchSaves()
+                onApplyChanges(editedPlayers, editedEncounters);
+            }
+        } catch (e) {
+            setError('Failed to save')
         }
-
-        const saveFiles = loadSaves()
-
-        const existingIndex = saveFiles.findIndex(save => (save.name === newSaveFile.name))
-        if (existingIndex !== -1) saveFiles[existingIndex] = newSaveFile
-        else saveFiles.push(newSaveFile)
-
-        carefulSave('saveFiles', JSON.stringify(saveFiles))
-        carefulSave('saveName', saveName)
-        onApplyChanges(editedPlayers, editedEncounters); // Pass current edited state back to parent
     }
 
-    function loadSavedDay(nameToLoad: string) {
-        const saveFile = loadSaves().find(save => (save.name === nameToLoad))
-
-        if (!saveFile) return
-
-        onApplyChanges(saveFile.players, saveFile.encounters) // Pass loaded state to parent
-        setEditedPlayers(saveFile.players); // Update local state
-        setEditedEncounters(saveFile.encounters); // Update local state
-        setSaveName(nameToLoad);
-        carefulSave('saveName', nameToLoad);
+    function loadSavedDay(save: SaveFile) {
+        onApplyChanges(save.players, save.encounters)
+        setEditedPlayers(save.players);
+        setEditedEncounters(save.encounters);
+        setSaveName(save.name);
     }
 
-    function deleteSave(nameToDelete: string) {
-        setDeleted(deleted + 1)
-        const saveFiles = loadSaves()
-        const index = saveFiles.findIndex(save => (save.name === nameToDelete))
-
-        if (index === -1) return
-
-        saveFiles.splice(index, 1)
-        carefulSave('saveFiles', JSON.stringify(saveFiles))
-
-        if (saveName === nameToDelete) {
-            setSaveName('');
-            localStorage.removeItem('saveName');
+    async function deleteSave(filename: string) {
+        try {
+            const response = await fetch(`/api/adventuring-days/${filename}`, {
+                method: 'DELETE'
+            })
+            if (response.ok) {
+                fetchSaves()
+            }
+        } catch (e) {
+            setError('Failed to delete')
         }
     }
 
@@ -275,17 +233,24 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
 
         const newSave: SaveFile = parsed.data
 
-        const saveFiles = loadSaves()
-
-        const existingIndex = saveFiles.findIndex(save => (save.name === newSave.name))
-        if (existingIndex !== -1) saveFiles[existingIndex] = newSave
-        else saveFiles.push(newSave)
-
-        carefulSave('saveFiles', JSON.stringify(saveFiles))
-        carefulSave('saveName', newSave.name)
-        onApplyChanges(newSave.players, newSave.encounters) // Update parent
-        setEditedPlayers(newSave.players); // Update local state
-        setEditedEncounters(newSave.encounters); // Update local state
+        try {
+            await fetch('/api/adventuring-days', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: newSave.name,
+                    players: newSave.players,
+                    encounters: newSave.encounters,
+                })
+            })
+            fetchSaves()
+            onApplyChanges(newSave.players, newSave.encounters)
+            setEditedPlayers(newSave.players);
+            setEditedEncounters(newSave.encounters);
+            setSaveName(newSave.name);
+        } catch (e) {
+            setError('Failed to upload')
+        }
     }
 
 
@@ -317,11 +282,13 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
             {/* Existing Save Files List (still useful for loading others) */}
             <section className={styles.saveFilesList}>
                 <h3>Saved Days:</h3>
-                {searchResults.map(save => (
+                {loading ? <p>Loading saves...</p> : 
+                 savedDays.length === 0 ? <p>No saved adventuring days found.</p> :
+                 savedDays.map(save => (
                     <div key={save.name} className={styles.saveItem}>
                         <span>{save.name} ({new Date(save.updated).toLocaleDateString()})</span>
-                        <button onClick={() => loadSavedDay(save.name)}>Load</button>
-                        <button onClick={() => deleteSave(save.name)}>Delete</button>
+                        <button onClick={() => loadSavedDay(save)}>Load</button>
+                        <button onClick={() => deleteSave(save.filename || save.name)}>Delete</button>
                     </div>
                 ))}
             </section>

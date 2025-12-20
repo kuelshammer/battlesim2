@@ -67,7 +67,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [canSave, setCanSave] = useState(false)
     
     useEffect(() => {
-        setCanSave(!isEmptyResult && (typeof window !== "undefined") && !!localStorage && !!localStorage.getItem('useLocalStorage'))
+        setCanSave(!isEmptyResult)
     }, [isEmptyResult])
 
     // Detect changes that need resimulation with debounce
@@ -253,7 +253,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             />
                             {(worker.analysis?.encounters?.[index] ? (
                                 <EncounterResult 
-                                    value={worker.analysis.encounters[index].quintiles[2].median_run_data || simulationResults[index]} 
+                                    value={worker.analysis.encounters[index].quintiles[2].medianRunData || simulationResults[index]} 
                                     analysis={worker.analysis.encounters[index]} 
                                     isStale={isStale}
                                     isPreliminary={worker.isRunning && worker.progress < 100}
@@ -333,6 +333,22 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Adventuring Day Editor (Save/Load) */}
+                    {(saving || loading) && (
+                        <AdventuringDayForm
+                            currentPlayers={players}
+                            currentEncounters={encounters}
+                            onCancel={() => { setSaving(false); setLoading(false); }}
+                            onApplyChanges={(newPlayers, newEncounters) => {
+                                setPlayers(newPlayers);
+                                setEncounters(newEncounters);
+                                setSaving(false);
+                                setLoading(false);
+                            }}
+                            onEditingChange={setIsEditing}
+                        />
                     )}
 
                     {/* Quintile Analysis Modal */}

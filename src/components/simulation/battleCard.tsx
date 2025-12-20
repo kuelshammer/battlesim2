@@ -14,29 +14,54 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
         return styles.healthy
     }
 
-    const getHpBarFill = (hpPercentage: number): string => {
-        if (hpPercentage <= 0) return '░░░░░░░░░░'
-        if (hpPercentage <= 10) return '█░░░░░░░░░'
-        if (hpPercentage <= 20) return '██░░░░░░░░'
-        if (hpPercentage <= 30) return '███░░░░░░░'
-        if (hpPercentage <= 40) return '████░░░░░░'
-        if (hpPercentage <= 50) return '█████░░░░░'
-        if (hpPercentage <= 60) return '██████░░░░'
-        if (hpPercentage <= 70) return '███████░░░'
-        if (hpPercentage <= 80) return '████████░░'
-        if (hpPercentage <= 90) return '█████████░'
-        return '██████████'
-    }
+    const renderHpBar = (currentHp: number, startHp: number, maxHp: number) => {
+        // Calculate segments (10 total)
+        const totalSegments = 10;
+        
+        // Green: Remaining HP
+        const greenCount = Math.floor((currentHp / maxHp) * totalSegments);
+        
+        // Red: Lost in this battle (Start HP - Current HP)
+        const newDamage = Math.max(0, startHp - currentHp);
+        const redCount = Math.floor((newDamage / maxHp) * totalSegments);
+        
+        // Grey: Previously lost HP (Max HP - Start HP)
+        const greyCount = totalSegments - greenCount - redCount;
+        
+        const segments = [];
+        // Green segments (Remaining)
+        for (let i = 0; i < greenCount; i++) {
+            segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
+        }
+        // Red segments (Newly lost)
+        for (let i = 0; i < redCount; i++) {
+            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
+        }
+        // Grey segments (Previously lost)
+        for (let i = 0; i < greyCount; i++) {
+            segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
+        }
+        
+        // Ensure we always have exactly 10 segments due to rounding
+        while (segments.length < totalSegments) {
+            segments.push(<span key={`f-${segments.length}`} className={styles.segmentGrey}>░</span>);
+        }
+        if (segments.length > totalSegments) {
+            segments.splice(totalSegments);
+        }
+
+        return segments;
+    };
 
     const getOutcomeIcon = (winRate: number): string => {
         if (winRate < 100) return '💀'
-        if (winRate === 100 && quintile.median_survivors < quintile.party_size) return '⚠️'
+        if (winRate === 100 && quintile.medianSurvivors < quintile.partySize) return '⚠️'
         return '✅'
     }
 
     const getOutcomeLabel = (winRate: number): string => {
         if (winRate < 100) return 'TPK'
-        if (winRate === 100 && quintile.median_survivors < quintile.party_size) return 'Pyrrhic Victory'
+        if (winRate === 100 && quintile.medianSurvivors < quintile.partySize) return 'Pyrrhic Victory'
         return 'Victory'
     }
 
@@ -79,27 +104,27 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
                             {getStatisticalMeaning(quintile.quintile)}
                         </span>
                     </div>
-                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(quintile.win_rate)}`}>
-                        {getOutcomeIcon(quintile.win_rate)} {getOutcomeLabel(quintile.win_rate)}
+                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(quintile.winRate)}`}>
+                        {getOutcomeIcon(quintile.winRate)} {getOutcomeLabel(quintile.winRate)}
                     </span>
                 </div>
                 <div className={styles.duration}>
-                    Duration: {quintile.battle_duration_rounds} Rounds
+                    Duration: {quintile.battleDurationRounds} Rounds
                 </div>
             </div>
 
             <div className={styles.combatants}>
-                {quintile.median_run_visualization?.map((combatant: CombatantVisualization, index: number) => (
+                {quintile.medianRunVisualization?.map((combatant: CombatantVisualization, index: number) => (
                     <div key={index} className={styles.combatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
-                            {combatant.is_dead && <span className={styles.deathIndicator}> 💀 Dead</span>}
+                            {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
                         </div>
                         <div className={styles.hpBar}>
-                            <span className={getHpBarColor(combatant.hp_percentage, combatant.is_dead)}>
-                                [{getHpBarFill(combatant.hp_percentage)}] 
+                            <span className={getHpBarColor(combatant.hpPercentage, combatant.isDead)}>
+                                [{renderHpBar(combatant.currentHp, combatant.startHp, combatant.maxHp)}] 
                                 <span className={styles.hpText}>
-                                    {combatant.current_hp.toFixed(0)}/{combatant.max_hp.toFixed(0)}
+                                    {combatant.currentHp}/{combatant.maxHp}
                                 </span>
                             </span>
                         </div>
@@ -115,10 +140,10 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
 
             <div className={styles.footer}>
                 <div className={styles.winRate}>
-                    Win Rate: {quintile.win_rate.toFixed(1)}%
+                    Win Rate: {quintile.winRate.toFixed(1)}%
                 </div>
                 <div className={styles.survivors}>
-                    Survivors: {quintile.median_survivors}/{quintile.party_size}
+                    Survivors: {quintile.medianSurvivors}/{quintile.partySize}
                 </div>
             </div>
         </div>

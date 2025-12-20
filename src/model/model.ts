@@ -460,36 +460,32 @@ export type Event = z.infer<typeof EventSchema>
 // Quintile Analysis Types
 export const CombatantVisualizationSchema = z.object({
     name: z.string(),
-    max_hp: z.number().int(),
-    start_hp: z.number().int(),
-    current_hp: z.number().int(),
-    is_dead: z.boolean(),
-    is_player: z.boolean(),
-    hp_percentage: z.number(),
+    maxHp: z.number().int(),
+    startHp: z.number().int(),
+    currentHp: z.number().int(),
+    isDead: z.boolean(),
+    isPlayer: z.boolean(),
+    hpPercentage: z.number(),
 })
 
 export const QuintileStatsSchema = z.object({
     quintile: z.number(),
     label: z.string(),
-    median_survivors: z.number(),
-    party_size: z.number(),
-    total_hp_lost: z.number(),
-    hp_lost_percent: z.number(),
-    win_rate: z.number(),
+    medianSurvivors: z.number(),
+    partySize: z.number(),
+    totalHpLost: z.number(),
+    hpLostPercent: z.number(),
+    winRate: z.number(),
     // New fields for 5-Timeline Dashboard
-    median_run_visualization: z.array(CombatantVisualizationSchema),
-    median_run_data: EncounterResultSchema.optional().nullable(),
-    battle_duration_rounds: z.number(),
+    medianRunVisualization: z.array(CombatantVisualizationSchema),
+    medianRunData: EncounterResultSchema.optional().nullable(),
+    battleDurationRounds: z.number(),
 })
 
 export const AggregateOutputSchema = z.object({
-
-    scenario_name: z.string(),
-
-    total_runs: z.number(),
-
+    scenarioName: z.string(),
+    totalRuns: z.number(),
     quintiles: z.array(QuintileStatsSchema),
-
 }).passthrough()
 
 

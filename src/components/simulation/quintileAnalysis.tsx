@@ -37,13 +37,13 @@ const QuintileAnalysis: FC<PropType> = memo(({ analysis }) => {
                     {isExpanded ? '🔽' : '▶️'} {isExpanded ? 'Hide' : 'Show'} Full Quintile Analysis
                 </button>
                 <div className={styles.analysisSummary}>
-                    <span>Based on {analysis.total_runs} simulation runs</span>
+                    <span>Based on {analysis.totalRuns} simulation runs</span>
                 </div>
             </div>
 
             {isExpanded && (
                 <div className={styles.analysisContent}>
-                    <h3>5-Timeline Dashboard: {analysis.scenario_name}</h3>
+                    <h3>5-Timeline Dashboard: {analysis.scenarioName}</h3>
                     {visibleQuintiles.length === 0 ? (
                         <div className={styles.emptyState}>
                             <p>All quintiles are hidden</p>

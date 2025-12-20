@@ -14,15 +14,15 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
         if (!analysis || !analysis.quintiles.length) return null;
 
         // Calculate overall win rate and average HP loss
-        const totalRuns = analysis.total_runs;
+        const totalRuns = analysis.totalRuns;
         let totalWins = 0;
         let totalHpLossPercent = 0;
 
         analysis.quintiles.forEach(quintile => {
             // Each quintile represents 20% of runs (for 5 quintiles)
             const quintileRuns = totalRuns / 5;
-            totalWins += ((quintile.win_rate || 0) / 100) * quintileRuns;
-            totalHpLossPercent += (quintile.hp_lost_percent || 0);
+            totalWins += ((quintile.winRate || 0) / 100) * quintileRuns;
+            totalHpLossPercent += (quintile.hpLostPercent || 0);
         });
 
         const overallWinRate = (totalWins / totalRuns) * 100;
@@ -50,8 +50,8 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
             <div className={styles.ratingDetails}>
                 {analysis && (
                     <>
-                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + (q.win_rate || 0), 0) / analysis.quintiles.length)).toFixed(1)}%</span>
-                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + (q.hp_lost_percent || 0), 0) / analysis.quintiles.length).toFixed(1)}%</span>
+                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + (q.winRate || 0), 0) / analysis.quintiles.length)).toFixed(1)}%</span>
+                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + (q.hpLostPercent || 0), 0) / analysis.quintiles.length).toFixed(1)}%</span>
                     </>
                 )}
             </div>
@@ -116,8 +116,8 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
         return segments;
     };
 
-    const avgFinalHp = medianQuintile.median_run_visualization
-        ? (medianQuintile.median_run_visualization.reduce((sum, c) => sum + c.hp_percentage, 0) / medianQuintile.median_run_visualization.length).toFixed(1)
+    const avgFinalHp = medianQuintile.medianRunVisualization
+        ? (medianQuintile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianQuintile.medianRunVisualization.length).toFixed(1)
         : '0.0';
 
     return (
@@ -125,28 +125,28 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
             <h4>📊 Median Performance {isPreliminary && <small>(Updating...)</small>}</h4>
             <div className={styles.bestQuintileHeader}>
                 <span className={styles.survivorsBadge}>
-                    ✅ {medianQuintile.median_survivors}/{medianQuintile.party_size} Survivors
+                    ✅ {medianQuintile.medianSurvivors}/{medianQuintile.partySize} Survivors
                 </span>
                 <span className={styles.winRateBadge}>
-                    {(medianQuintile.win_rate || 0).toFixed(1)}% Win Rate
+                    {(medianQuintile.winRate || 0).toFixed(1)}% Win Rate
                 </span>
             </div>
 
             <div className={styles.bestQuintileCombatants}>
-                {medianQuintile.median_run_visualization?.map((combatant, index) => (
+                {medianQuintile.medianRunVisualization?.map((combatant, index) => (
                     <div key={index} className={styles.bestQuintileCombatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
-                            {combatant.is_dead && <span className={styles.deathIndicator}> 💀 Dead</span>}
+                            {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
                         </div>
                         <div className={styles.hpBar}>
-                            <span className={getHpBarColor(combatant.hp_percentage, combatant.is_dead)}>
+                            <span className={getHpBarColor(combatant.hpPercentage, combatant.isDead)}>
                                 <div className={styles.hpBarContainer}>
                                     <div className={styles.hpBarVisual}>
-                                        [{renderHpBar(combatant.current_hp, combatant.start_hp, combatant.max_hp)}]
+                                        [{renderHpBar(combatant.currentHp, combatant.startHp, combatant.maxHp)}]
                                     </div>
                                     <span className={styles.hpText}>
-                                        {combatant.current_hp}/{combatant.max_hp} HP ({combatant.hp_percentage.toFixed(0)}%)
+                                        {combatant.currentHp}/{combatant.maxHp} HP ({combatant.hpPercentage.toFixed(0)}%)
                                     </span>
                                 </div>
                             </span>
@@ -160,7 +160,7 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
                     <strong>Average Final HP:</strong> {avgFinalHp}%
                 </div>
                 <div className={styles.metric}>
-                    <strong>Combat Duration:</strong> {medianQuintile.battle_duration_rounds} rounds
+                    <strong>Combat Duration:</strong> {medianQuintile.battleDurationRounds} rounds
                 </div>
             </div>
         </div>

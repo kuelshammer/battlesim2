@@ -1,0 +1,58 @@
+{
+  "monsters": [
+    {
+      "id": "hobgoblin-captain",
+      "name": "Hobgoblin Captain",
+      "count": 1,
+      "hp": 39,
+      "AC": 18,
+      "speed_fly": null,
+      "saveBonus": 2,
+      "strSaveBonus": null,
+      "dexSaveBonus": null,
+      "conSaveBonus": null,
+      "intSaveBonus": null,
+      "wisSaveBonus": null,
+      "chaSaveBonus": null,
+      "conSaveAdvantage": false,
+      "saveAdvantage": false,
+      "initiativeBonus": null,
+      "initiativeAdvantage": false,
+      "actions": [
+        {
+          "id": "longsword",
+          "name": "Longsword",
+          "cost": [],
+          "requirements": [],
+          "tags": [],
+          "freq": "at will",
+          "condition": "always",
+          "targets": 1,
+          "type": "atk",
+          "dpr": 8.5,
+          "toHit": 5,
+          "target": "enemy",
+          "useSaves": false,
+          "halfOnSave": false,
+          "riderEffect": null
+        }
+      ],
+      "triggers": null,
+      "spellSlots": null,
+      "classResources": null,
+      "hitDice": null,
+      "conModifier": null,
+      "arrival": 0,
+      "mode": "monster",
+      "type": null,
+      "cr": null,
+      "src": null,
+      "class": null
+    }
+  ],
+  "playersSurprised": false,
+  "monstersSurprised": false,
+  "shortRest": false,
+  "playersPrecast": false,
+  "monstersPrecast": false
+}
