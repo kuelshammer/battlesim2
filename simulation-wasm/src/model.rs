@@ -689,6 +689,7 @@ impl Default for CreatureState {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Combattant {
     pub id: String,
+    pub team: u32, // 0 for Team 1 (Players), 1 for Team 2 (Monsters)
     pub creature: Creature,
     #[serde(default)]
     pub initiative: f64,

@@ -76,23 +76,43 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
         return styles.healthy;
     };
 
-    const renderHpBar = (currentHp: number, maxHp: number) => {
+    const renderHpBar = (currentHp: number, startHp: number, maxHp: number) => {
         // Calculate segments (10 total)
         const totalSegments = 10;
-        const ratio = currentHp / maxHp;
-        const greenCount = Math.ceil(ratio * totalSegments);
-        const lostCount = totalSegments - greenCount;
         
-        // Note: Without 'initial_hp' in the visualization data, we cannot distinguish 
-        // "previously lost" vs "newly lost" HP. We assume all lost HP is red/missing.
+        // Green: Remaining HP
+        const greenCount = Math.floor((currentHp / maxHp) * totalSegments);
+        
+        // Red: Lost in this battle (Start HP - Current HP)
+        const newDamage = Math.max(0, startHp - currentHp);
+        const redCount = Math.floor((newDamage / maxHp) * totalSegments);
+        
+        // Grey: Previously lost HP (Max HP - Start HP)
+        const oldDamage = Math.max(0, maxHp - startHp);
+        const greyCount = totalSegments - greenCount - redCount;
         
         const segments = [];
+        // Green segments (Remaining)
         for (let i = 0; i < greenCount; i++) {
             segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
         }
-        for (let i = 0; i < lostCount; i++) {
-            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>░</span>);
+        // Red segments (Newly lost)
+        for (let i = 0; i < redCount; i++) {
+            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
         }
+        // Grey segments (Previously lost)
+        for (let i = 0; i < greyCount; i++) {
+            segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
+        }
+        
+        // Ensure we always have exactly 10 segments due to rounding
+        while (segments.length < totalSegments) {
+            segments.push(<span key={`f-${segments.length}`} className={styles.segmentGrey}>░</span>);
+        }
+        if (segments.length > totalSegments) {
+            segments.splice(totalSegments);
+        }
+
         return segments;
     };
 
@@ -123,7 +143,7 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
                             <span className={getHpBarColor(combatant.hp_percentage, combatant.is_dead)}>
                                 <div className={styles.hpBarContainer}>
                                     <div className={styles.hpBarVisual}>
-                                        [{renderHpBar(combatant.current_hp, combatant.max_hp)}]
+                                        [{renderHpBar(combatant.current_hp, combatant.start_hp, combatant.max_hp)}]
                                     </div>
                                     <span className={styles.hpText}>
                                         {combatant.current_hp}/{combatant.max_hp} HP ({combatant.hp_percentage.toFixed(0)}%)

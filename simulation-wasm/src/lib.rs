@@ -330,6 +330,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
             // Create Combattant for ActionExecutionEngine
             let combattant = Combattant {
                 id: id.clone(),
+                team: 0, // Team 0 for players
                 creature: p.clone(),
                 initiative: crate::utilities::roll_initiative(&p),
                 initial_state: state.clone(),
@@ -351,7 +352,6 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
                 let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
                 let mut m = monster.clone();
                 m.name = name;
-                m.mode = "monster".to_string(); // Explicitly set mode for team assignment
                 let id = format!("{}-{}-{}", monster.id, group_idx, i);
 
                 let enemy_state = CreatureState {
@@ -378,6 +378,7 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
 
                 let enemy_combattant = Combattant {
                     id: id.clone(),
+                    team: 1, // Team 1 for monsters
                     creature: m.clone(),
                     initiative: crate::utilities::roll_initiative(&m),
                     initial_state: enemy_state.clone(),
@@ -512,8 +513,8 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
                 }
             }
 
-            // Check mode
-            let is_player = state.base_combatant.creature.mode.as_str() == "player";
+            // Check side
+            let is_player = state.side == 0;
 
             if is_player {
                 team1.push(combatant);
@@ -552,7 +553,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
             // combatant.creature.hp = state.current_hp; // Removed: creature.hp should remain max HP
             combatant.final_state = final_creature_state;
             
-            let is_player = state.base_combatant.creature.mode.as_str() == "player";
+            let is_player = state.side == 0;
             if is_player {
                 team1.push(combatant);
             } else {

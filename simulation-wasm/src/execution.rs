@@ -149,6 +149,7 @@ impl ActionExecutionEngine {
                     .values()
                     .map(|state| CombattantState {
                         id: state.id.clone(),
+                        side: state.side,
                         base_combatant: state.base_combatant.clone(), // This is necessary for reference
                         current_hp: state.current_hp,
                         temp_hp: state.temp_hp,
@@ -620,29 +621,6 @@ impl ActionExecutionEngine {
     fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
         
-        // Calculate total HP for each team
-        let mut player_total_hp = 0;
-        let mut monster_total_hp = 0;
-
-        for combatant in &alive_combatants {
-            let hp = combatant.current_hp;
-            if hp == 0 {
-                continue; // Skip dead combatants
-            }
-            
-            match combatant.base_combatant.creature.mode.as_str() {
-                "player" => player_total_hp += hp,
-                "monster" => monster_total_hp += hp,
-                _ => {} // Ignore other modes
-            }
-        }
-
-// If product of team HP sums is effectively zero (very close to zero), combat is ended
-        if player_total_hp * monster_total_hp == 0 {
-            eprintln!("COMBAT TERMINATION: player_total_hp={}, monster_total_hp={}, product={}", player_total_hp, monster_total_hp, player_total_hp * monster_total_hp);
-            return true;
-        }
-
         // If no one is alive, encounter is complete
         if alive_combatants.is_empty() {
             return true;
@@ -653,11 +631,11 @@ impl ActionExecutionEngine {
             return true;
         }
 
-        // Check if all alive combatants are on the same team
-        let first_mode = &alive_combatants[0].base_combatant.creature.mode;
+        // Check if all alive combatants are on the same team (side)
+        let first_side = alive_combatants[0].side;
         alive_combatants
             .iter()
-            .all(|c| &c.base_combatant.creature.mode == first_mode)
+            .all(|c| c.side == first_side)
     }
 
     /// Generate final encounter results
@@ -685,36 +663,30 @@ impl ActionExecutionEngine {
     fn determine_winner(&self) -> Option<String> {
         let alive_combatants = self.context.get_alive_combatants();
         
-        // Calculate total HP for each team
-        let mut player_total_hp = 0;
-        let mut monster_total_hp = 0;
+        // Calculate total HP for each side
+        let mut team1_hp = 0;
+        let mut team2_hp = 0;
 
         for combatant in &alive_combatants {
-            let hp = combatant.current_hp;
-            if hp == 0 {
-                continue; // Skip dead combatants
-            }
-            
-            match combatant.base_combatant.creature.mode.as_str() {
-                "player" => player_total_hp += hp,
-                "monster" => monster_total_hp += hp,
-                _ => {} // Ignore other modes
+            if combatant.side == 0 {
+                team1_hp += combatant.current_hp;
+            } else {
+                team2_hp += combatant.current_hp;
             }
         }
 
-        // Determine winner based on team HP sums
-        if player_total_hp > 0 && monster_total_hp == 0 {
-            // All monsters are dead, players win
+        // Determine winner based on side HP sums
+        if team1_hp > 0 && team2_hp == 0 {
+            // All of side 1 are dead, side 0 wins
             return Some("Players".to_string());
-        } else if monster_total_hp > 0 && player_total_hp == 0 {
-            // All players are dead, monsters win  
+        } else if team2_hp > 0 && team1_hp == 0 {
+            // All of side 0 are dead, side 1 wins  
             return Some("Monsters".to_string());
-        } else if player_total_hp == 0 && monster_total_hp == 0 {
+        } else if team1_hp == 0 && team2_hp == 0 {
             // Everyone is dead, draw
             return None;
         } else {
-            // Multiple survivors on both teams - for now return None (draw)
-            // TODO: In a full implementation, check team composition when teams are added
+            // Multiple survivors on both sides - for now return None (draw)
             None
         }
     }

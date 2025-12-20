@@ -35,6 +35,7 @@ pub struct TurnContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CombattantState {
     pub id: String,
+    pub side: u32, // 0 for Team 1, 1 for Team 2
     pub base_combatant: Combattant,
     pub current_hp: u32,
     pub temp_hp: u32,
@@ -118,6 +119,7 @@ impl TurnContext {
                 }
                 let state = CombattantState {
                     id: c.id.clone(),
+                    side: c.team,
                     current_hp: c.creature.hp,
                     temp_hp: c.initial_state.temp_hp.unwrap_or(0),
                     conditions: Vec::new(),

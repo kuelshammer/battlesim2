@@ -46,6 +46,7 @@ pub enum EncounterLabel {
 pub struct CombatantVisualization {
     pub name: String,           // "Aragorn", "Gandalf", "Adult Red Dragon"
     pub max_hp: u32,           // 65, 35, 300
+    pub start_hp: u32,         // HP at the start of this encounter
     pub current_hp: u32,        // 0, 13, 0
     pub is_dead: bool,         // true, false, true
     pub is_player: bool,       // true, true, false
@@ -96,7 +97,12 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
     }
 
     if let Some(final_encounter) = result.last() {
-        if let Some(last_round) = final_encounter.rounds.last() {
+        if let (Some(first_round), Some(last_round)) = (final_encounter.rounds.first(), final_encounter.rounds.last()) {
+            // Map starting HP by ID for lookup
+            let start_hps: std::collections::HashMap<String, u32> = first_round.team1.iter().chain(first_round.team2.iter())
+                .map(|c| (c.id.clone(), c.initial_state.current_hp))
+                .collect();
+
             for combatant in &last_round.team1 {
                 let hp_percentage = if combatant.creature.hp > 0 {
                     (combatant.final_state.current_hp as f64 / combatant.creature.hp as f64) * 100.0
@@ -107,6 +113,7 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
                 combatants.push(CombatantVisualization {
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
+                    start_hp: *start_hps.get(&combatant.id).unwrap_or(&combatant.creature.hp),
                     current_hp: combatant.final_state.current_hp,
                     is_dead: combatant.final_state.current_hp == 0,
                     is_player: true,
@@ -124,6 +131,7 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
                 combatants.push(CombatantVisualization {
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
+                    start_hp: *start_hps.get(&combatant.id).unwrap_or(&combatant.creature.hp),
                     current_hp: combatant.final_state.current_hp,
                     is_dead: combatant.final_state.current_hp == 0,
                     is_player: false,
