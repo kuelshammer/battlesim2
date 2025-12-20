@@ -327,17 +327,18 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
 
     let total_runs = results.len();
     
-    // 2511 methodology: 5 slices of 251 + 1 median + 5 slices of 251
-    // If total_runs != 2511, we fall back to standard decile calculation
-    let is_perfect_2511 = total_runs == 2511;
-    let slice_size = if is_perfect_2511 { 251 } else { total_runs / 10 };
+    // Generalized methodology: 5 slices of N + 1 median + 5 slices of N
+    // This works for any length where (total_runs - 1) is divisible by 10 (e.g., 251, 2511)
+    let is_perfect = total_runs > 0 && (total_runs - 1) % 10 == 0;
+    let slice_size = if is_perfect { (total_runs - 1) / 10 } else { total_runs / 10 };
     
     let mut deciles = Vec::with_capacity(10);
     let mut global_median = None;
 
-    if is_perfect_2511 {
-        // Absolute Median at index 1255
-        let median_run = &results[1255];
+    if is_perfect && total_runs > 0 {
+        // Absolute Median at the exact center
+        let median_idx = total_runs / 2;
+        let median_run = &results[median_idx];
         let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
         let (visualization_data, _) = extract_combatant_visualization(median_run);
         
@@ -354,11 +355,10 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             battle_duration_rounds: duration,
         });
 
-        // 10 Deciles of 251 runs each
+        // 10 Deciles of equal size N
         for i in 0..10 {
-            // Slices: [0..251], [251..502], [502..753], [753..1004], [1004..1255], 
-            // Skip index 1255 (median)
-            // [1256..1507], [1507..1758], [1758..2009], [2009..2260], [2260..2511]
+            // Slices before median: [0..N], [N..2N]...
+            // Slices after median: Skip the middle index
             let start_idx = if i < 5 { i * slice_size } else { i * slice_size + 1 };
             let end_idx = start_idx + slice_size;
             let slice = &results[start_idx..end_idx];

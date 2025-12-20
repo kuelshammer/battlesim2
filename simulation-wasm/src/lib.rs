@@ -113,7 +113,7 @@ pub fn run_simulation_with_callback(
 
         let is_last_iteration = i == iterations - 1;
         let should_report_progress = (i + 1) % batch_size == 0 || is_last_iteration;
-        let should_report_analysis = (i + 1) % 252 == 0 || is_last_iteration;
+        let should_report_analysis = (i + 1) % 251 == 0 || is_last_iteration;
 
         if should_report_progress || should_report_analysis {
             let progress = (i + 1) as f64 / iterations as f64;
