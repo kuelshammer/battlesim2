@@ -204,7 +204,7 @@ export const CreatureSchema = z.object({
     name: z.string(),
     count: z.number(),
     hp: z.number().int(),
-    AC: z.number(),
+    ac: z.number(),
     speed_fly: z.number().optional(),
 
     // Save bonuses - average is required, individual are optional overrides
@@ -246,14 +246,14 @@ export const ResourceLedgerSchema = z.object({
 export type ResourceLedger = z.infer<typeof ResourceLedgerSchema>
 
 const CreatureStateSchema = z.object({
-    currentHP: z.number(),
-    tempHP: z.number().optional(),
+    currentHp: z.number(),
+    tempHp: z.number().optional(),
     buffs: z.map(z.string(), BuffSchema),
     resources: ResourceLedgerSchema,
     upcomingBuffs: z.map(z.string(), BuffSchema),
     usedActions: z.set(z.string()),
     concentratingOn: z.string().nullable().optional(),
-    arcaneWardHP: z.number().optional(),
+    arcaneWardHp: z.number().optional(),
 })
 
 const CombattantSchema = z.object({

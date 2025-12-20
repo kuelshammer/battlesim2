@@ -391,20 +391,20 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
                         <div
                             className={styles.lifebarForeground}
                             style={{
-                                width: `${100 * combattant.initialState.currentHP / (combattant.creature.hp + (combattant.initialState.tempHP || 0))}%`
+                                width: `${100 * combattant.initialState.currentHp / (combattant.creature.hp + (combattant.initialState.tempHp || 0))}%`
                             }}
                         />
-                        {combattant.initialState.tempHP ? (
+                        {combattant.initialState.tempHp ? (
                             <div
                                 className={styles.lifebarTHP}
                                 style={{
-                                    width: `${100 * combattant.initialState.tempHP / (combattant.creature.hp + combattant.initialState.tempHP)}%`,
+                                    width: `${100 * combattant.initialState.tempHp / (combattant.creature.hp + combattant.initialState.tempHp)}%`,
                                 }}
                             />
                         ) : null}
                         <div className={styles.lifebarLabel}>
-                            {combattant.initialState.currentHP}/{combattant.creature.hp}
-                            {combattant.initialState.tempHP ? `+${combattant.initialState.tempHP}` : null}
+                            {combattant.initialState.currentHp}/{combattant.creature.hp}
+                            {combattant.initialState.tempHp ? `+${combattant.initialState.tempHp}` : null}
                         </div>
                     </div>
                     <div className={styles.creatureName}>
@@ -588,13 +588,13 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
 <strong>Winner:</strong> {
                                         (() => {
                                             const lastRound = value.rounds[value.rounds.length - 1]
-                                            const team1Alive = lastRound.team1.filter(c => c.finalState.currentHP > 0).length
-                                            const team2Alive = lastRound.team2.filter(c => c.finalState.currentHP > 0).length
+                                            const team1Alive = lastRound.team1.filter(c => c.finalState.currentHp > 0).length
+                                            const team2Alive = lastRound.team2.filter(c => c.finalState.currentHp > 0).length
                                             const maxRounds = 50; // Match the Rust simulation max rounds
 
                                             // Check if encounter is complete based on team HP sums
-                                            const team1HasHp = lastRound.team1.some(c => c.finalState.currentHP > 0)
-                                            const team2HasHp = lastRound.team2.some(c => c.finalState.currentHP > 0)
+                                            const team1HasHp = lastRound.team1.some(c => c.finalState.currentHp > 0)
+                                            const team2HasHp = lastRound.team2.some(c => c.finalState.currentHp > 0)
 
                                             if (team1HasHp && !team2HasHp) return "Players"
                                             if (team2HasHp && !team1HasHp) return "Monsters"

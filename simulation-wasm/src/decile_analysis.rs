@@ -392,7 +392,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
             win_rate: if survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
-            median_run_data: if total_runs < 50 { Some(median_run.encounters[0].clone()) } else { None },
+            median_run_data: Some(median_run.encounters[0].clone()),
             battle_duration_rounds: duration,
         });
     }
@@ -452,7 +452,7 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
         hp_lost_percent: if avg_party_max_hp > 0.0 { (avg_hp_lost / avg_party_max_hp) * 100.0 } else { 0.0 },
         win_rate: (total_wins / count) * 100.0,
         median_run_visualization: visualization_data,
-        median_run_data: if slice.len() < 50 { Some(median_run.encounters[0].clone()) } else { None },
+        median_run_data: Some(median_run.encounters[0].clone()),
         battle_duration_rounds: (total_duration as f64 / count).round() as usize,
     }
 }
