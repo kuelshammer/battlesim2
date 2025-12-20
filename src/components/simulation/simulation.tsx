@@ -250,7 +250,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             />
                             {(worker.analysis?.encounters?.[index] ? (
                                 <EncounterResult 
-                                    value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles[4].medianRunData || simulationResults[index]} 
+                                    value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]} 
                                     analysis={worker.analysis.encounters[index]} 
                                     isStale={isStale}
                                     isPreliminary={worker.isRunning && worker.progress < 100}
