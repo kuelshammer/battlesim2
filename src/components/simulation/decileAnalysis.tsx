@@ -1,40 +1,40 @@
 import React, { FC, memo, useState } from "react"
 import { AggregateOutput } from "@/model/model"
 import BattleCard from "./battleCard"
-import styles from './quintileAnalysis.module.scss'
+import styles from './decileAnalysis.module.scss'
 import { useUIToggles, UIToggleType } from "@/model/uiToggleState"
 
 type PropType = {
     analysis: AggregateOutput | null
 }
 
-const QuintileAnalysis: FC<PropType> = memo(({ analysis }) => {
+const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
     const { getToggleState } = useUIToggles()
     const [isExpanded, setIsExpanded] = useState(false)
 
     if (!analysis) {
         return (
-            <div className={styles.quintileAnalysis}>
-                <h3>Quintile Analysis</h3>
-                <p>Run simulations to see quintile analysis...</p>
+            <div className={styles.decileAnalysis}>
+                <h3>Decile Analysis</h3>
+                <p>Run simulations to see decile analysis...</p>
             </div>
         )
     }
 
-    // Filter quintiles based on toggle states
-    const visibleQuintiles = analysis.quintiles.filter(quintile => {
-        const toggleId = `quintile-${quintile.quintile}` as UIToggleType
+    // Filter deciles based on toggle states
+    const visibleDeciles = analysis.deciles.filter(decile => {
+        const toggleId = `quintile-${decile.decile}` as UIToggleType // We keep quintile-* toggle IDs for now to avoid massive refactor of toggle state
         return getToggleState(toggleId)
     })
 
     return (
-        <div className={styles.quintileAnalysis}>
+        <div className={styles.decileAnalysis}>
             <div className={styles.analysisHeader}>
                 <button
                     className={styles.expandToggle}
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
-                    {isExpanded ? '🔽' : '▶️'} {isExpanded ? 'Hide' : 'Show'} Full Quintile Analysis
+                    {isExpanded ? '🔽' : '▶️'} {isExpanded ? 'Hide' : 'Show'} Full Decile Analysis
                 </button>
                 <div className={styles.analysisSummary}>
                     <span>Based on {analysis.totalRuns} simulation runs</span>
@@ -43,23 +43,23 @@ const QuintileAnalysis: FC<PropType> = memo(({ analysis }) => {
 
             {isExpanded && (
                 <div className={styles.analysisContent}>
-                    <h3>5-Timeline Dashboard: {analysis.scenarioName}</h3>
-                    {visibleQuintiles.length === 0 ? (
+                    <h3>10-Timeline Dashboard: {analysis.scenarioName}</h3>
+                    {visibleDeciles.length === 0 ? (
                         <div className={styles.emptyState}>
-                            <p>All quintiles are hidden</p>
-                            <p className={styles.emptyHint}>Use the UI controls to show specific quintiles</p>
+                            <p>All deciles are hidden</p>
+                            <p className={styles.emptyHint}>Use the UI controls to show specific deciles</p>
                         </div>
                     ) : (
                         <div className={styles.battleCards}>
-                            {visibleQuintiles.map((quintile) => (
-                                <BattleCard key={quintile.quintile} quintile={quintile} />
+                            {visibleDeciles.map((decile) => (
+                                <BattleCard key={decile.decile} decile={decile} />
                             ))}
                         </div>
                     )}
-                    {visibleQuintiles.length !== analysis.quintiles.length && (
+                    {visibleDeciles.length !== analysis.deciles.length && (
                         <div className={styles.analysisSummary}>
                             <p className={styles.visibilityNote}>
-                                Showing {visibleQuintiles.length} of {analysis.quintiles.length} quintiles
+                                Showing {visibleDeciles.length} of {analysis.deciles.length} deciles
                             </p>
                         </div>
                     )}
@@ -69,4 +69,4 @@ const QuintileAnalysis: FC<PropType> = memo(({ analysis }) => {
     )
 })
 
-export default QuintileAnalysis
+export default DecileAnalysis

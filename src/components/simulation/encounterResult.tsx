@@ -11,22 +11,22 @@ import { useUIToggle } from "@/model/uiToggleState"
 // Encounter Rating Component
 const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
     const getEncounterRating = useMemo(() => {
-        if (!analysis || !analysis.quintiles.length) return null;
+        if (!analysis || !analysis.deciles?.length) return null;
 
         // Calculate overall win rate and average HP loss
         const totalRuns = analysis.totalRuns;
         let totalWins = 0;
         let totalHpLossPercent = 0;
 
-        analysis.quintiles.forEach(quintile => {
+        analysis.deciles.forEach(decile => {
             // Each decile represents 10% of runs
-            const decileRuns = totalRuns / analysis.quintiles.length;
-            totalWins += ((quintile.winRate || 0) / 100) * decileRuns;
-            totalHpLossPercent += (quintile.hpLostPercent || 0);
+            const decileRuns = totalRuns / analysis.deciles.length;
+            totalWins += ((decile.winRate || 0) / 100) * decileRuns;
+            totalHpLossPercent += (decile.hpLostPercent || 0);
         });
 
         const overallWinRate = (totalWins / totalRuns) * 100;
-        const avgHpLossPercent = totalHpLossPercent / analysis.quintiles.length;
+        const avgHpLossPercent = totalHpLossPercent / analysis.deciles.length;
 
         // Rating logic
         if (overallWinRate < 20 || avgHpLossPercent > 80) return { rating: "Deadly", color: "#dc3545", icon: "🔴" };
@@ -50,8 +50,8 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
             <div className={styles.ratingDetails}>
                 {analysis && (
                     <>
-                        <span>Win Rate: {((analysis.quintiles.reduce((sum, q) => sum + (q.winRate || 0), 0) / analysis.quintiles.length)).toFixed(1)}%</span>
-                        <span>Avg HP Lost: {(analysis.quintiles.reduce((sum, q) => sum + (q.hpLostPercent || 0), 0) / analysis.quintiles.length).toFixed(1)}%</span>
+                        <span>Win Rate: {((analysis.deciles.reduce((sum, q) => sum + (q.winRate || 0), 0) / analysis.deciles.length)).toFixed(1)}%</span>
+                        <span>Avg HP Lost: {(analysis.deciles.reduce((sum, q) => sum + (q.hpLostPercent || 0), 0) / analysis.deciles.length).toFixed(1)}%</span>
                     </>
                 )}
             </div>
@@ -61,15 +61,19 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
 
 // Median Performance Display Component
 const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
-    const medianQuintile = useMemo(() => {
-        if (!analysis || !analysis.quintiles.length) return null;
-        // With 10 deciles, Index 4 is the 50th Percentile (Median)
-        // With 5 quintiles, Index 2 was the Median
-        const medianIndex = analysis.quintiles.length === 10 ? 4 : Math.floor(analysis.quintiles.length / 2);
-        return analysis.quintiles[medianIndex];
+    const medianDecile = useMemo(() => {
+        if (!analysis) return null;
+        
+        // Prefer explicit globalMedian if provided (2511 methodology)
+        if (analysis.globalMedian) return analysis.globalMedian;
+        
+        // Fallback to standard median decile
+        if (!analysis.deciles?.length) return null;
+        const medianIndex = analysis.deciles.length === 10 ? 4 : Math.floor(analysis.deciles.length / 2);
+        return analysis.deciles[medianIndex];
     }, [analysis]);
 
-    if (!medianQuintile) return null;
+    if (!medianDecile) return null;
 
     const getHpBarColor = (hpPercentage: number, isDead: boolean): string => {
         if (isDead) return styles.dead;
@@ -118,25 +122,25 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
         return segments;
     };
 
-    const avgFinalHp = medianQuintile.medianRunVisualization
-        ? (medianQuintile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianQuintile.medianRunVisualization.length).toFixed(1)
+    const avgFinalHp = medianDecile.medianRunVisualization
+        ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
         : '0.0';
 
     return (
-        <div className={`${styles.bestQuintileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
-            <h4>📊 Median Performance {isPreliminary && <small>(Updating...)</small>}</h4>
-            <div className={styles.bestQuintileHeader}>
+        <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
+            <h4>📊 {medianDecile.label === "Global Median" ? "True Global Median" : "Median Performance"} {isPreliminary && <small>(Updating...)</small>}</h4>
+            <div className={styles.bestDecileHeader}>
                 <span className={styles.survivorsBadge}>
-                    ✅ {medianQuintile.medianSurvivors}/{medianQuintile.partySize} Survivors
+                    ✅ {medianDecile.medianSurvivors}/{medianDecile.partySize} Survivors
                 </span>
                 <span className={styles.winRateBadge}>
-                    {(medianQuintile.winRate || 0).toFixed(1)}% Win Rate
+                    {(medianDecile.winRate || 0).toFixed(1)}% Win Rate
                 </span>
             </div>
 
-            <div className={styles.bestQuintileCombatants}>
-                {medianQuintile.medianRunVisualization?.map((combatant, index) => (
-                    <div key={index} className={styles.bestQuintileCombatant}>
+            <div className={styles.bestDecileCombatants}>
+                {medianDecile.medianRunVisualization?.map((combatant, index) => (
+                    <div key={index} className={styles.bestDecileCombatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
                             {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
@@ -157,12 +161,12 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
                 ))}
             </div>
 
-            <div className={styles.bestQuintileMetrics}>
+            <div className={styles.bestDecileMetrics}>
                 <div className={styles.metric}>
                     <strong>Average Final HP:</strong> {avgFinalHp}%
                 </div>
                 <div className={styles.metric}>
-                    <strong>Combat Duration:</strong> {medianQuintile.battleDurationRounds} rounds
+                    <strong>Combat Duration:</strong> {medianDecile.battleDurationRounds} rounds
                 </div>
             </div>
         </div>

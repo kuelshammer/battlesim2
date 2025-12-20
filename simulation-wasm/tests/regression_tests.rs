@@ -1,6 +1,6 @@
 use simulation_wasm::model::{Creature, Encounter};
 use simulation_wasm::run_event_driven_simulation_rust;
-use simulation_wasm::quintile_analysis::run_quintile_analysis;
+use simulation_wasm::decile_analysis::run_decile_analysis;
 use std::fs;
 use std::path::PathBuf;
 
@@ -23,32 +23,33 @@ fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<Encounter>, String) {
 fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     println!("Running regression test for: {}", scenario_file);
     let (players, encounters, _) = load_scenario(scenario_file);
-    let iterations = 505; // Sufficient for quintile analysis
+    let iterations = 505; // Sufficient for decile analysis
     
     // Run simulation
-    let (mut results, _) = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
     
-    // Sort results (required for quintile analysis)
+    // Sort results (required for decile analysis)
     results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
         .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
         .unwrap_or(std::cmp::Ordering::Equal));
 
     // Analyze
     let party_size = 1; // Assuming 1v1 for these tests
-    let analysis = run_quintile_analysis(&results, scenario_file, party_size);
-    let median_quintile = &analysis.quintiles[2]; // Index 2 is Median
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let median_decile = &analysis.deciles[4]; // Index 4 is Median (50th percentile)
 
-    println!("  Median Win Rate: {:.1}%", median_quintile.win_rate);
-    println!("  Median Survivors: {}/{}", median_quintile.median_survivors, median_quintile.party_size);
+    println!("  Median Win Rate: {:.1}%", median_decile.win_rate);
+    println!("  Median Survivors: {}/{}", median_decile.median_survivors, median_decile.party_size);
 
     if expected_winner_is_player {
-        assert!(median_quintile.win_rate > 50.0, 
+        assert!(median_decile.win_rate > 50.0, 
             "Regression Failed: Player should win in '{}', but median win rate is {:.1}%", 
-            scenario_file, median_quintile.win_rate);
+            scenario_file, median_decile.win_rate);
     } else {
-        assert!(median_quintile.win_rate < 50.0, 
+        assert!(median_decile.win_rate < 50.0, 
             "Regression Failed: Monster should win in '{}', but median win rate is {:.1}%", 
-            scenario_file, median_quintile.win_rate);
+            scenario_file, median_decile.win_rate);
     }
 }
 

@@ -10,13 +10,13 @@ This architecture implements a comprehensive UI cleanup strategy for Battlesim2,
 
 1. **Combat Log (EventLog.tsx)**: Always visible, displays all simulation events
 2. **HP Bars (EncounterResult.tsx)**: Always visible, shows round-by-round HP bars for combatants
-3. **Quintile Analysis (QuintileAnalysis.tsx)**: Always visible, displays all 5 quintile timelines
+3. **Decile Analysis (DecileAnalysis.tsx)**: Always visible, displays all 5 decile timelines
 
 ### User Requirements
 
 1. **Combat Log**: Hide by default, add toggle to show/hide
 2. **HP Bars**: Remove round-to-round HP bars, add toggle to show/hide
-3. **Quintile Analysis**: Only show quintile 5 at startup, hide other quintiles initially
+3. **Decile Analysis**: Only show decile 5 at startup, hide other deciles initially
 
 ## System Design
 
@@ -54,12 +54,12 @@ import { createContext, useContext, useState, ReactNode } from 'react'
 interface UIToggleState {
   combatLogVisible: boolean
   hpBarsVisible: boolean
-  quintileAnalysisVisible: {
-    quintile1: boolean
-    quintile2: boolean
-    quintile3: boolean
-    quintile4: boolean
-    quintile5: boolean
+  decileAnalysisVisible: {
+    decile1: boolean
+    decile2: boolean
+    decile3: boolean
+    decile4: boolean
+    decile5: boolean
   }
 }
 
@@ -67,8 +67,8 @@ interface UIToggleContextType {
   state: UIToggleState
   toggleCombatLog: () => void
   toggleHpBars: () => void
-  toggleQuintile: (quintile: number) => void
-  setQuintileVisibility: (quintile: number, visible: boolean) => void
+  toggleDecile: (decile: number) => void
+  setDecileVisibility: (decile: number, visible: boolean) => void
 }
 
 const UIToggleContext = createContext<UIToggleContextType | undefined>(undefined)
@@ -77,12 +77,12 @@ export const UIToggleProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [state, setState] = useState<UIToggleState>({
     combatLogVisible: false,
     hpBarsVisible: false,
-    quintileAnalysisVisible: {
-      quintile1: false,
-      quintile2: false,
-      quintile3: false,
-      quintile4: false,
-      quintile5: true // Only quintile 5 visible by default
+    decileAnalysisVisible: {
+      decile1: false,
+      decile2: false,
+      decile3: false,
+      decile4: false,
+      decile5: true // Only decile 5 visible by default
     }
   })
 
@@ -94,28 +94,28 @@ export const UIToggleProvider: React.FC<{ children: ReactNode }> = ({ children }
     setState(prev => ({ ...prev, hpBarsVisible: !prev.hpBarsVisible }))
   }
 
-  const toggleQuintile = (quintile: number) => {
+  const toggleDecile = (decile: number) => {
     setState(prev => ({
       ...prev,
-      quintileAnalysisVisible: {
-        ...prev.quintileAnalysisVisible,
-        [`quintile${quintile}`]: !prev.quintileAnalysisVisible[`quintile${quintile}` as keyof typeof prev.quintileAnalysisVisible]
+      decileAnalysisVisible: {
+        ...prev.decileAnalysisVisible,
+        [`decile${decile}`]: !prev.decileAnalysisVisible[`decile${decile}` as keyof typeof prev.decileAnalysisVisible]
       }
     }))
   }
 
-  const setQuintileVisibility = (quintile: number, visible: boolean) => {
+  const setDecileVisibility = (decile: number, visible: boolean) => {
     setState(prev => ({
       ...prev,
-      quintileAnalysisVisible: {
-        ...prev.quintileAnalysisVisible,
-        [`quintile${quintile}`]: visible
+      decileAnalysisVisible: {
+        ...prev.decileAnalysisVisible,
+        [`decile${decile}`]: visible
       }
     }))
   }
 
   return (
-    <UIToggleContext.Provider value={{ state, toggleCombatLog, toggleHpBars, toggleQuintile, setQuintileVisibility }}>
+    <UIToggleContext.Provider value={{ state, toggleCombatLog, toggleHpBars, toggleDecile, setDecileVisibility }}>
       {children}
     </UIToggleContext.Provider>
   )
@@ -207,48 +207,48 @@ const EncounterResult: FC<PropType> = memo(({ value }) => {
 })
 ```
 
-#### 3. Quintile Analysis Toggle
+#### 3. Decile Analysis Toggle
 
-**Current Implementation**: Always visible all quintiles in `QuintileAnalysis.tsx`
-**New Implementation**: Conditional rendering with individual quintile toggles
+**Current Implementation**: Always visible all deciles in `DecileAnalysis.tsx`
+**New Implementation**: Conditional rendering with individual decile toggles
 
 ```typescript
-// src/components/simulation/quintileAnalysis.tsx
+// src/components/simulation/decileAnalysis.tsx
 import { useUIToggles } from '@/model/uiToggleState'
 
-const QuintileAnalysis: FC<PropType> = memo(({ analysis }) => {
-  const { state, toggleQuintile, setQuintileVisibility } = useUIToggles()
+const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
+  const { state, toggleDecile, setDecileVisibility } = useUIToggles()
 
   if (!analysis) {
     return (
-      <div className={styles.quintileAnalysis}>
-        <h3>Quintile Analysis</h3>
-        <p>Run simulations to see quintile analysis...</p>
+      <div className={styles.decileAnalysis}>
+        <h3>Decile Analysis</h3>
+        <p>Run simulations to see decile analysis...</p>
       </div>
     )
   }
 
   return (
-    <div className={styles.quintileAnalysis}>
+    <div className={styles.decileAnalysis}>
       <h3>5-Timeline Dashboard: {analysis.scenario_name}</h3>
       
-      {/* Quintile toggle controls */}
-      <div className={styles.quintileToggles}>
-        {[1, 2, 3, 4, 5].map(quintile => (
+      {/* Decile toggle controls */}
+      <div className={styles.decileToggles}>
+        {[1, 2, 3, 4, 5].map(decile => (
           <button
-            key={quintile}
-            onClick={() => toggleQuintile(quintile)}
-            className={state.quintileAnalysisVisible[`quintile${quintile}` as keyof typeof state.quintileAnalysisVisible] ? styles.active : ''}
+            key={decile}
+            onClick={() => toggleDecile(decile)}
+            className={state.decileAnalysisVisible[`decile${decile}` as keyof typeof state.decileAnalysisVisible] ? styles.active : ''}
           >
-            Quintile {quintile}
+            Decile {decile}
           </button>
         ))}
       </div>
 
       <div className={styles.battleCards}>
-        {analysis.quintiles.map((quintile) => (
-          state.quintileAnalysisVisible[`quintile${quintile.quintile}` as keyof typeof state.quintileAnalysisVisible] && (
-            <BattleCard key={quintile.quintile} quintile={quintile} />
+        {analysis.deciles.map((decile) => (
+          state.decileAnalysisVisible[`decile${decile.decile}` as keyof typeof state.decileAnalysisVisible] && (
+            <BattleCard key={decile.decile} decile={decile} />
           )
         ))}
       </div>
@@ -284,12 +284,12 @@ class LoadingManager {
     uiToggles: {
       combatLogVisible: false,
       hpBarsVisible: false,
-      quintileAnalysisVisible: {
-        quintile1: false,
-        quintile2: false,
-        quintile3: false,
-        quintile4: false,
-        quintile5: true
+      decileAnalysisVisible: {
+        decile1: false,
+        decile2: false,
+        decile3: false,
+        decile4: false,
+        decile5: true
       }
     }
   }
@@ -307,7 +307,7 @@ class LoadingManager {
 import { useUIToggles } from '@/model/uiToggleState'
 
 const UiTogglePanel: FC = () => {
-  const { state, toggleCombatLog, toggleHpBars, toggleQuintile } = useUIToggles()
+  const { state, toggleCombatLog, toggleHpBars, toggleDecile } = useUIToggles()
 
   return (
     <div className={styles.togglePanel}>
@@ -333,16 +333,16 @@ const UiTogglePanel: FC = () => {
         </label>
       </div>
 
-      <div className={styles.quintileToggles}>
-        <h5>Quintile Analysis</h5>
-        {[1, 2, 3, 4, 5].map(quintile => (
-          <label key={quintile} className={styles.toggleLabel}>
+      <div className={styles.decileToggles}>
+        <h5>Decile Analysis</h5>
+        {[1, 2, 3, 4, 5].map(decile => (
+          <label key={decile} className={styles.toggleLabel}>
             <input
               type="checkbox"
-              checked={state.quintileAnalysisVisible[`quintile${quintile}` as keyof typeof state.quintileAnalysisVisible]}
-              onChange={() => toggleQuintile(quintile)}
+              checked={state.decileAnalysisVisible[`decile${decile}` as keyof typeof state.decileAnalysisVisible]}
+              onChange={() => toggleDecile(decile)}
             />
-            Quintile {quintile}
+            Decile {decile}
           </label>
         ))}
       </div>
@@ -376,10 +376,10 @@ const UiTogglePanel: FC = () => {
    - Remove round-by-round HP bars by default
    - Add simplified result view
 
-3. **Quintile Analysis Integration**
-   - Modify `QuintileAnalysis.tsx` for conditional rendering
-   - Add individual quintile toggles
-   - Ensure only quintile 5 is visible by default
+3. **Decile Analysis Integration**
+   - Modify `DecileAnalysis.tsx` for conditional rendering
+   - Add individual decile toggles
+   - Ensure only decile 5 is visible by default
 
 #### Phase 3: User Experience Enhancements
 

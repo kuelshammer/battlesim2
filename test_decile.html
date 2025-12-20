@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decile Analysis Test</title>
+</head>
+<body>
+    <h1>Decile Analysis Test</h1>
+    <div id="results">Running test...</div>
+
+    <script type="module">
+        import init, { run_decile_analysis_wasm } from './simulation-wasm/pkg/simulation_wasm.js';
+
+        async function runTest() {
+            await init();
+            
+            const testResults = [
+                // Minimal dummy results for testing
+                { encounters: [] }
+            ];
+
+            try {
+                console.log('Testing decile analysis...');
+                const analysis = run_decile_analysis_wasm(testResults, "Test Scenario", 1);
+                console.log('Analysis results:', analysis);
+                
+                document.getElementById('results').innerHTML = `
+                    <p>Analysis successful!</p>
+                    <p>Generated ${analysis.deciles.length} deciles</p>
+                `;
+            } catch (e) {
+                console.error('Analysis failed:', e);
+                document.getElementById('results').innerHTML = `<p style="color: red">Error: ${e}</p>`;
+            }
+        }
+
+        runTest();
+    </script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 
-import init, { run_simulation_with_callback, run_quintile_analysis_wasm } from 'simulation-wasm';
+import init, { run_simulation_with_callback, run_decile_analysis_wasm } from 'simulation-wasm';
 const wasmUrl = require('simulation-wasm/simulation_wasm_bg.wasm');
 
 let wasmInitialized = false;

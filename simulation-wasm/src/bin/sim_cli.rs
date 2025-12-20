@@ -3,7 +3,7 @@ use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
 use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun};
-use simulation_wasm::quintile_analysis::run_quintile_analysis;
+use simulation_wasm::decile_analysis::{run_decile_analysis, run_encounter_analysis, AggregateOutput};
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
 use std::fs;
@@ -19,7 +19,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate aggregated statistics for each quintile from 2510 simulation runs
+    /// Generate aggregated statistics for each decile from 2511 simulation runs
     Aggregate {
         /// Path to the scenario JSON file
         scenario: PathBuf,
@@ -35,7 +35,7 @@ enum Commands {
         #[arg(short, long)]
         run_index: Option<usize>,
     },
-    /// Find the simulation run closest to the median quintile
+    /// Find the simulation run closest to the median decile
     FindMedian {
         /// Path to the scenario JSON file
         scenario: PathBuf,
@@ -147,8 +147,8 @@ fn run_aggregate(scenario_path: &PathBuf) {
     // Get party size
     let party_size = players.len();
 
-    // Run 2510 iterations to match frontend and methodology (10 slices of 251)
-    let iterations = 2510;
+    // Run 2511 iterations to match frontend and methodology (10 slices of 251 + 1 median)
+    let iterations = 2511;
     println!("Running {} iterations for Adventuring Day: {}...", iterations, scenario_name);
     let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
@@ -163,7 +163,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     if num_encounters > 1 {
         println!("\n--- Individual Encounter Breakdown ---");
         for i in 0..num_encounters {
-            let enc_analysis = simulation_wasm::quintile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size);
+            let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size);
             println!("Encounter {}: {:<20} | Grade: {:<10} | Tier: {:<15} | {}", 
                 i + 1, 
                 format!("{}", enc_analysis.encounter_label),
@@ -176,7 +176,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     }
 
     // 2. Run Overall Analysis
-    let output = run_quintile_analysis(&raw_results, &scenario_name, party_size);
+    let output = run_decile_analysis(&raw_results, &scenario_name, party_size);
 
     // Output summary and rating
     println!("OVERALL ADVENTURING DAY RATING: {}", output.scenario_name);
@@ -184,14 +184,14 @@ fn run_aggregate(scenario_path: &PathBuf) {
     println!("Combined Label: {} ({})", output.encounter_label, output.safety_grade);
     println!("Intensity:      {}", output.intensity_tier);
     println!("Description:    {}", output.analysis_summary);
-    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY (B/Tier 5 or A/Tier 3-4)" } else if output.safety_grade == simulation_wasm::quintile_analysis::SafetyGrade::B && output.intensity_tier == simulation_wasm::quintile_analysis::IntensityTier::Tier5 { "🏆 PERFECT DAY (B/Tier 5)" } else { "⚠️ Imbalanced" });
+    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY (B/Tier 5 or A/Tier 3-4)" } else if output.safety_grade == simulation_wasm::decile_analysis::SafetyGrade::B && output.intensity_tier == simulation_wasm::decile_analysis::IntensityTier::Tier5 { "🏆 PERFECT DAY (B/Tier 5)" } else { "⚠️ Imbalanced" });
     println!("=====================================\n");
 
     // Output table format
     println!("{:>15} | {:>12} | {:>12} | {:>12} | {:>10}", 
               "Decile / %ile", "Survivors", "HP Lost", "HP Lost %", "Win Rate");
     println!("----------------|--------------|--------------|------------|----------");
-    for (i, quintile) in output.quintiles.iter().enumerate() {
+    for (i, decile) in output.deciles.iter().enumerate() {
         let percentile = match i {
             0 => "5th %ile",
             4 => "50th %ile",
@@ -201,11 +201,11 @@ fn run_aggregate(scenario_path: &PathBuf) {
         
         println!(
             "{:>15} | {:>13} | {:>12.1} | {:>10.1}% | {:>8.1}%",
-            format!("{} ({})", quintile.label, percentile),
-            format!("{}/{}", quintile.median_survivors, quintile.party_size),
-            quintile.total_hp_lost, 
-            quintile.hp_lost_percent, 
-            quintile.win_rate
+            format!("{} ({})", decile.label, percentile),
+            format!("{}/{}", decile.median_survivors, decile.party_size),
+            decile.total_hp_lost, 
+            decile.hp_lost_percent, 
+            decile.win_rate
         );
     }
 }
@@ -335,26 +335,26 @@ fn print_markdown_log(result: &SimulationResult, events: &[String]) {
 fn run_find_median(scenario_path: &PathBuf) {
     let (players, encounters, _) = load_scenario(scenario_path);
 
-    // Run 2510 iterations
-    let iterations = 2510;
+    // Run 2511 iterations
+    let iterations = 2511;
     println!("Running {} iterations...", iterations);
     let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
-    // Results are sorted by score. Middle quintile is indices 402-602.
-    // We want to find the run closest to the median of the MIDDLE quintile.
+    // Results are sorted by score. Middle decile is around indices 1004-1506.
+    // We want to find the run closest to the median of the MIDDLE decile.
 
-    let middle_start = 402;
-    let middle_end = 603;
+    let middle_start = iterations * 4 / 10; // 1004
+    let middle_end = iterations * 6 / 10; // 1506
     let middle_slice = &runs[middle_start..middle_end];
 
-    // Calculate median score of middle quintile
+    // Calculate median score of middle decile
     let median_idx = middle_slice.len() / 2;
     let median_score = calculate_score(&middle_slice[median_idx].result);
 
     // Also calculate average HP spread (max_hp - min_hp) for winning team and avg rounds
     let (avg_hp_spread, avg_rounds) = calculate_averages(middle_slice);
 
-    // Now find the run within middle quintile closest to these averages
+    // Now find the run within middle decile closest to these averages
     let mut best_idx = middle_start;
     let mut best_distance = f64::MAX;
 
@@ -838,7 +838,7 @@ fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
     let (players_b, encounters_b, name_b) = load_scenario(scenario_b_path);
 
     // Run both
-    let iterations = 2510;
+    let iterations = 2511;
     println!("Running {} iterations for each scenario...\n", iterations);
 
     let runs_a = run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);

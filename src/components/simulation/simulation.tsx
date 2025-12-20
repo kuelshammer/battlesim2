@@ -12,7 +12,7 @@ import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo 
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
-import QuintileAnalysis from "./quintileAnalysis"
+import DecileAnalysis from "./decileAnalysis"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 
@@ -39,7 +39,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [loading, setLoading] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [showLogModal, setShowLogModal] = useState(false)
-    const [showQuintileModal, setShowQuintileModal] = useState(false)
+    const [showDecileModal, setShowDecileModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     
     // Web Worker Simulation
@@ -93,8 +93,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
         if (!autoSimulate) return;
         
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
-            console.log('Triggering background simulation...');
-            worker.runSimulation(players, encounters, 2510);
+            worker.runSimulation(players, encounters, 2511);
             setNeedsResimulation(false);
         }
     }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker, autoSimulate]);
@@ -251,7 +250,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             />
                             {(worker.analysis?.encounters?.[index] ? (
                                 <EncounterResult 
-                                    value={worker.analysis.encounters[index].quintiles[2].medianRunData || simulationResults[index]} 
+                                    value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles[4].medianRunData || simulationResults[index]} 
                                     analysis={worker.analysis.encounters[index]} 
                                     isStale={isStale}
                                     isPreliminary={worker.isRunning && worker.progress < 100}
@@ -268,7 +267,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 <button
                                     onClick={() => {
                                         console.log('Manually rerunning simulation...');
-                                        worker.runSimulation(players, encounters, 2510);
+                                        worker.runSimulation(players, encounters, 2511);
                                         setIsStale(false);
                                     }}
                                     className={styles.rerunButton}
@@ -288,11 +287,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 <button
                                     onClick={() => {
                                         setSelectedEncounterIndex(index);
-                                        setShowQuintileModal(true);
+                                        setShowDecileModal(true);
                                     }}
-                                    className={styles.showQuintileButton}>
+                                    className={styles.showDecileButton}>
                                     <FontAwesomeIcon icon={faChartLine} />
-                                    Show Quintile Analysis
+                                    Show Decile Analysis
                                 </button>
                             </div>
                         </div>
@@ -305,9 +304,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         Add Encounter
                     </button>
 
-{/* Quintile Analysis Display */}
+{/* Decile Analysis Display */}
                     {worker.analysis && (
-                        <QuintileAnalysis analysis={worker.analysis.overall} />
+                        <DecileAnalysis analysis={worker.analysis.overall} />
                     )}
 
                     {/* Event Log Modal */}
@@ -349,20 +348,20 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         />
                     )}
 
-                    {/* Quintile Analysis Modal */}
-                    {showQuintileModal && selectedEncounterIndex !== null && (
+                    {/* Decile Analysis Modal */}
+                    {showDecileModal && selectedEncounterIndex !== null && (
                         <div className={styles.logModalOverlay}>
                             <div className={styles.logModal}>
                                 <div className={styles.modalHeader}>
-                                    <h3>Quintile Analysis - Encounter {selectedEncounterIndex + 1}</h3>
+                                    <h3>Decile Analysis - Encounter {selectedEncounterIndex + 1}</h3>
                                     <button 
-                                        onClick={() => setShowQuintileModal(false)}
+                                        onClick={() => setShowDecileModal(false)}
                                         className={styles.closeButton}>
                                         <FontAwesomeIcon icon={faTimes} />
                                     </button>
                                 </div>
                                 <div className={styles.logBody}>
-                                    <QuintileAnalysis analysis={worker.analysis?.encounters?.[selectedEncounterIndex] ?? null} />
+                                    <DecileAnalysis analysis={worker.analysis?.encounters?.[selectedEncounterIndex] ?? null} />
                                 </div>
                             </div>
                         </div>

@@ -459,7 +459,7 @@ export const EventSchema = z.discriminatedUnion('type', [
 
 export type Event = z.infer<typeof EventSchema>
 
-// Quintile Analysis Types
+// Decile Analysis Types
 export const CombatantVisualizationSchema = z.object({
     name: z.string(),
     maxHp: z.number().int(),
@@ -470,8 +470,8 @@ export const CombatantVisualizationSchema = z.object({
     hpPercentage: z.number(),
 })
 
-export const QuintileStatsSchema = z.object({
-    quintile: z.number(),
+export const DecileStatsSchema = z.object({
+    decile: z.number(),
     label: z.string(),
     medianSurvivors: z.number(),
     partySize: z.number(),
@@ -487,25 +487,23 @@ export const QuintileStatsSchema = z.object({
 export const AggregateOutputSchema = z.object({
     scenarioName: z.string(),
     totalRuns: z.number(),
-    quintiles: z.array(QuintileStatsSchema),
+    deciles: z.array(DecileStatsSchema),
+    globalMedian: DecileStatsSchema.optional().nullable(),
 }).passthrough()
 
-
-
 export const FullAnalysisOutputSchema = z.object({
-
     overall: AggregateOutputSchema,
-
     encounters: z.array(AggregateOutputSchema),
-
 })
 
-
+export const FullSimulationOutputSchema = z.object({
+    results: z.array(SimulationResultSchema),
+    analysis: FullAnalysisOutputSchema,
+    firstRunEvents: z.array(EventSchema),
+})
 
 export type CombatantVisualization = z.infer<typeof CombatantVisualizationSchema>
-
-export type QuintileStats = z.infer<typeof QuintileStatsSchema>
-
+export type DecileStats = z.infer<typeof DecileStatsSchema>
 export type AggregateOutput = z.infer<typeof AggregateOutputSchema>
-
 export type FullAnalysisOutput = z.infer<typeof FullAnalysisOutputSchema>
+export type FullSimulationOutput = z.infer<typeof FullSimulationOutputSchema>

@@ -10,8 +10,13 @@ export const UIToggleTypeList = [
   'quintile-2',
   'quintile-3',
   'quintile-4',
-  'quintile-5'
-] as const
+  'quintile-5',
+  'quintile-6',
+  'quintile-7',
+  'quintile-8',
+  'quintile-9',
+  'quintile-10'
+] as const;
 
 export const UIToggleTypeSchema = z.enum(UIToggleTypeList)
 export type UIToggleType = z.infer<typeof UIToggleTypeSchema>
@@ -52,44 +57,64 @@ export const defaultUIToggleConfig: UIToggleConfig = {
   },
   'quintile-1': {
     id: 'quintile-1',
-    enabled: false,
-    label: 'Quintile 1 (Worst)',
-    description: 'Show worst-case scenario analysis',
-    defaultValue: false,
-    category: 'analysis'
+    label: 'Decile 1 (Worst Case)',
+    defaultValue: true,
+    group: 'Simulation'
   },
   'quintile-2': {
     id: 'quintile-2',
-    enabled: false,
-    label: 'Quintile 2',
-    description: 'Show 2nd worst scenario analysis',
+    label: 'Decile 2',
     defaultValue: false,
-    category: 'analysis'
+    group: 'Simulation'
   },
   'quintile-3': {
     id: 'quintile-3',
-    enabled: false,
-    label: 'Quintile 3 (Median)',
-    description: 'Show median scenario analysis',
-    defaultValue: false,
-    category: 'analysis'
+    label: 'Decile 3 (Struggle)',
+    defaultValue: true,
+    group: 'Simulation'
   },
   'quintile-4': {
     id: 'quintile-4',
-    enabled: false,
-    label: 'Quintile 4',
-    description: 'Show 2nd best scenario analysis',
+    label: 'Decile 4',
     defaultValue: false,
-    category: 'analysis'
+    group: 'Simulation'
   },
   'quintile-5': {
     id: 'quintile-5',
-    enabled: true,
-    label: 'Quintile 5 (Best)',
-    description: 'Show best-case scenario analysis',
+    label: 'Decile 5 (Typical Case)',
     defaultValue: true,
-    category: 'analysis'
-  }
+    group: 'Simulation'
+  },
+  'quintile-6': {
+    id: 'quintile-6',
+    label: 'Decile 6',
+    defaultValue: false,
+    group: 'Simulation'
+  },
+  'quintile-7': {
+    id: 'quintile-7',
+    label: 'Decile 7',
+    defaultValue: false,
+    group: 'Simulation'
+  },
+  'quintile-8': {
+    id: 'quintile-8',
+    label: 'Decile 8 (Heroic)',
+    defaultValue: true,
+    group: 'Simulation'
+  },
+  'quintile-9': {
+    id: 'quintile-9',
+    label: 'Decile 9',
+    defaultValue: false,
+    group: 'Simulation'
+  },
+  'quintile-10': {
+    id: 'quintile-10',
+    label: 'Decile 10 (Best Case)',
+    defaultValue: true,
+    group: 'Simulation'
+  },
 }
 
 // UI Toggle Context

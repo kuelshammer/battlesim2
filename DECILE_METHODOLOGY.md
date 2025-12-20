@@ -1,4 +1,4 @@
-# The Quintile Method: Analyzing Combat Swinginess
+# The Decile Method: Analyzing Combat Swinginess
 ### *Beyond Averages: How to Prevent Accidental TPKs*
 
 ## 1. The Problem with Averages

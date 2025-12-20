@@ -14,7 +14,7 @@ pub mod execution;
 pub mod action_resolver;
 pub mod validation; // New module for requirement validation
 pub mod utilities;
-pub mod quintile_analysis;
+pub mod decile_analysis;
 pub mod combat_stats;
 pub mod error_handling; // Enhanced error handling system
 pub mod enhanced_validation; // Comprehensive validation
@@ -48,8 +48,8 @@ use std::sync::{Mutex, OnceLock};
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct FullAnalysisOutput {
-    overall: crate::quintile_analysis::AggregateOutput,
-    encounters: Vec<crate::quintile_analysis::AggregateOutput>,
+    overall: crate::decile_analysis::AggregateOutput,
+    encounters: Vec<crate::decile_analysis::AggregateOutput>,
 }
 
 #[derive(serde::Serialize)]
@@ -113,7 +113,7 @@ pub fn run_simulation_with_callback(
 
         let is_last_iteration = i == iterations - 1;
         let should_report_progress = (i + 1) % batch_size == 0 || is_last_iteration;
-        let should_report_analysis = (i + 1) % 251 == 0 || is_last_iteration;
+        let should_report_analysis = (i + 1) % 252 == 0 || is_last_iteration;
 
         if should_report_progress || should_report_analysis {
             let progress = (i + 1) as f64 / iterations as f64;
@@ -132,17 +132,24 @@ pub fn run_simulation_with_callback(
                     score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
                 });
 
-                let overall = quintile_analysis::run_quintile_analysis(&temp_results, "Current Scenario", players.len());
+                let overall = decile_analysis::run_decile_analysis(&temp_results, "Current Scenario", players.len());
                 let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
                 let mut encounters_analysis = Vec::new();
                 for i_enc in 0..num_encounters {
-                    let analysis = quintile_analysis::run_encounter_analysis(&results, i_enc, &format!("Encounter {}", i_enc + 1), players.len());
+                    let analysis = decile_analysis::run_encounter_analysis(&results, i_enc, &format!("Encounter {}", i_enc + 1), players.len());
                     encounters_analysis.push(analysis);
                 }
 
                 let tr_len = temp_results.len();
-                let decile = tr_len as f64 / 10.0;
-                let rep_indices = [(decile * 0.5) as usize, (decile * 2.5) as usize, (tr_len / 2) as usize, (decile * 7.5) as usize, (decile * 9.5) as usize];
+                let median_idx = tr_len / 2;
+                
+                // Representative indices for 2511 system (or fallback)
+                let rep_indices = if tr_len == 2511 {
+                    vec![125, 627, 1255, 1883, 2385] // Approx medians of 1st, 3rd, Global, 8th, 10th
+                } else {
+                    let decile = tr_len as f64 / 10.0;
+                    vec![(decile * 0.5) as usize, (decile * 2.5) as usize, median_idx, (decile * 7.5) as usize, (decile * 9.5) as usize]
+                };
                 let mut reduced_results = Vec::new();
                 for &idx in &rep_indices {
                     if idx < tr_len { reduced_results.push(temp_results[idx].clone()); }
@@ -170,17 +177,22 @@ pub fn run_simulation_with_callback(
         score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    let overall = quintile_analysis::run_quintile_analysis(&results, "Current Scenario", players.len());
+    let overall = decile_analysis::run_decile_analysis(&results, "Current Scenario", players.len());
     let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
-        let analysis = quintile_analysis::run_encounter_analysis(&results, i, &format!("Encounter {}", i + 1), players.len());
+        let analysis = decile_analysis::run_encounter_analysis(&results, i, &format!("Encounter {}", i + 1), players.len());
         encounters_analysis.push(analysis);
     }
 
     let total_runs = results.len();
-    let decile = total_runs as f64 / 10.0;
-    let representative_indices = [(decile * 0.5) as usize, (decile * 2.5) as usize, (total_runs / 2) as usize, (decile * 7.5) as usize, (decile * 9.5) as usize];
+    let median_idx = total_runs / 2;
+    let representative_indices = if total_runs == 2511 {
+        vec![125, 627, 1255, 1883, 2385]
+    } else {
+        let decile = total_runs as f64 / 10.0;
+        vec![(decile * 0.5) as usize, (decile * 2.5) as usize, median_idx, (decile * 7.5) as usize, (decile * 9.5) as usize]
+    };
     let mut reduced_results = Vec::new();
     for &idx in &representative_indices {
         if idx < total_runs { reduced_results.push(results[idx].clone()); }
@@ -643,9 +655,9 @@ fn get_storage_manager() -> &'static Mutex<StorageManager> {
 // The system now operates purely in RAM
 
 #[wasm_bindgen]
-pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_size: usize) -> Result<JsValue, JsValue> {
+pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_size: usize) -> Result<JsValue, JsValue> {
     // Add debug logging
-    console::log_1(&"=== Quintile Analysis WASM Debug ===".into());
+    console::log_1(&"=== Decile Analysis WASM Debug ===".into());
     
     let mut results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
@@ -675,7 +687,7 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     console::log_1(&format!("Calculated party size: {}", actual_party_size).into());
     
     // 1. Run Overall Analysis (Adventure-wide)
-    let overall = quintile_analysis::run_quintile_analysis(&results, scenario_name, actual_party_size);
+    let overall = decile_analysis::run_decile_analysis(&results, scenario_name, actual_party_size);
     
     // 2. Run Per-Encounter Analysis
     // Determine number of encounters from the first result
@@ -684,7 +696,7 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     
     for i in 0..num_encounters {
         let encounter_name = format!("Encounter {}", i + 1);
-        let analysis = quintile_analysis::run_encounter_analysis(&results, i, &encounter_name, actual_party_size);
+        let analysis = decile_analysis::run_encounter_analysis(&results, i, &encounter_name, actual_party_size);
         encounters.push(analysis);
     }
     
@@ -699,7 +711,7 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
         .serialize_maps_as_objects(false);
         
     serde::Serialize::serialize(&output, &serializer)
-        .map_err(|e| JsValue::from_str(&format!("Failed to serialize quintile analysis: {}", e)))
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize decile analysis: {}", e)))
 }
 
 // ===== PHASE 3: GUI INTEGRATION WASM BINDINGS =====

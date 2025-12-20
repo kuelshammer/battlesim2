@@ -1,12 +1,12 @@
 import React, { FC, memo } from "react"
-import { QuintileStats, CombatantVisualization } from "../../model/model"
+import { DecileStats, CombatantVisualization } from "../../model/model"
 import styles from './battleCard.module.scss'
 
 type PropType = {
-    quintile: QuintileStats
+    decile: DecileStats
 }
 
-const BattleCard: FC<PropType> = memo(({ quintile }) => {
+const BattleCard: FC<PropType> = memo(({ decile }) => {
     const getHpBarColor = (hpPercentage: number, isDead: boolean): string => {
         if (isDead) return styles.dead
         if (hpPercentage <= 20) return styles.danger
@@ -55,13 +55,13 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
 
     const getOutcomeIcon = (winRate: number): string => {
         if (winRate < 100) return '💀'
-        if (winRate === 100 && quintile.medianSurvivors < quintile.partySize) return '⚠️'
+        if (winRate === 100 && decile.medianSurvivors < decile.partySize) return '⚠️'
         return '✅'
     }
 
     const getOutcomeLabel = (winRate: number): string => {
         if (winRate < 100) return 'TPK'
-        if (winRate === 100 && quintile.medianSurvivors < quintile.partySize) return 'Pyrrhic Victory'
+        if (winRate === 100 && decile.medianSurvivors < decile.partySize) return 'Pyrrhic Victory'
         return 'Victory'
     }
 
@@ -71,28 +71,28 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
     }
 
     // Map decile labels to methodology labels
-    const getQuintileLabel = (quintileNum: number): string => {
-        switch (quintileNum) {
+    const getDecileLabel = (decileNum: number): string => {
+        switch (decileNum) {
             case 1: return 'Disaster'
             case 3: return 'Struggle'
             case 5: return 'Typical'
             case 8: return 'Heroic'
             case 10: return 'Legend'
-            default: return `Decile ${quintileNum}`
+            default: return `Decile ${decileNum}`
         }
     }
 
     // Map decile number to statistical meaning
-    const getStatisticalMeaning = (quintileNum: number): string => {
-        switch (quintileNum) {
+    const getStatisticalMeaning = (decileNum: number): string => {
+        switch (decileNum) {
             case 1: return '5th Percentile (Worst Case)'
             case 3: return '25th Percentile (Bad Luck)'
             case 5: return '50th Percentile (Global Median)'
             case 8: return '75th Percentile (Good Luck)'
             case 10: return '95th Percentile (Best Case)'
             default: {
-                const start = (quintileNum - 1) * 10;
-                const end = quintileNum * 10;
+                const start = (decileNum - 1) * 10;
+                const end = decileNum * 10;
                 return `${start}-${end}% Performance Slice`;
             }
         }
@@ -101,24 +101,24 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
     return (
         <div className={styles.battleCard}>
             <div className={styles.header}>
-                <div className={styles.quintileInfo}>
-                    <div className={styles.quintileLabel}>
-                        {getQuintileLabel(quintile.quintile)}
+                <div className={styles.decileInfo}>
+                    <div className={styles.decileLabel}>
+                        {getDecileLabel(decile.decile)}
                         <span className={styles.statisticalMeaning}>
-                            {getStatisticalMeaning(quintile.quintile)}
+                            {getStatisticalMeaning(decile.decile)}
                         </span>
                     </div>
-                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(quintile.winRate)}`}>
-                        {getOutcomeIcon(quintile.winRate)} {getOutcomeLabel(quintile.winRate)}
+                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(decile.winRate)}`}>
+                        {getOutcomeIcon(decile.winRate)} {getOutcomeLabel(decile.winRate)}
                     </span>
                 </div>
                 <div className={styles.duration}>
-                    Duration: {quintile.battleDurationRounds} Rounds
+                    Duration: {decile.battleDurationRounds} Rounds
                 </div>
             </div>
 
             <div className={styles.combatants}>
-                {quintile.medianRunVisualization?.map((combatant: CombatantVisualization, index: number) => (
+                {decile.medianRunVisualization?.map((combatant: CombatantVisualization, index: number) => (
                     <div key={index} className={styles.combatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
@@ -143,11 +143,11 @@ const BattleCard: FC<PropType> = memo(({ quintile }) => {
             </div>
 
             <div className={styles.footer}>
-                <div className={styles.winRate}>
-                    Win Rate: {quintile.winRate.toFixed(1)}%
+                <div className={winRate < 100 ? styles.winRateDanger : styles.winRate}>
+                    Win Rate: {decile.winRate.toFixed(1)}%
                 </div>
                 <div className={styles.survivors}>
-                    Survivors: {quintile.medianSurvivors}/{quintile.partySize}
+                    Survivors: {decile.medianSurvivors}/{decile.partySize}
                 </div>
             </div>
         </div>
