@@ -133,10 +133,10 @@ pub fn run_simulation_with_callback(
                 });
 
                 let overall = quintile_analysis::run_quintile_analysis(&temp_results, "Current Scenario", players.len());
-                let num_encounters = temp_results.first().map(|r| r.len()).unwrap_or(0);
+                let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
                 let mut encounters_analysis = Vec::new();
                 for i_enc in 0..num_encounters {
-                    let analysis = quintile_analysis::run_encounter_analysis(&temp_results, i_enc, &format!("Encounter {}", i_enc + 1), players.len());
+                    let analysis = quintile_analysis::run_encounter_analysis(&results, i_enc, &format!("Encounter {}", i_enc + 1), players.len());
                     encounters_analysis.push(analysis);
                 }
 
@@ -171,7 +171,7 @@ pub fn run_simulation_with_callback(
     });
 
     let overall = quintile_analysis::run_quintile_analysis(&results, "Current Scenario", players.len());
-    let num_encounters = results.first().map(|r| r.len()).unwrap_or(0);
+    let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
         let analysis = quintile_analysis::run_encounter_analysis(&results, i, &format!("Encounter {}", i + 1), players.len());
@@ -415,8 +415,8 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
         }
     }
 
-    // SimulationResult is just Vec<EncounterResult>
-    (encounter_results, all_events)
+    // SimulationResult is now SimulationRunData struct
+    (SimulationResult { encounters: encounter_results }, all_events)
 }
 
 fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
@@ -661,7 +661,7 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     
     // Calculate party size from first result (use actual data instead of parameter)
     let actual_party_size = if let Some(first_result) = results.first() {
-        if let Some(first_encounter) = first_result.first() {
+        if let Some(first_encounter) = first_result.encounters.first() {
             first_encounter.rounds.first()
                 .map(|first_round| first_round.team1.len())
                 .unwrap_or(0)
@@ -679,7 +679,7 @@ pub fn run_quintile_analysis_wasm(results: JsValue, scenario_name: &str, _party_
     
     // 2. Run Per-Encounter Analysis
     // Determine number of encounters from the first result
-    let num_encounters = results.first().map(|r| r.len()).unwrap_or(0);
+    let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
     let mut encounters = Vec::new();
     
     for i in 0..num_encounters {

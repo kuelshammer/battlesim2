@@ -373,7 +373,7 @@ pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, Simulation
         return Err(SimulationError::EmptyResult("Cannot calculate score for empty result".to_string()));
     }
 
-    let last_encounter = result.last().ok_or_else(|| {
+    let last_encounter = result.encounters.last().ok_or_else(|| {
         SimulationError::EmptyResult("No last encounter found in result".to_string())
     })?;
     let last_round = last_encounter.rounds.last();
@@ -406,7 +406,15 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
     use std::fmt::Write;
     let mut log = String::new();
 
-    if let Some(encounter) = result.first() {
+    if result.encounters.is_empty() {
+        return Err(SimulationError::EmptyResult("No encounters found for combat log".to_string()));
+    }
+
+    for (enc_idx, encounter) in result.encounters.iter().enumerate() {
+        writeln!(&mut log, "=== Encounter {} ===\n", enc_idx + 1).map_err(|e| {
+            SimulationError::SerializationError(format!("Failed to write to log: {}", e))
+        })?;
+
         // Build ID -> Name map
         let mut id_to_name = HashMap::new();
         if let Some(first_round) = encounter.rounds.first() {
@@ -476,8 +484,9 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
                 SimulationError::SerializationError(format!("Failed to write to log: {}", e))
             })?;
         }
-    } else {
-        return Err(SimulationError::EmptyResult("No encounter found for combat log".to_string()));
+        writeln!(&mut log).map_err(|e| {
+            SimulationError::SerializationError(format!("Failed to write to log: {}", e))
+        })?;
     }
     
     Ok(log)

@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
 import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult, AggregateOutput } from "@/model/model"
+import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult, AggregateOutput, EncounterResult as EncounterResultType } from "@/model/model"
 import { parseEventString, SimulationEvent } from "@/model/events"
 import { clone, useStoredState } from "@/model/utils"
 import styles from './simulation.module.scss'
@@ -31,7 +31,7 @@ const emptyEncounter: Encounter = {
 const Simulation: FC<PropType> = memo(({ }) => {
     const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
     const [encounters, setEncounters] = useStoredState<Encounter[]>('encounters', [emptyEncounter], z.array(EncounterSchema).parse)
-    const [simulationResults, setSimulationResults] = useState<SimulationResult>([])
+    const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
 
@@ -104,13 +104,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
         if (!worker.results || worker.results.length === 0) return;
 
         const results = worker.results;
-        // The backend now only returns 5 representative runs:
         // [Disaster, Struggle, Typical, Heroic, Legend]
-        // Index 2 is the 'Typical' (Median) run.
         const index = results.length >= 3 ? 2 : 0;
         const selectedRun = results[index];
 
-        setSimulationResults(selectedRun);
+        setSimulationResults(selectedRun.encounters);
 
         // Update events from the first run returned by the worker
         if (worker.events) {

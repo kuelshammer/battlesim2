@@ -199,7 +199,7 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
 
     // We need to rebuild the name map for formatting logs
     let mut combatant_names = HashMap::new();
-    if let Some(encounter) = result.first() {
+    if let Some(encounter) = result.encounters.first() {
         if let Some(round) = encounter.rounds.first() {
             for c in round.team1.iter().chain(round.team2.iter()) {
                 combatant_names.insert(c.id.clone(), c.creature.name.clone());
@@ -240,9 +240,10 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
 fn print_markdown_log(result: &SimulationResult, events: &[String]) {
     println!("# Combat Log\n");
 
-    if let Some(encounter) = result.first() {
+    for (enc_idx, encounter) in result.encounters.iter().enumerate() {
+        println!("## Encounter {}\n", enc_idx + 1);
         for (round_idx, round) in encounter.rounds.iter().enumerate() {
-            println!("## Round {}\n", round_idx + 1);
+            println!("### Round {}\n", round_idx + 1);
 
             // Show all combatants sorted by initiative
             let mut all: Vec<_> = round.team1.iter().chain(round.team2.iter()).collect();
@@ -253,17 +254,17 @@ fn print_markdown_log(result: &SimulationResult, events: &[String]) {
             });
 
             for c in all {
-                if c.initial_state.current_hp <= 0.0 && c.final_state.current_hp <= 0.0 {
+                if c.initial_state.current_hp == 0 && c.final_state.current_hp == 0 {
                     continue; // Skip dead
                 }
 
-                println!("### {} (Initiative: {:.1})", c.creature.name, c.initiative);
+                println!("#### {} (Initiative: {:.1})", c.creature.name, c.initiative);
                 println!(
-                    "- **HP**: {:.1} → {:.1}",
+                    "- **HP**: {} → {}",
                     c.initial_state.current_hp, c.final_state.current_hp
                 );
 
-                if c.actions.is_empty() && c.final_state.current_hp > 0.0 {
+                if c.actions.is_empty() && c.final_state.current_hp > 0 {
                     println!("- *No actions taken*");
                 }
 
@@ -360,16 +361,16 @@ fn calculate_averages(runs: &[SimulationRun]) -> (f64, f64) {
 }
 
 fn get_run_metrics(result: &SimulationResult) -> (f64, usize) {
-    if let Some(encounter) = result.last() {
+    if let Some(encounter) = result.encounters.last() {
         if let Some(last_round) = encounter.rounds.last() {
             let team1_alive = last_round
                 .team1
                 .iter()
-                .any(|c| c.final_state.current_hp > 0.0);
+                .any(|c| c.final_state.current_hp > 0);
             let team2_alive = last_round
                 .team2
                 .iter()
-                .any(|c| c.final_state.current_hp > 0.0);
+                .any(|c| c.final_state.current_hp > 0);
 
             let winning_team = if team1_alive && !team2_alive {
                 &last_round.team1
@@ -381,7 +382,7 @@ fn get_run_metrics(result: &SimulationResult) -> (f64, usize) {
 
             let hps: Vec<f64> = winning_team
                 .iter()
-                .map(|c| c.final_state.current_hp)
+                .map(|c| c.final_state.current_hp as f64)
                 .collect();
             let max_hp = hps.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
             let min_hp = hps.iter().cloned().fold(f64::INFINITY, f64::min);
@@ -428,7 +429,7 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
     let mut combatant_actions = HashMap::new(); // ID -> Vec<Action>
 
     if let Some(result) = results.first() {
-        if let Some(encounter) = result.first() {
+        if let Some(encounter) = result.encounters.first() {
             // We can get combatants from rounds or final state
             if let Some(round) = encounter.rounds.first() {
                 for c in round.team1.iter().chain(round.team2.iter()) {
@@ -577,7 +578,7 @@ fn run_math(scenario_path: &PathBuf, attacker_name: &str, defender_name: &str) {
 
     println!("=== Theoretical Math Report ===");
     println!("Matchup: {} vs {}", attacker.name, defender.name);
-    println!("Defender AC: {:.0}\n", defender.ac);
+    println!("Defender AC: {}\n", defender.ac);
 
     for action in &attacker.actions {
         if let Action::Atk(atk) = action {
@@ -596,11 +597,11 @@ fn run_math(scenario_path: &PathBuf, attacker_name: &str, defender_name: &str) {
 
             // Calculate Hit Chance
             // Roll + Bonus >= AC  =>  Roll >= AC - Bonus
-            let needed_roll = defender.ac - to_hit_bonus;
+            let needed_roll = defender.ac as f64 - to_hit_bonus;
             // Clamp needed roll to 1-20 range logic (nat 1 is miss, nat 20 is hit)
             // Chance = (21 - needed) / 20
 
-            let mut hit_chance = if needed_roll > 20.0 {
+            let mut hit_chance: f64 = if needed_roll > 20.0 {
                 0.05 // Only nat 20 hits (and crits)
             } else if needed_roll <= 1.0 {
                 0.95 // Only nat 1 misses
@@ -739,20 +740,20 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
         let mut wins = 0;
         let mut total_rounds = 0;
         for result in &results {
-            if let Some(encounter) = result.last() {
+            if let Some(encounter) = result.encounters.last() {
                 if let Some(last_round) = encounter.rounds.last() {
                     let team1_alive = last_round
                         .team1
                         .iter()
-                        .any(|c| c.final_state.current_hp > 0.0);
+                        .any(|c| c.final_state.current_hp > 0);
                     let team2_alive = last_round
                         .team2
                         .iter()
-                        .any(|c| c.final_state.current_hp > 0.0);
+                        .any(|c| c.final_state.current_hp > 0);
                     if team1_alive && !team2_alive {
                         wins += 1;
                     }
-                    total_rounds += encounter.rounds.len();
+                    total_rounds += result.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
                 }
             }
         }
@@ -772,8 +773,8 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
 
 fn modify_stat(creature: &mut Creature, stat: &str, value: f64) {
     match stat.to_lowercase().as_str() {
-        "ac" => creature.ac = value,
-        "hp" => creature.hp = value,
+        "ac" => creature.ac = value as u32,
+        "hp" => creature.hp = value as u32,
         "tohit" => {
             // Modify toHit on all attack actions
             for action in &mut creature.actions {
@@ -870,25 +871,25 @@ fn calculate_scenario_stats(results: &[SimulationResult]) -> ScenarioStats {
     let mut total_rounds = 0.0;
 
     for result in results {
-        if let Some(encounter) = result.last() {
+        if let Some(encounter) = result.encounters.last() {
             if let Some(last_round) = encounter.rounds.last() {
-                total_rounds += encounter.rounds.len() as f64;
+                total_rounds += result.encounters.iter().map(|e| e.rounds.len() as f64).sum::<f64>();
 
                 let team1_alive = last_round
                     .team1
                     .iter()
-                    .any(|c| c.final_state.current_hp > 0.0);
+                    .any(|c| c.final_state.current_hp > 0);
                 let team2_alive = last_round
                     .team2
                     .iter()
-                    .any(|c| c.final_state.current_hp > 0.0);
+                    .any(|c| c.final_state.current_hp > 0);
 
                 if team1_alive && !team2_alive {
                     wins += 1;
                     total_hp += last_round
                         .team1
                         .iter()
-                        .map(|c| c.final_state.current_hp)
+                        .map(|c| c.final_state.current_hp as f64)
                         .sum::<f64>();
                 }
             }

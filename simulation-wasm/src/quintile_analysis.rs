@@ -88,15 +88,15 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
     let mut combatants = Vec::new();
     let mut battle_duration = 0;
 
-    if result.is_empty() {
+    if result.encounters.is_empty() {
         return (combatants, battle_duration);
     }
     
-    for encounter in result {
+    for encounter in &result.encounters {
         battle_duration += encounter.rounds.len();
     }
 
-    if let Some(final_encounter) = result.last() {
+    if let Some(final_encounter) = result.encounters.last() {
         if let (Some(first_round), Some(last_round)) = (final_encounter.rounds.first(), final_encounter.rounds.last()) {
             // Map starting HP by ID for lookup
             let start_hps: std::collections::HashMap<String, u32> = first_round.team1.iter().chain(first_round.team2.iter())
@@ -328,8 +328,8 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         let hp_lost_percent = if party_max_hp > 0.0 { (hp_lost as f64 / party_max_hp as f64) * 100.0 } else { 0.0 };
 
         // For encounter analysis, we want to capture the specific encounter's round data
-        let median_run_data = if !single_run.is_empty() && results[0].len() == 1 {
-            Some(single_run[0].clone())
+        let median_run_data = if !single_run.encounters.is_empty() && results[0].encounters.len() == 1 {
+            Some(single_run.encounters[0].clone())
         } else {
             None
         };
@@ -364,7 +364,11 @@ pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party
 pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
     let mut encounter_results: Vec<SimulationResult> = results.iter()
         .filter_map(|run| {
-            if encounter_idx < run.len() { Some(vec![run[encounter_idx].clone()]) } else { None }
+            if encounter_idx < run.encounters.len() { 
+                Some(SimulationResult { encounters: vec![run.encounters[encounter_idx].clone()] }) 
+            } else { 
+                None 
+            }
         })
         .collect();
 

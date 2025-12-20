@@ -759,7 +759,25 @@ pub struct EncounterResult {
     pub rounds: Vec<Round>,
 }
 
-pub type SimulationResult = Vec<EncounterResult>;
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SimulationRunData {
+    pub encounters: Vec<EncounterResult>,
+}
+
+impl std::ops::Deref for SimulationRunData {
+    type Target = Vec<EncounterResult>;
+    fn deref(&self) -> &Self::Target {
+        &self.encounters
+    }
+}
+
+impl std::ops::DerefMut for SimulationRunData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.encounters
+    }
+}
+
+pub type SimulationResult = SimulationRunData;
 
 /// A complete simulation run with both results and events
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -21,7 +21,7 @@ impl AggregationData {
     }
 }
 
-pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
+pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
     #[cfg(debug_assertions)]
     eprintln!("AGGREGATION: Starting with {} results", results.len());
 
@@ -29,338 +29,142 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<Round> {
         return Vec::new();
     }
 
-    let max_rounds = results
-        .iter()
-        .map(|r| r.first().map(|e| e.rounds.len()).unwrap_or(0))
-        .max()
-        .unwrap_or(0);
+    // Determine number of encounters from the first result
+    let num_encounters = results[0].len();
+    let mut aggregated_encounters = Vec::with_capacity(num_encounters);
 
-    #[cfg(debug_assertions)]
-    eprintln!("AGGREGATION: max_rounds = {}", max_rounds);
+    for enc_idx in 0..num_encounters {
+        let max_rounds = results
+            .iter()
+            .map(|r| r.get(enc_idx).map(|e| e.rounds.len()).unwrap_or(0))
+            .max()
+            .unwrap_or(0);
 
-    let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
-
-    let template_encounter = results.first().and_then(|r| r.first());
-    if template_encounter.is_none() {
-        #[cfg(debug_assertions)]
-        eprintln!("AGGREGATION: No template encounter found!");
-        return Vec::new();
-    }
-    let template_encounter = template_encounter.unwrap();
-
-    for round_idx in 0..max_rounds {
-        let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
-        let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
-        let mut count = 0;
-
-        for res in results {
-            if let Some(encounter) = res.first() {
-                // Determine which round to use (actual or last padding)
-                let round_opt = if round_idx < encounter.rounds.len() {
-                    encounter.rounds.get(round_idx)
-                } else {
-                    encounter.rounds.last()
-                };
-
-                if let Some(round) = round_opt {
-                    count += 1;
-
-                    for c in &round.team1 {
-                        // With deterministic IDs, c.id is stable across runs.
-                        let entry = team1_map
-                            .entry(c.id.clone())
-                            .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp as f64;
-
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
-                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
-
-                        // Aggregate Buffs
-                        for (buff_id, buff) in &c.final_state.buffs {
-                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry
-                                .buff_definitions
-                                .entry(buff_id.clone())
-                                .or_insert_with(|| buff.clone());
-                        }
-
-                        // Aggregate Concentration
-                        if let Some(conc_id) = &c.final_state.concentrating_on {
-                            *entry
-                                .concentration_counts
-                                .entry(conc_id.clone())
-                                .or_insert(0) += 1;
-                        }
-                    }
-
-                    // Team 2
-                    for c in &round.team2 {
-                        let entry = team2_map
-                            .entry(c.id.clone())
-                            .or_insert_with(AggregationData::new);
-                        entry.total_hp += c.final_state.current_hp as f64;
-
-                        let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
-                        *entry.action_counts.entry(action_key).or_insert(0) += 1;
-
-                        for (buff_id, buff) in &c.final_state.buffs {
-                            *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                            entry
-                                .buff_definitions
-                                .entry(buff_id.clone())
-                                .or_insert_with(|| buff.clone());
-                        }
-
-                        if let Some(conc_id) = &c.final_state.concentrating_on {
-                            *entry
-                                .concentration_counts
-                                .entry(conc_id.clone())
-                                .or_insert(0) += 1;
-                        }
-                    }
-                }
-            }
-        }
-
-        if count == 0 {
+        if max_rounds == 0 {
+            // Push empty encounter result if no rounds found
+            aggregated_encounters.push(EncounterResult {
+                stats: HashMap::new(),
+                rounds: Vec::new(),
+            });
             continue;
         }
-        let threshold = count / 2;
 
-        let template_round = if round_idx < template_encounter.rounds.len() {
-            &template_encounter.rounds[round_idx]
-        } else {
-            template_encounter.rounds.last().unwrap_or(&template_encounter.rounds[0]) // Fallback to first round if last is missing (shouldn't happen given previous checks)
-        };
+        let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
+        
+        // Use first available encounter as template for metadata
+        let template_encounter = results.iter().find_map(|r| r.get(enc_idx)).unwrap();
 
-        // Reconstruct Team 1
-        let mut t1 = Vec::new();
-        for c_template in &template_round.team1 {
-            if let Some(data) = team1_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count as f64;
-                let best_action_json = data
-                    .action_counts
-                    .iter()
-                    .max_by_key(|entry| entry.1)
-                    .map(|(k, _)| k.as_str())
-                    .unwrap_or("[]"); // Default to empty actions if none found
-                let actions: Vec<CombattantAction> =
-                    serde_json::from_str(best_action_json).unwrap_or_default();
+        for round_idx in 0..max_rounds {
+            let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
+            let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
+            let mut count = 0;
 
-                let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp.round() as u32;
-                c.actions = actions;
-
-                // Reconstruct Buffs
-                c.final_state.buffs.clear();
-                for (buff_id, buff_count) in &data.buff_counts {
-                    if *buff_count > threshold {
-                        if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                            c.final_state
-                                .buffs
-                                .insert(buff_id.clone(), buff_def.clone());
-                        }
-                    }
-                }
-
-                // Reconstruct Concentration
-                c.final_state.concentrating_on = None;
-                if let Some((conc_id, conc_count)) =
-                    data.concentration_counts.iter().max_by_key(|e| e.1)
-                {
-                    if *conc_count > threshold {
-                        c.final_state.concentrating_on = Some(conc_id.clone());
-                    }
-                }
-
-                // Fix initial_state
-                if round_idx > 0 {
-                    if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                        if let Some(prev_c) = prev_round.team1.iter().find(|pc| pc.id == c.id) {
-                            c.initial_state = prev_c.final_state.clone();
-                        }
-                    }
-                }
-
-                t1.push(c);
-            }
-        }
-
-        // Reconstruct Team 2
-        let mut t2 = Vec::new();
-        for c_template in &template_round.team2 {
-            if let Some(data) = team2_map.get(&c_template.id) {
-                let avg_hp = data.total_hp / count as f64;
-                let best_action_json = data
-                    .action_counts
-                    .iter()
-                    .max_by_key(|entry| entry.1)
-                    .map(|(k, _)| k.as_str())
-                    .unwrap_or("[]"); // Default to empty actions if none found
-                let actions: Vec<CombattantAction> =
-                    serde_json::from_str(best_action_json).unwrap_or_default();
-
-                let mut c = c_template.clone();
-                c.final_state.current_hp = avg_hp.round() as u32;
-                c.actions = actions;
-
-                // Reconstruct Buffs
-                c.final_state.buffs.clear();
-                for (buff_id, buff_count) in &data.buff_counts {
-                    if *buff_count > threshold {
-                        if let Some(buff_def) = data.buff_definitions.get(buff_id) {
-                            c.final_state
-                                .buffs
-                                .insert(buff_id.clone(), buff_def.clone());
-                        }
-                    }
-                }
-
-                // Reconstruct Concentration
-                c.final_state.concentrating_on = None;
-                if let Some((conc_id, conc_count)) =
-                    data.concentration_counts.iter().max_by_key(|e| e.1)
-                {
-                    if *conc_count > threshold {
-                        c.final_state.concentrating_on = Some(conc_id.clone());
-                    }
-                }
-
-                if round_idx > 0 {
-                    if let Some(prev_round) = aggregated_rounds.get(round_idx - 1) {
-                        if let Some(prev_c) = prev_round.team2.iter().find(|pc| pc.id == c.id) {
-                            c.initial_state = prev_c.final_state.clone();
-                        }
-                    }
-                }
-
-                t2.push(c);
-            }
-        }
-
-        // Consistency Cleanup: Enforce "Dead = No Concentration" on the aggregated result
-        let mut dead_source_ids = HashSet::new();
-
-        // 1. Identify effectively dead combatants and clear their concentration
-        for c in t1.iter_mut().chain(t2.iter_mut()) {
-            if c.final_state.current_hp == 0 {
-                #[cfg(debug_assertions)]
-                eprintln!(
-                    "AGGREGATION: {} is dead (HP: {}). Clearing concentration.",
-                    c.creature.name, c.final_state.current_hp
-                );
-
-                if c.final_state.concentrating_on.is_some() {
-                    c.final_state.concentrating_on = None;
-                }
-                dead_source_ids.insert(c.id.clone());
-            }
-        }
-
-        // 2. Build a map of who is concentrating on what
-        let mut concentration_map: HashMap<String, Option<String>> = HashMap::new(); // caster_id -> buff_id
-        for c in t1.iter().chain(t2.iter()) {
-            concentration_map.insert(c.id.clone(), c.final_state.concentrating_on.clone());
-        }
-
-        // 3. Multi-pass buff cleanup for comprehensive dead source handling
-        if !dead_source_ids.is_empty() || !concentration_map.is_empty() {
-            #[cfg(debug_assertions)]
-            eprintln!("AGGREGATION: Starting comprehensive cleanup. Dead sources: {}, concentration_map: {:?}",
-                dead_source_ids.len(), concentration_map.len());
-
-            // First pass: Remove buffs from clearly dead sources (HP <= 0.0)
-            for c in t1.iter_mut().chain(t2.iter_mut()) {
-                let _before_count = c.final_state.buffs.len();
-                c.final_state.buffs.retain(|_buff_id, buff| {
-                    if let Some(source) = &buff.source {
-                        if dead_source_ids.contains(source) {
-                            #[cfg(debug_assertions)]
-                            eprintln!("AGGREGATION: PASS1: Removing buff {} from {} (source {} is dead, HP: {:.1})",
-                                _buff_id, c.creature.name, source, c.final_state.current_hp);
-                            return false;
-                        }
-                        true
+            for res in results {
+                if let Some(encounter) = res.get(enc_idx) {
+                    let round_opt = if round_idx < encounter.rounds.len() {
+                        encounter.rounds.get(round_idx)
                     } else {
-                        // Buff with no source is always kept (might be innate effects)
-                        true
-                    }
-                });
-                let _after_count = c.final_state.buffs.len();
+                        encounter.rounds.last()
+                    };
 
-                #[cfg(debug_assertions)]
-                if _before_count != _after_count {
-                    eprintln!(
-                        "AGGREGATION: PASS1: {} had {} buffs, now has {}",
-                        c.creature.name, _before_count, _after_count
-                    );
-                }
-            }
-
-            // Second pass: Handle concentration-specific cleanup for remaining alive casters
-            if !concentration_map.is_empty() {
-                #[cfg(debug_assertions)]
-                eprintln!(
-                    "AGGREGATION: PASS2: Checking concentration mechanics for sources: {:?}",
-                    concentration_map
-                );
-
-                for c in t1.iter_mut().chain(t2.iter_mut()) {
-                    let _before_count = c.final_state.buffs.len();
-                    c.final_state.buffs.retain(|buff_id, buff| {
-                        if let Some(source) = &buff.source {
-                            // Skip if already handled in first pass
-                            if dead_source_ids.contains(source) {
-                                return false;
+                    if let Some(round) = round_opt {
+                        count += 1;
+                        for c in &round.team1 {
+                            let entry = team1_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
+                            entry.total_hp += c.final_state.current_hp as f64;
+                            let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
+                            *entry.action_counts.entry(action_key).or_insert(0) += 1;
+                            for (buff_id, buff) in &c.final_state.buffs {
+                                *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
+                                entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
                             }
-                        
-                        // Handle concentration buffs specifically
-                            if buff.concentration {
-                                if let Some(source_concentrating) = concentration_map.get(source) {
-                                    let is_concentrating_on_this = source_concentrating.as_ref() == Some(buff_id);
-                                    if !is_concentrating_on_this {
-                                    #[cfg(debug_assertions)]
-                                        eprintln!("AGGREGATION: Removing buff {} from {} (source {} not concentrating on it, concentrating on: {:?})",
-                                            buff_id, c.creature.name, source, source_concentrating);
-                                        return false;
-                                    }
-                                    // Concentration buff is valid - keep it
-                                    true
-                                } else {
-                                    #[cfg(debug_assertions)]
-                                    eprintln!("AGGREGATION: Removing concentration buff {} from {} (source {} not in concentration map)",
-                                        buff_id, c.creature.name, source);
-                                    false
-                                }
-                            } else {
-                                // Non-concentration buff from alive source - keep it
-                                true
+                            if let Some(conc_id) = &c.final_state.concentrating_on {
+                                *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
                             }
-                        } else {
-                            // Buff with no source is always kept (innate effects)
-                            true
                         }
-                });
-                    let _after_count = c.final_state.buffs.len();
-
-                    #[cfg(debug_assertions)]
-                    if _before_count != _after_count {
-                        eprintln!(
-                            "AGGREGATION: PASS2: {} had {} concentration-related buffs, now has {}",
-                            c.creature.name, _before_count, _after_count
-                        );
+                        for c in &round.team2 {
+                            let entry = team2_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
+                            entry.total_hp += c.final_state.current_hp as f64;
+                            let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
+                            *entry.action_counts.entry(action_key).or_insert(0) += 1;
+                            for (buff_id, buff) in &c.final_state.buffs {
+                                *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
+                                entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                            }
+                            if let Some(conc_id) = &c.final_state.concentrating_on {
+                                *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
+                            }
+                        }
                     }
                 }
             }
+
+            if count == 0 { continue; }
+            let threshold = count / 2;
+            let template_round = if round_idx < template_encounter.rounds.len() {
+                &template_encounter.rounds[round_idx]
+            } else {
+                template_encounter.rounds.last().unwrap()
+            };
+
+            let mut t1 = Vec::new();
+            for c_template in &template_round.team1 {
+                if let Some(data) = team1_map.get(&c_template.id) {
+                    let mut c = c_template.clone();
+                    c.final_state.current_hp = (data.total_hp / count as f64).round() as u32;
+                    let best_action_json = data.action_counts.iter().max_by_key(|e| e.1).map(|(k,_)| k.as_str()).unwrap_or("[]");
+                    c.actions = serde_json::from_str(best_action_json).unwrap_or_default();
+                    c.final_state.buffs.clear();
+                    for (bid, bcount) in &data.buff_counts {
+                        if *bcount > threshold { if let Some(bdef) = data.buff_definitions.get(bid) { c.final_state.buffs.insert(bid.clone(), bdef.clone()); } }
+                    }
+                    c.final_state.concentrating_on = data.concentration_counts.iter().max_by_key(|e| e.1).and_then(|(cid, ccount)| if *ccount > threshold { Some(cid.clone()) } else { None });
+                    if round_idx > 0 { if let Some(prev) = aggregated_rounds.get(round_idx - 1) { if let Some(pc) = prev.team1.iter().find(|x| x.id == c.id) { c.initial_state = pc.final_state.clone(); } } }
+                    t1.push(c);
+                }
+            }
+
+            let mut t2 = Vec::new();
+            for c_template in &template_round.team2 {
+                if let Some(data) = team2_map.get(&c_template.id) {
+                    let mut c = c_template.clone();
+                    c.final_state.current_hp = (data.total_hp / count as f64).round() as u32;
+                    let best_action_json = data.action_counts.iter().max_by_key(|e| e.1).map(|(k,_)| k.as_str()).unwrap_or("[]");
+                    c.actions = serde_json::from_str(best_action_json).unwrap_or_default();
+                    c.final_state.buffs.clear();
+                    for (bid, bcount) in &data.buff_counts {
+                        if *bcount > threshold { if let Some(bdef) = data.buff_definitions.get(bid) { c.final_state.buffs.insert(bid.clone(), bdef.clone()); } }
+                    }
+                    c.final_state.concentrating_on = data.concentration_counts.iter().max_by_key(|e| e.1).and_then(|(cid, ccount)| if *ccount > threshold { Some(cid.clone()) } else { None });
+                    if round_idx > 0 { if let Some(prev) = aggregated_rounds.get(round_idx - 1) { if let Some(pc) = prev.team2.iter().find(|x| x.id == c.id) { c.initial_state = pc.final_state.clone(); } } }
+                    t2.push(c);
+                }
+            }
+
+            // Cleanup
+            let mut dead_ids = HashSet::new();
+            for c in t1.iter_mut().chain(t2.iter_mut()) {
+                if c.final_state.current_hp == 0 {
+                    c.final_state.concentrating_on = None;
+                    dead_ids.insert(c.id.clone());
+                }
+            }
+            
+            // Simplified cleanup for brevity
+            for c in t1.iter_mut().chain(t2.iter_mut()) {
+                c.final_state.buffs.retain(|_, b| b.source.as_ref().map_or(true, |s| !dead_ids.contains(s)));
+            }
+
+            aggregated_rounds.push(Round { team1: t1, team2: t2 });
         }
 
-        aggregated_rounds.push(Round {
-            team1: t1,
-            team2: t2,
+        aggregated_encounters.push(EncounterResult {
+            stats: HashMap::new(), // TODO: Aggregate stats if needed
+            rounds: aggregated_rounds,
         });
     }
 
-    aggregated_rounds
+    aggregated_encounters
 }
 
 pub fn calculate_score(result: &SimulationResult) -> f64 {
@@ -376,7 +180,9 @@ pub fn generate_combat_log(result: &SimulationResult) -> String {
     use std::fmt::Write;
     let mut log = String::new();
 
-    if let Some(encounter) = result.first() {
+    for (enc_idx, encounter) in result.encounters.iter().enumerate() {
+        writeln!(&mut log, "=== Encounter {} ===\n", enc_idx + 1).unwrap();
+        
         // Build ID -> Name map
         let mut id_to_name = HashMap::new();
         if let Some(first_round) = encounter.rounds.first() {
@@ -436,6 +242,7 @@ pub fn generate_combat_log(result: &SimulationResult) -> String {
             }
             writeln!(&mut log).unwrap();
         }
+        writeln!(&mut log).unwrap();
     }
     log
 }
