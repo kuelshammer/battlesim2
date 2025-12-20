@@ -158,16 +158,28 @@ fn run_aggregate(scenario_path: &PathBuf) {
     // Use shared quintile analysis function
     let output = run_quintile_analysis(&results.iter().map(|r| r.result.clone()).collect::<Vec<_>>(), &scenario_name, party_size);
 
+    // Output summary and rating
+    println!("\nAnalysis Summary: {}", output.scenario_name);
+    println!("-------------------------------------");
+    println!("Encounter Rating: {} ({})", output.encounter_label, output.risk_factor);
+    println!("Description:      {}", output.analysis_summary);
+    println!("-------------------------------------\n");
+
     // Output table format
-    println!("Quintile Analysis: {}", output.scenario_name);
-    println!("=====================================");
-    println!("{:>12} | {:>12} | {:>12} | {:>12} | {:>10}", 
-              "Quintile", "Survivors", "Damage", "HP Lost %", "Win Rate");
-    println!("-------------|--------------|--------------|------------|----------");
-    for quintile in &output.quintiles {
+    println!("{:>15} | {:>12} | {:>12} | {:>12} | {:>10}", 
+              "Decile / %ile", "Survivors", "HP Lost", "HP Lost %", "Win Rate");
+    println!("----------------|--------------|--------------|------------|----------");
+    for (i, quintile) in output.quintiles.iter().enumerate() {
+        let percentile = match i {
+            0 => "5th %ile",
+            4 => "50th %ile",
+            9 => "95th %ile",
+            _ => "",
+        };
+        
         println!(
-            "{:>12} | {:>13} | {:>12.1} | {:>10.1}% | {:>8.1}%",
-            quintile.label, 
+            "{:>15} | {:>13} | {:>12.1} | {:>10.1}% | {:>8.1}%",
+            format!("{} ({})", quintile.label, percentile),
             format!("{}/{}", quintile.median_survivors, quintile.party_size),
             quintile.total_hp_lost, 
             quintile.hp_lost_percent, 

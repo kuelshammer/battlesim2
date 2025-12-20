@@ -146,10 +146,10 @@ fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantV
 
 /// Assess risk factor based on quintile analysis - implements Safety Grade system (A-F)
 fn assess_risk_factor(quintiles: &[QuintileStats]) -> RiskFactor {
-    if quintiles.len() < 3 { return RiskFactor::Safe; }
-    let disaster = &quintiles[0];  // Disaster run (#125) - 5th Percentile
-    let struggle = &quintiles[1]; // Struggle run (#627) - 25th Percentile
-    let typical = &quintiles[2];  // Typical run (#1255) - 50th Percentile
+    if quintiles.len() < 5 { return RiskFactor::Safe; }
+    let disaster = &quintiles[0];  // Decile 1 (0-10%)
+    let struggle = &quintiles[2]; // Decile 3 (20-30%)
+    let typical = &quintiles[4];  // Decile 5 (40-50%)
 
     if typical.median_survivors == 0 {
         return RiskFactor::Suicidal; // Safety Grade F
@@ -178,8 +178,8 @@ fn assess_risk_factor(quintiles: &[QuintileStats]) -> RiskFactor {
 
 /// Assess difficulty based on typical quintile HP remaining - implements Intensity Tier system (1-5)
 fn assess_difficulty(quintiles: &[QuintileStats]) -> Difficulty {
-    if quintiles.len() < 3 { return Difficulty::Medium; }
-    let typical = &quintiles[2];
+    if quintiles.len() < 5 { return Difficulty::Medium; }
+    let typical = &quintiles[4];
 
     let surviving_players: Vec<_> = typical.median_run_visualization
         .iter()
@@ -227,10 +227,10 @@ fn get_encounter_label(risk: &RiskFactor, difficulty: &Difficulty) -> EncounterL
 
 /// Generate analysis summary based on ratings
 fn generate_analysis_summary(_risk: &RiskFactor, _difficulty: &Difficulty, quintiles: &[QuintileStats]) -> String {
-    if quintiles.len() < 3 { return "Insufficient data".to_string(); }
+    if quintiles.len() < 5 { return "Insufficient data".to_string(); }
     let disaster = &quintiles[0];
-    let struggle = &quintiles[1];
-    let typical = &quintiles[2];
+    let struggle = &quintiles[2];
+    let typical = &quintiles[4];
 
     let safety_grade = if disaster.median_survivors == 0 && struggle.median_survivors == 0 { "F (Broken)" }
     else if struggle.median_survivors == 0 { "D (Unstable)" }
@@ -318,7 +318,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         let (visualization_data, battle_duration) = extract_combatant_visualization(single_run);
 
         let mut party_max_hp = 0.0;
-        if let Some(enc) = single_run.first() {
+        if let Some(enc) = single_run.encounters.first() {
             if let Some(round) = enc.rounds.first() {
                 for c in &round.team1 { party_max_hp += c.creature.hp as f64; }
             }

@@ -19,9 +19,9 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
         let totalHpLossPercent = 0;
 
         analysis.quintiles.forEach(quintile => {
-            // Each quintile represents 20% of runs (for 5 quintiles)
-            const quintileRuns = totalRuns / 5;
-            totalWins += ((quintile.winRate || 0) / 100) * quintileRuns;
+            // Each decile represents 10% of runs
+            const decileRuns = totalRuns / analysis.quintiles.length;
+            totalWins += ((quintile.winRate || 0) / 100) * decileRuns;
             totalHpLossPercent += (quintile.hpLostPercent || 0);
         });
 
@@ -63,8 +63,10 @@ const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: bo
 const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
     const medianQuintile = useMemo(() => {
         if (!analysis || !analysis.quintiles.length) return null;
-        // Quintile 3 is the Median (index 2)
-        return analysis.quintiles[2];
+        // With 10 deciles, Index 4 is the 50th Percentile (Median)
+        // With 5 quintiles, Index 2 was the Median
+        const medianIndex = analysis.quintiles.length === 10 ? 4 : Math.floor(analysis.quintiles.length / 2);
+        return analysis.quintiles[medianIndex];
     }, [analysis]);
 
     if (!medianQuintile) return null;
