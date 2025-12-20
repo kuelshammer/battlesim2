@@ -22,7 +22,7 @@ const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
     }
 
     // Filter deciles based on toggle states
-    const visibleDeciles = analysis.deciles.filter(decile => {
+    const visibleDeciles = (analysis.deciles || []).filter(decile => {
         const toggleId = `quintile-${decile.decile}` as UIToggleType // We keep quintile-* toggle IDs for now to avoid massive refactor of toggle state
         return getToggleState(toggleId)
     })
@@ -56,10 +56,10 @@ const DecileAnalysis: FC<PropType> = memo(({ analysis }) => {
                             ))}
                         </div>
                     )}
-                    {visibleDeciles.length !== analysis.deciles.length && (
+                    {visibleDeciles.length !== (analysis.deciles || []).length && (
                         <div className={styles.analysisSummary}>
                             <p className={styles.visibilityNote}>
-                                Showing {visibleDeciles.length} of {analysis.deciles.length} deciles
+                                Showing {visibleDeciles.length} of {(analysis.deciles || []).length} deciles
                             </p>
                         </div>
                     )}
