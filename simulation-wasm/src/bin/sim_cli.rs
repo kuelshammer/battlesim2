@@ -19,7 +19,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate aggregated statistics for each quintile from 1005 simulation runs
+    /// Generate aggregated statistics for each quintile from 2510 simulation runs
     Aggregate {
         /// Path to the scenario JSON file
         scenario: PathBuf,
@@ -147,23 +147,45 @@ fn run_aggregate(scenario_path: &PathBuf) {
     // Get party size
     let party_size = players.len();
 
-    // Run 1005 iterations
-    let iterations = 1005;
-    println!("Running {} iterations...", iterations);
+    // Run 2510 iterations to match frontend and methodology (10 slices of 251)
+    let iterations = 2510;
+    println!("Running {} iterations for Adventuring Day: {}...", iterations, scenario_name);
     let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
     // Sort results by score from worst to best performance
     results.sort_by(|a, b| calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal));
 
-    // Use shared quintile analysis function
-    let output = run_quintile_analysis(&results.iter().map(|r| r.result.clone()).collect::<Vec<_>>(), &scenario_name, party_size);
+    let raw_results: Vec<_> = results.iter().map(|r| r.result.clone()).collect();
+
+    // 1. Run Per-Encounter Analysis
+    let num_encounters = raw_results.first().map(|r| r.encounters.len()).unwrap_or(0);
+    
+    if num_encounters > 1 {
+        println!("\n--- Individual Encounter Breakdown ---");
+        for i in 0..num_encounters {
+            let enc_analysis = simulation_wasm::quintile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size);
+            println!("Encounter {}: {:<20} | Grade: {:<10} | Tier: {:<15} | {}", 
+                i + 1, 
+                format!("{}", enc_analysis.encounter_label),
+                format!("{}", enc_analysis.safety_grade),
+                format!("{}", enc_analysis.intensity_tier),
+                if enc_analysis.is_good_design { "✅ Good" } else { "⚠️ Review" }
+            );
+        }
+        println!("---------------------------------------\n");
+    }
+
+    // 2. Run Overall Analysis
+    let output = run_quintile_analysis(&raw_results, &scenario_name, party_size);
 
     // Output summary and rating
-    println!("\nAnalysis Summary: {}", output.scenario_name);
-    println!("-------------------------------------");
-    println!("Encounter Rating: {} ({})", output.encounter_label, output.risk_factor);
-    println!("Description:      {}", output.analysis_summary);
-    println!("-------------------------------------\n");
+    println!("OVERALL ADVENTURING DAY RATING: {}", output.scenario_name);
+    println!("=====================================");
+    println!("Combined Label: {} ({})", output.encounter_label, output.safety_grade);
+    println!("Intensity:      {}", output.intensity_tier);
+    println!("Description:    {}", output.analysis_summary);
+    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY (B/Tier 5 or A/Tier 3-4)" } else if output.safety_grade == simulation_wasm::quintile_analysis::SafetyGrade::B && output.intensity_tier == simulation_wasm::quintile_analysis::IntensityTier::Tier5 { "🏆 PERFECT DAY (B/Tier 5)" } else { "⚠️ Imbalanced" });
+    println!("=====================================\n");
 
     // Output table format
     println!("{:>15} | {:>12} | {:>12} | {:>12} | {:>10}", 
@@ -313,8 +335,8 @@ fn print_markdown_log(result: &SimulationResult, events: &[String]) {
 fn run_find_median(scenario_path: &PathBuf) {
     let (players, encounters, _) = load_scenario(scenario_path);
 
-    // Run 1005 iterations
-    let iterations = 1005;
+    // Run 2510 iterations
+    let iterations = 2510;
     println!("Running {} iterations...", iterations);
     let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
 
@@ -816,7 +838,7 @@ fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
     let (players_b, encounters_b, name_b) = load_scenario(scenario_b_path);
 
     // Run both
-    let iterations = 1005;
+    let iterations = 2510;
     println!("Running {} iterations for each scenario...\n", iterations);
 
     let runs_a = run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);
