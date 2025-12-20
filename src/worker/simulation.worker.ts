@@ -36,13 +36,14 @@ self.onmessage = async (e: MessageEvent) => {
                 progressCallback
             );
 
-            const { results, analysis, first_run_events } = output;
+            // output is a JS object with camelCase properties from WASM
+            const { results, analysis, firstRunEvents } = output;
 
             self.postMessage({
                 type: 'SIMULATION_COMPLETE',
                 results,
                 analysis,
-                events: first_run_events
+                events: firstRunEvents
             });
         } catch (error) {
             console.error('Worker simulation error:', error);

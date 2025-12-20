@@ -15,6 +15,8 @@ const BattleCard: FC<PropType> = memo(({ decile }) => {
     }
 
     const renderHpBar = (currentHp: number, startHp: number, maxHp: number) => {
+        if (!maxHp || maxHp <= 0) return [];
+        
         // Calculate segments (10 total)
         const totalSegments = 10;
         
@@ -26,7 +28,7 @@ const BattleCard: FC<PropType> = memo(({ decile }) => {
         const redCount = Math.floor((newDamage / maxHp) * totalSegments);
         
         // Grey: Previously lost HP (Max HP - Start HP)
-        const greyCount = totalSegments - greenCount - redCount;
+        const greyCount = Math.max(0, totalSegments - greenCount - redCount);
         
         const segments = [];
         // Green segments (Remaining)
@@ -143,7 +145,7 @@ const BattleCard: FC<PropType> = memo(({ decile }) => {
             </div>
 
             <div className={styles.footer}>
-                <div className={winRate < 100 ? styles.winRateDanger : styles.winRate}>
+                <div className={decile.winRate < 100 ? styles.winRateDanger : styles.winRate}>
                     Win Rate: {decile.winRate.toFixed(1)}%
                 </div>
                 <div className={styles.survivors}>

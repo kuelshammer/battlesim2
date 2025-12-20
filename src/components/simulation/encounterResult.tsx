@@ -83,6 +83,8 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
     };
 
     const renderHpBar = (currentHp: number, startHp: number, maxHp: number) => {
+        if (!maxHp || maxHp <= 0) return [];
+        
         // Calculate segments (10 total)
         const totalSegments = 10;
         
@@ -94,8 +96,7 @@ const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPrelimi
         const redCount = Math.floor((newDamage / maxHp) * totalSegments);
         
         // Grey: Previously lost HP (Max HP - Start HP)
-        const oldDamage = Math.max(0, maxHp - startHp);
-        const greyCount = totalSegments - greenCount - redCount;
+        const greyCount = Math.max(0, totalSegments - greenCount - redCount);
         
         const segments = [];
         // Green segments (Remaining)

@@ -252,7 +252,7 @@
 }
 
 // Best Quintile Display Styles
-.bestQuintileDisplay {
+.bestDecileDisplay {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -294,7 +294,7 @@
         }
     }
 
-    .bestQuintileHeader {
+    .bestDecileHeader {
         display: flex;
         justify-content: center;
         gap: 1em;
@@ -328,14 +328,14 @@
         }
     }
 
-    .bestQuintileCombatants {
+    .bestDecileCombatants {
         display: flex;
         flex-direction: column;
         gap: 0.75em;
         margin-bottom: 1em;
     }
 
-    .bestQuintileCombatant {
+    .bestDecileCombatant {
         .combatantName {
             color: #fff;
             font-weight: 500;
@@ -423,7 +423,7 @@
     }
     }
 
-    .bestQuintileMetrics {
+    .bestDecileMetrics {
         display: flex;
         justify-content: center;
         gap: 2em;
