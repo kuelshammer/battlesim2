@@ -45,6 +45,7 @@ pub struct CombattantState {
     pub resources: ResourceLedger,     // Per-combatant resource tracking
     #[serde(default)]
     pub arcane_ward_hp: Option<u32>,
+    pub known_ac: HashMap<String, crate::model::AcKnowledge>,
     #[serde(skip)]
     pub cached_stats: Option<CombatantStats>, // Cached combat statistics
 }
@@ -87,48 +88,27 @@ impl TurnContext {
         let combatant_states: HashMap<String, CombattantState> = combatants
             .into_iter()
             .map(|c| {
-                // Initialize resource ledger for this combatant
-                let mut resources = ResourceLedger::new();
+                // Initialize resource ledger from creature definition (Max values)
+                let mut resources = c.creature.initialize_ledger();
 
-                // Initialize basic resources
-                resources.register_resource(
-                    ResourceType::Action,
-                    None,
-                    1.0,
-                    Some(ResetType::ShortRest),
-                );
-                resources.register_resource(
-                    ResourceType::BonusAction,
-                    None,
-                    1.0,
-                    Some(ResetType::ShortRest),
-                );
-                resources.register_resource(
-                    ResourceType::Reaction,
-                    None,
-                    1.0,
-                    Some(ResetType::ShortRest),
-                );
-
-                // TODO: Initialize spell slots and class resources from creature definition
-                // This would be done here by reading c.creature.spell_slots etc.
-                // Copy initialized resources from combatant state (e.g. 1/fight actions)
+                // Overwrite current values from initial state (carry-over usage)
                 for (key, val) in &c.initial_state.resources.current {
                     resources.current.insert(key.clone(), *val);
-                    resources.max.insert(key.clone(), *val);
                 }
+
                 let state = CombattantState {
                     id: c.id.clone(),
                     side: c.team,
-                    current_hp: c.creature.hp,
+                    current_hp: c.initial_state.current_hp,
                     temp_hp: c.initial_state.temp_hp.unwrap_or(0),
                     conditions: Vec::new(),
-                    concentration: None,
+                    concentration: c.initial_state.concentrating_on.clone(),
                     position: None,
-                    base_combatant: c.clone(), // Clone to avoid borrow issues if c is used below? No, map takes ownership.
+                    base_combatant: c.clone(), 
                     resources,
                     arcane_ward_hp: c.initial_state.arcane_ward_hp,
-                    cached_stats: None, // Will be populated by cache
+                    known_ac: c.initial_state.known_ac.clone(),
+                    cached_stats: None, 
                 };
                 (state.id.clone(), state)
             })

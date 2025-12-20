@@ -1,0 +1,386 @@
+{
+  "name": "Fighters_2_Encounters",
+  "players": [
+    {
+      "id": "adc4fb72-6701-467c-9d5f-605a4710367b",
+      "mode": "player",
+      "class": {
+        "type": "fighter",
+        "level": 10,
+        "options": {}
+      },
+      "name": "Lv10 Fighter",
+      "count": 1,
+      "hp": 75,
+      "AC": 18,
+      "saveBonus": 4,
+      "conSaveBonus": 6,
+      "actions": [
+        {
+          "id": "054981ca-479d-4f48-a7dc-7f4dd1c4cca2",
+          "name": "Indomitable",
+          "actionSlot": 6,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Indomitable",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Defense"
+          ],
+          "freq": {
+            "reset": "lr",
+            "uses": 1
+          },
+          "condition": "default",
+          "targets": 1,
+          "type": "buff",
+          "target": "self",
+          "buff": {
+            "displayName": "Indomitable",
+            "duration": "until next attack taken",
+            "save": 10
+          }
+        },
+        {
+          "id": "9c649239-b4c7-4cdd-820b-3b7af335c38c",
+          "name": "Action Surge: Greatsword x2",
+          "actionSlot": 5,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Action Surge",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon",
+            "GWM"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is available",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON] + 10[GWM]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON] - 5[GWM]",
+          "target": "enemy with least HP"
+        },
+        {
+          "id": "1ccdefcb-5182-47ac-906a-51d98845d2eb",
+          "name": "Second Wind",
+          "actionSlot": 1,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "BonusAction",
+              "amount": 1
+            },
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Second Wind",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Healing"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is under half HP",
+          "targets": 1,
+          "type": "heal",
+          "amount": "1d10 + 10",
+          "target": "self"
+        },
+        {
+          "id": "a0f5a640-af2f-47f3-b10a-692407ca5d9b",
+          "name": "Greatsword x2",
+          "actionSlot": 0,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "Action",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon",
+            "GWM"
+          ],
+          "freq": "at will",
+          "condition": "default",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON] + 10[GWM]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON] - 5[GWM]",
+          "target": "enemy with least HP"
+        }
+      ],
+      "classResources": {
+        "Action Surge": 1,
+        "Second Wind": 1,
+        "Indomitable": 1
+      },
+      "hitDice": "10d10",
+      "conModifier": 2
+    },
+    {
+      "id": "c1f326ce-5f55-47db-ad32-a873dc59396e",
+      "mode": "player",
+      "class": {
+        "type": "fighter",
+        "level": 10,
+        "options": {}
+      },
+      "name": "Lv10 Fighter",
+      "count": 1,
+      "hp": 75,
+      "AC": 18,
+      "saveBonus": 4,
+      "conSaveBonus": 6,
+      "actions": [
+        {
+          "id": "b5397c48-6362-462f-a32c-2dc6a1eb7b11",
+          "name": "Indomitable",
+          "actionSlot": 6,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Indomitable",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Defense"
+          ],
+          "freq": {
+            "reset": "lr",
+            "uses": 1
+          },
+          "condition": "default",
+          "targets": 1,
+          "type": "buff",
+          "target": "self",
+          "buff": {
+            "displayName": "Indomitable",
+            "duration": "until next attack taken",
+            "save": 10
+          }
+        },
+        {
+          "id": "3122fedd-bdd3-45e3-b917-b15d9b191336",
+          "name": "Action Surge: Greatsword x2",
+          "actionSlot": 5,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Action Surge",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is available",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON]",
+          "target": "enemy with least HP"
+        },
+        {
+          "id": "99cb6048-f93c-4387-ac45-45e029807fbb",
+          "name": "Second Wind",
+          "actionSlot": 1,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "BonusAction",
+              "amount": 1
+            },
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Second Wind",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Healing"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is under half HP",
+          "targets": 1,
+          "type": "heal",
+          "amount": "1d10 + 10",
+          "target": "self"
+        },
+        {
+          "id": "668313ec-486e-4eb6-b4c6-7b68172c1f91",
+          "name": "Greatsword x2",
+          "actionSlot": 0,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "Action",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon"
+          ],
+          "freq": "at will",
+          "condition": "default",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON]",
+          "target": "enemy with least HP"
+        }
+      ],
+      "classResources": {
+        "Action Surge": 1,
+        "Second Wind": 1,
+        "Indomitable": 1
+      },
+      "hitDice": "10d10",
+      "conModifier": 2
+    }
+  ],
+  "encounters": [
+    {
+      "monsters": [
+        {
+          "id": "c132609d-a013-4223-8b9e-8377107cff5f",
+          "mode": "monster",
+          "type": "humanoid",
+          "cr": "1",
+          "src": "MM p.166",
+          "name": "Goblin Boss",
+          "count": 3,
+          "hp": 21,
+          "AC": 17,
+          "saveBonus": 0.5,
+          "actions": [
+            {
+              "id": "768b300a-5f7c-4d85-b3bb-18d03b9ef03b",
+              "name": "Javelin",
+              "actionSlot": 0,
+              "cost": [],
+              "requirements": [],
+              "tags": [],
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1,
+              "type": "atk",
+              "dpr": 3.5,
+              "toHit": 2,
+              "target": "enemy with most HP"
+            },
+            {
+              "id": "521a8f1f-c9a6-4873-a1ef-a39479e96f27",
+              "name": "Scimitar x 2",
+              "actionSlot": 0,
+              "cost": [],
+              "requirements": [],
+              "tags": [],
+              "freq": "at will",
+              "condition": "default",
+              "targets": 2,
+              "type": "atk",
+              "dpr": 5.5,
+              "toHit": 4,
+              "target": "enemy with most HP"
+            },
+            {
+              "id": "59296459-64f6-44d1-9ba4-294637971b8f",
+              "name": "Hide",
+              "actionSlot": 1,
+              "cost": [],
+              "requirements": [],
+              "tags": [],
+              "freq": "at will",
+              "condition": "not used yet",
+              "targets": 1,
+              "type": "buff",
+              "target": "self",
+              "buff": {
+                "duration": "1 round",
+                "condition": "Invisible"
+              }
+            }
+          ]
+        }
+      ],
+      "playersSurprised": false,
+      "monstersSurprised": false
+    },
+    {
+      "monsters": [
+        {
+          "id": "46a09fb4-0680-4bd8-9b6e-91003a5ceaa6",
+          "mode": "custom",
+          "type": "humanoid",
+          "cr": "3",
+          "src": "MM p.186",
+          "name": "Hobgoblin Captain",
+          "count": 1,
+          "hp": 39,
+          "AC": 17,
+          "saveBonus": 1.5,
+          "actions": [
+            {
+              "id": "8fe49378-bde0-458a-8c53-e70fa9cb9825",
+              "name": "Greatsword x 2 + Martial Advantage",
+              "actionSlot": 0,
+              "cost": [],
+              "requirements": [],
+              "tags": [],
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1,
+              "type": "atk",
+              "dpr": "12d1",
+              "toHit": 4,
+              "target": "enemy with most HP"
+            }
+          ]
+        }
+      ],
+      "playersSurprised": false,
+      "monstersSurprised": false
+    }
+  ],
+  "updated": 1766229466008
+}

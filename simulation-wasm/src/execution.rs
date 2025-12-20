@@ -144,20 +144,20 @@ impl ActionExecutionEngine {
             // This ensures round-by-round visualization and final state are accurate
             let snapshot: Vec<CombattantState> = self.context.combatants
                 .values()
-                .map(|state| CombattantState {
-                    id: state.id.clone(),
-                    side: state.side,
-                    base_combatant: state.base_combatant.clone(), // This is necessary for reference
-                    current_hp: state.current_hp,
-                    temp_hp: state.temp_hp,
-                    conditions: state.conditions.clone(),
-                    concentration: state.concentration.clone(),
-                    position: state.position.clone(),
-                    resources: crate::resources::ResourceLedger::new(), // Use empty ledger for snapshot
-                    arcane_ward_hp: state.arcane_ward_hp,
-                    cached_stats: None, // Don't clone cached stats
-                })
-                .collect();
+                                    .map(|state| CombattantState {
+                                        id: state.id.clone(),
+                                        side: state.side,
+                                        base_combatant: state.base_combatant.clone(), // This is necessary for reference
+                                        current_hp: state.current_hp,
+                                        temp_hp: state.temp_hp,
+                                        conditions: state.conditions.clone(),
+                                        concentration: state.concentration.clone(),
+                                        position: state.position.clone(),
+                                        resources: crate::resources::ResourceLedger::new(), // Use empty ledger for snapshot
+                                        arcane_ward_hp: state.arcane_ward_hp,
+                                        known_ac: state.known_ac.clone(),
+                                        cached_stats: None, // Don't clone cached stats
+                                    })                .collect();
             round_snapshots.push(snapshot);
 
             // Continue to max rounds limit - let combat run its course

@@ -41,6 +41,7 @@ use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureSt
 use crate::user_interaction::ScenarioParameters;
 use crate::execution::ActionExecutionEngine;
 use crate::storage_manager::StorageManager;
+use crate::resources::ResetType;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, OnceLock};
 
@@ -407,10 +408,10 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
         let legacy_result = convert_to_legacy_simulation_result(&encounter_result, encounter_idx);
         encounter_results.push(legacy_result);
 
-        // Update player states for next encounter (simple recovery)
+        // Update player states for next encounter
         if encounter_idx < encounters.len() - 1 {
-            // This is simplified - in a full implementation would handle short/long rests
-            players_with_state = update_player_states_for_next_encounter(&players_with_state, &encounter_result);
+            let is_short_rest = encounters[encounter_idx].short_rest.unwrap_or(false);
+            players_with_state = update_player_states_for_next_encounter(&players_with_state, &encounter_result, is_short_rest);
         }
     }
 
@@ -573,7 +574,11 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
     }
 }
 
-fn update_player_states_for_next_encounter(players: &[Combattant], encounter_result: &crate::execution::EncounterResult) -> Vec<Combattant> {
+fn update_player_states_for_next_encounter(
+    players: &[Combattant], 
+    encounter_result: &crate::execution::EncounterResult,
+    short_rest: bool
+) -> Vec<Combattant> {
     // Update players with their final state from the encounter
     let mut updated_players = Vec::new();
     
@@ -582,19 +587,38 @@ fn update_player_states_for_next_encounter(players: &[Combattant], encounter_res
         if let Some(final_state) = encounter_result.final_combatant_states.iter().find(|s| s.id == player.id) {
              let mut updated_player = player.clone();
              
+             let mut current_hp = final_state.current_hp;
+             let mut temp_hp = final_state.temp_hp;
+             let mut resources = final_state.resources.clone();
+
+             if short_rest {
+                 // 1. Reset Short Rest resources
+                 resources.reset_by_type(&ResetType::ShortRest);
+                 
+                 // 2. Basic Short Rest healing (Simplification of Hit Dice)
+                 if current_hp == 0 {
+                     current_hp = 1; // Wake up
+                 }
+                 let max_hp = player.creature.hp;
+                 let heal_amount = (max_hp / 4).max(1); // Heal 25% of Max HP
+                 current_hp = (current_hp + heal_amount).min(max_hp);
+                 
+                 temp_hp = 0; // Temp HP lost on rest
+             }
+
              // Update state
              updated_player.initial_state = crate::model::CreatureState {
-                current_hp: final_state.current_hp,
-                temp_hp: Some(final_state.temp_hp),
+                current_hp,
+                temp_hp: if temp_hp > 0 { Some(temp_hp) } else { None },
                 buffs: HashMap::new(),
-                resources: final_state.resources.clone().into(),
+                resources: resources.into(),
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: final_state.concentration.clone(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
-                known_ac: HashMap::new(),
-                arcane_ward_hp: None,
+                known_ac: final_state.known_ac.clone(),
+                arcane_ward_hp: final_state.arcane_ward_hp,
              };
              
              updated_players.push(updated_player);

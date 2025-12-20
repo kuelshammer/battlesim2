@@ -1,0 +1,289 @@
+{
+  "name": "Fighters_1st_Encounter",
+  "players": [
+    {
+      "id": "adc4fb72-6701-467c-9d5f-605a4710367b",
+      "mode": "player",
+      "class": {
+        "type": "fighter",
+        "level": 10,
+        "options": {}
+      },
+      "name": "Lv10 Fighter",
+      "count": 1,
+      "hp": 75,
+      "AC": 18,
+      "saveBonus": 4,
+      "conSaveBonus": 6,
+      "actions": [
+        {
+          "id": "054981ca-479d-4f48-a7dc-7f4dd1c4cca2",
+          "name": "Indomitable",
+          "actionSlot": 6,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Indomitable",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Defense"
+          ],
+          "freq": {
+            "reset": "lr",
+            "uses": 1
+          },
+          "condition": "default",
+          "targets": 1,
+          "type": "buff",
+          "target": "self",
+          "buff": {
+            "displayName": "Indomitable",
+            "duration": "until next attack taken",
+            "save": 10
+          }
+        },
+        {
+          "id": "9c649239-b4c7-4cdd-820b-3b7af335c38c",
+          "name": "Action Surge: Greatsword x2",
+          "actionSlot": 5,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Action Surge",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon",
+            "GWM"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is available",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON] + 10[GWM]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON] - 5[GWM]",
+          "target": "enemy with least HP"
+        },
+        {
+          "id": "1ccdefcb-5182-47ac-906a-51d98845d2eb",
+          "name": "Second Wind",
+          "actionSlot": 1,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "BonusAction",
+              "amount": 1
+            },
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Second Wind",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Healing"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is under half HP",
+          "targets": 1,
+          "type": "heal",
+          "amount": "1d10 + 10",
+          "target": "self"
+        },
+        {
+          "id": "a0f5a640-af2f-47f3-b10a-692407ca5d9b",
+          "name": "Greatsword x2",
+          "actionSlot": 0,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "Action",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon",
+            "GWM"
+          ],
+          "freq": "at will",
+          "condition": "default",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON] + 10[GWM]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON] - 5[GWM]",
+          "target": "enemy with least HP"
+        }
+      ],
+      "classResources": {
+        "Action Surge": 1,
+        "Second Wind": 1,
+        "Indomitable": 1
+      },
+      "hitDice": "10d10",
+      "conModifier": 2
+    },
+    {
+      "id": "c1f326ce-5f55-47db-ad32-a873dc59396e",
+      "mode": "player",
+      "class": {
+        "type": "fighter",
+        "level": 10,
+        "options": {}
+      },
+      "name": "Lv10 Fighter",
+      "count": 1,
+      "hp": 75,
+      "AC": 18,
+      "saveBonus": 4,
+      "conSaveBonus": 6,
+      "actions": [
+        {
+          "id": "b5397c48-6362-462f-a32c-2dc6a1eb7b11",
+          "name": "Indomitable",
+          "actionSlot": 6,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Indomitable",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Defense"
+          ],
+          "freq": {
+            "reset": "lr",
+            "uses": 1
+          },
+          "condition": "default",
+          "targets": 1,
+          "type": "buff",
+          "target": "self",
+          "buff": {
+            "displayName": "Indomitable",
+            "duration": "until next attack taken",
+            "save": 10
+          }
+        },
+        {
+          "id": "3122fedd-bdd3-45e3-b917-b15d9b191336",
+          "name": "Action Surge: Greatsword x2",
+          "actionSlot": 5,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Action Surge",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is available",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON]",
+          "target": "enemy with least HP"
+        },
+        {
+          "id": "99cb6048-f93c-4387-ac45-45e029807fbb",
+          "name": "Second Wind",
+          "actionSlot": 1,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "BonusAction",
+              "amount": 1
+            },
+            {
+              "type": "Discrete",
+              "resourceType": "ClassResource",
+              "resourceVal": "Second Wind",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Healing"
+          ],
+          "freq": {
+            "reset": "sr",
+            "uses": 1
+          },
+          "condition": "is under half HP",
+          "targets": 1,
+          "type": "heal",
+          "amount": "1d10 + 10",
+          "target": "self"
+        },
+        {
+          "id": "668313ec-486e-4eb6-b4c6-7b68172c1f91",
+          "name": "Greatsword x2",
+          "actionSlot": 0,
+          "cost": [
+            {
+              "type": "Discrete",
+              "resourceType": "Action",
+              "amount": 1
+            }
+          ],
+          "requirements": [],
+          "tags": [
+            "Melee",
+            "Weapon"
+          ],
+          "freq": "at will",
+          "condition": "default",
+          "targets": 2,
+          "type": "atk",
+          "dpr": "2d6 + 5[STR] + 2[WEAPON]",
+          "toHit": "4[PB] + 5[STR] + 2[WEAPON]",
+          "target": "enemy with least HP"
+        }
+      ],
+      "classResources": {
+        "Action Surge": 1,
+        "Second Wind": 1,
+        "Indomitable": 1
+      },
+      "hitDice": "10d10",
+      "conModifier": 2
+    }
+  ],
+  "encounters": [
+    {
+      "monsters": [],
+      "playersSurprised": false,
+      "monstersSurprised": false
+    }
+  ],
+  "updated": 1766229503812
+}
