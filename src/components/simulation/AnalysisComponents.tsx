@@ -44,7 +44,7 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     );
 });
 
-export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
+export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean, isDaySummary?: boolean }> = memo(({ analysis, isPreliminary, isDaySummary }) => {
     const medianDecile = useMemo(() => {
         if (!analysis) return null;
         if (analysis.globalMedian) return analysis.globalMedian;
@@ -65,23 +65,47 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
     const renderHpBar = (currentHp: number, startHp: number, maxHp: number) => {
         if (!maxHp || maxHp <= 0) return [];
         const totalSegments = 10;
+        
+        // In day summary mode, we don't care about the starting HP of the last encounter.
+        // We show Green (remaining) vs Red (total lost over the day).
         const greenCount = Math.floor((currentHp / maxHp) * totalSegments);
-        const newDamage = Math.max(0, startHp - currentHp);
-        const redCount = Math.floor((newDamage / maxHp) * totalSegments);
-        const greyCount = Math.max(0, totalSegments - greenCount - redCount);
+        const redCount = isDaySummary 
+            ? totalSegments - greenCount 
+            : Math.floor((Math.max(0, startHp - currentHp) / maxHp) * totalSegments);
+        
+        const greyCount = isDaySummary ? 0 : totalSegments - greenCount - redCount;
         
         const segments = [];
-        for (let i = 0; i < greenCount; i++) segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
-        for (let i = 0; i < redCount; i++) segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
-        for (let i = 0; i < greyCount; i++) segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
+        // Green segments (Remaining)
+        for (let i = 0; i < greenCount; i++) {
+            segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
+        }
+        // Red segments (Newly lost or total lost)
+        for (let i = 0; i < redCount; i++) {
+            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
+        }
+        // Grey segments (Previously lost - only in encounter mode)
+        for (let i = 0; i < greyCount; i++) {
+            segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
+        }
         
-        while (segments.length < totalSegments) segments.push(<span key={`f-${segments.length}`} className={styles.segmentGrey}>░</span>);
+        // Ensure we always have exactly 10 segments due to rounding
+        while (segments.length < totalSegments) {
+            segments.push(<span key={`f-${segments.length}`} className={isDaySummary ? styles.segmentRed : styles.segmentGrey}>
+                {isDaySummary ? '█' : '░'}
+            </span>);
+        }
         return segments.slice(0, totalSegments);
     };
 
     const avgFinalHp = medianDecile.medianRunVisualization
         ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
         : '0.0';
+
+    // In Day Summary mode, we only show players
+    const filteredCombatants = isDaySummary 
+        ? medianDecile.medianRunVisualization.filter(c => c.isPlayer)
+        : medianDecile.medianRunVisualization;
 
     return (
         <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
@@ -96,7 +120,7 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
             </div>
 
             <div className={styles.bestDecileCombatants}>
-                {medianDecile.medianRunVisualization?.map((combatant, index) => (
+                {filteredCombatants?.map((combatant, index) => (
                     <div key={index} className={styles.bestDecileCombatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
