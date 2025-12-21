@@ -199,7 +199,7 @@ export const CreatureSchema = z.object({
         type: ClassesSchema,
         level: z.number(),
         options: ClassOptionsSchema,
-    }).optional().passthrough(),
+    }).passthrough().optional(),
 
     // Properties of the creature, which are used by the simulator
     name: z.string(),
