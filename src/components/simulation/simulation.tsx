@@ -123,6 +123,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     function createEncounter() {
         setEncounters([...encounters, {
+            id: uuid(), // Ensure new encounters have a unique ID
             monsters: [],
             monstersSurprised: false,
             playersSurprised: false,
@@ -148,6 +149,15 @@ const Simulation: FC<PropType> = memo(({ }) => {
         encountersClone[index1] = encountersClone[index2]
         encountersClone[index2] = tmp
         setEncounters(encountersClone)
+
+        // Also swap simulation results if they exist to keep them aligned
+        if (simulationResults.length > Math.max(index1, index2)) {
+            const resultsClone = [...simulationResults]
+            const tmpRes = resultsClone[index1]
+            resultsClone[index1] = resultsClone[index2]
+            resultsClone[index2] = tmpRes
+            setSimulationResults(resultsClone)
+        }
     }
 
     // Memoize action names map

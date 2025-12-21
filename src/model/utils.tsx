@@ -5,35 +5,40 @@ export function clone<T>(obj: T): T {
     return structuredClone(obj)
 }
 
-// A wrapper for useState which automatically backs up the state into the localStorage if the user has agreed to it
-export function useStoredState<T>(key: string, defaultValue: T, parser: (str: string) => T|null) {
-    const [state, setState] = useState(defaultValue)
-    
-    useEffect(() => {
-        if (!localStorage) return
-
-        const storedValue = localStorage.getItem(key)
-        if (storedValue === null) return
-        
+export function useStoredState<T>(key: string, defaultValue: T, parser: (str: any) => T | null) {
+    const [state, setState] = useState<T>(() => {
+        if (typeof window === 'undefined') return defaultValue;
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return defaultValue;
         try {
-            const parsedValue = parser(JSON.parse(storedValue))
-            if (parsedValue !== null) setState(parsedValue)
-            else console.error('Could not parse', key, 'from localStorage')
+            const parsed = JSON.parse(storedValue);
+            const parsedValue = parser(parsed);
+            return parsedValue !== null ? parsedValue : defaultValue;
         } catch (e) {
-            console.error(e)
+            console.error(`Error loading state for key "${key}":`, e);
+            return defaultValue;
         }
-    }, [])
+    });
+
+    // We still keep the useEffect to sync if localStorage changes externally (optional)
+    // but the main loading is now in the initializer.
+    useEffect(() => {
+        if (!localStorage) return;
+        const storedValue = localStorage.getItem(key);
+        if (storedValue === null) return;
+        try {
+            const parsedValue = parser(JSON.parse(storedValue));
+            if (parsedValue !== null) setState(parsedValue);
+        } catch (e) {}
+    }, [key]); // Added key dependency for safety
 
     const stateSaver = (newValue: T) => {
-        setState(newValue)
-        
-        if (!localStorage) return
-        
-        const useLocalStorage = localStorage.getItem('useLocalStorage')
-        if (useLocalStorage !== null) localStorage.setItem(key, JSON.stringify(newValue))
-    }
+        setState(newValue);
+        if (!localStorage) return;
+        localStorage.setItem(key, JSON.stringify(newValue));
+    };
 
-    return [state, stateSaver] as const
+    return [state, stateSaver] as const;
 }
 
 // The state will be shared between identical components, even if the component is unmounted

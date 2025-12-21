@@ -277,6 +277,7 @@ const RoundSchema = z.object({
 })
 
 export const EncounterSchema = z.object({
+    id: z.string().optional().default(() => uuid()),
     monsters: TeamSchema,
     playersSurprised: z.boolean().optional(),
     monstersSurprised: z.boolean().optional(),
