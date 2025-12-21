@@ -24,7 +24,7 @@
             .lifebar {
                 position: relative;
 
-.lifebarBackground {
+                .lifebarBackground {
                     position: relative;
                     width: 100%;
                     height: 2em;
@@ -88,170 +88,79 @@
     }
 }
 
-// Toggle Control Styles
-.toggleControl {
-    margin-bottom: 1em;
-    padding: 0.75em;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-
-    .toggleLabel {
-        display: flex;
-        align-items: center;
-        gap: 0.75em;
-        cursor: pointer;
-        font-size: 0.9em;
-        color: #fff;
-        margin: 0;
-    }
-
-    .toggleInput {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggleSwitch {
-        position: relative;
-        width: 40px;
-        height: 20px;
-        background: #666;
-        border-radius: 10px;
-        transition: all 0.2s ease;
-        flex-shrink: 0;
-
-        &::before {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 16px;
-            height: 16px;
-            background: white;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-        }
-    }
-
-    .toggleInput:checked + .toggleSwitch {
-        background: #4a90e2;
-
-        &::before {
-            transform: translateX(20px);
-        }
-    }
-
-    .toggleText {
-        font-weight: 500;
-        flex: 1;
-    }
-}
-
-// Result Summary Styles
-.resultSummary {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 6px;
-    padding: 1em;
-    margin-bottom: 1em;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-
-    .summaryItem {
-        margin-bottom: 0.5em;
-        color: #fff;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-
-        strong {
-            color: #ffa;
-            margin-right: 0.5em;
-        }
-    }
-}
-
-// Encounter Rating Styles
+// Encounter Rating Styles - Refined Hierarchy
 .encounterRating {
     width: 100%;
-    padding: 1em;
+    padding: 1.25em;
     border-radius: 8px;
     margin-bottom: 1em;
     color: white;
     text-align: center;
-    font-weight: bold;
-    font-size: 1.2em;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 
-    @media (width < 600px) {
-        font-size: 1em;
-        padding: 0.75em;
-    }
+    .ratingHeader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75em;
+        margin-bottom: 0.25em;
 
-    .ratingIcon {
-        font-size: 1.5em;
-        margin-right: 0.5em;
-
-        @media (width < 600px) {
-            font-size: 1.2em;
+        .statusIcon {
+            font-size: 1.4em;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
     }
 
-    .ratingText {
-        letter-spacing: 1px;
+    .ratingTitle {
+        font-size: 1.6em;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+        @media (width < 600px) {
+            font-size: 1.3em;
+        }
+    }
+
+    .ratingSubline {
+        font-size: 1em;
+        font-weight: 600;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75em;
+        margin-bottom: 0.75em;
+
+        .separator {
+            opacity: 0.5;
+        }
     }
 
     .preliminaryNotice {
-        font-size: 0.7em;
+        font-size: 0.6em;
         vertical-align: middle;
         background: rgba(0, 0, 0, 0.3);
-        padding: 2px 6px;
+        padding: 2px 8px;
         border-radius: 4px;
-        margin-left: 8px;
-        font-weight: normal;
+        margin-left: 10px;
+        font-weight: bold;
         animation: pulse 2s infinite;
     }
 
     .ratingDetails {
-        font-size: 0.8em;
-        font-weight: normal;
-        margin-top: 0.5em;
-        opacity: 0.9;
-
-        @media (width < 600px) {
-            font-size: 0.75em;
-        }
-
-        span {
-            display: inline-block;
-            margin: 0 1em;
-
-            @media (width < 600px) {
-                display: block;
-                margin: 0.25em 0;
-            }
-
-            &:first-child {
-                margin-left: 0;
-
-                @media (width < 600px) {
-                    margin-top: 0;
-                }
-            }
-
-            &:last-child {
-                margin-right: 0;
-
-                @media (width < 600px) {
-                    margin-bottom: 0;
-                }
-            }
-        }
+        font-size: 0.9em;
+        font-weight: 400;
+        padding-top: 0.75em;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        font-style: italic;
+        opacity: 0.85;
     }
 }
 
-// Best Quintile Display Styles
+// Best Decile Display Styles
 .bestDecileDisplay {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -272,26 +181,11 @@
         }
     }
 
-    @media (width < 600px) {
-// ...
-// ...
-@keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-        padding: 0.75em;
-    }
-
     h4 {
         margin: 0 0 0.75em 0;
         color: #fff;
         font-size: 1.1em;
         text-align: center;
-
-        @media (width < 600px) {
-            font-size: 1em;
-        }
     }
 
     .bestDecileHeader {
@@ -301,10 +195,6 @@
         margin-bottom: 1em;
         flex-wrap: wrap;
 
-        @media (width < 600px) {
-            gap: 0.5em;
-        }
-
         .survivorsBadge, .winRateBadge {
             background: rgba(255, 255, 255, 0.2);
             padding: 0.4em 0.8em;
@@ -312,11 +202,6 @@
             font-size: 0.9em;
             font-weight: 500;
             color: #fff;
-
-            @media (width < 600px) {
-                font-size: 0.8em;
-                padding: 0.3em 0.6em;
-            }
         }
 
         .survivorsBadge {
@@ -342,10 +227,6 @@
             margin-bottom: 0.25em;
             font-size: 0.95em;
 
-            @media (width < 600px) {
-                font-size: 0.9em;
-            }
-
             .deathIndicator {
                 color: #ff6b6b;
                 font-weight: bold;
@@ -353,74 +234,42 @@
         }
 
         .hpBar {
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-        line-height: 1.2;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.2;
 
-        @media (width < 600px) {
-            font-size: 0.8em;
-        }
+            .dead { color: #666; }
+            .danger { color: #ff4444; }
+            .bloodied { color: #ffaa44; }
+            .healthy { color: #44ff44; }
 
-        .dead {
-            color: #666;
-        }
+            .hpBarContainer {
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+            }
 
-        .danger {
-            color: #ff4444;
-        }
+            .hpBarVisual {
+                font-family: monospace;
+                font-size: 1em;
+                padding: 0.1em 0.3em;
+                background: #333;
+                border-radius: 4px;
+                color: #fff;
+                min-width: 8em;
+                text-align: center;
+            }
 
-        .bloodied {
-            color: #ffaa44;
-        }
+            .segmentGrey { color: #666; }
+            .segmentRed { color: #ff4444; }
+            .segmentGreen { color: #44ff44; }
 
-        .healthy {
-            color: #44ff44;
-        }
-
-        .hpBarContainer {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-        }
-
-        .hpBarVisual {
-            font-family: monospace;
-            font-size: 1em;
-            padding: 0.1em 0.3em;
-            background: #333;
-            border-radius: 4px;
-            color: #fff;
-            min-width: 8em;
-            text-align: center;
-        }
-
-        .hpBarSegment {
-            display: inline-block;
-        }
-
-        .segmentGrey {
-            color: #666; /* Previously lost HP */
-        }
-
-        .segmentRed {
-            color: #ff4444; /* Newly lost HP in current battle */
-        }
-
-        .segmentGreen {
-            color: #44ff44; /* Remaining HP */
-        }
-
-        .hpText {
-            margin-left: 0.5em;
-            font-family: inherit;
-            color: #fff;
-
-            @media (width < 600px) {
-                margin-left: 0.25em;
-                font-size: 0.8em;
+            .hpText {
+                margin-left: 0.5em;
+                font-family: inherit;
+                color: #fff;
             }
         }
-    }
     }
 
     .bestDecileMetrics {
@@ -429,21 +278,10 @@
         gap: 2em;
         flex-wrap: wrap;
 
-        @media (width < 600px) {
-            gap: 1em;
-        }
-
         .metric {
             color: #fff;
             font-size: 0.9em;
-
-            @media (width < 600px) {
-                font-size: 0.8em;
-            }
-
-            strong {
-                color: #ffa;
-            }
+            strong { color: #ffa; }
         }
     }
 }
@@ -482,11 +320,6 @@
         &:hover {
             background: rgba(255, 255, 255, 0.15);
         }
-
-        &:focus {
-            outline: 2px solid #4a90e2;
-            outline-offset: 2px;
-        }
     }
 
     .detailsContent {
@@ -494,4 +327,10 @@
         padding-top: 1em;
         border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
 }

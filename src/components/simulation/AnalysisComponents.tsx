@@ -2,16 +2,42 @@ import { FC, memo, useMemo } from "react"
 import { AggregateOutput, DecileStats } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBrain } from "@fortawesome/free-solid-svg-icons"
+import { faBrain, faTrophy, faCheckCircle, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons"
+
+const formatLabel = (label: string): string => {
+    switch (label) {
+        case 'EpicChallenge': return 'The Epic Challenge';
+        case 'TacticalGrinder': return 'The Tactical Grinder';
+        case 'ActionMovie': return 'The Action Movie';
+        case 'TheTrap': return 'The Trap';
+        case 'TheSlog': return 'The Slog';
+        case 'Standard': return 'Standard Encounter';
+        case 'TrivialMinions': return 'Trivial / Minions';
+        case 'TPKRisk': return 'High TPK Risk';
+        case 'Broken': return 'Broken / Impossible';
+        default: return label;
+    }
+};
+
+const formatTier = (tier: string): string => {
+    switch (tier) {
+        case 'Tier1': return 'Tier 1 (Trivial)';
+        case 'Tier2': return 'Tier 2 (Light)';
+        case 'Tier3': return 'Tier 3 (Moderate)';
+        case 'Tier4': return 'Tier 4 (Heavy)';
+        case 'Tier5': return 'Tier 5 (Extreme)';
+        default: return tier;
+    }
+};
 
 export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean, label?: string }> = memo(({ analysis, isPreliminary, label = "ENCOUNTER" }) => {
+    const isDaySummary = label.toLowerCase().includes("day");
+
     const ratingInfo = useMemo(() => {
         if (!analysis || !analysis.deciles?.length) return null;
 
-        // Use backend provided labels and grades
-        const { encounterLabel, safetyGrade, intensityTier, analysisSummary } = analysis as any;
+        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign } = analysis as any;
         
-        // Map safety grade to color
         const getGradeColor = (grade: string) => {
             if (grade.startsWith('A')) return "#28a745";
             if (grade.startsWith('B')) return "#20c997";
@@ -20,23 +46,50 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
             return "#dc3545";
         };
 
+        let displayLabel = formatLabel(encounterLabel);
+        let statusIcon = null;
+
+        if (isDaySummary) {
+            if (safetyGrade === 'B' && intensityTier === 'Tier5') {
+                displayLabel = "🏆 PERFECT ADVENTURING DAY";
+                statusIcon = faTrophy;
+            } else if (isGoodDesign) {
+                displayLabel = "✅ WELL BALANCED DAY";
+                statusIcon = faCheckCircle;
+            } else {
+                displayLabel = "⚠️ IMBALANCED DAY";
+                statusIcon = faExclamationTriangle;
+            }
+        }
+
         return {
-            label: encounterLabel || "Standard",
+            title: displayLabel,
             grade: safetyGrade || "A",
-            tier: intensityTier || "Tier 1",
+            tier: formatTier(intensityTier || "Tier1"),
             summary: analysisSummary,
-            color: getGradeColor(String(safetyGrade || 'A'))
+            color: getGradeColor(String(safetyGrade || 'A')),
+            statusIcon
         };
-    }, [analysis]);
+    }, [analysis, isDaySummary]);
 
     if (!ratingInfo) return null;
 
     return (
         <div className={styles.encounterRating} style={{ backgroundColor: ratingInfo.color }}>
-            <span className={styles.ratingText}>
-                {label.toUpperCase()}: {String(ratingInfo.label).toUpperCase()} ({ratingInfo.grade})
+            <div className={styles.ratingHeader}>
+                {ratingInfo.statusIcon && <FontAwesomeIcon icon={ratingInfo.statusIcon} className={styles.statusIcon} />}
+                <span className={styles.ratingTitle}>
+                    {ratingInfo.title}
+                </span>
                 {isPreliminary && <span className={styles.preliminaryNotice}> (ESTIMATING...)</span>}
-            </span>
+            </div>
+            
+            <div className={styles.ratingSubline}>
+                <span>Grade {ratingInfo.grade}</span>
+                <span className={styles.separator}>|</span>
+                <span>{ratingInfo.tier}</span>
+            </div>
+
             <div className={styles.ratingDetails}>
                 <span>{ratingInfo.summary}</span>
             </div>
@@ -66,8 +119,6 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
         if (!maxHp || maxHp <= 0) return [];
         const totalSegments = 10;
         
-        // In day summary mode, we don't care about the starting HP of the last encounter.
-        // We show Green (remaining) vs Red (total lost over the day).
         const greenCount = Math.floor((currentHp / maxHp) * totalSegments);
         const redCount = isDaySummary 
             ? totalSegments - greenCount 
@@ -76,20 +127,16 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
         const greyCount = isDaySummary ? 0 : totalSegments - greenCount - redCount;
         
         const segments = [];
-        // Green segments (Remaining)
         for (let i = 0; i < greenCount; i++) {
             segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
         }
-        // Red segments (Newly lost or total lost)
         for (let i = 0; i < redCount; i++) {
             segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
         }
-        // Grey segments (Previously lost - only in encounter mode)
         for (let i = 0; i < greyCount; i++) {
             segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
         }
         
-        // Ensure we always have exactly 10 segments due to rounding
         while (segments.length < totalSegments) {
             segments.push(<span key={`f-${segments.length}`} className={isDaySummary ? styles.segmentRed : styles.segmentGrey}>
                 {isDaySummary ? '█' : '░'}
@@ -102,7 +149,6 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
         ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
         : '0.0';
 
-    // In Day Summary mode, we only show players
     const filteredCombatants = isDaySummary 
         ? medianDecile.medianRunVisualization.filter(c => c.isPlayer)
         : medianDecile.medianRunVisualization;
