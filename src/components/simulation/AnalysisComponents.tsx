@@ -1,5 +1,5 @@
 import { FC, memo, useMemo } from "react"
-import { AggregateOutput, DecileStats } from "@/model/model"
+import { AggregateOutput, DecileStats, CombatantVisualization } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain, faTrophy, faCheckCircle, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons"
@@ -124,24 +124,16 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
             ? totalSegments - greenCount 
             : Math.floor((Math.max(0, startHp - currentHp) / maxHp) * totalSegments);
         
-        const greyCount = isDaySummary ? 0 : totalSegments - greenCount - redCount;
+        const greyCount = isDaySummary ? 0 : Math.max(0, totalSegments - greenCount - redCount);
         
         const segments = [];
-        for (let i = 0; i < greenCount; i++) {
-            segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
-        }
-        for (let i = 0; i < redCount; i++) {
-            segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
-        }
-        for (let i = 0; i < greyCount; i++) {
-            segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
-        }
+        for (let i = 0; i < greenCount; i++) segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
+        for (let i = 0; i < redCount; i++) segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
+        for (let i = 0; i < greyCount; i++) segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
         
-        while (segments.length < totalSegments) {
-            segments.push(<span key={`f-${segments.length}`} className={isDaySummary ? styles.segmentRed : styles.segmentGrey}>
-                {isDaySummary ? '█' : '░'}
-            </span>);
-        }
+        while (segments.length < totalSegments) segments.push(<span key={`f-${segments.length}`} className={isDaySummary ? styles.segmentRed : styles.segmentGrey}>
+            {isDaySummary ? '█' : '░'}
+        </span>);
         return segments.slice(0, totalSegments);
     };
 
@@ -149,9 +141,11 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
         ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
         : '0.0';
 
+    // IMPORTANT: In Day Summary mode, we only show players.
+    // Otherwise, we show EVERYTHING (Players and Monsters).
     const filteredCombatants = isDaySummary 
-        ? medianDecile.medianRunVisualization.filter(c => c.isPlayer)
-        : medianDecile.medianRunVisualization;
+        ? (medianDecile.medianRunVisualization || []).filter(c => c.isPlayer)
+        : (medianDecile.medianRunVisualization || []);
 
     return (
         <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
@@ -166,11 +160,14 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
             </div>
 
             <div className={styles.bestDecileCombatants}>
-                {filteredCombatants?.map((combatant, index) => (
+                {filteredCombatants.length === 0 ? (
+                    <div className={styles.emptyCombatants}>No combatants to display</div>
+                ) : filteredCombatants.map((combatant, index) => (
                     <div key={index} className={styles.bestDecileCombatant}>
                         <div className={styles.combatantName}>
                             {combatant.name}
                             {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
+                            {!combatant.isPlayer && <span className={styles.monsterLabel}> (Monster)</span>}
                         </div>
                         <div className={styles.hpBar}>
                             <span className={getHpBarColor(combatant.hpPercentage, combatant.isDead)}>

@@ -57,7 +57,7 @@ struct FullAnalysisOutput {
 struct FullSimulationOutput {
     results: Vec<SimulationResult>,
     analysis: FullAnalysisOutput,
-    first_run_events: Vec<crate::events::Event>,
+    firstRunEvents: Vec<crate::events::Event>,
 }
 
 #[derive(serde::Serialize)]
@@ -204,7 +204,7 @@ pub fn run_simulation_with_callback(
             overall,
             encounters: encounters_analysis,
         },
-        first_run_events: all_events,
+        firstRunEvents: all_events,
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -308,14 +308,15 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     let mut all_events = Vec::new();
     let mut players_with_state = Vec::new();
 
-    // Initialize players with state
+    // Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
+    // and carried over correctly across encounters.
     for (group_idx, player) in players.iter().enumerate() {
         for i in 0..player.count as i32 {
             let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
             let mut p = player.clone();
             p.name = name;
-            p.mode = "player".to_string(); // Explicitly set mode for team assignment
-            let id = format!("{}-{}-{}", player.id, group_idx, i);
+            p.mode = "player".to_string(); 
+            let id = format!("p-{}-{}-{}", group_idx, i, player.id);
 
             // Create CreatureState
             let state = CreatureState {
@@ -358,14 +359,14 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     let mut encounter_results = Vec::new();
 
     for (encounter_idx, encounter) in encounters.iter().enumerate() {
-        // Create enemy combatants
+        // Create enemy combatants - IDs include encounter index to be globally unique
         let mut enemies = Vec::new();
         for (group_idx, monster) in encounter.monsters.iter().enumerate() {
             for i in 0..monster.count as i32 {
                 let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
                 let mut m = monster.clone();
                 m.name = name;
-                let id = format!("{}-{}-{}", monster.id, group_idx, i);
+                let id = format!("enc{}-m-{}-{}-{}", encounter_idx, group_idx, i, monster.id);
 
                 let enemy_state = CreatureState {
                     current_hp: m.hp,
