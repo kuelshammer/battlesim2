@@ -98,7 +98,7 @@ const ActionSchemaBase = z.object({
 
     freq: FrequencySchema,
     condition: ActionConditionSchema,
-    targets: z.number(),
+    targets: z.number().default(1),
 })
 
 const AtkActionSchema = ActionSchemaBase.merge(z.object({
@@ -208,7 +208,7 @@ export const CreatureSchema = z.object({
     speed_fly: z.number().optional(),
 
     // Save bonuses - average is required, individual are optional overrides
-    saveBonus: z.number(), // Average save bonus (required)
+    saveBonus: z.number().default(0), // Average save bonus (default to 0 if missing)
     strSaveBonus: z.number().optional(),
     dexSaveBonus: z.number().optional(),
     conSaveBonus: z.number().optional(),

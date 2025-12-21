@@ -27,11 +27,11 @@ export const EnemyTargetSchema = z.enum(EnemyTargetList)
 export type EnemyTarget = z.infer<typeof EnemyTargetSchema>
 
 export const AllyTargetList = [
-    'ally with the least HP',
-    'ally with the most HP',
-    'ally with the highest DPR',
-    'ally with the lowest AC',
-    'ally with the highest AC',
+    'ally with least HP',
+    'ally with most HP',
+    'ally with highest DPR',
+    'ally with lowest AC',
+    'ally with highest AC',
     'self',
 ] as const
 export const AllyTargetSchema = z.enum(AllyTargetList)

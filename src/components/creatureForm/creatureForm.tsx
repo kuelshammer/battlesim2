@@ -25,7 +25,7 @@ function newCreature(mode: 'player'|'monster'): Creature {
         id: uuid(),
         mode,
         name: (mode === 'player') ? 'Player Character' : 'Monster',
-        AC: 10,
+        ac: 10,
         saveBonus: 2,
         count: 1,
         hp: 10,
@@ -37,7 +37,10 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
     const [value, setValue] = useState<Creature>(initialValue || newCreature(initialMode || 'player'))
     const [isValid, setIsValid] = useState(false)
     useEffect(() => {
-        if (!CreatureSchema.safeParse(value).success) {
+        const result = CreatureSchema.safeParse(value);
+        if (!result.success) {
+            console.error('Creature validation failed:', result.error.format());
+            console.log('Value attempted:', value);
             setIsValid(false)
             return
         }

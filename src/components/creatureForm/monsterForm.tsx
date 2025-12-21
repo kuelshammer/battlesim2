@@ -42,7 +42,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
         const templates = JSON.parse(localStorage.getItem('monsterTemplates') || "{}")
         const monsterTemplate = CreatureSchema.safeParse(templates[monster.id])
 
-        const creature = monsterTemplate.success ? monsterTemplate.data : monster
+        const creature = monsterTemplate.success ? monsterTemplate.data : clone(monster)
         creature.count = value?.count || 1
         onChange(creature)
     }

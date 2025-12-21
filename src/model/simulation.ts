@@ -229,13 +229,13 @@ function getNextTarget(combattant: Combattant, action: FinalAction, allies: Comb
     if (action.target.startsWith('enemy') && (filteredEnemies.length === 0)) return undefined
 
     if (action.target === 'self') return combattant
-    if (action.target === "ally with the highest AC") return allies.reduce((a1, a2) => (a1.creature.AC > a2.creature.AC) ? a1 : a2)
-    if (action.target === "ally with the lowest AC") return allies.reduce((a1, a2) => (a1.creature.AC < a2.creature.AC) ? a1 : a2)
+    if (action.target === "ally with the highest AC") return allies.reduce((a1, a2) => (a1.creature.ac > a2.creature.ac) ? a1 : a2)
+    if (action.target === "ally with the lowest AC") return allies.reduce((a1, a2) => (a1.creature.ac < a2.creature.ac) ? a1 : a2)
     if (action.target === "ally with the most HP") return allies.reduce((a1, a2) => (a1.finalState.currentHP > a2.finalState.currentHP) ? a1 : a2)
     if (action.target === "ally with the least HP") return allies.reduce((a1, a2) => (a1.finalState.currentHP < a2.finalState.currentHP) ? a1 : a2)
     if (action.target === "ally with the highest DPR") return getHighestDPR(allies)
-    if (action.target === "enemy with highest AC") return filteredEnemies.reduce((a1, a2) => (a1.creature.AC > a2.creature.AC) ? a1 : a2)
-    if (action.target === "enemy with lowest AC") return filteredEnemies.reduce((a1, a2) => (a1.creature.AC < a2.creature.AC) ? a1 : a2)
+    if (action.target === "enemy with highest AC") return filteredEnemies.reduce((a1, a2) => (a1.creature.ac > a2.creature.ac) ? a1 : a2)
+    if (action.target === "enemy with lowest AC") return filteredEnemies.reduce((a1, a2) => (a1.creature.ac < a2.creature.ac) ? a1 : a2)
     if (action.target === "enemy with most HP") return filteredEnemies.reduce((a1, a2) => (a1.finalState.currentHP + (a1.finalState.tempHP || 0) > a2.finalState.currentHP + (a2.finalState.tempHP || 0)) ? a1 : a2)
     if (action.target === "enemy with least HP") return filteredEnemies.reduce((a1, a2) => (a1.finalState.currentHP + (a1.finalState.tempHP || 0) < a2.finalState.currentHP + (a2.finalState.tempHP || 0)) ? a1 : a2)
     /* if (action.target === "enemy with highest DPR") */ return getHighestDPR(filteredEnemies)
@@ -514,7 +514,7 @@ function calculateChanceToFail(attacker: Combattant, target: Combattant, baseDC:
 // Chance to hit with an attack
 function calculateHitChance(attacker: Combattant, target: Combattant, baseToHit: DiceFormula, luck: number) {
     const toHit = evaluateDiceFormula(baseToHit, luck) + getBuffs(attacker, b => b.toHit, 'add', luck)
-    const ac = target.creature.AC + getBuffs(target, b => b.ac, 'add', 1 - luck)
+    const ac = target.creature.ac + getBuffs(target, b => b.ac, 'add', 1 - luck)
     const hitChance = Math.min(1, Math.max(0, (11 + toHit - (ac - 10)) / 20))
 
     return hitChance

@@ -40,7 +40,7 @@ export const ActionTemplates = {
         // Legacy fields
         type: 'buff',
         targets: 3,
-        target: 'ally with the least HP',
+        target: 'ally with least HP',
         buff: {
             displayName: 'Bless',
             duration: 'entire encounter',
@@ -249,7 +249,7 @@ export const ActionTemplates = {
         tags: ['Spell', 'Concentration', 'Abjuration', 'Buff', 'Defense'],
         type: 'buff',
         targets: 1,
-        target: 'ally with the least HP',
+        target: 'ally with least HP',
         buff: {
             displayName: 'Shield of Faith',
             duration: 'entire encounter', // 10 mins

@@ -13,7 +13,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.12",
         "cr": "1/4",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "6ef9f7ab-2adf-48a9-8830-b3adf5329ca3",
@@ -51,7 +51,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.13",
         "cr": "10",
         "hp": 135,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "8e4811aa-2d4c-4960-b3f4-6831094f835f",
@@ -89,7 +89,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.306",
         "cr": "9",
         "hp": 137,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "bcfde5d4-2e74-4fd4-ae7f-037985a48b43",
@@ -129,7 +129,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.342",
         "cr": "1/4",
         "hp": 9,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "b92c0727-7b4d-41cd-b31e-3d1a02d5221e",
@@ -140,14 +140,14 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 7,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "f5e9b5f8-72f2-403e-9e58-2de262beb3b5",
                 "condition": "not used yet",
                 "freq": "at will",
                 "type": "template",
-                templateOptions: { templateName: 'Bless', target: "ally with the highest DPR" },
+                templateOptions: { templateName: 'Bless', target: "ally with highest DPR" },
             },
             {
                 "id": "26e6ab65-5b86-403f-b246-d6ef50d013c7",
@@ -173,7 +173,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.88",
         "cr": "14",
         "hp": 195,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "4ecf90dd-97c1-4082-838b-ec96194b22e0",
@@ -225,7 +225,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.84",
         "cr": "17",
         "hp": 225,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "7b0af669-06be-412e-8261-c0c24da4e87a",
@@ -289,7 +289,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.91",
         "cr": "16",
         "hp": 225,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "8c0e3b00-8c14-40e2-9503-1f61cc6714f9",
@@ -353,7 +353,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.105",
         "cr": "13",
         "hp": 172,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "e89afca5-7403-4e27-88e3-0cbc0ad07307",
@@ -417,7 +417,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.108",
         "cr": "15",
         "hp": 212,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "92c71ad4-5e33-40c9-a111-931ae343825c",
@@ -481,7 +481,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.112",
         "cr": "14",
         "hp": 184,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "f8f4f7f9-8712-4da4-896f-67803b571e9a",
@@ -545,7 +545,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.114",
         "cr": "17",
         "hp": 256,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "5c403535-e0c1-42b6-9116-dfe9d0422af2",
@@ -609,7 +609,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.94",
         "cr": "15",
         "hp": 207,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "a9eb6ad2-9e79-4c30-bd20-a8e2fcb5e3da",
@@ -673,7 +673,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.98",
         "cr": "17",
         "hp": 256,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "1996f3e8-8174-448f-b514-6b9e35c3724d",
@@ -737,7 +737,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.117",
         "cr": "16",
         "hp": 243,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "d8cc1c58-11af-4b70-bf36-1189411ccf76",
@@ -801,7 +801,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.101",
         "cr": "13",
         "hp": 200,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "40a4e675-1f34-41a9-b2d2-638737d4078d",
@@ -865,7 +865,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.124",
         "cr": "5",
         "hp": 90,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "3e57da1f-7bf4-45ad-a793-b0585d8a9adc",
@@ -905,7 +905,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.79",
         "cr": "2",
         "hp": 51,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "0a2ed335-2a06-4e70-8d04-96f4eb62e630",
@@ -943,7 +943,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.87",
         "cr": "21",
         "hp": 367,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "692b5908-62ce-4768-a845-3cf670c09cda",
@@ -1007,7 +1007,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.90",
         "cr": "23",
         "hp": 481,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "ac46a8c2-1b0e-40a7-ab89-e29effebb103",
@@ -1071,7 +1071,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.104",
         "cr": "20",
         "hp": 297,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "3f28f925-389b-4c97-ab50-c5d7a0e0dbb9",
@@ -1135,7 +1135,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.107",
         "cr": "22",
         "hp": 444,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "62cbca93-c50c-4594-90b6-e56d3c549e8a",
@@ -1199,7 +1199,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.110",
         "cr": "21",
         "hp": 350,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "d38c044c-7534-4bfa-97cb-a8955c92d5a0",
@@ -1263,7 +1263,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.113",
         "cr": "24",
         "hp": 546,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "a105d1c1-d0a6-4b89-bfe8-f26234ab4b92",
@@ -1327,7 +1327,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.93",
         "cr": "22",
         "hp": 385,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "f9d17d7e-b66c-4e0c-a309-a0a2b99b5f27",
@@ -1391,7 +1391,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.97",
         "cr": "24",
         "hp": 546,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "0bae38ea-0019-4cd5-a6d5-f0e9f8ee5181",
@@ -1455,7 +1455,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.116",
         "cr": "23",
         "hp": 487,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "c9f705b7-f4af-4705-8a16-4b2fdada91f8",
@@ -1519,7 +1519,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.100",
         "cr": "20",
         "hp": 333,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "96d0afd3-6179-438d-88a9-96b59c5bf9b0",
@@ -1583,7 +1583,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.281",
         "cr": "17",
         "hp": 199,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "555a5704-20db-4abc-9382-c1e4c2415a79",
@@ -1635,7 +1635,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.19",
         "cr": "1",
         "hp": 33,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "f0bdc055-61eb-44a0-9d3b-69303e3dc386",
@@ -1661,7 +1661,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.21",
         "cr": "2",
         "hp": 39,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "cc8e913d-d598-4dcf-b0b6-92e15d1a639f",
@@ -1701,7 +1701,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.79",
         "cr": "3",
         "hp": 68,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "36e58e3b-3d1c-4cb5-b3e8-929f51d31fcc",
@@ -1727,7 +1727,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.317",
         "cr": "1/2",
         "hp": 19,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e019d16c-e167-47be-b646-0ae18bd50f86",
@@ -1765,7 +1765,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.313",
         "cr": "12",
         "hp": 104,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "ae7153c1-4c0d-4be9-bc9a-8a4e8b8995d3",
@@ -1810,7 +1810,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.342",
         "cr": "12",
         "hp": 99,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "14270ca3-d687-4c55-9d85-b56407df47f5",
@@ -1857,7 +1857,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.343",
         "cr": "8",
         "hp": 78,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "f14b8998-4066-466c-a683-d9c3ad639226",
@@ -1895,7 +1895,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.317",
         "cr": "0",
         "hp": 10,
-        "AC": 9,
+        "ac": 9,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -1908,7 +1908,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.317",
         "cr": "2",
         "hp": 59,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "ba5b30d1-c744-43f0-b41b-b82ae9a0aa37",
@@ -1934,7 +1934,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.317",
         "cr": "1/4",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "7b4cc74e-4f9f-4798-aa06-fbea6a995d8c",
@@ -1960,7 +1960,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.22",
         "cr": "2",
         "hp": 39,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "ba0ab305-b8de-418f-8be7-d89fac367557",
@@ -1986,7 +1986,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.318",
         "cr": "0",
         "hp": 3,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -1999,7 +1999,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.318",
         "cr": "0",
         "hp": 3,
-        "AC": 10,
+        "ac": 10,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -2012,7 +2012,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.55",
         "cr": "19",
         "hp": 262,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "aede95ee-f7de-49fe-b2d5-cce99525987e",
@@ -2065,7 +2065,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.343",
         "cr": "1/8",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "932121f1-a8ab-4ad1-9c3a-3de0423ff70b",
@@ -2103,7 +2103,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.344",
         "cr": "2",
         "hp": 65,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "39ddd986-0e58-4ee6-a3ce-bd9dbc177fe8",
@@ -2129,7 +2129,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.23",
         "cr": "4",
         "hp": 58,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "984d6225-02fb-448f-ab3b-168682786cda",
@@ -2168,7 +2168,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.70",
         "cr": "5",
         "hp": 110,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "87740760-e00d-4d38-bc53-fe05cf30cff4",
@@ -2194,7 +2194,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.56",
         "cr": "5",
         "hp": 68,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "5f5fbc4f-c968-4d0f-8b7f-9bc212da2603",
@@ -2234,7 +2234,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.24",
         "cr": "3",
         "hp": 52,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "aaf69c35-87ab-48e4-85d6-71cbc7b6d46a",
@@ -2260,7 +2260,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.318",
         "cr": "0",
         "hp": 1,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -2273,7 +2273,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.70",
         "cr": "3",
         "hp": 52,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "593f2762-9534-4418-92a6-8f7d92fdbea0",
@@ -2299,7 +2299,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.25",
         "cr": "11",
         "hp": 168,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "7a1c3f6b-511c-490a-bb91-1f84853e4165",
@@ -2339,7 +2339,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.28",
         "cr": "13",
         "hp": 180,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "6b9f1a02-eb98-4e20-af17-a2662a04e14a",
@@ -2379,7 +2379,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.316",
         "cr": "5",
         "hp": 93,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "4eec7cf5-f58f-41dd-9b8e-ca04e44de1dd",
@@ -2418,7 +2418,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.344",
         "cr": "2",
         "hp": 67,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "10a31730-7a4d-414b-9130-7045fee13359",
@@ -2458,7 +2458,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.318",
         "cr": "1/2",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "c1a79a75-cfc0-4802-865f-cb858a173a3c",
@@ -2484,7 +2484,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.88",
         "cr": "2",
         "hp": 33,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "411558f4-dc5c-41c8-a22e-50ec3f0734df",
@@ -2524,7 +2524,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.241",
         "cr": "4",
         "hp": 85,
-        "AC": 7,
+        "ac": 7,
         "actions": [
             {
                 "id": "d8c948ba-255d-4c7b-bbd5-26fe104a9202",
@@ -2550,7 +2550,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.318",
         "cr": "1/4",
         "hp": 22,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e5068f2b-0f79-4993-9830-e5ca702b3450",
@@ -2576,7 +2576,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.319",
         "cr": "1/8",
         "hp": 7,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "7f1dce45-7ee3-4ccf-8528-eee4524f4b7c",
@@ -2602,7 +2602,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.91",
         "cr": "3",
         "hp": 52,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "3c608edc-18f3-4ec0-bce6-4d6bf2c19081",
@@ -2642,7 +2642,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.276",
         "cr": "7",
         "hp": 123,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "93a5f8d0-6dbe-4765-a156-0bd8e5884397",
@@ -2668,7 +2668,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.319",
         "cr": "1/4",
         "hp": 11,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "d979eb6e-90a9-43a0-a3ec-b42ea602a615",
@@ -2694,7 +2694,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.71",
         "cr": "9",
         "hp": 142,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "55df6b98-7f84-4e5e-9c2a-e6fee26840ca",
@@ -2727,7 +2727,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.233",
         "cr": "4",
         "hp": 58,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "fb3a6a0c-79e3-4b0c-a0a2-ffb9366b18bd",
@@ -2753,7 +2753,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.233",
         "cr": "4",
         "hp": 58,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "81658a5b-1278-49fa-b7c4-8424d64a58f9",
@@ -2779,7 +2779,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.106",
         "cr": "1",
         "hp": 16,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "d7b71fac-8794-4af8-8101-8d7cf724f4eb",
@@ -2819,7 +2819,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.109",
         "cr": "2",
         "hp": 32,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "bad60b84-dbea-48ef-8467-d171bf45eeee",
@@ -2859,7 +2859,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.319",
         "cr": "1",
         "hp": 34,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "d3abb83e-e5b4-4ecd-90ce-fd7e5a2b7fd4",
@@ -2885,7 +2885,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.33",
         "cr": "1",
         "hp": 27,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "45aa611d-6a75-4ae0-a2b0-6a6e3156daad",
@@ -2923,7 +2923,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.33",
         "cr": "3",
         "hp": 65,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "f71ae55f-88c2-4f83-96bb-ca6f4e6bb068",
@@ -2961,7 +2961,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.34",
         "cr": "5",
         "hp": 94,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "89a67aea-4c45-448e-adb9-7391704bfb03",
@@ -2987,7 +2987,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.35",
         "cr": "1/4",
         "hp": 11,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "6555bdd4-9dc4-43c9-8c1f-38961f54084a",
@@ -3013,7 +3013,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.36",
         "cr": "5",
         "hp": 82,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "7448280f-208d-48bf-8f57-4451f41d46d1",
@@ -3039,7 +3039,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.320",
         "cr": "1/8",
         "hp": 15,
-        "AC": 9,
+        "ac": 9,
         "actions": [
             {
                 "id": "164829ad-4eed-4824-a6bb-5a661c074a53",
@@ -3065,7 +3065,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.37",
         "cr": "2",
         "hp": 51,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "781a58e7-c166-4b94-bf5d-d57a66a1e7f0",
@@ -3091,7 +3091,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.320",
         "cr": "0",
         "hp": 2,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -3104,7 +3104,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.334",
         "cr": "2",
         "hp": 42,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "41ff44c7-0a29-4312-ae05-0fab4d4d6e4d",
@@ -3130,7 +3130,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.38",
         "cr": "2",
         "hp": 45,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "59bfc8ca-6dda-464f-ac7f-01ea76c1f735",
@@ -3156,7 +3156,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.72",
         "cr": "8",
         "hp": 85,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "9c00fb96-5c2c-412c-9237-c571380e291a",
@@ -3246,7 +3246,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.57",
         "cr": "6",
         "hp": 84,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "8bdbe598-8c27-49f9-8fbe-70f8a3bd0ea5",
@@ -3272,7 +3272,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.39",
         "cr": "6",
         "hp": 114,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "edc7fd81-2c7e-4db5-89c0-349e7317ef99",
@@ -3312,7 +3312,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.40",
         "cr": "4",
         "hp": 93,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "cee97f6e-e8c2-4288-aa24-62da8328cf78",
@@ -3338,7 +3338,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.168",
         "cr": "9",
         "hp": 133,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "8db358dc-8a34-44e1-8a9e-7f4857a68bc7",
@@ -3376,7 +3376,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.41",
         "cr": "8",
         "hp": 78,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "1e83f4ea-4e8a-4c9c-8d17-f0b88532e843",
@@ -3402,7 +3402,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.154",
         "cr": "9",
         "hp": 200,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "6da024d3-81e0-4cd3-8fbc-a848e77ea79b",
@@ -3440,7 +3440,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.42",
         "cr": "1/2",
         "hp": 27,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "4f5adadb-672c-4582-b0f5-5c9af62ca6bc",
@@ -3466,7 +3466,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.345",
         "cr": "0",
         "hp": 4,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "4a9c54e3-20a9-4f75-9a98-1d571e4d8ae9",
@@ -3492,7 +3492,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.320",
         "cr": "1/4",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "49d6bac1-4280-4f0d-8ce0-45d6703b54a5",
@@ -3530,7 +3530,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.111",
         "cr": "1",
         "hp": 22,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "dea670ce-6b24-415e-94b4-cf4a5f8287e9",
@@ -3570,7 +3570,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.43",
         "cr": "4",
         "hp": 97,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "7024fbfc-39cb-4f69-a0a3-8c766e21b2d3",
@@ -3608,7 +3608,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.320",
         "cr": "0",
         "hp": 2,
-        "AC": 11,
+        "ac": 11,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -3621,7 +3621,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.44",
         "cr": "0",
         "hp": 2,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "76a0d90f-a9e7-46a3-b6d7-83dbf8aec583",
@@ -3647,7 +3647,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.320",
         "cr": "1/2",
         "hp": 19,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4ed27380-5f9a-4279-afc0-6f53703403f8",
@@ -3673,7 +3673,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.345",
         "cr": "2",
         "hp": 33,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "51947e8a-83e6-4365-9ba8-16ad32310a1b",
@@ -3711,7 +3711,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.345",
         "cr": "1/8",
         "hp": 9,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "423d69df-e5b9-4819-b745-4ab66ee8023d",
@@ -3737,7 +3737,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.45",
         "cr": "6",
         "hp": 138,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "64c9df11-e83c-41ca-a1f0-2718879deb79",
@@ -3775,7 +3775,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.143",
         "cr": "11",
         "hp": 187,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "2f4df425-7324-4d7c-8290-48a92f9528ae",
@@ -3801,7 +3801,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.46",
         "cr": "1/2",
         "hp": 22,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "fff216ff-63f5-416f-9d8c-f14f0c6b6cbe",
@@ -3827,7 +3827,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.321",
         "cr": "1",
         "hp": 39,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "f015c642-0ebb-4283-b396-f0851483270e",
@@ -3853,7 +3853,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.47",
         "cr": "17",
         "hp": 180,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "aa308d76-1fb7-4482-a7c3-cca9d1b4d8fc",
@@ -3907,7 +3907,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.278",
         "cr": "10",
         "hp": 170,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "cc2e2634-8cbe-4b4e-a084-350737b1a009",
@@ -3944,7 +3944,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.29",
         "cr": "14",
         "hp": 187,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "065af412-cb31-4198-8f50-0d10a6b83b7a",
@@ -3984,7 +3984,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.164",
         "cr": "1/2",
         "hp": 16,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "5d70b4ec-ff4e-4899-a4e8-f41cfdd349e8",
@@ -4022,7 +4022,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.321",
         "cr": "0",
         "hp": 4,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e683dbaf-ce2f-48bd-9091-09d407e971a7",
@@ -4048,7 +4048,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.48",
         "cr": "18",
         "hp": 80,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "cd927901-1976-4c11-aaaa-13e1c486cc8c",
@@ -4101,7 +4101,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.16",
         "cr": "10",
         "hp": 136,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "681c5680-0a5d-4550-a4a5-d62fa15c485e",
@@ -4124,7 +4124,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 20,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -4138,7 +4138,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.321",
         "cr": "1",
         "hp": 37,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "5ce452a5-0310-4520-9b89-7438c75567e7",
@@ -4164,7 +4164,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.81",
         "cr": "3",
         "hp": 85,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "66add2f4-a157-4407-8cbc-749ac13a097f",
@@ -4190,7 +4190,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.144",
         "cr": "11",
         "hp": 161,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "da42f009-2ac0-4b98-a9c2-bcd92d6de917",
@@ -4216,7 +4216,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.82",
         "cr": "3",
         "hp": 52,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "c4242b98-56b2-4bad-bd0e-aa05b80e0d26",
@@ -4242,7 +4242,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.321",
         "cr": "1/4",
         "hp": 19,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "ac247a30-3310-45a1-85c6-e4c2a2fe6468",
@@ -4268,7 +4268,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.119",
         "cr": "17",
         "hp": 341,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "d254bda5-9116-43e3-98a3-9b86ed7baab0",
@@ -4308,7 +4308,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.57",
         "cr": "1/4",
         "hp": 18,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "480f06ec-81f1-4b95-a1d2-562c192b4a64",
@@ -4334,7 +4334,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.120",
         "cr": "6",
         "hp": 123,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "754909ee-96bc-4039-9ce6-493e3a9d4d52",
@@ -4360,7 +4360,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.128",
         "cr": "1/4",
         "hp": 13,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "576bdcfd-402c-4451-9db5-ef47c82c0410",
@@ -4398,7 +4398,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.128",
         "cr": "5",
         "hp": 71,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "0411d615-7dbb-4e39-9288-a5a5d9381aba",
@@ -4438,7 +4438,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.129",
         "cr": "7",
         "hp": 45,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "14270ca3-d687-4c55-9d85-b56407df47f5",
@@ -4471,7 +4471,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.129",
         "cr": "8",
         "hp": 71,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "20602a44-c297-4266-a278-953d91b8ea51",
@@ -4494,7 +4494,7 @@ export const Monsters: Creature[] = [
                 "targets": 2,
                 "type": "heal",
                 "amount": 17,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -4508,7 +4508,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.346",
         "cr": "2",
         "hp": 27,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "ba00f89f-c380-4b77-8128-a915f7826fa9",
@@ -4549,7 +4549,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.121",
         "cr": "1",
         "hp": 22,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "60143b84-e231-4e13-b23f-3a5aaef0e02e",
@@ -4590,7 +4590,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.122",
         "cr": "1",
         "hp": 26,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "048659bd-2a51-4954-a0b6-8b80703e2df3",
@@ -4628,7 +4628,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.225",
         "cr": "1/4",
         "hp": 11,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "33fd19d8-3702-47b6-99db-61bfb2578600",
@@ -4654,7 +4654,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.215",
         "cr": "1/2",
         "hp": 17,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e76db1b2-52c9-417d-be35-53e9f1c7e32e",
@@ -4695,7 +4695,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.322",
         "cr": "0",
         "hp": 3,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "1885fe64-3c1b-4c63-8c26-a1499c395d7a",
@@ -4721,7 +4721,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.124",
         "cr": "5",
         "hp": 126,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "9432f62e-e745-4a6a-85c8-236efd42be49",
@@ -4747,7 +4747,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.145",
         "cr": "11",
         "hp": 200,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "1154e1b0-d120-45e3-94d2-6671417080fe",
@@ -4785,7 +4785,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.322",
         "cr": "4",
         "hp": 76,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "c41c1ca2-8f17-4c46-bca0-0654da5e65a7",
@@ -4823,7 +4823,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.322",
         "cr": "1/4",
         "hp": 13,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "f2736255-c45e-4651-955e-303eae1b1d57",
@@ -4861,7 +4861,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.130",
         "cr": "23",
         "hp": 313,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "6030e852-423c-4830-baaa-6e3d848a98f1",
@@ -4899,7 +4899,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.73",
         "cr": "12",
         "hp": 153,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "4760202d-5bb9-40d9-8681-06920966af9b",
@@ -4925,7 +4925,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.131",
         "cr": "2",
         "hp": 44,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "ab1d26a6-fe0a-46e7-b8cc-7f454dd000d1",
@@ -4958,7 +4958,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.132",
         "cr": "4",
         "hp": 85,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "749a82de-793a-4fe9-b557-5631e562f10d",
@@ -4984,7 +4984,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "2",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 1
@@ -4997,7 +4997,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "2",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 1
@@ -5010,7 +5010,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "2",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 1
@@ -5023,7 +5023,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "1",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 0.5
@@ -5036,7 +5036,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "1",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 0.5
@@ -5049,7 +5049,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "2",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 1
@@ -5062,7 +5062,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.133",
         "cr": "1",
         "hp": 14,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 0.5
@@ -5075,7 +5075,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.125",
         "cr": "5",
         "hp": 102,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "23c0a9dc-6a83-4689-8f50-b4995bf8d95a",
@@ -5101,7 +5101,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.154",
         "cr": "9",
         "hp": 162,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "cb59055b-02d3-43e0-a7fe-bc89990e79ab",
@@ -5139,7 +5139,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.265",
         "cr": "1",
         "hp": 22,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "96f40f3e-f04c-4b59-be23-d756c5e67c0f",
@@ -5165,7 +5165,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.134",
         "cr": "4",
         "hp": 40,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 id: "79e62dc7-fae0-402a-953a-ffb1c32b8bc8",
@@ -5205,7 +5205,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.169",
         "cr": "5",
         "hp": 93,
-        "AC": 9,
+        "ac": 9,
         "actions": [
             {
                 "id": "8c64fa31-377f-44b8-ac5a-03930fff5c7e",
@@ -5231,7 +5231,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.135",
         "cr": "1/8",
         "hp": 7,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "9bb9e208-7535-4f5c-8c09-806e1e77b236",
@@ -5257,7 +5257,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.322",
         "cr": "1/8",
         "hp": 5,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "124babd4-69bb-4046-b850-3c5588808753",
@@ -5283,7 +5283,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.20",
         "cr": "1/4",
         "hp": 17,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "a5f27165-385b-4e86-a04f-445991a36cd7",
@@ -5309,7 +5309,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.136",
         "cr": "8",
         "hp": 149,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "d49236f4-b134-4b7b-90dc-25c71494f21f",
@@ -5349,7 +5349,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.322",
         "cr": "0",
         "hp": 1,
-        "AC": 11,
+        "ac": 11,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -5362,7 +5362,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.155",
         "cr": "8",
         "hp": 138,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "ff12a132-9cf9-44d0-96ab-6bdfba555495",
@@ -5400,7 +5400,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.139",
         "cr": "6",
         "hp": 85,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "6f71b87c-7790-47f4-941b-9d5603e8ba5d",
@@ -5426,7 +5426,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.140",
         "cr": "2",
         "hp": 52,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "cda9e60d-bad5-4c8e-baab-506b99a0a853",
@@ -5452,7 +5452,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.138",
         "cr": "1/2",
         "hp": 1,
-        "AC": 5,
+        "ac": 5,
         "actions": [
             {
                 "id": "e76db1b2-52c9-417d-be35-53e9f1c7e32f",
@@ -5505,7 +5505,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.242",
         "cr": "2",
         "hp": 84,
-        "AC": 6,
+        "ac": 6,
         "actions": [
             {
                 "id": "b4215249-fde4-4a58-aabb-4edc803925ff",
@@ -5544,7 +5544,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.148",
         "cr": "2",
         "hp": 36,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "96c7b110-123a-4066-8305-189292f3ff07",
@@ -5582,7 +5582,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.147",
         "cr": "4",
         "hp": 45,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "8793c87f-7619-4965-a344-146b6d552f64",
@@ -5608,7 +5608,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.148",
         "cr": "1",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "ed6efb35-6a74-4eb1-b01a-4ed596ebe7d5",
@@ -5646,7 +5646,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.323",
         "cr": "7",
         "hp": 157,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "c9d6a7d4-eb2c-4a4e-a5d3-bea687232f86",
@@ -5684,7 +5684,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.323",
         "cr": "1/4",
         "hp": 13,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "6dfa476d-fde9-4967-9f85-ee275800aba8",
@@ -5710,7 +5710,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.323",
         "cr": "1/4",
         "hp": 22,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "f3a522e9-9892-4a48-b51b-86551fd297dd",
@@ -5736,7 +5736,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.323",
         "cr": "2",
         "hp": 42,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "946b1b9f-3dea-457c-8d95-d21517a75724",
@@ -5762,7 +5762,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.323",
         "cr": "1/4",
         "hp": 4,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "2276a913-098c-429c-9a89-0feabb0fe4b2",
@@ -5788,7 +5788,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.324",
         "cr": "2",
         "hp": 60,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e6f4d0c0-359f-4104-8155-0b2e361fc629",
@@ -5826,7 +5826,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.324",
         "cr": "1/8",
         "hp": 13,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "332bd116-3bd6-4645-a661-5f4bb573211d",
@@ -5852,7 +5852,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.324",
         "cr": "5",
         "hp": 85,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "341a8627-4c0f-47e8-89ed-46a65bbacdb4",
@@ -5878,7 +5878,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.324",
         "cr": "1",
         "hp": 26,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e745b636-c2ac-401c-b77f-cd1d03e274bf",
@@ -5904,7 +5904,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.325",
         "cr": "2",
         "hp": 42,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "a1a041f7-7443-47fb-ae0d-78d8fc50f4d9",
@@ -5942,7 +5942,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.325",
         "cr": "0",
         "hp": 4,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "74e45162-b548-48cf-aefd-fa363ae95acd",
@@ -5968,7 +5968,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.325",
         "cr": "1/4",
         "hp": 18,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "05ffc2cb-105d-4685-82a8-7340c92d746d",
@@ -6006,7 +6006,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.326",
         "cr": "1/2",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "1ab88d9c-a0cd-457f-a6ba-0a4a0700316e",
@@ -6032,7 +6032,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.326",
         "cr": "1",
         "hp": 45,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "33ab619d-b444-4b3b-b388-d42b0ba6b673",
@@ -6058,7 +6058,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.326",
         "cr": "1/4",
         "hp": 19,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d85b49a6-13d6-4a6b-b9e8-54f1806d831a",
@@ -6084,7 +6084,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.326",
         "cr": "1",
         "hp": 52,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "e917cb01-1099-4b28-9f26-1533bd0d6ed1",
@@ -6110,7 +6110,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.327",
         "cr": "1/4",
         "hp": 19,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "5f3fac38-6995-4b04-a83c-b8bcdbd95507",
@@ -6136,7 +6136,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.327",
         "cr": "1/4",
         "hp": 11,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "85b888e0-1672-476f-a8a9-3ea6ec66fe84",
@@ -6162,7 +6162,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.327",
         "cr": "1/8",
         "hp": 7,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4d203bd9-b84a-4783-9bab-1f173d7bd470",
@@ -6188,7 +6188,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.327",
         "cr": "3",
         "hp": 52,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "b17786ef-1e13-48ad-9264-f5447c3c4f3b",
@@ -6214,7 +6214,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.328",
         "cr": "1/2",
         "hp": 16,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "de069518-d422-4bd9-9d40-41ebf3879d7d",
@@ -6240,7 +6240,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.328",
         "cr": "5",
         "hp": 126,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "9fb19f1d-b378-450e-88bf-91f812b7600c",
@@ -6266,7 +6266,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.328",
         "cr": "1",
         "hp": 26,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "35642fe1-2dac-47b0-9a7a-2a6c524beb03",
@@ -6292,7 +6292,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.329",
         "cr": "1",
         "hp": 39,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "7cf359d3-88c8-4521-9f4e-5213b98d9695",
@@ -6325,7 +6325,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.329",
         "cr": "1",
         "hp": 22,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "8fa5c6c8-3725-4d03-a7f7-241ec79e937f",
@@ -6351,7 +6351,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.329",
         "cr": "1/2",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d8e9df42-46f1-4664-b99c-67f9fab890fb",
@@ -6377,7 +6377,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.329",
         "cr": "1/8",
         "hp": 9,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "1ca99745-ebca-4142-b220-1339a6ef5608",
@@ -6403,7 +6403,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.330",
         "cr": "1/4",
         "hp": 11,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "03fe1288-18d5-4823-8349-561896604657",
@@ -6429,7 +6429,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.157",
         "cr": "2",
         "hp": 67,
-        "AC": 9,
+        "ac": 9,
         "actions": [
             {
                 "id": "c38f50cf-8af4-41a2-a107-3dbcd0710e98",
@@ -6455,7 +6455,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.160",
         "cr": "8",
         "hp": 91,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "ee4eef5f-a5c7-4047-a926-fd5f10414e5d",
@@ -6481,7 +6481,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.160",
         "cr": "3",
         "hp": 49,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "ea67ef69-dc2e-40a8-8124-4d8b20fc6e77",
@@ -6507,7 +6507,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.161",
         "cr": "2",
         "hp": 38,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "6299998b-92d1-4ddb-862b-898924d93ab3",
@@ -6533,7 +6533,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.161",
         "cr": "6",
         "hp": 84,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "2e6961e5-c9d9-4d36-8b23-448eb432f6e8",
@@ -6559,7 +6559,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.58",
         "cr": "9",
         "hp": 157,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "59ee2a11-2f98-44c8-a30c-c2ef0dd5ab7d",
@@ -6585,7 +6585,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.143",
         "cr": "10",
         "hp": 112,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "1aece606-132c-4dc6-80e4-ad4ee1bd4ca8",
@@ -6631,7 +6631,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.163",
         "cr": "1/2",
         "hp": 22,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "6aea9664-d6d7-4e46-b157-26017944449e",
@@ -6681,7 +6681,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.163",
         "cr": "4",
         "hp": 65,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "91fa1151-eaae-4d8f-8503-ad8659ac72e9",
@@ -6707,7 +6707,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.163",
         "cr": "2",
         "hp": 49,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "943cc4b2-f395-45da-bf8e-36623d095488",
@@ -6729,7 +6729,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     "damageMultiplier": 1.5
@@ -6747,7 +6747,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.330",
         "cr": "0",
         "hp": 4,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "ab5044ea-61ae-457c-af6f-d40c40b90471",
@@ -6773,7 +6773,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.166",
         "cr": "1/4",
         "hp": 7,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "17b41cbe-b515-4bf7-9095-0cbc91987f13",
@@ -6825,7 +6825,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.166",
         "cr": "1",
         "hp": 21,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "768b300a-5f7c-4d85-b3bb-18d03b9ef03b",
@@ -6877,7 +6877,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.115",
         "cr": "3",
         "hp": 60,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "06463441-912d-411a-bbe5-f886ce89c05f",
@@ -6917,7 +6917,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.171",
         "cr": "5",
         "hp": 114,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "744a85f3-78d8-44dd-8338-34436d1c3bbc",
@@ -6955,7 +6955,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.59",
         "cr": "17",
         "hp": 310,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "3cd10104-7c3f-4459-a30e-856d1cf6142a",
@@ -6993,7 +6993,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.243",
         "cr": "1/2",
         "hp": 22,
-        "AC": 8,
+        "ac": 8,
         "actions": [
             {
                 "id": "608af480-903e-49e8-9633-5db898e26b3d",
@@ -7019,7 +7019,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.277",
         "cr": "9",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "ee552ae0-18a2-4324-b76f-13c225a8d910",
@@ -7045,7 +7045,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.95",
         "cr": "2",
         "hp": 38,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "c7e19401-6929-4924-bfb3-e13f6cb0d3d3",
@@ -7085,7 +7085,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.177",
         "cr": "3",
         "hp": 82,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "330ffb1c-4259-48f0-b131-a9d07fec7a1b",
@@ -7111,7 +7111,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.277",
         "cr": "8",
         "hp": 127,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "3268a3ee-6a0d-4f54-aa74-c3160118bd5e",
@@ -7137,7 +7137,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.172",
         "cr": "3",
         "hp": 55,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "2105f5e4-9e48-40d1-ae50-7f437673f0b9",
@@ -7163,7 +7163,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.173",
         "cr": "2",
         "hp": 27,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "6d5628be-6de2-4311-a5e7-81e3744c8d7c",
@@ -7189,7 +7189,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.173",
         "cr": "7",
         "hp": 75,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a779c46d-9974-48fe-84fb-157ef532c0b9",
@@ -7215,7 +7215,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.174",
         "cr": "2",
         "hp": 59,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "58367753-f18c-456d-9593-2ff616136ee8",
@@ -7241,7 +7241,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.175",
         "cr": "1/4",
         "hp": 11,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "642682ad-b302-4d72-b40d-fc6366b10c3f",
@@ -7267,7 +7267,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.347",
         "cr": "1/8",
         "hp": 11,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "81c7e393-f529-416c-bf68-31977ad5c2f9",
@@ -7293,7 +7293,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.234",
         "cr": "10",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "c473170b-ea24-4aed-9057-65621a21bb58",
@@ -7331,7 +7331,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.282",
         "cr": "11",
         "hp": 136,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "14270ca3-d687-4c55-9d85-b56407df47f5",
@@ -7376,7 +7376,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.238",
         "cr": "1",
         "hp": 30,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4056a03b-328b-4b6d-91cc-0deacb8512ee",
@@ -7414,7 +7414,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.180",
         "cr": "5",
         "hp": 65,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "900008d1-22cf-495b-9ac3-c2c11c29c2c2",
@@ -7454,7 +7454,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.181",
         "cr": "1",
         "hp": 38,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "5b56d4dc-cbb2-43d1-a10e-3f21f7cecdf6",
@@ -7480,7 +7480,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.330",
         "cr": "0",
         "hp": 1,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "929b7fa0-16f0-420e-bdfa-387a8fbbc7e1",
@@ -7506,7 +7506,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.182",
         "cr": "3",
         "hp": 45,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "3d1b06ce-ee17-445e-97bb-52c56e4960ab",
@@ -7546,7 +7546,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.183",
         "cr": "4",
         "hp": 60,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "780c231e-6ddb-4796-854a-84fbdeaffd3d",
@@ -7572,7 +7572,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.60",
         "cr": "8",
         "hp": 136,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "b2f417be-7b30-431d-8489-b9bb4be4a672",
@@ -7598,7 +7598,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.155",
         "cr": "5",
         "hp": 105,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "4f95176b-92a8-4500-bd91-4882379af592",
@@ -7636,7 +7636,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.184",
         "cr": "1",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "7cd43faa-6cf6-45da-b6be-94f81c49276b",
@@ -7662,7 +7662,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.186",
         "cr": "1/2",
         "hp": 11,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "68bdc9b5-7775-4445-96d0-ed457f706d98",
@@ -7700,7 +7700,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.186",
         "cr": "3",
         "hp": 39,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "8fe49378-bde0-458a-8c53-e70fa9cb9825",
@@ -7726,7 +7726,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.187",
         "cr": "6",
         "hp": 97,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "d46c011f-a85b-4710-93ed-5bfd745143f1",
@@ -7748,7 +7748,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 2,
                 "type": "buff",
-                "target": "ally with the highest DPR",
+                "target": "ally with highest DPR",
                 "buff": {
                     "duration": "entire encounter",
                     "toHit": '1d4',
@@ -7781,7 +7781,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.188",
         "cr": "0",
         "hp": 5,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "89a49e3b-2997-4c58-bcca-05b811fb8aaf",
@@ -7814,7 +7814,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.189",
         "cr": "3",
         "hp": 75,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "07cf0c1c-de48-4fa3-bafa-8d2b828b911a",
@@ -7840,7 +7840,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.74",
         "cr": "11",
         "hp": 178,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "765d2769-3a78-4889-b53e-2bfd5861f4da",
@@ -7878,7 +7878,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.330",
         "cr": "2",
         "hp": 45,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "179c6257-7278-450a-996d-725581dc2446",
@@ -7904,7 +7904,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.190",
         "cr": "8",
         "hp": 172,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "e24476bb-931a-4730-b575-c01cbc27c169",
@@ -7978,7 +7978,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.331",
         "cr": "0",
         "hp": 5,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "f519985a-15dd-4862-b774-67aa5417f65f",
@@ -8004,7 +8004,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.75",
         "cr": "14",
         "hp": 180,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a88f759a-9f28-406f-b448-ce01abb549fc",
@@ -8044,7 +8044,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.215",
         "cr": "1/2",
         "hp": 21,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "c9eb4fb6-623f-40ad-9b46-a974e9297528",
@@ -8098,7 +8098,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.76",
         "cr": "1",
         "hp": 10,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "f8f18b77-b72f-4105-a3e0-887cd39e1c6a",
@@ -8124,7 +8124,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.285",
         "cr": "4",
         "hp": 66,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "27903ff8-2252-43c4-b017-16470d502402",
@@ -8162,7 +8162,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.191",
         "cr": "2",
         "hp": 21,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "0f69b990-fed0-4fa8-a88c-65ec63198af8",
@@ -8216,7 +8216,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.192",
         "cr": "6",
         "hp": 104,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "55536544-cf36-467c-a9ca-d54ccfd3a74a",
@@ -8242,7 +8242,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.170",
         "cr": "16",
         "hp": 210,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "4443587a-e648-47ba-9bee-2da4968d09a4",
@@ -8282,7 +8282,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.331",
         "cr": "0",
         "hp": 3,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "77bb60b4-34e3-408b-8d79-e0a8988313e2",
@@ -8308,7 +8308,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.193",
         "cr": "1/2",
         "hp": 18,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "0bf5fd6c-a0d6-4b83-b8b6-684df758f8f7",
@@ -8346,7 +8346,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.194",
         "cr": "1/4",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "3e364b81-2252-459c-b628-3fdff81eed73",
@@ -8384,7 +8384,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.331",
         "cr": "3",
         "hp": 90,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "086b2f78-cb69-4a44-b1c0-97c3d1847ac3",
@@ -8410,7 +8410,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.347",
         "cr": "3",
         "hp": 52,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "b8f8f038-a8db-44e0-be54-8acc31ae46cc",
@@ -8432,7 +8432,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 2,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     "toHit": '1d4',
@@ -8465,7 +8465,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.195",
         "cr": "1/8",
         "hp": 5,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "735eeb1b-2db0-41fd-bfd5-88917772cbe5",
@@ -8503,7 +8503,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.197",
         "cr": "23",
         "hp": 472,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "edef7fe0-23ad-48fb-b4a2-cd55de7b8f9d",
@@ -8555,7 +8555,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.199",
         "cr": "1/4",
         "hp": 18,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "08bb813f-a0ba-49f5-bee9-c8fdd38da6cd",
@@ -8593,7 +8593,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.200",
         "cr": "6",
         "hp": 97,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "27cb6571-0024-4899-b226-b51eaefcfd6c",
@@ -8628,7 +8628,7 @@ export const Monsters: Creature[] = [
                 "targets": 2,
                 "type": "heal",
                 "amount": 16,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "fa919198-838d-41d8-bd4d-93c8df6c5922",
@@ -8639,7 +8639,7 @@ export const Monsters: Creature[] = [
                 "targets": 2,
                 "type": "heal",
                 "amount": 16,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -8653,7 +8653,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.198",
         "cr": "3",
         "hp": 65,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "2e39f7f9-759a-4125-b8e2-30bc222f45f0",
@@ -8679,7 +8679,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.200",
         "cr": "1",
         "hp": 65,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "2f81bc61-5e65-4a19-8bfd-e11474292ece",
@@ -8705,7 +8705,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.201",
         "cr": "4",
         "hp": 97,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "44bedb15-94cb-4214-bb14-a1c54ac5d47c",
@@ -8731,7 +8731,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.76",
         "cr": "0",
         "hp": 13,
-        "AC": 7,
+        "ac": 7,
         "actions": [
             {
                 "id": "6d02d55e-d936-4b47-844e-2c91635af969",
@@ -8757,7 +8757,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.202",
         "cr": "21",
         "hp": 135,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "14270ca3-d687-4c55-9d85-b56407df47f5",
@@ -8814,7 +8814,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.331",
         "cr": "1",
         "hp": 26,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "adde5fc8-9635-4cc3-a168-51b97b2157fc",
@@ -8852,7 +8852,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.332",
         "cr": "0",
         "hp": 2,
-        "AC": 10,
+        "ac": 10,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -8865,7 +8865,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.205",
         "cr": "4",
         "hp": 78,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "d373f6fd-fd2c-4b32-a20e-422e2dfde80e",
@@ -8891,7 +8891,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.205",
         "cr": "4",
         "hp": 78,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "4686aa07-9ba6-4952-8965-27146cdba939",
@@ -8917,7 +8917,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.204",
         "cr": "1/2",
         "hp": 22,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "46f2f38b-2bd1-47ef-bc2f-41ea133d9fbf",
@@ -8979,7 +8979,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.205",
         "cr": "2",
         "hp": 27,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "b05ab0a7-e20a-470b-95f2-c0038bd72d5a",
@@ -9017,7 +9017,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.347",
         "cr": "6",
         "hp": 40,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "14270ca3-d687-4c55-9d85-b56407df47f5",
@@ -9057,7 +9057,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.216",
         "cr": "1/2",
         "hp": 22,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "a2c73e31-1369-46a6-a873-92db8efabc5e",
@@ -9111,7 +9111,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.212",
         "cr": "1/2",
         "hp": 9,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "8174e697-7259-4fff-9fec-02bc82ed99cd",
@@ -9151,7 +9151,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.332",
         "cr": "6",
         "hp": 126,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "b01355d8-e686-4682-bfde-358660c60152",
@@ -9189,7 +9189,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.60",
         "cr": "1/8",
         "hp": 9,
-        "AC": 9,
+        "ac": 9,
         "actions": [
             {
                 "id": "60a288d6-e89d-44de-91c2-5562b7d4c893",
@@ -9215,7 +9215,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.213",
         "cr": "3",
         "hp": 68,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "987b26ff-71b1-4521-b1fd-2b25f29f9a1d",
@@ -9253,7 +9253,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.146",
         "cr": "11",
         "hp": 229,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "41bf0751-572f-4aea-a513-cb2d70e60fd2",
@@ -9281,7 +9281,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.61",
         "cr": "16",
         "hp": 189,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "19bfaf7a-c07b-4903-b2c4-72a14ee01949",
@@ -9307,7 +9307,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.332",
         "cr": "1/8",
         "hp": 5,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "ed4895ef-d7a3-4a95-b39b-a9f274c22d98",
@@ -9333,7 +9333,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.214",
         "cr": "6",
         "hp": 127,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "abaaeb32-df0f-4e80-aae1-a06d02cf4c8f",
@@ -9359,7 +9359,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.218",
         "cr": "1/8",
         "hp": 11,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "a3ce5250-faad-49da-860a-aa93a093f57e",
@@ -9385,7 +9385,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.219",
         "cr": "2",
         "hp": 45,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "ef10c40b-9311-4087-9f5c-7d11b0e62b4c",
@@ -9411,7 +9411,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.313",
         "cr": "5",
         "hp": 75,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a61ff4c5-0428-4557-858b-95df6e01e627",
@@ -9437,7 +9437,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.220",
         "cr": "2",
         "hp": 58,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "8aaaeec6-2076-4061-b5cd-dc404c7c8529",
@@ -9475,7 +9475,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.222",
         "cr": "7",
         "hp": 71,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "ddf3219d-eedd-4bbd-9bd4-ce2c9ba55dd9",
@@ -9525,7 +9525,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.222",
         "cr": "8",
         "hp": 71,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "87bf09d6-70e6-4309-98cb-b27d613002a0",
@@ -9558,7 +9558,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.223",
         "cr": "3",
         "hp": 76,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "ff2ec610-e5b8-490f-ac5a-99eea30e1b23",
@@ -9596,7 +9596,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.273",
         "cr": "2",
         "hp": 67,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "384ac487-e135-49ad-8d43-ebe1bf1d147d",
@@ -9634,7 +9634,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.224",
         "cr": "1/8",
         "hp": 5,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "27c8ddec-0cd9-480a-884e-bd377b821375",
@@ -9672,7 +9672,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.216",
         "cr": "1/4",
         "hp": 27,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "b10c6c25-c827-4929-836c-76b0037e63a2",
@@ -9713,7 +9713,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.333",
         "cr": "1/8",
         "hp": 11,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "a660c467-e66b-4589-9557-0717999774d6",
@@ -9739,7 +9739,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.228",
         "cr": "3",
         "hp": 58,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "5e805820-0e1d-4f13-8cb5-cd7172ef7c45",
@@ -9765,7 +9765,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.229",
         "cr": "15",
         "hp": 97,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "7af20370-2e3c-44e7-9661-f1a07a40f9e2",
@@ -9815,7 +9815,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.232",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "9c5bcecf-53c6-495c-8cbc-b1cb049ea2cf",
@@ -9841,7 +9841,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.232",
         "cr": "2",
         "hp": 60,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "63666ebc-e119-4bde-b067-039cc73f0454",
@@ -9867,7 +9867,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.230",
         "cr": "0",
         "hp": 7,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "565d432d-fc65-48dd-b84e-1a4c52241038",
@@ -9893,7 +9893,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.62",
         "cr": "13",
         "hp": 184,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "20f717e5-9d09-4f32-ae68-5a788f6d0b29",
@@ -9919,7 +9919,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.32",
         "cr": "1/4",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e090ecab-86ae-43e7-ad2d-288b67d27aaa",
@@ -9957,7 +9957,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.178",
         "cr": "5",
         "hp": 112,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "2a93961b-0570-4d25-8ba3-e6dbce6274c3",
@@ -9983,7 +9983,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.235",
         "cr": "3",
         "hp": 68,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "9d0d1776-1f71-4c75-a25c-9d7f64d07f63",
@@ -10009,7 +10009,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.348",
         "cr": "1/8",
         "hp": 9,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "199f0f33-427b-4844-82da-2884de9482f9",
@@ -10057,7 +10057,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.236",
         "cr": "2",
         "hp": 45,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "29d1b081-8f1f-4fd3-9958-481fe5c5150e",
@@ -10096,7 +10096,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.314",
         "cr": "9",
         "hp": 123,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "f5b5f32c-2e63-4831-b255-7651ae65b19a",
@@ -10146,7 +10146,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.243",
         "cr": "2",
         "hp": 45,
-        "AC": 8,
+        "ac": 8,
         "actions": [
             {
                 "id": "837e8a62-24f5-4925-82ca-4d510472ce4c",
@@ -10172,7 +10172,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.333",
         "cr": "0",
         "hp": 3,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -10185,7 +10185,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.237",
         "cr": "2",
         "hp": 59,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "d2600c30-d662-4e3c-b44b-84fe688155a3",
@@ -10223,7 +10223,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.316",
         "cr": "2",
         "hp": 85,
-        "AC": 8,
+        "ac": 8,
         "actions": [
             {
                 "id": "3d03d54b-43ec-402c-b974-712d33aa31b3",
@@ -10260,7 +10260,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.239",
         "cr": "7",
         "hp": 110,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "a67ba541-31d9-40af-adc9-bf5acafc0c20",
@@ -10286,7 +10286,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.246",
         "cr": "1/2",
         "hp": 15,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e2086b3e-7e38-4d1d-ab76-7152c1e08cb5",
@@ -10324,7 +10324,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.247",
         "cr": "2",
         "hp": 45,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "564766b3-ca52-4839-97c7-676a5ef77617",
@@ -10350,7 +10350,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.246",
         "cr": "4",
         "hp": 93,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "933af31f-f59a-4894-b25d-e90ffdb974d6",
@@ -10372,7 +10372,7 @@ export const Monsters: Creature[] = [
                 "freq": "1/fight",
                 "targets": 4,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     condition: "Attacks with Advantage",
@@ -10402,7 +10402,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.247",
         "cr": "2",
         "hp": 42,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a8c220f9-6ba8-44a8-a098-8306b82e3f0e",
@@ -10440,7 +10440,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.248",
         "cr": "5",
         "hp": 114,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "17f022c0-7887-4805-a147-3dbdefe8f92d",
@@ -10486,7 +10486,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.333",
         "cr": "0",
         "hp": 1,
-        "AC": 11,
+        "ac": 11,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -10499,7 +10499,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.249",
         "cr": "3",
         "hp": 59,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "6783e543-3333-4ab5-b89d-c14d4a34060e",
@@ -10525,7 +10525,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.333",
         "cr": "1/4",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "09474615-c59e-45fe-b886-82337f4a529b",
@@ -10563,7 +10563,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.250",
         "cr": "2",
         "hp": 59,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4be137d6-c03c-4e97-a5e8-25b44a57b83e",
@@ -10589,7 +10589,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.226",
         "cr": "2",
         "hp": 32,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "e7714478-1bbb-4d44-a70f-88b3b855f100",
@@ -10615,7 +10615,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.251",
         "cr": "2",
         "hp": 33,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "9b5e4591-5f47-4276-9b5b-067e598d0496",
@@ -10653,7 +10653,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.334",
         "cr": "3",
         "hp": 32,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "4840f99e-6ce9-4d31-a683-ee6feafb568a",
@@ -10679,7 +10679,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.252",
         "cr": "1/2",
         "hp": 22,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "55dbacac-670c-42c3-9e49-3a914c415960",
@@ -10705,7 +10705,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.77",
         "cr": "20",
         "hp": 300,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "2e7b7970-1103-4322-bf9f-1d6ce9f2f92f",
@@ -10738,7 +10738,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.253",
         "cr": "1/4",
         "hp": 1,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "db1a831c-7dda-4e7b-9b5d-fb22b720a4d5",
@@ -10781,7 +10781,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.17",
         "cr": "16",
         "hp": 200,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "cca788a1-24c6-4ec1-83cf-4d0b0d450dcf",
@@ -10804,7 +10804,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 30,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -10818,7 +10818,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.80",
         "cr": "2",
         "hp": 68,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "4d28bda4-5d37-4df3-8af7-e29da036ff8e",
@@ -10844,7 +10844,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.334",
         "cr": "1/8",
         "hp": 2,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "671c375d-f920-442c-9a6d-671ff884263d",
@@ -10870,7 +10870,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.334",
         "cr": "2",
         "hp": 42,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "1422a08c-e90b-4698-a97f-282faf97fe40",
@@ -10896,7 +10896,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.279",
         "cr": "2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "c37e5f12-e9cc-4824-a3af-e1dda8cd31f0",
@@ -10934,7 +10934,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.335",
         "cr": "1/8",
         "hp": 11,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "059efc81-6f96-4c7b-81dc-87f69b730c36",
@@ -10960,7 +10960,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.348",
         "cr": "2",
         "hp": 27,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "35e0c272-b43d-4f6a-9140-ff30de40abcf",
@@ -10994,7 +10994,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the highest DPR",
+                "target": "ally with highest DPR",
                 "buff": {
                     "duration": "until next attack made",
                     condition: 'Attacks with Advantage'
@@ -11009,7 +11009,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 7,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -11023,7 +11023,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.254",
         "cr": "1/4",
         "hp": 7,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "262f7547-2a59-4fe9-8bed-8dd8462e1e57",
@@ -11061,7 +11061,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.80",
         "cr": "1/4",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "005d62df-5f63-484c-8017-d2055987d46b",
@@ -11087,7 +11087,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.255",
         "cr": "15",
         "hp": 247,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "6a8e6e05-b0ce-43f5-8839-6109661ae750",
@@ -11120,7 +11120,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.226",
         "cr": "1",
         "hp": 22,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "0171d2bf-c48a-4609-8ff6-913d91ce37e5",
@@ -11146,7 +11146,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.256",
         "cr": "2",
         "hp": 45,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "da8f1ddf-b60c-4538-b7ad-d1909963b666",
@@ -11172,7 +11172,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.230",
         "cr": "1",
         "hp": 45,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "1914c455-8c07-4310-b3f3-9cf3f5877115",
@@ -11198,7 +11198,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.256",
         "cr": "3",
         "hp": 45,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "2209b4b1-ddec-4e42-a5ab-1d031d04e3ac",
@@ -11224,7 +11224,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.63",
         "cr": "1",
         "hp": 7,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "57841394-6972-41b1-a694-1dbd0c2e3dea",
@@ -11257,7 +11257,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.335",
         "cr": "0",
         "hp": 1,
-        "AC": 13,
+        "ac": 13,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -11270,7 +11270,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.257",
         "cr": "13",
         "hp": 110,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "d76ca05f-81c4-4443-98ae-a46f19c7959d",
@@ -11296,7 +11296,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.335",
         "cr": "0",
         "hp": 1,
-        "AC": 10,
+        "ac": 10,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -11309,7 +11309,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.335",
         "cr": "0",
         "hp": 1,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -11322,7 +11322,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.98",
         "cr": "4",
         "hp": 75,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "52852c2f-d42b-4d50-a326-a220a693fd11",
@@ -11362,7 +11362,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.276",
         "cr": "5",
         "hp": 93,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "eb38ea40-d751-4a5f-b7d5-2faa1d672982",
@@ -11388,7 +11388,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.336",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "8570a9db-4b78-4510-8ca1-6d4dcf1b0325",
@@ -11414,7 +11414,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.258",
         "cr": "11",
         "hp": 195,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "4d060777-e006-4229-a5f8-00b26f1c3b87",
@@ -11459,7 +11459,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.259",
         "cr": "5",
         "hp": 136,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "b02dbb93-bb22-47ef-b361-f045db7539aa",
@@ -11485,7 +11485,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.336",
         "cr": "2",
         "hp": 45,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "110fbac8-07ce-4891-ae61-5d0e6d5a4a19",
@@ -11511,7 +11511,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.336",
         "cr": "1/4",
         "hp": 13,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "b480ea22-e0e7-4a4c-bdf1-ce4eeedac34b",
@@ -11537,7 +11537,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.260",
         "cr": "11",
         "hp": 248,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "f2f45163-66d1-49f9-9180-79f0abb2136a",
@@ -11563,7 +11563,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.261",
         "cr": "5",
         "hp": 93,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "de32e134-f203-4b22-a9a3-59a01230ff2b",
@@ -11589,7 +11589,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.20",
         "cr": "2",
         "hp": 33,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "77edaa04-7755-483c-932a-29361daefde2",
@@ -11615,7 +11615,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.262",
         "cr": "1/2",
         "hp": 27,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "4f30da78-1743-451e-8fac-e69875ae4cc0",
@@ -11641,7 +11641,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.336",
         "cr": "2",
         "hp": 52,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "23fb24b9-20de-4cfe-ba9f-30dd84fee2be",
@@ -11679,7 +11679,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.263",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e69f1274-9f62-485d-8d66-6dd210d565af",
@@ -11719,7 +11719,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.264",
         "cr": "5",
         "hp": 76,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "a800854d-4a9e-479a-96c9-1ac0f2c3744e",
@@ -11759,7 +11759,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.264",
         "cr": "2",
         "hp": 33,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "732a08f6-d6a7-4298-a776-b67b1e0090d0",
@@ -11785,7 +11785,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.266",
         "cr": "5",
         "hp": 90,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "f9500725-1efd-448f-8fee-2f30369bdfbb",
@@ -11818,7 +11818,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.267",
         "cr": "1/2",
         "hp": 31,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "c09b5bd8-1e08-46e2-8694-0de08575ad26",
@@ -11868,7 +11868,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.268",
         "cr": "1",
         "hp": 36,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "cfb06ebf-d3b1-4eda-a815-e00518bcf97d",
@@ -11894,7 +11894,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.337",
         "cr": "0",
         "hp": 1,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "6e7ca442-648e-43f9-8305-5e2efce510d6",
@@ -11920,7 +11920,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.349",
         "cr": "1/2",
         "hp": 16,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "98b23dc1-4a53-4763-b95f-b003d01f7561",
@@ -11958,7 +11958,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.179",
         "cr": "2",
         "hp": 52,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "48b522fe-b092-4197-9a4e-6a15a7507871",
@@ -11984,7 +11984,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.337",
         "cr": "0",
         "hp": 1,
-        "AC": 11,
+        "ac": 11,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -11997,7 +11997,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.269",
         "cr": "1/2",
         "hp": 16,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "59450efc-41c9-46ac-a8a2-9525e5680079",
@@ -12037,7 +12037,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.64",
         "cr": "4",
         "hp": 66,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "3889b6ce-d24d-4412-a62c-68767b06036c",
@@ -12077,7 +12077,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.270",
         "cr": "5",
         "hp": 136,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "165d7300-0463-4e86-b995-498b737fd1f1",
@@ -12115,7 +12115,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.271",
         "cr": "7",
         "hp": 142,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "a41cd172-e27f-4e97-906b-0db6852d1d60",
@@ -12148,7 +12148,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the highest DPR",
+                "target": "ally with highest DPR",
                 "buff": {
                     "duration": "until next attack taken",
                     "ac": 2
@@ -12166,7 +12166,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.138",
         "cr": "0",
         "hp": 13,
-        "AC": 5,
+        "ac": 5,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -12179,7 +12179,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.118",
         "cr": "2",
         "hp": 45,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "985a1c61-ab60-4d31-8ad7-7add708b044e",
@@ -12219,7 +12219,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.272",
         "cr": "1/4",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "c5297ca5-1f30-4836-ab9d-88aacd03a09f",
@@ -12257,7 +12257,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.276",
         "cr": "1/8",
         "hp": 10,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4f0f1ffb-a4dd-47c3-94fc-4a6bee0c60b0",
@@ -12283,7 +12283,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.217",
         "cr": "1/4",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "058d4672-860e-4c54-b9cd-8c8b2b81712a",
@@ -12309,7 +12309,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.18",
         "cr": "21",
         "hp": 243,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "1e8932a7-197b-467d-8786-08366d96415e",
@@ -12332,7 +12332,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 40,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "ed52b4b5-305f-4f8c-90c1-2aba7d9543e0",
@@ -12358,7 +12358,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.30",
         "cr": "3",
         "hp": 39,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "a37b1d6d-d666-46b2-b722-bf34f61f9417",
@@ -12386,7 +12386,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.279",
         "cr": "1",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "de5530fc-3bdf-4f7b-803a-bb5e691a8f6d",
@@ -12412,7 +12412,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.337",
         "cr": "0",
         "hp": 1,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "079f20fe-6879-4ca6-82ce-a05a46dd719b",
@@ -12438,7 +12438,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.78",
         "cr": "2",
         "hp": 22,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "960ffaa0-cb48-494f-9eed-47d7f67de28f",
@@ -12464,7 +12464,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.234",
         "cr": "8",
         "hp": 75,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "d264020a-4c60-4ef7-b59e-2f5d4da85bbe",
@@ -12490,7 +12490,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.283",
         "cr": "1/4",
         "hp": 2,
-        "AC": 15,
+        "ac": 15,
         "actions": [],
         "count": 1,
         "saveBonus": 0.125
@@ -12503,7 +12503,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.349",
         "cr": "1",
         "hp": 27,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d7e68127-d808-4060-a49d-66cce6a8e0c6",
@@ -12543,7 +12543,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.217",
         "cr": "1/4",
         "hp": 21,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "6a7f85a5-fcbd-4923-8f54-ce4b3cc17d29",
@@ -12596,7 +12596,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.284",
         "cr": "1/8",
         "hp": 2,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "4585dba7-1ecf-47c7-bb78-2a8c3e04eaf6",
@@ -12622,7 +12622,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.156",
         "cr": "7",
         "hp": 126,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "9f959c8c-e3bf-4205-9ba4-f748e9e11242",
@@ -12660,7 +12660,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.170",
         "cr": "10",
         "hp": 178,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "181ec701-1b47-4981-a88b-4135d69cbab0",
@@ -12686,7 +12686,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.156",
         "cr": "13",
         "hp": 230,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "1526a756-5dc2-440c-8e37-e06b5cfead88",
@@ -12738,7 +12738,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.285",
         "cr": "4",
         "hp": 66,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "8c30df84-0d5e-4e63-b47e-84f78dd94b0a",
@@ -12776,7 +12776,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.337",
         "cr": "1/4",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "9208b3e3-ba8c-4801-b342-acc2736adba0",
@@ -12802,7 +12802,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "768cb633-d3bc-4cda-b6ab-89d050d7c3e1",
@@ -12828,7 +12828,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "22e5a52b-a8b1-46ae-9477-b6376c6d4a85",
@@ -12854,7 +12854,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d6277f94-21cb-49d9-a85d-06e46e2711e7",
@@ -12880,7 +12880,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "2",
         "hp": 36,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "1ccb9a8c-893a-4157-b0b8-e00847077217",
@@ -12906,7 +12906,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1",
         "hp": 28,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d6de9a92-f23e-47cc-8e2c-4d2cf85a1188",
@@ -12932,7 +12932,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.339",
         "cr": "1/4",
         "hp": 24,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "5ad11741-3ba6-437a-a67f-6fd3b670ddd7",
@@ -12958,7 +12958,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.339",
         "cr": "1/4",
         "hp": 24,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "18e412d7-2808-47e1-9663-a5e02bda2c0d",
@@ -12984,7 +12984,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "a239ad1a-2f0b-416c-af3a-b9f936abcba5",
@@ -13010,7 +13010,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.338",
         "cr": "1/2",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "96308fdb-4a6b-4d35-b27a-054ec55b205e",
@@ -13036,7 +13036,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.286",
         "cr": "30",
         "hp": 676,
-        "AC": 25,
+        "ac": 25,
         "actions": [
             {
                 "id": "d949ec9a-3c3c-4efb-b1d0-fdfa04944f53",
@@ -13074,7 +13074,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.288",
         "cr": "1",
         "hp": 33,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "2b20fd5a-2193-4977-a7f9-91b87033567a",
@@ -13100,7 +13100,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.350",
         "cr": "1/2",
         "hp": 32,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "c1dfa1cd-2160-4784-a674-1da9cca60239",
@@ -13138,7 +13138,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.339",
         "cr": "1",
         "hp": 37,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "0eedebd4-37b0-4e7c-b6a3-03e3cc095445",
@@ -13176,7 +13176,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.289",
         "cr": "9",
         "hp": 138,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "201ad2ff-6efa-450a-b44a-db9a33954e9e",
@@ -13214,7 +13214,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.350",
         "cr": "1/8",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "3bfd4f42-aca1-47e7-bffa-81f2e87bd81c",
@@ -13240,7 +13240,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.80",
         "cr": "5",
         "hp": 95,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "6ea36138-2f10-4bf9-843d-0a76955b7592",
@@ -13278,7 +13278,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.225",
         "cr": "1/2",
         "hp": 16,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "c93eb4b0-218a-486e-bf7a-95bced8d1dc0",
@@ -13304,7 +13304,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.290",
         "cr": "1/4",
         "hp": 13,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "4d7d1c9f-05fa-4383-9109-ea374bb55d44",
@@ -13330,7 +13330,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.291",
         "cr": "5",
         "hp": 84,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "095c9743-3d62-4431-9247-9bc5fe08bf64",
@@ -13356,7 +13356,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.32",
         "cr": "1/8",
         "hp": 4,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "73b98478-c317-47df-aa37-1d440e1697a1",
@@ -13382,7 +13382,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.80",
         "cr": "8",
         "hp": 136,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "06c469b7-90ab-4173-b2a9-68f67eee0421",
@@ -13408,7 +13408,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.314",
         "cr": "13",
         "hp": 153,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "d1f75d77-4134-4236-adac-f49cfc2cb23d",
@@ -13461,7 +13461,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.292",
         "cr": "5",
         "hp": 93,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "bd0cb132-fa2f-4581-8cd8-4e61f6bd7f5a",
@@ -13487,7 +13487,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.294",
         "cr": "5",
         "hp": 67,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "ff52e433-7fa1-4abc-8afc-3d9f3f0eb318",
@@ -13513,7 +13513,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.297",
         "cr": "13",
         "hp": 144,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "950eeb43-c92a-4ed9-808d-ea3b084e2994",
@@ -13562,7 +13562,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.298",
         "cr": "5",
         "hp": 82,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "bdf96374-07a0-4f42-bbd3-6b8631db6066",
@@ -13588,7 +13588,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.298",
         "cr": "15",
         "hp": 144,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "fa83e8cd-abae-4096-aacb-4218e23f34b8",
@@ -13637,7 +13637,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.298",
         "cr": "15",
         "hp": 144,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "0dc768d8-0607-4b4f-a024-b760a2122456",
@@ -13686,7 +13686,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.350",
         "cr": "3",
         "hp": 58,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "902aefca-ffb3-4596-97c1-b3a7eb5fe079",
@@ -13712,7 +13712,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.346",
         "cr": "5",
         "hp": 112,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "902aefca-ffb3-4596-97c1-b3a7eb5fe079",
@@ -13771,7 +13771,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.32",
         "cr": "1/2",
         "hp": 26,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "a1e9d82a-9e3a-4fa3-97c2-d625afedc36b",
@@ -13797,7 +13797,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.138",
         "cr": "1/4",
         "hp": 18,
-        "AC": 5,
+        "ac": 5,
         "actions": [
             {
                 "id": "70beec17-0eb8-4dcf-b5ac-88db12cb714a",
@@ -13823,7 +13823,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.64",
         "cr": "6",
         "hp": 104,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "52f862f9-e9e2-43b2-b9e7-7834f99affc5",
@@ -13877,7 +13877,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.339",
         "cr": "0",
         "hp": 5,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "913f663b-24e9-40dc-ac3b-8f804cd816fa",
@@ -13903,7 +13903,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.340",
         "cr": "1/2",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "05b00c37-d3f5-47c5-a257-d47773d799a5",
@@ -13929,7 +13929,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.273",
         "cr": "1/2",
         "hp": 22,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d2398b3f-5695-44bc-88dd-2201c3f4dbca",
@@ -13955,7 +13955,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.125",
         "cr": "5",
         "hp": 114,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "219d7afc-f0af-48f9-a947-3f0489e7283d",
@@ -13993,7 +13993,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.299",
         "cr": "3",
         "hp": 58,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "a672072a-e6c1-43d4-9a0f-eece233f9de8",
@@ -14019,7 +14019,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.340",
         "cr": "0",
         "hp": 1,
-        "AC": 13,
+        "ac": 13,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -14032,7 +14032,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.208",
         "cr": "5",
         "hp": 135,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "d46e644b-512f-4bd9-a66e-d3409a4b8fcf",
@@ -14082,7 +14082,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.209",
         "cr": "4",
         "hp": 78,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "8adcad2f-5f67-4419-893f-08240229fc95",
@@ -14120,7 +14120,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.209",
         "cr": "2",
         "hp": 33,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d784cd8a-13d2-4e0a-b71d-dc762bd85df5",
@@ -14170,7 +14170,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.210",
         "cr": "4",
         "hp": 120,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "69270f5a-4fe3-40cc-bd2c-89ae0cda2eb7",
@@ -14232,7 +14232,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.211",
         "cr": "3",
         "hp": 58,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "41017536-2a81-4011-8625-aac8e93cc0f0",
@@ -14282,7 +14282,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.102",
         "cr": "2",
         "hp": 32,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "039445cd-5e70-4dbe-acc7-8ee3ae9159ed",
@@ -14322,7 +14322,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.300",
         "cr": "3",
         "hp": 45,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "a83037ae-8f3d-4921-aba0-9b2da09a7046",
@@ -14360,7 +14360,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.301",
         "cr": "2",
         "hp": 22,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "f52bbc13-dd79-4cfc-afe0-dadfadc31026",
@@ -14386,7 +14386,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.195",
         "cr": "1/4",
         "hp": 7,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "492bb674-2e52-4619-beba-7e5d58774549",
@@ -14424,7 +14424,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.340",
         "cr": "3",
         "hp": 75,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "2f0c6830-d560-4c2b-8f10-af83d193997e",
@@ -14464,7 +14464,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.341",
         "cr": "1/4",
         "hp": 11,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d0dcfef2-ec29-4c6b-9426-b9e6c31fadbd",
@@ -14490,7 +14490,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.341",
         "cr": "1/2",
         "hp": 26,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "c50051cc-15cc-426c-b21f-c75fb4dc189b",
@@ -14516,7 +14516,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.302",
         "cr": "5",
         "hp": 67,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d45e8e29-c0e6-44bb-91e3-bf843b639a2b",
@@ -14542,7 +14542,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.303",
         "cr": "6",
         "hp": 110,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "f8aad756-ca48-4a7e-a113-5b6c0363aba3",
@@ -14568,7 +14568,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.304",
         "cr": "5",
         "hp": 73,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "04764159-ffa0-45c7-ac15-504d51ec8664",
@@ -14594,7 +14594,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.305",
         "cr": "3",
         "hp": 51,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d0a81de1-e18b-4fb7-977a-eb01e796bcc6",
@@ -14633,7 +14633,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.65",
         "cr": "10",
         "hp": 136,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "d0659750-3c12-427e-88b8-2d06930300c4",
@@ -14659,7 +14659,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.88",
         "cr": "7",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "1e957729-8248-4558-9a29-6f5818efb51e",
@@ -14699,7 +14699,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.91",
         "cr": "9",
         "hp": 152,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "904629d7-1f6d-4d21-a2c7-e79296900036",
@@ -14739,7 +14739,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.105",
         "cr": "6",
         "hp": 110,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "4e242e5d-14b5-4198-a6d8-76138c626140",
@@ -14779,7 +14779,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.108",
         "cr": "8",
         "hp": 142,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "f448d43a-8395-49a4-a0e8-2e6d1f3dde86",
@@ -14819,7 +14819,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.112",
         "cr": "7",
         "hp": 119,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "cba58d4f-f8ae-4d6e-ac98-f3f2c0ebcec7",
@@ -14859,7 +14859,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.115",
         "cr": "10",
         "hp": 178,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "c4d6c32b-ae00-4e20-bba5-306a72289be5",
@@ -14899,7 +14899,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.94",
         "cr": "8",
         "hp": 136,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "d8b60ba2-e23f-4fce-850a-6d671d2e731e",
@@ -14939,7 +14939,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.98",
         "cr": "10",
         "hp": 178,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "1d755fb6-1bd0-4314-89da-aeee86856804",
@@ -14979,7 +14979,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.85",
         "cr": "13",
         "hp": 178,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "32730dfd-f4da-4a0f-bc3f-eb58eba67520",
@@ -15033,7 +15033,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.258",
         "cr": "5",
         "hp": 93,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "dd82becc-7b8b-4f46-a395-abcdf26ed87f",
@@ -15059,7 +15059,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.118",
         "cr": "9",
         "hp": 168,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a99b4c00-d72f-4db0-aa37-c0d5621054f1",
@@ -15099,7 +15099,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.101",
         "cr": "6",
         "hp": 133,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "0a3c4acc-20db-40d8-a85c-9578738e3848",
@@ -15139,7 +15139,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.308",
         "cr": "7",
         "hp": 127,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "0d6c0e44-d6ff-40f8-9b26-4d86e67f18ba",
@@ -15165,7 +15165,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.309",
         "cr": "3",
         "hp": 66,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "964eabbd-05a2-4204-82ac-fb3e516bf4e0",
@@ -15215,7 +15215,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.309",
         "cr": "3",
         "hp": 66,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "40664514-bdbd-4fbe-a5bc-397e035800a0",
@@ -15241,7 +15241,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.309",
         "cr": "3",
         "hp": 66,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "279255c9-db95-4684-bf39-d8fe383c92ed",
@@ -15303,7 +15303,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.310",
         "cr": "1",
         "hp": 40,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "c7392963-59c9-435b-aa91-e1e5e5735f4f",
@@ -15341,7 +15341,7 @@ export const Monsters: Creature[] = [
         "src": "MM p.316",
         "cr": "1/4",
         "hp": 22,
-        "AC": 8,
+        "ac": 8,
         "actions": [
             {
                 "id": "1cdb9b9a-b8c8-4ab2-8fe7-aa43a07738cb",
@@ -15378,7 +15378,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.260",
         "cr": "9",
         "hp": 104,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "5162a1d2-e7fa-4abf-a8e8-fa7e5f5456e9",
@@ -15418,7 +15418,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.169",
         "cr": "2",
         "hp": 39,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "44cf6c3a-68ee-43f6-a046-3f05b6f35cf6",
@@ -15456,7 +15456,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.198",
         "cr": "5",
         "hp": 75,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "878ace34-a467-4ac3-9673-b6a8b46bc434",
@@ -15510,7 +15510,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.122",
         "cr": "7",
         "hp": 117,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "c3cd560f-5eff-442b-b099-1a14dedcb199",
@@ -15556,7 +15556,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.43",
         "cr": "10",
         "hp": 150,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "380322b1-0e18-4f6e-a9d8-4fbfa63ba111",
@@ -15602,7 +15602,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.44",
         "cr": "11",
         "hp": 168,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "264639f7-6139-48c5-b054-0c72bb3a1062",
@@ -15628,7 +15628,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.45",
         "cr": "5",
         "hp": 40,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d72e624a-1aff-4b19-b3fb-cd50c918b4c5",
@@ -15654,7 +15654,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.46",
         "cr": "18",
         "hp": 202,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "001696d8-f632-48bf-bbb0-9e47d6703fa6",
@@ -15720,7 +15720,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.222",
         "cr": "13",
         "hp": 255,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "781b1450-568f-4789-b994-fbfbb4975c3e",
@@ -15746,7 +15746,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.47",
         "cr": "6",
         "hp": 90,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "dad83df7-0690-41fd-9a6f-24fcbdc6de1d",
@@ -15784,7 +15784,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.259",
         "cr": "1/4",
         "hp": 13,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "b3a0146e-03b8-4289-a1d4-5be45e27dcfa",
@@ -15823,7 +15823,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.48",
         "cr": "12",
         "hp": 154,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "3f50000b-6014-4172-b55f-829498d46c0c",
@@ -15846,7 +15846,7 @@ export const Monsters: Creature[] = [
                 "targets": 2,
                 "type": "heal",
                 "amount": 19,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "e709cd3a-9f5f-46ed-b161-f03e84a61807",
@@ -15884,7 +15884,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.49",
         "cr": "3",
         "hp": 75,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "331362ad-c1b7-4074-b612-570df9fefdfa",
@@ -15910,7 +15910,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.50",
         "cr": "7",
         "hp": 94,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "34c5beea-8c5e-4125-87fd-79e01907c5b6",
@@ -15950,7 +15950,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.51",
         "cr": "21",
         "hp": 297,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "0333e759-119e-4052-af24-4158e7efd2a1",
@@ -15988,7 +15988,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.71",
         "cr": "2",
         "hp": 38,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "08f21d05-4f83-469a-b09c-e37286da800a",
@@ -16014,7 +16014,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.115",
         "cr": "10",
         "hp": 165,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "53e5d2c0-0d47-4faa-9c4a-8bd951df1b66",
@@ -16063,7 +16063,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.52",
         "cr": "4",
         "hp": 82,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "037fa50b-dcc1-40fb-9b6a-b2a1c6d1d9d1",
@@ -16089,7 +16089,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.54",
         "cr": "19",
         "hp": 189,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a0d4c1ee-9a53-4675-9ba9-fe37c33aa856",
@@ -16152,7 +16152,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.55",
         "cr": "11",
         "hp": 114,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "3c858445-b099-4f0a-86bf-7899700fe7e3",
@@ -16190,7 +16190,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.56",
         "cr": "5",
         "hp": 84,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "6bd41fa6-0d02-47f4-b70d-57a5d7bd67ee",
@@ -16237,7 +16237,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.58",
         "cr": "23",
         "hp": 319,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "e1e4603c-0d3b-48df-af2c-5cf28fe63f98",
@@ -16275,7 +16275,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.59",
         "cr": "2",
         "hp": 44,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "9ce8da50-55e8-408c-8252-99e1297f8b58",
@@ -16330,7 +16330,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.60",
         "cr": "4",
         "hp": 60,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "7510fc40-4964-43c2-bc54-3d14b75b1beb",
@@ -16356,7 +16356,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.61",
         "cr": "2",
         "hp": 49,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "1fef155d-b336-433b-a8f2-2c506a28236f",
@@ -16382,7 +16382,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.62",
         "cr": "7",
         "hp": 91,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "e008260a-7567-4250-840c-6b0f9f43c105",
@@ -16421,7 +16421,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.38",
         "cr": "7",
         "hp": 58,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "e3dd3393-c0a4-4cc5-be40-1e5db78c3bc5",
@@ -16461,7 +16461,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.63",
         "cr": "8",
         "hp": 119,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "389dd239-0424-44d3-bdd5-c1d65658b795",
@@ -16487,7 +16487,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.39",
         "cr": "17",
         "hp": 202,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "1f83bbe3-2228-499b-8a4d-f115e111ab51",
@@ -16513,7 +16513,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.64",
         "cr": "6",
         "hp": 58,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "c785549e-eb09-42dd-af5e-e2abafdee252",
@@ -16568,7 +16568,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.65",
         "cr": "1/8",
         "hp": 18,
-        "AC": 14,
+        "ac": 14,
         "actions": [],
         "count": 1,
         "saveBonus": 0.0625
@@ -16581,7 +16581,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.66",
         "cr": "12",
         "hp": 150,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "4d1d039b-8d5d-4c95-ace6-344a29e43939",
@@ -16633,7 +16633,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.95",
         "cr": "5",
         "hp": 121,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "dd4ec355-d869-4374-aa5b-5ca0df6b531e",
@@ -16671,7 +16671,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.67",
         "cr": "3",
         "hp": 52,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "90e5502b-40e6-4019-8310-289fb2f0431d",
@@ -16716,7 +16716,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.68",
         "cr": "14",
         "hp": 189,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "5cc6b2cd-a690-4388-b963-a1b9f608588f",
@@ -16742,7 +16742,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.69",
         "cr": "8",
         "hp": 120,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "c703c377-b24a-4da5-8e12-c476453d79b2",
@@ -16787,7 +16787,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.70",
         "cr": "5",
         "hp": 84,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "9e33cd36-f886-4e4a-a97b-54f2808ed41d",
@@ -16827,7 +16827,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.73",
         "cr": "3",
         "hp": 58,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "9459ef67-f75e-4143-a1d5-8834aa6a68fe",
@@ -16853,7 +16853,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.74",
         "cr": "9",
         "hp": 143,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "e8b52880-1f13-4a55-ac66-348249c6bebe",
@@ -16902,7 +16902,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.75",
         "cr": "1/2",
         "hp": 18,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "b6d49e0f-26d0-4d7b-98f9-fbf715ddfda1",
@@ -16928,7 +16928,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.76",
         "cr": "1",
         "hp": 13,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "70476911-0dc5-4320-8d9b-6be8fdd14840",
@@ -16954,7 +16954,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.77",
         "cr": "3",
         "hp": 66,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "acd86608-af06-4398-95dd-54cce5c12c7f",
@@ -16980,7 +16980,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.79",
         "cr": "1",
         "hp": 36,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "7527bec6-3fd2-45ea-8ec8-7966177b9fe6",
@@ -17020,7 +17020,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.79",
         "cr": "4",
         "hp": 91,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "95e920bf-a1a0-4a2a-91b9-be8d10e5474a",
@@ -17046,7 +17046,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.80",
         "cr": "5",
         "hp": 117,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "985fe330-5ea5-41cc-940d-ef390b0fe25b",
@@ -17086,7 +17086,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.80",
         "cr": "4",
         "hp": 105,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "563d2ce6-2e43-40b4-bba8-aeb90beb6b06",
@@ -17108,7 +17108,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the lowest AC",
+                "target": "ally with lowest AC",
                 "buff": {
                     "duration": "until next attack taken",
                     "ac": 5
@@ -17126,7 +17126,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.81",
         "cr": "11",
         "hp": 250,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "49d090b4-5b44-48f2-b5ff-c3c0d425ae00",
@@ -17152,7 +17152,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.82",
         "cr": "8",
         "hp": 127,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "3d876e3e-a1b4-4ed0-a93e-7b7f4e3343dd",
@@ -17189,7 +17189,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.83",
         "cr": "0",
         "hp": 2,
-        "AC": 12,
+        "ac": 12,
         "actions": [],
         "count": 1,
         "saveBonus": 0
@@ -17202,7 +17202,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.84",
         "cr": "1/2",
         "hp": 13,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "42abf668-64bd-490f-9531-a6acb33fa92c",
@@ -17228,7 +17228,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.84",
         "cr": "2",
         "hp": 27,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "3b4b8bcd-b40b-4739-af0b-1d29fdcae5e2",
@@ -17254,7 +17254,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.85",
         "cr": "10",
         "hp": 142,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "a2554ff7-38a3-4803-8828-f3f7dcd7a3af",
@@ -17294,7 +17294,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.86",
         "cr": "4",
         "hp": 36,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "e75c173f-0615-46a3-8c21-643977d1f278",
@@ -17320,7 +17320,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.87",
         "cr": "8",
         "hp": 110,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e75c173f-0615-46a3-8c21-643977d1f278",
@@ -17353,7 +17353,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.87",
         "cr": "3",
         "hp": 37,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "fa4cb6d2-8249-47d6-adc3-3de8013a8404",
@@ -17379,7 +17379,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.71",
         "cr": "1/4",
         "hp": 13,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "0ef8c183-4644-4431-825c-6872b1711714",
@@ -17405,7 +17405,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.88",
         "cr": "3",
         "hp": 67,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "1ee776a2-d814-45fd-82dd-e94c6211d3a5",
@@ -17431,7 +17431,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.95",
         "cr": "1",
         "hp": 26,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "a3445b34-0f27-4f5f-9d5a-3b298cafaaca",
@@ -17457,7 +17457,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.90",
         "cr": "26",
         "hp": 464,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "7751b150-2c9b-4d56-bc6a-00f3cd1c5985",
@@ -17495,7 +17495,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.91",
         "cr": "1/4",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "3c7fcb24-cdb9-45fa-90c1-ce69b5769154",
@@ -17533,7 +17533,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.92",
         "cr": "3",
         "hp": 36,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e2b41124-7536-43e8-a317-f86d96e11f1c",
@@ -17561,7 +17561,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.93",
         "cr": "13",
         "hp": 189,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "ab581f30-381d-44ab-9f0a-967766762858",
@@ -17601,7 +17601,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.94",
         "cr": "7",
         "hp": 119,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "b40d102f-4d2e-4020-962c-da8b40ce04e1",
@@ -17640,7 +17640,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.95",
         "cr": "1/4",
         "hp": 19,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "ce6a3147-0123-4045-a9b7-94c088b55bb2",
@@ -17666,7 +17666,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.246",
         "cr": "13",
         "hp": 172,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "ffdbecb9-e0bb-44c1-b633-00bf0fbcd178",
@@ -17717,7 +17717,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.261",
         "cr": "8",
         "hp": 90,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "c6b5082c-97c5-4440-87b2-d2061ca4d02a",
@@ -17765,7 +17765,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.97",
         "cr": "1/8",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "8bbe232b-775c-4639-b667-99202092b6e9",
@@ -17791,7 +17791,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.97",
         "cr": "3",
         "hp": 27,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "a0450dd0-669f-4b5e-978d-5e26c03dc644",
@@ -17817,7 +17817,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.98",
         "cr": "7",
         "hp": 123,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "6b7ae369-fda3-47bf-9cfb-d2046d36c9ef",
@@ -17843,7 +17843,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.99",
         "cr": "13",
         "hp": 162,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "f570d79a-40ed-435e-bdae-76b10be3dcf7",
@@ -17869,7 +17869,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.100",
         "cr": "18",
         "hp": 240,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "07d5bcee-707b-4317-8448-811a1f11eee1",
@@ -17891,7 +17891,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     "ac": 5
@@ -17909,7 +17909,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.101",
         "cr": "9",
         "hp": 162,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "d35fd49d-99a2-4195-b5e9-6669f8f25139",
@@ -17931,7 +17931,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     condition: 'Is attacked with Disadvantage',
@@ -17945,7 +17945,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the highest DPR",
+                "target": "ally with highest DPR",
                 "buff": {
                     "duration": "1 round",
                     "damageMultiplier": 1.5
@@ -17977,7 +17977,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.102",
         "cr": "14",
         "hp": 149,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "23b98e46-c2cd-4a59-a312-98d1ab0bcdf1",
@@ -18015,7 +18015,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.104",
         "cr": "20",
         "hp": 247,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "57f3e8e3-2299-4d4e-8c4e-d1cbe7c5c6c5",
@@ -18063,7 +18063,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "until next attack made",
                     condition: 'Attacks with Advantage',
@@ -18081,7 +18081,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.105",
         "cr": "11",
         "hp": 150,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "fbd3332a-f790-408a-bf9b-0d885c97eea5",
@@ -18107,7 +18107,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.107",
         "cr": "12",
         "hp": 119,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "ad9fb7e0-2948-4af4-922d-77ef615360b5",
@@ -18147,7 +18147,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.112",
         "cr": "2",
         "hp": 33,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "227973af-6aed-453d-9252-734a0ec7e9e5",
@@ -18173,7 +18173,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.107",
         "cr": "2",
         "hp": 26,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "8370bcc2-3ee4-432f-996f-aea5bda4f411",
@@ -18199,7 +18199,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.108",
         "cr": "2",
         "hp": 39,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "912fa281-01c7-4e5a-824b-13aaa02bf7f4",
@@ -18225,7 +18225,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.111",
         "cr": "3",
         "hp": 38,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "23604eca-f917-4d36-b629-318006fb79cb",
@@ -18264,7 +18264,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.109",
         "cr": "1",
         "hp": 27,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "80b2e432-7554-4a2d-8ec3-8a801a616b80",
@@ -18290,7 +18290,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.110",
         "cr": "2",
         "hp": 39,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "7f2826e2-3071-468b-b503-e7e99c856f78",
@@ -18328,7 +18328,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.111",
         "cr": "6",
         "hp": 75,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "8a247bc0-13f8-4c1b-9e17-bc2fd4ce7089",
@@ -18350,7 +18350,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 3,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     "damageMultiplier": 1.5
@@ -18364,7 +18364,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 1,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "until next attack made",
                     "toHit": '1d6'
@@ -18382,7 +18382,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.111",
         "cr": "2",
         "hp": 26,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "46b6ec8d-1a8b-41fd-8f58-335024724545",
@@ -18422,7 +18422,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.113",
         "cr": "4",
         "hp": 57,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "25692fd2-e05e-4a01-b57e-9c16f17ae9ff",
@@ -18459,7 +18459,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.122",
         "cr": "7",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "b1e24efc-d810-41ec-bd4c-c8efcd9cd8fa",
@@ -18497,7 +18497,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.114",
         "cr": "12",
         "hp": 63,
-        "AC": 9,
+        "ac": 9,
         "actions": [],
         "count": 1,
         "saveBonus": 6
@@ -18510,7 +18510,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.120",
         "cr": "14",
         "hp": 210,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "9696ac55-0906-4514-a9f6-73b4a632db31",
@@ -18560,7 +18560,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.199",
         "cr": "10",
         "hp": 115,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "905bcf0e-f151-4911-a444-1d5ba8b5323b",
@@ -18606,7 +18606,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.121",
         "cr": "23",
         "hp": 264,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "3206a9a6-460f-4066-8df5-3b7f9def3412",
@@ -18660,7 +18660,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.261",
         "cr": "5",
         "hp": 49,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "679e02c2-c00b-4dad-9626-0e4e791e3b97",
@@ -18686,7 +18686,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.262",
         "cr": "9",
         "hp": 121,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "550a300f-b7a5-48f9-8f7d-da5a8748a1ca",
@@ -18726,7 +18726,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.231",
         "cr": "1",
         "hp": 30,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "c9554b8d-1141-4e0f-ac3d-dfa91c6d91fa",
@@ -18752,7 +18752,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.123",
         "cr": "7",
         "hp": 123,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "b0b7f0bf-a93c-4d0d-a24d-f5815b5e219a",
@@ -18790,7 +18790,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.124",
         "cr": "14",
         "hp": 187,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "be35aba8-b0bf-43df-bb8b-f93e7a9fb495",
@@ -18829,7 +18829,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.125",
         "cr": "1",
         "hp": 33,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "c8352736-11c1-4924-a307-73544b31e496",
@@ -18867,7 +18867,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.125",
         "cr": "1/2",
         "hp": 27,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "95955e55-d66f-4461-aebb-526acddb81a0",
@@ -18907,7 +18907,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.126",
         "cr": "3",
         "hp": 52,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "b2ed2ba7-5e44-49fe-9c34-d90262489f3d",
@@ -18933,7 +18933,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.127",
         "cr": "9",
         "hp": 127,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "6d5196a7-dfb7-4508-821a-3d98328677b9",
@@ -18966,7 +18966,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.129",
         "cr": "23",
         "hp": 337,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "3f34fae3-59a1-43e4-9471-ac4e8acb1843",
@@ -19017,7 +19017,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.130",
         "cr": "10",
         "hp": 161,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "a2f0b7ba-7389-4381-9110-0666a1c875dd",
@@ -19050,7 +19050,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.131",
         "cr": "12",
         "hp": 378,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "79c2825c-1265-4832-98c8-c7a6a000fc14",
@@ -19076,7 +19076,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.132",
         "cr": "9",
         "hp": 168,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "d0ecd261-85ae-46bf-af14-c4c94a42a3a1",
@@ -19128,7 +19128,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.133",
         "cr": "6",
         "hp": 52,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "dff91310-1ece-4ebf-9b0f-a2bcbefd3253",
@@ -19168,7 +19168,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.134",
         "cr": "1/2",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "26eaa2c2-2576-43f4-a8b5-e23c7eb6c5e0",
@@ -19195,7 +19195,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.136",
         "cr": "22",
         "hp": 300,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "b4b97c24-14fe-4b1d-8075-6a772264e848",
@@ -19247,7 +19247,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.137",
         "cr": "1",
         "hp": 22,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "e61dd08f-5cb0-4048-8be9-b98a01838e34",
@@ -19287,7 +19287,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.138",
         "cr": "3",
         "hp": 60,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "33fce093-15b4-4f44-8893-cda3f6b22a19",
@@ -19351,7 +19351,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.139",
         "cr": "4",
         "hp": 59,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "d1db1181-8dfb-4772-90e8-664bdc09cab1",
@@ -19377,7 +19377,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.140",
         "cr": "10",
         "hp": 130,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "114f3959-0fd4-4e8c-ad23-f2e3703086a0",
@@ -19403,7 +19403,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.140",
         "cr": "12",
         "hp": 180,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "517495d2-8bb0-4551-890d-71486a17039b",
@@ -19443,7 +19443,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.141",
         "cr": "14",
         "hp": 187,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "f216aec7-961c-4046-9b28-5acf9a29322f",
@@ -19465,7 +19465,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 3,
                 "type": "buff",
-                "target": "ally with the least HP",
+                "target": "ally with least HP",
                 "buff": {
                     "duration": "1 round",
                     "damageMultiplier": 1.5
@@ -19497,7 +19497,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.142",
         "cr": "16",
         "hp": 144,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "cfe845c5-bc5b-41a7-bdec-aae66d9bdf2c",
@@ -19535,7 +19535,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.144",
         "cr": "1",
         "hp": 22,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "18ebca23-9d79-470d-9277-f683acf3c2b4",
@@ -19561,7 +19561,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.144",
         "cr": "1/2",
         "hp": 22,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "30522d8f-d922-4352-a6a1-19e0d315c436",
@@ -19587,7 +19587,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.145",
         "cr": "1/4",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "dc0d1448-54c9-4bce-bc31-12a790900291",
@@ -19625,7 +19625,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.146",
         "cr": "12",
         "hp": 189,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "1344fdce-68f9-41d8-83dc-0f69d3ae972b",
@@ -19651,7 +19651,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.148",
         "cr": "24",
         "hp": 346,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "4e372f53-6a8f-4512-96a6-d756f520b1b4",
@@ -19689,7 +19689,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.40",
         "cr": "15",
         "hp": 195,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "fbfa40da-3dba-49f2-81b4-a535ccbfd37f",
@@ -19722,7 +19722,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.149",
         "cr": "1/4",
         "hp": 11,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "7f976b8c-ccb9-45fd-889c-9b33b5030fb1",
@@ -19748,7 +19748,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.150",
         "cr": "2",
         "hp": 49,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "7c1009eb-08d3-451c-ba26-101290e1683e",
@@ -19786,7 +19786,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.150",
         "cr": "1",
         "hp": 27,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "0abfba35-bc5d-45bf-8d12-79373b880573",
@@ -19824,7 +19824,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.151",
         "cr": "2",
         "hp": 52,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "196a5361-d421-45e2-9097-c0c6b6708a29",
@@ -19862,7 +19862,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.96",
         "cr": "1/4",
         "hp": 19,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "64bc737b-8c80-46fd-b3c3-328a345072e9",
@@ -19888,7 +19888,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.152",
         "cr": "16",
         "hp": 216,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "8ec24b7f-48ee-49d0-bdc8-9dc3fcf096ed",
@@ -19915,7 +19915,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.153",
         "cr": "4",
         "hp": 45,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 id: "79e62dc7-fae0-402a-953a-ffb1c32b8bc8",
@@ -19936,7 +19936,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.154",
         "cr": "2",
         "hp": 32,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "53e1d71c-65f6-429d-9b0e-9134980e2755",
@@ -19962,7 +19962,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.155",
         "cr": "8",
         "hp": 90,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "0de2084c-ece9-4710-bdff-a04ed9804d76",
@@ -20009,7 +20009,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.223",
         "cr": "11",
         "hp": 225,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "c1fcfeda-d1a3-4b4c-affa-36ce03bcd8e5",
@@ -20061,7 +20061,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.157",
         "cr": "21",
         "hp": 200,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "094dfa6d-c329-49ef-8c36-23cf62c219e3",
@@ -20106,7 +20106,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.158",
         "cr": "9",
         "hp": 135,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "a772cefb-5f87-4f0b-9ec7-2b4c0479206d",
@@ -20132,7 +20132,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.263",
         "cr": "3",
         "hp": 44,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "a50b378f-8135-4de8-8671-70710034c85e",
@@ -20158,7 +20158,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.160",
         "cr": "23",
         "hp": 350,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "6164523e-967a-4cfd-a819-cc24decc5d33",
@@ -20196,7 +20196,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.162",
         "cr": "12",
         "hp": 153,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "5ebd416e-b5ff-45ba-9545-4517c1cc1ef2",
@@ -20234,7 +20234,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.163",
         "cr": "1",
         "hp": 44,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "204843c9-749f-467e-ab3e-002cff2cac45",
@@ -20260,7 +20260,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.164",
         "cr": "1/4",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "db1cf8d6-ea53-4ea9-ba9b-ac16547cf477",
@@ -20310,7 +20310,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.165",
         "cr": "1",
         "hp": 27,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "b9070f64-f500-41d3-b60e-ec1617ab70a0",
@@ -20348,7 +20348,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.166",
         "cr": "7",
         "hp": 93,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "28dda42f-821c-4a48-b6be-902a5e413bd9",
@@ -20386,7 +20386,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.167",
         "cr": "5",
         "hp": 75,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "9b9a29b7-ef1e-4c2b-85fc-94514aaf9073",
@@ -20412,7 +20412,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.169",
         "cr": "5",
         "hp": 102,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "7896cfc5-e03c-4129-91ca-d9d0b7a255fc",
@@ -20464,7 +20464,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.170",
         "cr": "3",
         "hp": 67,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "35c1a6e9-278e-4914-a05e-f505035590d3",
@@ -20502,7 +20502,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.171",
         "cr": "20",
         "hp": 328,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "a108a8d9-7c2b-47a9-a7ef-2dc35b1f7951",
@@ -20554,7 +20554,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.223",
         "cr": "9",
         "hp": 112,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "a89f62e4-3b0a-47ad-9eb1-63fc4364fef8",
@@ -20606,7 +20606,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.224",
         "cr": "7",
         "hp": 78,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "8dc9c49a-b949-45b7-9e5a-16c57164890a",
@@ -20644,7 +20644,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.231",
         "cr": "1/4",
         "hp": 13,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "67ce10e9-1956-4460-8cab-794f5bab5690",
@@ -20670,7 +20670,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.172",
         "cr": "3",
         "hp": 60,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "9202dce2-ebdc-43f4-a120-40707e4cdfa8",
@@ -20708,7 +20708,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.173",
         "cr": "25",
         "hp": 432,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "7579364a-7f2b-41c4-925b-c757374e41dd",
@@ -20754,7 +20754,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.174",
         "cr": "5",
         "hp": 84,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "53bbaf36-3c09-4c4b-a3a5-3ca8dc0d571b",
@@ -20808,7 +20808,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.175",
         "cr": "7",
         "hp": 88,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "265d429a-1f1d-4784-8186-15d4adec2f62",
@@ -20834,7 +20834,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.176",
         "cr": "1",
         "hp": 33,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "bcb7a2c7-b150-4aaa-8b3a-f28a9533582c",
@@ -20873,7 +20873,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.177",
         "cr": "1",
         "hp": 35,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "1afd6652-2912-4d82-8abb-f059fe2aa008",
@@ -20925,7 +20925,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.178",
         "cr": "2",
         "hp": 31,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "7443ebeb-1bdd-4118-a3cd-52feedac1ccf",
@@ -20951,7 +20951,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.179",
         "cr": "4",
         "hp": 45,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "d6b9ea11-c30e-4850-8666-89babf817887",
@@ -20977,7 +20977,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.180",
         "cr": "3",
         "hp": 40,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "8903699e-5595-4e14-b11b-773697dfe115",
@@ -21003,7 +21003,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.181",
         "cr": "5",
         "hp": 75,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "7d053f8d-4da6-4009-9bc1-fbf1d50d4a8f",
@@ -21029,7 +21029,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.183",
         "cr": "21",
         "hp": 253,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "ed319049-37e6-4cae-89bd-3ce77b2e6a1f",
@@ -21067,7 +21067,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.184",
         "cr": "21",
         "hp": 216,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "b9402381-e7bc-45ec-bf49-d78719ef6a54",
@@ -21105,7 +21105,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.186",
         "cr": "11",
         "hp": 165,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "dd8a70c5-d8a5-4787-969d-db3a42a4bbfc",
@@ -21143,7 +21143,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.187",
         "cr": "6",
         "hp": 105,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "1ecdddca-27d4-4ffc-b47f-9678bfc41d36",
@@ -21181,7 +21181,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.188",
         "cr": "15",
         "hp": 190,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "207a0b51-d34f-4b4b-b9e4-19b0b2dabe51",
@@ -21232,7 +21232,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.189",
         "cr": "17",
         "hp": 203,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "36752dbf-abbe-4fce-98d4-0b6e64b25dcb",
@@ -21273,7 +21273,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.190",
         "cr": "13",
         "hp": 112,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "74e503ea-99ef-4d07-be76-00b29ce7da96",
@@ -21299,7 +21299,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.264",
         "cr": "9",
         "hp": 110,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "fa5515e0-6635-4a25-ba67-e1f4a5d04366",
@@ -21325,7 +21325,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.192",
         "cr": "3",
         "hp": 33,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "0373dc4a-f2c5-45d5-b2f0-9a0277cbb626",
@@ -21358,7 +21358,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.191",
         "cr": "1/8",
         "hp": 7,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "dc0eb726-b4c2-4646-861b-dbbfa2142fe5",
@@ -21391,7 +21391,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.192",
         "cr": "4",
         "hp": 71,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "83879e8b-0fa9-4177-8d15-4b7c51c0544d",
@@ -21417,7 +21417,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.193",
         "cr": "13",
         "hp": 232,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "7ae8f5bd-fee7-471b-b736-c205af28c452",
@@ -21464,7 +21464,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.194",
         "cr": "20",
         "hp": 337,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "8de7bcac-4af7-43ce-b01c-27405333d6c9",
@@ -21527,7 +21527,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.195",
         "cr": "1",
         "hp": 7,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "a219b9b6-cfa6-4ae8-858b-ab01b9a56912",
@@ -21580,7 +21580,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.196",
         "cr": "1/2",
         "hp": 11,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "f7e1998d-3496-47b4-a0fc-1d577f7059db",
@@ -21618,7 +21618,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.197",
         "cr": "1/4",
         "hp": 18,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "587a80b7-0fe6-4b2a-9bc0-7d1ad103ac30",
@@ -21644,7 +21644,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.200",
         "cr": "4",
         "hp": 76,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "02d5b784-60bb-4878-901a-316ef5b2e6bc",
@@ -21670,7 +21670,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.200",
         "cr": "2",
         "hp": 59,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "689deef8-e4ee-4342-9090-c44943465e4d",
@@ -21708,7 +21708,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.201",
         "cr": "3",
         "hp": 59,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "76beddf1-a839-4c49-855c-3cb59898cf0a",
@@ -21746,7 +21746,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.201",
         "cr": "2",
         "hp": 59,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "016c7fcd-eff1-4b92-aa4d-8f40aa1e51f0",
@@ -21772,7 +21772,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.202",
         "cr": "12",
         "hp": 119,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "23b97174-cacc-42e5-b7b7-895d9557fb3e",
@@ -21809,7 +21809,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 1000,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "094b4fb7-77d9-458b-9e58-a085131a96e8",
@@ -21835,7 +21835,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.204",
         "cr": "26",
         "hp": 405,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "205c8921-d77e-4b72-9d7a-bb6bcf8c533c",
@@ -21885,7 +21885,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.205",
         "cr": "10",
         "hp": 105,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "03d2a2d8-0c35-4c3e-815d-a3888ca912ef",
@@ -21946,7 +21946,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.72",
         "cr": "1/4",
         "hp": 15,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "c46b6f88-65ba-4706-abd7-b037c410746f",
@@ -21972,7 +21972,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.206",
         "cr": "16",
         "hp": 175,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "a44c79a4-e3d3-4ab1-9e46-d7d99be46746",
@@ -22010,7 +22010,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.96",
         "cr": "2",
         "hp": 30,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "9b5c6814-7d26-4eea-bbc6-9c762d76fa96",
@@ -22036,7 +22036,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.207",
         "cr": "1",
         "hp": 10,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "0e3df7ad-0ace-4bda-8d3e-a4b988b4b0f1",
@@ -22062,7 +22062,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.40",
         "cr": "19",
         "hp": 289,
-        "AC": 22,
+        "ac": 22,
         "actions": [
             {
                 "id": "d3c0cbc6-f411-409f-9dbc-3e81ad7a2f96",
@@ -22084,7 +22084,7 @@ export const Monsters: Creature[] = [
                 "freq": "at will",
                 "targets": 4,
                 "type": "buff",
-                "target": "ally with the highest DPR",
+                "target": "ally with highest DPR",
                 "buff": {
                     "duration": "1 round",
                     condition: 'Attacks with Advantage',
@@ -22102,7 +22102,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.208",
         "cr": "3",
         "hp": 45,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "7048e465-837b-4d2f-af2d-8a5c974ea996",
@@ -22140,7 +22140,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.209",
         "cr": "14",
         "hp": 210,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "4f37a5cb-fac0-4406-9a07-87ff660fcb61",
@@ -22179,7 +22179,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.247",
         "cr": "9",
         "hp": 138,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "9cc533b1-9abb-4876-b1ee-d5a72b798a68",
@@ -22217,7 +22217,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.210",
         "cr": "2",
         "hp": 37,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "29d1dcba-5b52-4e2a-9f8f-1da32b290f19",
@@ -22243,7 +22243,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.114",
         "cr": "—",
         "hp": 95,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "f678dff2-f286-44e4-abb3-24af3d7b8748",
@@ -22281,7 +22281,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.211",
         "cr": "1",
         "hp": 32,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "67763ad0-8f73-4772-b880-137985854acf",
@@ -22314,7 +22314,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.213",
         "cr": "9",
         "hp": 104,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "44453c71-27b0-48c4-bc86-4521f36cecd6",
@@ -22340,7 +22340,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.213",
         "cr": "7",
         "hp": 71,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "68e633c1-a132-4638-b373-1bfa3f682089",
@@ -22366,7 +22366,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.214",
         "cr": "11",
         "hp": 136,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "5b03153c-cde7-4d11-8671-71a6b373ee6a",
@@ -22418,7 +22418,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.215",
         "cr": "2",
         "hp": 33,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "4ae49693-1ed6-4c64-905d-1eabcec77467",
@@ -22444,7 +22444,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.215",
         "cr": "3",
         "hp": 44,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "d6a233bc-e9d1-4920-bef1-b641b88ff543",
@@ -22470,7 +22470,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.216",
         "cr": "8",
         "hp": 136,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "63fcc353-edab-40a7-af05-4a0dfd454d0e",
@@ -22508,7 +22508,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.217",
         "cr": "18",
         "hp": 150,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "c8426e66-f9a3-432d-ba7f-55f7c1e6e9b9",
@@ -22571,7 +22571,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.219",
         "cr": "1/2",
         "hp": 18,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "68f15fe3-5681-4357-9ab3-6c3aa03ee38b",
@@ -22597,7 +22597,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.220",
         "cr": "15",
         "hp": 112,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "93c348d0-c429-485a-8a3a-c377b93242dd",
@@ -22620,7 +22620,7 @@ export const Monsters: Creature[] = [
                 "targets": 2,
                 "type": "heal",
                 "amount": 3,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             },
             {
                 "id": "ecc14eec-f1db-44fc-a9dd-994450321885",
@@ -22646,7 +22646,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.221",
         "cr": "3",
         "hp": 39,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "97f47af8-e1c7-436b-a658-bc91dd17cbda",
@@ -22700,7 +22700,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.225",
         "cr": "5",
         "hp": 76,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "7f8e2bee-fa92-473e-b9a6-27509bc3cb37",
@@ -22739,7 +22739,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.247",
         "cr": "11",
         "hp": 130,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "df79ba25-1326-4e3f-b2a7-8dae562cc1cf",
@@ -22776,7 +22776,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.116",
         "cr": "10",
         "hp": 165,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "e14c41ca-781b-4589-b16f-cd2b8a42a9f3",
@@ -22802,7 +22802,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.227",
         "cr": "1/4",
         "hp": 17,
-        "AC": 11,
+        "ac": 11,
         "actions": [
             {
                 "id": "5b10573b-6d3b-4608-819f-d22d16d90240",
@@ -22835,7 +22835,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.227",
         "cr": "10",
         "hp": 136,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "8751f6f5-fbaf-43ee-ae1d-b05e6963e0a8",
@@ -22861,7 +22861,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.228",
         "cr": "16",
         "hp": 168,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "d9f72bc0-7574-4630-8161-e1e32c36ae60",
@@ -22912,7 +22912,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.229",
         "cr": "5",
         "hp": 71,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "8cee8597-429f-43ae-915b-2e9de2eaab86",
@@ -22964,7 +22964,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.230",
         "cr": "13",
         "hp": 153,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "3beda408-af25-4f08-a711-d400e4234f66",
@@ -23010,7 +23010,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.232",
         "cr": "16",
         "hp": 207,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "aa24fa7e-338b-45ff-933b-1db9f4113de4",
@@ -23050,7 +23050,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.96",
         "cr": "4",
         "hp": 76,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "91c5de4d-bc31-4484-8ae6-94c018b4fe88",
@@ -23076,7 +23076,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.72",
         "cr": "1/2",
         "hp": 15,
-        "AC": 10,
+        "ac": 10,
         "actions": [
             {
                 "id": "4e2ffdcf-0acb-48a6-88e1-63e63aac1254",
@@ -23102,7 +23102,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.233",
         "cr": "1",
         "hp": 19,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "075c9229-51c3-4968-b476-f0649eb27847",
@@ -23128,7 +23128,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.234",
         "cr": "10",
         "hp": 161,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "62a96b87-14f3-45e4-a17e-25df94d60e31",
@@ -23166,7 +23166,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.235",
         "cr": "16",
         "hp": 230,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "1a582316-4cdf-4dc3-b604-a8e6c61c77d2",
@@ -23204,7 +23204,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.116",
         "cr": "10",
         "hp": 165,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "99f9ab8a-ba41-48d3-977c-05301c548b31",
@@ -23244,7 +23244,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.83",
         "cr": "5",
         "hp": 76,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "67e05dcc-192c-4dd0-bfa3-8fbffff177de",
@@ -23270,7 +23270,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.237",
         "cr": "1/2",
         "hp": 22,
-        "AC": 8,
+        "ac": 8,
         "actions": [
             {
                 "id": "2aba95f6-1ceb-458d-864a-24ba9c201afe",
@@ -23297,7 +23297,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.238",
         "cr": "3",
         "hp": 66,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "8920ddcf-9e76-4d43-9a73-74ca018cd610",
@@ -23335,7 +23335,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.239",
         "cr": "8",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "492fcac1-9d53-4f91-88ae-62b19be5a53d",
@@ -23373,7 +23373,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.239",
         "cr": "3",
         "hp": 45,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "9105812a-4984-4a0c-8962-db26bdcb4904",
@@ -23411,7 +23411,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.240",
         "cr": "5",
         "hp": 95,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "33778c18-1ca8-42d4-b372-62e92b6e8fdb",
@@ -23449,7 +23449,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.253",
         "cr": "1",
         "hp": 27,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "4ce8f63a-5947-4344-af1c-db108c5a0320",
@@ -23475,7 +23475,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.242",
         "cr": "16",
         "hp": 150,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "d0771b2d-e70e-4f9e-9498-c2f3f612ad76",
@@ -23501,7 +23501,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.242",
         "cr": "5",
         "hp": 85,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "999b51ca-0eda-48d2-95b4-adeea893832c",
@@ -23551,7 +23551,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.244",
         "cr": "1/4",
         "hp": 22,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "eea1f394-2a55-4cc2-a443-ea08862614b4",
@@ -23601,7 +23601,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.244",
         "cr": "2",
         "hp": 33,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "f3893d8e-918e-4e93-aaac-64a93fa04da2",
@@ -23639,7 +23639,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.265",
         "cr": "5",
         "hp": 49,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "787cd7df-4ee8-44a2-8f08-9ca47e11d08c",
@@ -23665,7 +23665,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.245",
         "cr": "3",
         "hp": 68,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "4a3fcb83-38ba-45a4-a3e4-8841edc0fff8",
@@ -23692,7 +23692,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.249",
         "cr": "9",
         "hp": 127,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "737130be-73c4-4547-aa24-00751adbe791",
@@ -23742,7 +23742,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.250",
         "cr": "3",
         "hp": 30,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "113b6241-809f-4b43-bb75-d53ac25286b2",
@@ -23768,7 +23768,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.251",
         "cr": "1",
         "hp": 18,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "1ca7c29f-1e2d-4243-9564-169c35b5b145",
@@ -23794,7 +23794,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.252",
         "cr": "1/4",
         "hp": 13,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "396942c6-fe0b-4be3-ad97-d879a0e79bef",
@@ -23832,7 +23832,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.253",
         "cr": "2",
         "hp": 33,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "c52a00fd-180d-4329-8a28-0617f1a0fbf2",
@@ -23883,7 +23883,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.96",
         "cr": "1/4",
         "hp": 10,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "7dac9aa5-b820-4d79-951a-12b2ee2da236",
@@ -23921,7 +23921,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.248",
         "cr": "7",
         "hp": 94,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "f5d8877f-0f0f-448b-a31c-39800d0af0fa",
@@ -23973,7 +23973,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.254",
         "cr": "9",
         "hp": 117,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "b90f451f-94c1-44b9-b075-f250257b2bba",
@@ -23996,7 +23996,7 @@ export const Monsters: Creature[] = [
                 "targets": 1,
                 "type": "heal",
                 "amount": 12,
-                "target": "ally with the least HP"
+                "target": "ally with least HP"
             }
         ],
         "count": 1,
@@ -24010,7 +24010,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.255",
         "cr": "4",
         "hp": 67,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "adf03997-53ce-417f-8050-8413724c200f",
@@ -24036,7 +24036,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.255",
         "cr": "7",
         "hp": 78,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "c4536a31-362c-4761-8a16-067f8535c727",
@@ -24088,7 +24088,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.256",
         "cr": "6",
         "hp": 91,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "0512e495-b55e-4caf-9540-b0822c12d476",
@@ -24127,7 +24127,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.257",
         "cr": "12",
         "hp": 229,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "669c7ea8-5e72-40ce-ad3f-790aef0efd5c",
@@ -24176,7 +24176,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.258",
         "cr": "13",
         "hp": 157,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "6374b7ea-40d3-47c2-b253-2e650c508528",
@@ -24226,7 +24226,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.123",
         "cr": "7",
         "hp": 127,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "aa4c8d04-0318-44b9-a34d-0c54a8a87f09",
@@ -24264,7 +24264,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.41",
         "cr": "6",
         "hp": 68,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "6da2b026-0ec1-4d2d-a9ca-dda34e667cdd",
@@ -24304,7 +24304,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.117",
         "cr": "10",
         "hp": 165,
-        "AC": 19,
+        "ac": 19,
         "actions": [
             {
                 "id": "83b636cd-001a-4e3c-9ac7-561794369f92",
@@ -24330,7 +24330,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.266",
         "cr": "5",
         "hp": 75,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "181aa130-ca1a-4270-a9af-004398db9c32",
@@ -24356,7 +24356,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.224",
         "cr": "1/4",
         "hp": 10,
-        "AC": 15,
+        "ac": 15,
         "actions": [
             {
                 "id": "348dd703-d946-453c-90a0-45a775582967",
@@ -24382,7 +24382,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.267",
         "cr": "1/8",
         "hp": 7,
-        "AC": 13,
+        "ac": 13,
         "actions": [
             {
                 "id": "e3d4a33b-6939-4e1d-869a-f72450bde04a",
@@ -24408,7 +24408,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.267",
         "cr": "1",
         "hp": 22,
-        "AC": 12,
+        "ac": 12,
         "actions": [
             {
                 "id": "fd52f714-b497-45d1-9122-e8d787195c82",
@@ -24434,7 +24434,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.268",
         "cr": "11",
         "hp": 147,
-        "AC": 17,
+        "ac": 17,
         "actions": [
             {
                 "id": "a1ed16a1-1822-48cc-ae13-52af5dd02d09",
@@ -24483,7 +24483,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.270",
         "cr": "24",
         "hp": 333,
-        "AC": 20,
+        "ac": 20,
         "actions": [
             {
                 "id": "5132278b-1adc-44ba-936e-3cbe04c37afa",
@@ -24521,7 +24521,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.271",
         "cr": "4",
         "hp": 51,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "d41690e6-698e-499d-a2c1-1c10476ef708",
@@ -24547,7 +24547,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.168",
         "cr": "1/8",
         "hp": 9,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "c8b4aeff-b978-44b9-87cf-57ed311c7269",
@@ -24573,7 +24573,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.272",
         "cr": "12",
         "hp": 189,
-        "AC": 16,
+        "ac": 16,
         "actions": [
             {
                 "id": "6cb0090a-895b-4471-8d94-9edab9404d4c",
@@ -24611,7 +24611,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.273",
         "cr": "2",
         "hp": 45,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "bf9134a0-fd6c-4db9-b5b2-e207310ddc31",
@@ -24649,7 +24649,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.274",
         "cr": "4",
         "hp": 71,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "6307ebc7-f277-4beb-b648-fecb5adeee28",
@@ -24699,7 +24699,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.275",
         "cr": "4",
         "hp": 71,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "491b05a2-4151-4c0d-a898-761319e954ce",
@@ -24762,7 +24762,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.276",
         "cr": "5",
         "hp": 88,
-        "AC": 14,
+        "ac": 14,
         "actions": [
             {
                 "id": "91ef9771-6cfe-4c36-b1df-cf56ab875dd6",
@@ -24800,7 +24800,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.278",
         "cr": "22",
         "hp": 307,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "5fd9dce2-b288-4fcf-bb62-5ff7ffc7d93c",
@@ -24852,7 +24852,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.280",
         "cr": "26",
         "hp": 420,
-        "AC": 21,
+        "ac": 21,
         "actions": [
             {
                 "id": "5ba6f9ef-6f7b-4df9-8da6-c1f5aac3387a",
@@ -24902,7 +24902,7 @@ export const Monsters: Creature[] = [
         "src": "MPMM p.281",
         "cr": "23",
         "hp": 304,
-        "AC": 18,
+        "ac": 18,
         "actions": [
             {
                 "id": "eaac23b4-8326-470d-8861-29118ad890d2",

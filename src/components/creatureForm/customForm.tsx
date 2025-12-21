@@ -96,7 +96,7 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
             </section>
             <section>
                 <h3>Armor Class</h3>
-                <DecimalInput min={0} value={value.AC} onChange={ac => update(v => { v.AC = ac || 0 })} />
+                <DecimalInput min={0} value={value.ac} onChange={ac => update(v => { v.ac = ac || 0 })} />
             </section>
             <section className="tooltipContainer">
                 <h3>Average Save Bonus</h3>

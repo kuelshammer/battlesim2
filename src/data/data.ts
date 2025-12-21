@@ -15,7 +15,7 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
     const INT = scale(level, { 1: 4, 4: 5 })
     const CON = scale(level, { 1: 2, 8: 3, 12: 4, 16: 5 })
     const PB = pb(level)
-    const AC = scale(level, { 1: 17, 3: 18, 5: 19, 8: 20, 11: 21, 16: 22 })
+    const ac = scale(level, { 1: 17, 3: 18, 5: 19, 8: 20, 11: 21, 16: 22 })
     const toHit = INT + PB
     const DC = 8 + PB + INT
 
@@ -36,7 +36,7 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
     const result: Creature = {
         id: uuid(),
         name: name('Artificer', level),
-        AC: AC,
+        ac: ac,
         saveBonus: scale(level, { 1: PB, 20: PB + 6 }),
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -88,7 +88,7 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
                 tags: ['Buff', 'Support'],
                 condition: 'is available',
                 targets: 100,
-                target: 'ally with the most HP',
+                target: 'ally with most HP',
                 buff: {
                     duration: 'entire encounter',
                     toHit: scale(level, { 1: 1, 12: 2 }),
@@ -106,7 +106,7 @@ function artificer(level: number, options: z.infer<typeof ClassOptions.artificer
                 tags: ['TempHP', 'Support'],
                 condition: 'default',
                 targets: 2,
-                target: 'ally with the least HP',
+                target: 'ally with least HP',
                 amount: `1d8+${INT}`,
                 tempHP: true,
             }],
@@ -142,7 +142,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
     const result: Creature = {
         id: uuid(),
         name: name('Barbarian', level),
-        AC: 10 + DEX + CON,
+        ac: 10 + DEX + CON,
         saveBonus: PB,
         hp: hp(level, 12, CON),
         hitDice: `${level}d12`,
@@ -296,7 +296,7 @@ function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creatu
     const result: Creature = {
         id: uuid(),
         name: name('Bard', level),
-        AC: 13 + DEX,
+        ac: 13 + DEX,
         saveBonus: PB,
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -310,7 +310,7 @@ function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creatu
                 {
                     id: uuid(),
                     name: 'Vicious Mockery',
-                    actionSlot: ACTION,
+                    actionSlot: acTION,
                     type: 'atk',
                     targets: 1,
                     condition: 'default',
@@ -353,7 +353,7 @@ function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creatu
                     condition: 'default', // Managed by class resource check
                     freq: 'at will', // Can use at will, but consumes a resource
                     cost: [{ type: 'Discrete', resourceType: 'ClassResource', resourceVal: 'Bardic Inspiration', amount: 1 }],
-                    target: 'ally with the highest DPR',
+                    target: 'ally with highest DPR',
                     buff: {
                         duration: 'until next attack made',
                         toHit: BARDIC_INSPI_DICE,
@@ -362,12 +362,12 @@ function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creatu
                 {
                     id: uuid(),
                     name: (level <= 9) ? 'Cure Wounds' : 'Mass Cure Wounds',
-                    actionSlot: ACTION,
+                    actionSlot: acTION,
                     type: 'heal',
                     targets: (level <= 9) ? 1 : 6,
                     freq: { reset: 'lr', uses: scale(level, { 1: 1, 3: 2, 5: 3, 7: 4, 9: 2, 11: 3, 13: 4, 15: 5, 17: 6 }) },
                     condition: 'ally at 0 HP',
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     amount: `${Math.ceil(level / 3)}d8 + ${CHA}`,
                 }
             ],
@@ -395,7 +395,7 @@ function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Cr
     return {
         id: uuid(),
         name: name('Cleric', level),
-        AC: scale(level, { 1: 17, 3: 18, 5: 19, 8: 20 }),
+        ac: scale(level, { 1: 17, 3: 18, 5: 19, 8: 20 }),
         saveBonus: PB,
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -425,7 +425,7 @@ function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Cr
                         type: 'template',
                         // freq and cost are handled by the template itself (Bless is a spell)
                         condition: 'not used yet',
-                        templateOptions: { templateName: 'Bless', target: 'ally with the highest DPR' },
+                        templateOptions: { templateName: 'Bless', target: 'ally with highest DPR' },
                     },
                     5: {
                         id: uuid(),
@@ -450,7 +450,7 @@ function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Cr
                     targets: 1,
                     freq: { reset: 'lr', uses: scale(level, { 1: 1, 3: 2, 5: 3, 7: 4, 9: 5, 11: 1, 13: 2, 15: 3 }) },
                     condition: 'ally at 0 HP',
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     amount: scale(level, { 1: `${Math.ceil(level / 3)}d8 + ${WIS}`, 11: 70 }),
                 },
             ],
@@ -477,7 +477,7 @@ function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Cr
                     targets: 6,
                     freq: { reset: 'lr', uses: scale(level, { 1: 1, 5: 1, 9: 2, 13: 3, 17: 4 }) },
                     condition: 'ally under half HP',
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     amount: scale(level, { 1: `1d4 + ${WIS}`, 9: `3d8 + ${WIS}`, 17: 70 }),
                 },
             ],
@@ -502,7 +502,7 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
         return {
             id: uuid(),
             name: name('Druid', level),
-            AC: 14 + DEX,
+            ac: 14 + DEX,
             saveBonus: PB,
             hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -533,7 +533,7 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
                     // Cure Wounds is a spell, its freq and cost are handled by spell slots
                     cost: [{ type: 'Discrete', resourceType: 'SpellSlot', resourceVal: 'level_1', amount: 1 }],
                     condition: 'ally at 0 HP',
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     amount: `1d8 + ${WIS}`,
                 },
             ],
@@ -569,7 +569,7 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
     return {
         id: uuid(),
         name: name('Druid', level),
-        AC: wildshape.AC,
+        ac: wildshape.ac,
         saveBonus: PB,
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -588,7 +588,7 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
                         type: 'template',
                         condition: 'ally at 0 HP',
                         // Heal is a spell, its freq and cost are handled by the template itself
-                        templateOptions: { templateName: 'Heal', target: 'ally with the least HP' },
+                        templateOptions: { templateName: 'Heal', target: 'ally with least HP' },
                     },
                     {
                         id: uuid(),
@@ -618,7 +618,7 @@ function fighter(level: number, options: z.infer<typeof ClassOptions.fighter>): 
     const CON = 2
     const STR = scale(level, { 1: 4, 4: 5, 6: 5, 8: 5 })
     const PB = pb(level)
-    const AC = scale(level, { 1: 16, 3: 17, 6: 18 })
+    const ac = scale(level, { 1: 16, 3: 17, 6: 18 })
     const toHit = `${PB}[PB] + ${STR}[STR]`
         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
         + (options.gwm ? ` - 5[GWM]` : '')
@@ -665,7 +665,7 @@ function fighter(level: number, options: z.infer<typeof ClassOptions.fighter>): 
     return {
         id: uuid(),
         name: name('Fighter', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         conSaveBonus: PB + CON, // Fighters can be proficient in CON saves
         hp: hp(level, 10, CON),
@@ -766,7 +766,7 @@ function monk(level: number, options: z.infer<typeof ClassOptions.monk>): Creatu
     const PB = pb(level)
     const toHit = PB + DEX
     const DC = 8 + PB + WIS
-    const AC = 10 + DEX + WIS
+    const ac = 10 + DEX + WIS
 
     const martialArtsDie = scale(level, { 1: '1d4', 5: '1d6', 11: '1d8', 17: '1d10' })
 
@@ -781,7 +781,7 @@ function monk(level: number, options: z.infer<typeof ClassOptions.monk>): Creatu
     return {
         id: uuid(),
         name: name('Monk', level),
-        AC: AC,
+        ac: ac,
         saveBonus: scale(level, { 1: PB, 14: PB + 3 }),
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -891,7 +891,7 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
     const STR = scale(level, { 1: 4, 4: 5 })
     const CHA = scale(level, { 1: 2, 8: 3, 12: 5 })
     const PB = pb(level)
-    const AC = scale(level, { 1: 17, 3: 18, 5: 19, 8: 20, 11: 21, 16: 22 })
+    const ac = scale(level, { 1: 17, 3: 18, 5: 19, 8: 20, 11: 21, 16: 22 })
     const toHit = `${PB}[PB] + ${STR}[STR]`
         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
         + (options.gwm ? ` - 5[GWM]` : '')
@@ -909,7 +909,7 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
     return {
         id: uuid(),
         name: name('Paladin', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         hp: hp(level, 10, CON),
         hitDice: `${level}d10`,
@@ -965,7 +965,7 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
                     freq: 'at will',
                     condition: 'any ally injured',
                     targets: 1,
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     amount: 5, // Standard dose
                     cost: [
                         {
@@ -986,7 +986,7 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
                     freq: 'at will',
                     condition: 'default',
                     targets: 2,
-                    target: 'ally with the least HP',
+                    target: 'ally with least HP',
                     buff: {
                         displayName: 'Aura of Protection',
                         duration: '1 round',
@@ -1003,7 +1003,7 @@ function ranger(level: number, options: z.infer<typeof ClassOptions.ranger>): Cr
     const DEX = scale(level, { 1: 4, 4: 5, 8: 5 })
     const WIS = scale(level, { 1: 2, 8: 3, 12: 4, 16: 5 })
     const PB = pb(level)
-    const AC = DEX + scale(level, { 1: 12, 5: 13, 11: 14 }) // Studded Leather progression
+    const ac = DEX + scale(level, { 1: 12, 5: 13, 11: 14 }) // Studded Leather progression
     const toHit = `${PB}[PB] + ${DEX}[DEX]`
         + (level > 1 ? ' + 2[ARCHERY]' : '')
         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
@@ -1035,7 +1035,7 @@ function ranger(level: number, options: z.infer<typeof ClassOptions.ranger>): Cr
     return {
         id: uuid(),
         name: name('Ranger', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         dexSaveBonus: PB + DEX, // Dexterity save proficiency
         hp: hp(level, 10, CON),
@@ -1206,7 +1206,7 @@ function rogue(level: number, options: z.infer<typeof ClassOptions.rogue>): Crea
     const CON = 2
     const DEX = scale(level, { 1: 4, 4: 5 })
     const PB = pb(level)
-    const AC = DEX + scale(level, { 1: 12, 5: 13, 11: 14 })
+    const ac = DEX + scale(level, { 1: 12, 5: 13, 11: 14 })
     const sneakAttack = `${Math.ceil(level / 2)}d6`
     const toHit = `${PB}[PB] + ${DEX}[DEX]`
         + (options.weaponBonus ? ` + ${options.weaponBonus}[WEAPON]` : '')
@@ -1223,7 +1223,7 @@ function rogue(level: number, options: z.infer<typeof ClassOptions.rogue>): Crea
     return {
         id: uuid(),
         name: name('Rogue', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -1342,7 +1342,7 @@ function sorcerer(level: number, options: z.infer<typeof ClassOptions.sorcerer>)
     const DEX = 2
     const CHA = scale(level, { 1: 4, 4: 5 })
     const PB = pb(level)
-    const AC = 13 + DEX
+    const ac = 13 + DEX
     const toHit = PB + CHA
     const DC = 8 + PB + CHA
 
@@ -1359,7 +1359,7 @@ function sorcerer(level: number, options: z.infer<typeof ClassOptions.sorcerer>)
     return {
         id: uuid(),
         name: name('Sorcerer', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         hp: hp(level, 6, CON),
         hitDice: `${level}d6`,
@@ -1435,7 +1435,7 @@ function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): 
     const DEX = 2
     const CHA = scale(level, { 1: 4, 4: 5 })
     const PB = pb(level)
-    const AC = 13 + DEX
+    const ac = 13 + DEX
     const DC = 8 + PB + CHA
     const toHit = PB + CHA
 
@@ -1461,7 +1461,7 @@ function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): 
     return {
         id: uuid(),
         name: name('Warlock', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         hp: hp(level, 8, CON),
         hitDice: `${level}d8`,
@@ -1514,7 +1514,7 @@ function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Cr
     const DEX = 2
     const INT = scale(level, { 1: 4, 4: 5, 8: 5 })
     const PB = pb(level)
-    const AC = 13 + DEX // Base with Mage Armor
+    const ac = 13 + DEX // Base with Mage Armor
     const toHit = PB + INT
     const DC = 8 + PB + INT
 
@@ -1537,7 +1537,7 @@ function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Cr
     return {
         id: uuid(),
         name: name('Wizard', level),
-        AC: AC,
+        ac: ac,
         saveBonus: PB,
         intSaveBonus: PB + INT, // Intelligence save proficiency
         wisSaveBonus: PB + scale(level, { 1: 1, 8: 2, 12: 3 }), // Wisdom save proficiency
@@ -1825,7 +1825,7 @@ export const PlayerTemplates = {
 
 /*  UTILS   */
 
-const ACTION = 0
+const acTION = 0
 const BONUS_ACTION = 1
 const REACTION = 4
 const PASSIVE = 5
