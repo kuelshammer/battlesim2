@@ -233,8 +233,6 @@ export const CreatureSchema = z.object({
     // New fields for Phase 5 resource management
     spellSlots: z.record(z.string(), z.coerce.number()).optional(),
     classResources: z.record(z.string(), z.coerce.number()).optional(),
-import { v4 as uuid } from 'uuid'
-// ...
     hitDice: DiceFormulaSchema.optional(), // New field for hit dice for short rest healing
     conModifier: z.coerce.number().optional(), // New field for constitution modifier to apply to hit dice rolls
 }).passthrough()
