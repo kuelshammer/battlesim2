@@ -12,7 +12,7 @@
       "name": "Lv10 Fighter",
       "count": 1,
       "hp": 75,
-      "AC": 18,
+      "ac": 18,
       "saveBonus": 4,
       "conSaveBonus": 6,
       "actions": [
@@ -151,7 +151,7 @@
       "name": "Lv10 Fighter",
       "count": 1,
       "hp": 75,
-      "AC": 18,
+      "ac": 18,
       "saveBonus": 4,
       "conSaveBonus": 6,
       "actions": [
@@ -290,7 +290,7 @@
           "name": "Hobgoblin Captain",
           "count": 1,
           "hp": 39,
-          "AC": 17,
+          "ac": 17,
           "saveBonus": 1.5,
           "actions": [
             {
