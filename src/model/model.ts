@@ -106,7 +106,7 @@ const AtkActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('atk'),
     dpr: DiceFormulaSchema.optional().default(0),
     toHit: DiceFormulaSchema.optional().default(0),
-    target: EnemyTargetSchema.optional().default('enemy with least HP'),
+    target: EnemyTargetSchema.optional().default('enemy with most HP'),
     useSaves: z.boolean().optional(), // If false or undefined, action.targets becomes the number of hits, and the action can now target the same creature multiple times
     halfOnSave: z.boolean().optional(), // Only useful if useSaves == true
 
@@ -126,7 +126,7 @@ const HealActionSchema = ActionSchemaBase.merge(z.object({
 
 const BuffActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('buff'),
-    target: AllyTargetSchema.optional().default('ally with least HP'),
+    target: AllyTargetSchema.optional().default('self'),
 
     buff: BuffSchema,
 })).passthrough()
