@@ -32,15 +32,15 @@ pub enum EnemyTarget {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AllyTarget {
-    #[serde(rename = "ally with the least HP")]
+    #[serde(rename = "ally with least HP")]
     AllyWithLeastHP,
-    #[serde(rename = "ally with the most HP")]
+    #[serde(rename = "ally with most HP")]
     AllyWithMostHP,
-    #[serde(rename = "ally with the highest DPR")]
+    #[serde(rename = "ally with highest DPR")]
     AllyWithHighestDPR,
-    #[serde(rename = "ally with the lowest AC")]
+    #[serde(rename = "ally with lowest AC")]
     AllyWithLowestAC,
-    #[serde(rename = "ally with the highest AC")]
+    #[serde(rename = "ally with highest AC")]
     AllyWithHighestAC,
     #[serde(rename = "self")]
     Self_,
