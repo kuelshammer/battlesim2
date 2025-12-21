@@ -404,7 +404,6 @@ pub struct Creature {
     pub name: String,
     pub count: f64, // TS uses number, but usually integer.
     pub hp: u32,
-    #[serde(rename = "AC")]
     pub ac: u32,
     #[serde(rename = "speed_fly")]
     pub speed_fly: Option<f64>,
@@ -616,9 +615,9 @@ fn register_hit_dice_term(ledger: &mut crate::resources::ResourceLedger, term: &
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CreatureState {
-    #[serde(rename = "currentHP")]
+    #[serde(rename = "currentHp")]
     pub current_hp: u32,
-    #[serde(rename = "tempHP")]
+    #[serde(rename = "tempHp")]
     pub temp_hp: Option<u32>,
     pub buffs: HashMap<String, Buff>,
 
@@ -638,7 +637,7 @@ pub struct CreatureState {
     #[serde(default)]
     pub known_ac: HashMap<String, AcKnowledge>,
     #[serde(
-        rename = "arcaneWardHP",
+        rename = "arcaneWardHp",
         default,
         skip_serializing_if = "Option::is_none"
     )]
