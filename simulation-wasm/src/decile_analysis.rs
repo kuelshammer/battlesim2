@@ -242,7 +242,7 @@ fn generate_analysis_summary(grade: &SafetyGrade, tier: &IntensityTier, deciles:
         IntensityTier::Tier5 => "Players will end with empty tanks.",
     };
 
-    format!("Grade {}: {} | Tier {}: {} | Typical Survivors: {}/{}",
+    format!("Grade {}: {} | {}: {} | Typical Survivors: {}/{}",
         grade, safety_desc, tier, intensity_desc, typical.median_survivors, typical.party_size)
 }
 
