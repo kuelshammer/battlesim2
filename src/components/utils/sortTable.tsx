@@ -24,7 +24,7 @@ const SortTable = <T,>({ value, list, onChange, comparators, children }: PropTyp
         }
     }
 
-    const sortedList = list.sort((a,b) => {
+    const sortedList = [...list].sort((a,b) => {
         const comparator = comparators[criteria]
         const comparisonResult = comparator(a, b)
         return direction === 'asc' ? comparisonResult : -comparisonResult

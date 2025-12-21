@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { AllyTargetSchema, BuffDurationSchema, ChallengeRatingSchema, ClassesSchema, ActionConditionSchema, CreatureTypeSchema, EnemyTargetSchema, CreatureConditionSchema, EnemyTargetList, AllyTargetList, TriggerConditionSchema, ResourceTypeSchema, ResetTypeSchema, ActionTagSchema } from './enums'
+import { v4 as uuid } from 'uuid'
+import { AllyTargetSchema, ...
 import { ClassOptionsSchema } from './classOptions'
 import { validateDiceFormula } from './dice'
 import type { ActionTemplateName } from '../data/actions'
@@ -66,7 +67,7 @@ export type ActionRequirement = z.infer<typeof ActionRequirementSchema>
 
 const BuffSchema = z.object({
     displayName: z.string().optional(),
-    duration: BuffDurationSchema,
+    duration: BuffDurationSchema.optional().default('entire encounter'),
 
     ac: DiceFormulaSchema.optional(),
     toHit: DiceFormulaSchema.optional(),
@@ -81,12 +82,12 @@ const BuffSchema = z.object({
     // Odds that the buff was applied. All of the effects are multiplied by this value. Default 1.
     magnitude: z.number().optional(),
     concentration: z.boolean().optional(),
-})
+}).passthrough()
 
 // Not to be used directly. See ActionSchema
 const ActionSchemaBase = z.object({
-    id: z.string(),
-    name: z.string(),
+    id: z.string().optional().default(() => uuid()),
+    name: z.string().optional().default('Action'),
 
     // Legacy field - kept for backward compatibility during transition
     actionSlot: z.number().optional(), // Will be deprecated in favor of cost/requirements/tags
@@ -96,47 +97,47 @@ const ActionSchemaBase = z.object({
     requirements: z.array(ActionRequirementSchema).default([]),
     tags: z.array(ActionTagSchema).default([]),
 
-    freq: FrequencySchema,
-    condition: ActionConditionSchema,
+    freq: FrequencySchema.optional().default('at will'),
+    condition: ActionConditionSchema.optional().default('default'),
     targets: z.number().default(1),
-})
+}).passthrough()
 
 const AtkActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('atk'),
-    dpr: DiceFormulaSchema,
-    toHit: DiceFormulaSchema,
-    target: EnemyTargetSchema,
+    dpr: DiceFormulaSchema.optional().default(0),
+    toHit: DiceFormulaSchema.optional().default(0),
+    target: EnemyTargetSchema.optional().default('enemy with least HP'),
     useSaves: z.boolean().optional(), // If false or undefined, action.targets becomes the number of hits, and the action can now target the same creature multiple times
     halfOnSave: z.boolean().optional(), // Only useful if useSaves == true
 
     // TODO: add other types of rider effects, like extra damage if the target fails a save, for example
     riderEffect: z.object({
-        dc: z.number(), // TODO: make it so if the dc is undefined, the rider effect applies without a save
+        dc: z.number().optional(), // TODO: make it so if the dc is undefined, the rider effect applies without a save
         buff: BuffSchema,
     }).optional(),
-}))
+})).passthrough()
 
 const HealActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('heal'),
-    amount: DiceFormulaSchema,
+    amount: DiceFormulaSchema.optional().default(0),
     tempHP: z.boolean().optional(),
-    target: AllyTargetSchema,
-}))
+    target: AllyTargetSchema.optional().default('ally with least HP'),
+})).passthrough()
 
 const BuffActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('buff'),
-    target: AllyTargetSchema,
+    target: AllyTargetSchema.optional().default('ally with least HP'),
 
     buff: BuffSchema,
-}))
+})).passthrough()
 
 const DebuffActionSchema = ActionSchemaBase.merge(z.object({
     type: z.literal('debuff'),
-    target: EnemyTargetSchema,
-    saveDC: z.number(),
+    target: EnemyTargetSchema.optional().default('enemy with least HP'),
+    saveDC: z.number().optional().default(10),
 
     buff: BuffSchema,
-}))
+})).passthrough()
 
 
 
@@ -198,23 +199,23 @@ export const CreatureSchema = z.object({
         type: ClassesSchema,
         level: z.number(),
         options: ClassOptionsSchema,
-    }).optional(),
+    }).optional().passthrough(),
 
     // Properties of the creature, which are used by the simulator
     name: z.string(),
-    count: z.number(),
-    hp: z.number().int(),
-    ac: z.number(),
-    speed_fly: z.number().optional(),
+    count: z.coerce.number(),
+    hp: z.coerce.number(), // Removed .int() constraint
+    ac: z.coerce.number(),
+    speed_fly: z.coerce.number().optional(),
 
     // Save bonuses - average is required, individual are optional overrides
-    saveBonus: z.number().default(0), // Average save bonus (default to 0 if missing)
-    strSaveBonus: z.number().optional(),
-    dexSaveBonus: z.number().optional(),
-    conSaveBonus: z.number().optional(),
-    intSaveBonus: z.number().optional(),
-    wisSaveBonus: z.number().optional(),
-    chaSaveBonus: z.number().optional(),
+    saveBonus: z.coerce.number().default(0), // Average save bonus (default to 0 if missing)
+    strSaveBonus: z.coerce.number().optional(),
+    dexSaveBonus: z.coerce.number().optional(),
+    conSaveBonus: z.coerce.number().optional(),
+    intSaveBonus: z.coerce.number().optional(),
+    wisSaveBonus: z.coerce.number().optional(),
+    chaSaveBonus: z.coerce.number().optional(),
 
     // Advantage on saves
     conSaveAdvantage: z.boolean().optional(), // For Resilient (Con), War Caster, etc.
@@ -228,13 +229,15 @@ export const CreatureSchema = z.object({
         condition: TriggerConditionSchema,
         action: ActionSchema,
         cost: z.number().optional(), // ActionSlot
-    })).optional(),
+    }).passthrough()).optional(),
     // New fields for Phase 5 resource management
-    spellSlots: z.record(z.string(), z.number()).optional(),
-    classResources: z.record(z.string(), z.number()).optional(),
+    spellSlots: z.record(z.string(), z.coerce.number()).optional(),
+    classResources: z.record(z.string(), z.coerce.number()).optional(),
+import { v4 as uuid } from 'uuid'
+// ...
     hitDice: DiceFormulaSchema.optional(), // New field for hit dice for short rest healing
-    conModifier: z.number().optional(), // New field for constitution modifier to apply to hit dice rolls
-})
+    conModifier: z.coerce.number().optional(), // New field for constitution modifier to apply to hit dice rolls
+}).passthrough()
 
 const TeamSchema = z.array(CreatureSchema)
 
