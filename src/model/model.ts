@@ -203,9 +203,9 @@ export const CreatureSchema = z.object({
 
     // Properties of the creature, which are used by the simulator
     name: z.string(),
-    count: z.coerce.number(),
-    hp: z.coerce.number(), // Removed .int() constraint
-    ac: z.coerce.number(),
+    count: z.coerce.number().default(1),
+    hp: z.coerce.number().default(0), // Removed .int() constraint
+    ac: z.coerce.number().default(10),
     speed_fly: z.coerce.number().optional(),
 
     // Save bonuses - average is required, individual are optional overrides
