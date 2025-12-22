@@ -51,7 +51,7 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
     const getCostIcon = (action: Action) => {
         const base = getActionBase(action);
         // Check costs
-        const costs = base.cost;
+        const costs = base.cost || [];
         if (costs.some(c => c.resourceType === 'Action')) return <FontAwesomeIcon icon={faBolt} title="Action" className={styles.iconAction} />;
         if (costs.some(c => c.resourceType === 'BonusAction')) return <FontAwesomeIcon icon={faPlus} title="Bonus Action" className={styles.iconBonus} />;
         if (costs.some(c => c.resourceType === 'Reaction')) return <FontAwesomeIcon icon={faHandPaper} title="Reaction" className={styles.iconReaction} />;
@@ -72,6 +72,7 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
             <div className={styles.actionList}>
                 {actions.map((action, index) => {
                     const base = getActionBase(action);
+                    const requirements = base.requirements || [];
                     return (
                         <div key={base.id} className={styles.actionItem}>
                             <div className={styles.priority}>{index + 1}</div>
@@ -81,8 +82,8 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
                             <div className={styles.details}>
                                 <span className={styles.name}>{base.name}</span>
                                 <span className={styles.summary}>
-                                    {base.requirements.length > 0
-                                        ? `${base.requirements.length} condition(s)`
+                                    {requirements.length > 0
+                                        ? `${requirements.length} condition(s)`
                                         : 'Always'}
                                 </span>
                             </div>
