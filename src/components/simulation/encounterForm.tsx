@@ -2,7 +2,7 @@ import { FC, ReactNode, useState } from "react"
 import { Creature, Encounter } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faChevronDown, faChevronUp, faPen, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons"
+import { faChevronDown, faChevronUp, faPen, faPlus, faTrash, faMagicWandSparkles } from "@fortawesome/free-solid-svg-icons"
 import CreatureForm from "./../creatureForm/creatureForm"
 import { clone } from "@/model/utils"
 import Checkbox from "@/utils/checkbox"
@@ -13,13 +13,15 @@ type PropType = {
     encounter: Encounter,
     onUpdate: (newValue: Encounter) => void,
     onDelete?: () => void,
+    onAutoAdjust?: () => void,
+    autoAdjustDisabled?: boolean,
     children?: ReactNode,
     onMoveUp?: () => void,
     onMoveDown?: () => void,
     onEditingChange?: (isEditing: boolean) => void,
 }
 
-const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, children, onMoveUp, onMoveDown, onEditingChange }) => {
+const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAutoAdjust, autoAdjustDisabled, children, onMoveUp, onMoveDown, onEditingChange }) => {
     const [updating, setUpdating] = useState<number | null>(null)
     const [creating, setCreating] = useState(false)
 
@@ -133,10 +135,23 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, chil
                     </div>
                 </div>
 
-                <button className={styles.addCreatureBtn} onClick={() => handleSetCreating(true)}>
-                    <FontAwesomeIcon icon={faPlus} />
-                    Add {(mode === 'player') ? 'Player Character' : 'Enemy'}
-                </button>
+                <div className={styles.formFooter}>
+                    <button className={styles.addCreatureBtn} onClick={() => handleSetCreating(true)}>
+                        <FontAwesomeIcon icon={faPlus} />
+                        Add {(mode === 'player') ? 'Player Character' : 'Enemy'}
+                    </button>
+                    {mode === 'monster' && onAutoAdjust && (
+                        <button 
+                            className={styles.autoAdjustBtn} 
+                            onClick={onAutoAdjust}
+                            disabled={autoAdjustDisabled}
+                            title="Optimize this encounter's difficulty automatically"
+                        >
+                            <FontAwesomeIcon icon={faMagicWandSparkles} />
+                            Auto-Adjust
+                        </button>
+                    )}
+                </div>
             </div>
 
             {(updating === null) ? null : (

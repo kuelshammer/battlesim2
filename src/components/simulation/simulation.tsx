@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
@@ -269,6 +269,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
                                                         onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
                                                         onEditingChange={setIsEditing}
+                                                        onAutoAdjust={() => {
+                                                            setSelectedEncounterIndex(index);
+                                                            worker.autoAdjustEncounter(players, item.monsters);
+                                                        }}
+                                                        autoAdjustDisabled={worker.isRunning}
                                                     />
                                                 ) : (
                                                     <div className={styles.restCard}>
