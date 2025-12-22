@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Timeline-Based Short Rests
+## [x] Track: Timeline-Based Short Rests
 *Link: [./conductor/tracks/timeline_short_rests_20251222/][./conductor/tracks/timeline_short_rests_20251222/]*
 
 ## [x] Track: Efficiency-Based Performance Scoring
