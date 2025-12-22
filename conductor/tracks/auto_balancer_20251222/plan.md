@@ -26,12 +26,12 @@ Goal: Convert adjusted numeric targets back into valid 5e dice notation.
 - [x] Task: Damage Reconstruction Logic (4af3d7c)
     - Back-calculate damage dice (e.g., 15 -> 2d10+4) and handle Multiattack adjustments.
 
-## Phase 4: WASM Bindings & Frontend Models
+## Phase 4: WASM Bindings & Frontend Models [checkpoint: 2bec118]
 Goal: Expose the Auto-Balancer to the web application.
 
-- [~] Task: Create WASM Entry Point
+- [x] Task: Create WASM Entry Point (2bec118)
     - Export `auto_adjust_encounter_wasm` in `lib.rs`.
-- [ ] Task: Update TypeScript Models
+- [x] Task: Update TypeScript Models (2bec118)
     - Define `AdjustmentReport` and updated `Creature` schemas in `src/model/model.ts`.
 
 ## Phase 5: UI Implementation
