@@ -11,7 +11,7 @@ Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Ab
     - Implement mapper in `src/model/import/5etools-mapper.ts`
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Core Data Parsing' (0d1d260)
 
-## Phase 2: Action Conversion
+## Phase 2: Action Conversion [checkpoint: 528efba]
 Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 
 - [x] Task: Implement regex-based parsing for standard attacks (8b865cc)
@@ -20,12 +20,12 @@ Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 - [x] Task: Implement Multiattack mapping (0bd955a)
     - Write tests for multiattack routinely logic
     - Integrate with mapper
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Action Conversion' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Action Conversion' (528efba)
 
 ## Phase 3: UI Integration
 Goal: Provide a way for users to use the import feature in the browser.
 
-- [ ] Task: Create Import Modal component
+- [~] Task: Create Import Modal component
     - Write tests for modal interaction and input handling
     - Implement `src/components/creatureForm/ImportModal.tsx`
 - [ ] Task: Integrate Import button into Creature Form
