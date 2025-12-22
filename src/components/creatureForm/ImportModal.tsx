@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import Modal from "../utils/modal";
 import styles from "./importModal.module.scss";
-import { Monster5eSchema } from "@/model/import/5etools-schema";
+import { Monster5eImportSchema } from "@/model/import/5etools-schema";
 import { mapMonster5eToCreature } from "@/model/import/5etools-mapper";
 import { Creature } from "@/model/model";
 import { cleanJsonInput } from "@/model/import/utils";
@@ -32,9 +32,10 @@ const ImportModal: FC<PropType> = ({ onImport, onCancel }) => {
                 return;
             }
 
-            const validation = Monster5eSchema.safeParse(rawData);
+            const validation = Monster5eImportSchema.safeParse(rawData);
             if (!validation.success) {
-                setError("Monster data format is invalid. Some required fields might be missing.");
+                const issues = validation.error.issues.map(i => `${i.path.join('.')} (${i.message})`).join(', ');
+                setError(`Invalid format: ${issues}`);
                 return;
             }
 

@@ -1,22 +1,25 @@
 import { Creature, Action } from "../model";
-import { Monster5e } from "./5etools-schema";
+import { Monster5eImport } from "./5etools-schema";
 import { v4 as uuid } from 'uuid';
 import { parse5eAttack, parse5eMultiattack } from "./5etools-action-parser";
 
-export function mapMonster5eToCreature(monster: Monster5e): Creature {
+export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
     // Extract base AC: usually the first number in the array
     let ac = 10;
     if (monster.ac && monster.ac.length > 0) {
         const firstAc = monster.ac[0];
         if (typeof firstAc === 'number') {
             ac = firstAc;
-        } else if (typeof firstAc === 'object' && firstAc.ac) {
+        } else if (typeof firstAc === 'object' && firstAc && firstAc.ac) {
             ac = firstAc.ac;
         }
     }
 
     // Extract HP
-    const hp = monster.hp.average || 0;
+    let hp = 0;
+    if (monster.hp && monster.hp.average) {
+        hp = monster.hp.average;
+    }
 
     // Map actions
     const actions: Action[] = [];
@@ -25,21 +28,21 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
     if (monster.action) {
         // First pass: find multiattack
         for (const act of monster.action) {
-            if (act.name === "Multiattack" && act.entries && act.entries.length > 0) {
+            if (act && act.name === "Multiattack" && act.entries && act.entries.length > 0) {
                 multiattackInfo = parse5eMultiattack(act.entries[0]);
             }
         }
 
         // Second pass: map attacks
         for (const act of monster.action) {
-            if (act.name === "Multiattack") continue;
+            if (!act || act.name === "Multiattack") continue;
 
             if (act.entries && act.entries.length > 0 && typeof act.entries[0] === 'string') {
-                const parsedAction = parse5eAttack(act.name, act.entries[0]);
+                const parsedAction = parse5eAttack(act.name || "Unknown", act.entries[0]);
                 if (parsedAction.toHit > 0 || parsedAction.dpr > 0) {
                     // Apply multiattack: if this attack is mentioned in multiattack details,
                     // or if it's the only attack and total > 1
-                    if (multiattackInfo) {
+                    if (multiattackInfo && act.name) {
                         const isMentioned = multiattackInfo.details.toLowerCase().includes(act.name.toLowerCase());
                         if (isMentioned || (monster.action.length === 2 && multiattackInfo.total > 1)) {
                             parsedAction.targets = multiattackInfo.total;
@@ -66,14 +69,14 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
     let creatureType: any = undefined;
     if (typeof monster.type === 'string') {
         creatureType = monster.type;
-    } else if (typeof monster.type === 'object' && monster.type.type) {
+    } else if (typeof monster.type === 'object' && monster.type && monster.type.type) {
         creatureType = monster.type.type;
     }
 
     return {
         id: uuid(),
         mode: "monster",
-        name: monster.name,
+        name: monster.name || "Unknown",
         src: monster.source || monster.src,
         type: creatureType,
         count: 1,
