@@ -1,5 +1,5 @@
 
-import init, { run_simulation_with_callback, run_decile_analysis_wasm } from 'simulation-wasm';
+import init, { run_simulation_with_callback, auto_adjust_encounter_wasm } from 'simulation-wasm';
 const wasmUrl = require('simulation-wasm/simulation_wasm_bg.wasm');
 
 let wasmInitialized = false;
@@ -12,7 +12,7 @@ async function ensureWasmInitialized() {
 }
 
 self.onmessage = async (e: MessageEvent) => {
-    const { type, players, timeline, iterations } = e.data;
+    const { type, players, timeline, monsters, iterations } = e.data;
 
     if (type === 'START_SIMULATION') {
         try {
@@ -47,6 +47,21 @@ self.onmessage = async (e: MessageEvent) => {
             });
         } catch (error) {
             console.error('Worker simulation error:', error);
+            self.postMessage({
+                type: 'SIMULATION_ERROR',
+                error: error instanceof Error ? error.message : String(error)
+            });
+        }
+    } else if (type === 'AUTO_ADJUST_ENCOUNTER') {
+        try {
+            await ensureWasmInitialized();
+            const result = auto_adjust_encounter_wasm(players, monsters);
+            self.postMessage({
+                type: 'AUTO_ADJUST_COMPLETE',
+                result
+            });
+        } catch (error) {
+            console.error('Worker auto-adjust error:', error);
             self.postMessage({
                 type: 'SIMULATION_ERROR',
                 error: error instanceof Error ? error.message : String(error)

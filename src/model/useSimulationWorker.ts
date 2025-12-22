@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { SimulationResult, FullAnalysisOutput, Creature, TimelineEvent } from '@/model/model';
+import { SimulationResult, FullAnalysisOutput, Creature, TimelineEvent, AutoAdjustmentResult } from '@/model/model';
 import { getFinalAction } from "@/data/actions";
 
 export interface SimulationWorkerState {
@@ -11,6 +11,7 @@ export interface SimulationWorkerState {
     analysis: FullAnalysisOutput | null;
     events: any[] | null;
     error: string | null;
+    optimizedResult: AutoAdjustmentResult | null;
 }
 
 export function useSimulationWorker() {
@@ -23,13 +24,14 @@ export function useSimulationWorker() {
         analysis: null,
         events: null,
         error: null,
+        optimizedResult: null,
     });
 
     const workerRef = useRef<Worker | null>(null);
 
     const setupWorkerListener = useCallback((worker: Worker) => {
         worker.onmessage = (e) => {
-            const { type, progress, completed, total, results, analysis, events, error } = e.data;
+            const { type, progress, completed, total, results, analysis, events, error, result } = e.data;
 
             switch (type) {
                 case 'SIMULATION_PROGRESS':
@@ -50,6 +52,15 @@ export function useSimulationWorker() {
                         results,
                         analysis,
                         events,
+                        error: null
+                    }));
+                    break;
+                case 'AUTO_ADJUST_COMPLETE':
+                    setState(prev => ({
+                        ...prev,
+                        isRunning: false,
+                        progress: 100,
+                        optimizedResult: result,
                         error: null
                     }));
                     break;
@@ -99,7 +110,8 @@ export function useSimulationWorker() {
             progress: 0,
             completed: 0,
             total: iterations,
-            error: null
+            error: null,
+            optimizedResult: null
         }));
 
         // Clean data before sending to worker
@@ -129,9 +141,47 @@ export function useSimulationWorker() {
         });
     }, [terminateAndRestart]);
 
+    const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[]) => {
+        // Terminate existing worker if running
+        terminateAndRestart();
+        
+        setState(prev => ({
+            ...prev,
+            isRunning: true,
+            progress: 0,
+            completed: 0,
+            total: 1, // Only one step conceptually
+            error: null,
+            optimizedResult: null
+        }));
+
+        // Clean data
+        const cleanPlayers = players.map(p => ({
+            ...p,
+            actions: p.actions.map(getFinalAction)
+        }));
+
+        const cleanMonsters = monsters.map(m => ({
+            ...m,
+            actions: m.actions.map(getFinalAction)
+        }));
+
+        workerRef.current?.postMessage({
+            type: 'AUTO_ADJUST_ENCOUNTER',
+            players: cleanPlayers,
+            monsters: cleanMonsters
+        });
+    }, [terminateAndRestart]);
+
+    const clearOptimizedResult = useCallback(() => {
+        setState(prev => ({ ...prev, optimizedResult: null }));
+    }, []);
+
     return {
         ...state,
         runSimulation,
+        autoAdjustEncounter,
+        clearOptimizedResult,
         terminateAndRestart
     };
 }

@@ -512,7 +512,13 @@ export const AggregateOutputSchema = z.object({
     totalRuns: z.number(),
     deciles: z.array(DecileStatsSchema),
     globalMedian: DecileStatsSchema.optional().nullable(),
+    battleDurationRounds: z.number(),
 }).passthrough()
+
+export const AutoAdjustmentResultSchema = z.object({
+    monsters: z.array(CreatureSchema),
+    analysis: AggregateOutputSchema,
+})
 
 export const FullAnalysisOutputSchema = z.object({
     overall: AggregateOutputSchema,
@@ -528,5 +534,6 @@ export const FullSimulationOutputSchema = z.object({
 export type CombatantVisualization = z.infer<typeof CombatantVisualizationSchema>
 export type DecileStats = z.infer<typeof DecileStatsSchema>
 export type AggregateOutput = z.infer<typeof AggregateOutputSchema>
+export type AutoAdjustmentResult = z.infer<typeof AutoAdjustmentResultSchema>
 export type FullAnalysisOutput = z.infer<typeof FullAnalysisOutputSchema>
 export type FullSimulationOutput = z.infer<typeof FullSimulationOutputSchema>

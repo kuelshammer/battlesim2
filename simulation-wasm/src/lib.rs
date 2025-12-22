@@ -71,6 +71,35 @@ struct PartialOutput {
     analysis: FullAnalysisOutput,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoAdjustmentResult {
+    pub monsters: Vec<Creature>,
+    pub analysis: crate::decile_analysis::AggregateOutput,
+}
+
+#[wasm_bindgen]
+pub fn auto_adjust_encounter_wasm(players: JsValue, monsters: JsValue) -> Result<JsValue, JsValue> {
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let monsters: Vec<Creature> = serde_wasm_bindgen::from_value(monsters)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse monsters: {}", e)))?;
+
+    let balancer = crate::auto_balancer::AutoBalancer::new();
+    let (optimized_monsters, analysis) = balancer.balance_encounter(players, monsters);
+
+    let result = AutoAdjustmentResult {
+        monsters: optimized_monsters,
+        analysis,
+    };
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+
+    serde::Serialize::serialize(&result, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
+}
+
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)

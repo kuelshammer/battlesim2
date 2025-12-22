@@ -29,7 +29,7 @@ Goal: Convert adjusted numeric targets back into valid 5e dice notation.
 ## Phase 4: WASM Bindings & Frontend Models
 Goal: Expose the Auto-Balancer to the web application.
 
-- [ ] Task: Create WASM Entry Point
+- [~] Task: Create WASM Entry Point
     - Export `auto_adjust_encounter_wasm` in `lib.rs`.
 - [ ] Task: Update TypeScript Models
     - Define `AdjustmentReport` and updated `Creature` schemas in `src/model/model.ts`.
