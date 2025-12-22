@@ -88,6 +88,7 @@ mod reliability_tests {
         SimulationResult {
             encounters: vec![encounter],
             score: Some(100.0),
+            num_combat_encounters: 1,
         }
     }
     
@@ -112,7 +113,7 @@ mod reliability_tests {
         }
         
         // Test safe score calculation with empty results
-        let empty_result = SimulationResult { encounters: vec![], score: None };
+        let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0 };
         match calculate_score_safe(&empty_result) {
             Err(SimulationError::EmptyResult(_)) => {
                 // Expected behavior
@@ -281,7 +282,7 @@ mod reliability_tests {
         }
         
         // Test with empty result
-        let empty_result = SimulationResult { encounters: vec![], score: None };
+        let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0 };
         match calculate_score_safe(&empty_result) {
             Err(SimulationError::EmptyResult(_)) => {
                 // Expected

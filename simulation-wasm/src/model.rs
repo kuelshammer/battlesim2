@@ -738,8 +738,6 @@ pub struct Encounter {
     pub players_surprised: Option<bool>,
     #[serde(rename = "monstersSurprised")]
     pub monsters_surprised: Option<bool>,
-    #[serde(rename = "shortRest")]
-    pub short_rest: Option<bool>,
     #[serde(rename = "playersPrecast")]
     pub players_precast: Option<bool>, // New field
     #[serde(rename = "monstersPrecast")]
@@ -799,6 +797,8 @@ pub struct SimulationRunData {
     pub encounters: Vec<EncounterResult>,
     #[serde(default)]
     pub score: Option<f64>,
+    #[serde(rename = "numCombatEncounters", default)]
+    pub num_combat_encounters: usize,
 }
 
 impl std::ops::Deref for SimulationRunData {

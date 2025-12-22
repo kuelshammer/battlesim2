@@ -62,6 +62,7 @@ mod tests {
                 }],
             }],
             score: None,
+            num_combat_encounters: 1,
         };
         let run_a_events = vec![
             Event::SpellCast { caster_id: "p1".to_string(), spell_id: "cure_wounds".to_string(), spell_level: 1 }
@@ -76,6 +77,7 @@ mod tests {
                 }],
             }],
             score: None,
+            num_combat_encounters: 1,
         };
         let run_b_events = vec![]; // No resources spent
 
@@ -102,6 +104,7 @@ mod tests {
                 }],
             }],
             score: None,
+            num_combat_encounters: 1,
         };
         let events = vec![
             Event::ResourceConsumed {

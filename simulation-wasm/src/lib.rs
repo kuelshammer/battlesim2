@@ -21,6 +21,8 @@ pub mod creature_adjustment;
 pub mod adjustment_test;
 pub mod auto_balancer;
 pub mod dice_reconstruction;
+pub mod intensity_calculation;
+pub mod intensity_test;
 pub mod error_handling; // Enhanced error handling system
 pub mod enhanced_validation; // Comprehensive validation
 pub mod recovery; // Error recovery mechanisms
@@ -390,6 +392,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
     }
 
     let mut encounter_results = Vec::new();
+    let num_combat_encounters = timeline.iter().filter(|step| matches!(step, crate::model::TimelineStep::Combat(_))).count();
 
     for (step_idx, step) in timeline.iter().enumerate() {
         match step {
@@ -473,7 +476,11 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
     }
 
     // SimulationResult is now SimulationRunData struct
-    let mut result = SimulationResult { encounters: encounter_results, score: None };
+    let mut result = SimulationResult { 
+        encounters: encounter_results, 
+        score: None,
+        num_combat_encounters
+    };
     
     // Calculate efficiency score
     let score = crate::aggregation::calculate_efficiency_score(&result, &all_events);

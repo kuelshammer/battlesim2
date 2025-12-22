@@ -282,7 +282,6 @@ export const EncounterSchema = z.object({
     monsters: TeamSchema,
     playersSurprised: z.boolean().optional(),
     monstersSurprised: z.boolean().optional(),
-    shortRest: z.boolean().optional(), // Deprecated in favor of timeline events
     playersPrecast: z.boolean().optional(),
     monstersPrecast: z.boolean().optional(),
 })
@@ -513,6 +512,7 @@ export const AggregateOutputSchema = z.object({
     deciles: z.array(DecileStatsSchema),
     globalMedian: DecileStatsSchema.optional().nullable(),
     battleDurationRounds: z.number(),
+    stars: z.number().optional().default(0),
 }).passthrough()
 
 export const AutoAdjustmentResultSchema = z.object({

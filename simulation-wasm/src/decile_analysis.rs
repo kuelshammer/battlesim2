@@ -1,4 +1,5 @@
 use crate::model::*;
+use crate::intensity_calculation::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -113,6 +114,9 @@ pub struct AggregateOutput {
     pub analysis_summary: String,
     pub tuning_suggestions: Vec<String>,
     pub is_good_design: bool,
+    pub stars: usize,
+    pub tdnw: f64, // Total Daily Net Worth
+    pub num_encounters: usize,
 }
 
 fn extract_combatant_visualization(result: &SimulationResult) -> (Vec<CombatantVisualization>, usize) {
@@ -265,7 +269,18 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
 
 fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, usize, usize) {
     let score = crate::aggregation::calculate_score(run);
-    let survivors = ((score / 1_000_000.0).floor() as usize).min(party_size);
+    
+    // Robust survivors calculation: count them from the actual data
+    let survivors = if let Some(last_enc) = run.encounters.last() {
+        if let Some(last_round) = last_enc.rounds.last() {
+            last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
+        } else { 
+            // Fallback to score logic if no rounds found
+            ((score / 1_000_000.0).floor() as usize).min(party_size)
+        }
+    } else { 
+        ((score / 1_000_000.0).floor() as usize).min(party_size)
+    };
     
     let mut run_party_max_hp = 0.0;
     if let Some(enc) = run.encounters.first() {
@@ -273,10 +288,27 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, 
             for c in &round.team1 { run_party_max_hp += c.creature.hp as f64; }
         }
     }
-    let hp_lost = (run_party_max_hp - (score - (survivors as f64 * 1_000_000.0))).max(0.0);
+
+    // Robust attrition formula: (max_hp - current_hp) + monster_hp + resource_penalty
+    // This is equivalent to: run_party_max_hp + (survivors * 1,000,000) - score
+    let hp_lost = (run_party_max_hp + (survivors as f64 * 1_000_000.0) - score).max(0.0);
+    
     let duration = run.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
     
     (hp_lost, run_party_max_hp, survivors, duration)
+}
+
+fn calculate_tdnw(run: &SimulationResult) -> f64 {
+    let mut total = 0.0;
+    if let Some(first_enc) = run.encounters.first() {
+        if let Some(first_round) = first_enc.rounds.first() {
+            for c in &first_round.team1 {
+                let ledger = c.creature.initialize_ledger();
+                total += calculate_ledger_max_ehp(&ledger);
+            }
+        }
+    }
+    total
 }
 
 fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
@@ -288,9 +320,14 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
                     global_median: None,
                     battle_duration_rounds: 0,
                     safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
-            analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false,
+            analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
+            tdnw: 0.0,
+            num_encounters: 0,
         };
     }
+
+    let tdnw = calculate_tdnw(&results[0]);
+    let num_encounters = results[0].num_combat_encounters;
 
     let total_runs = results.len();
     let is_perfect = total_runs > 0 && (total_runs - 1) % 10 == 0;
@@ -363,14 +400,26 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     let analysis_summary = generate_analysis_summary(&safety_grade, &intensity_tier, &deciles, &global_median);
     let tuning_suggestions = generate_tuning_suggestions(&safety_grade, &intensity_tier, &deciles);
     
-    let is_good_design = matches!(safety_grade, SafetyGrade::A | SafetyGrade::B) && 
-                         matches!(intensity_tier, IntensityTier::Tier3 | IntensityTier::Tier4);
+    // Safety Acceptance: A and B are good, C/D/F are bad.
+    let safety_ok = matches!(safety_grade, SafetyGrade::A | SafetyGrade::B);
+    
+    // Intensity Stars: Tier 4 = 3, Tier 3/5 = 2, Tier 2 = 1, Tier 1 = 0
+    let stars = match intensity_tier {
+        IntensityTier::Tier4 => 3,
+        IntensityTier::Tier3 | IntensityTier::Tier5 => 2,
+        IntensityTier::Tier2 => 1,
+        IntensityTier::Tier1 => 0,
+    };
+
+    let is_good_design = safety_ok && stars >= 2;
 
     let battle_duration_rounds = global_median.as_ref().map(|m| m.battle_duration_rounds).unwrap_or(0);
 
     AggregateOutput {
         scenario_name: scenario_name.to_string(), total_runs, deciles, global_median, battle_duration_rounds,
-        safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design,
+        safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
+        tdnw,
+        num_encounters,
     }
 }
 
@@ -432,7 +481,8 @@ pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize
             if encounter_idx < run.encounters.len() { 
                 Some(SimulationResult { 
                     encounters: vec![run.encounters[encounter_idx].clone()],
-                    score: run.score 
+                    score: run.score,
+                    num_combat_encounters: run.num_combat_encounters,
                 }) 
             } else { 
                 None 
