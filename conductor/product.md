@@ -11,8 +11,7 @@
 
 ## Key Features
 - **Complex Tactical Logic:** Simulation of advanced resource management (e.g., "Should the Fighter Action Surge now or save it for a later round based on encounter difficulty?").
-- **5e.tools Integration:** Rapidly import monsters and NPCs from 5e.tools data to streamline encounter creation.
-- **Modular Action System:** Leverage the existing flexible action system to support complex creature abilities and unique gameplans.
+    - **5e.tools Integration:** Rapidly import monsters and NPCs from 5e.tools JSON data to pre-fill custom creature forms, allowing for easy adjustment before adding to combat.- **Modular Action System:** Leverage the existing flexible action system to support complex creature abilities and unique gameplans.
 
 ## Visualization & Reporting
 - **Detailed Combat Logs:** Round-by-round breakdown of probability-weighted actions for debugging and strategy review.
