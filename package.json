@@ -2,30 +2,7 @@
   "name": "battlesim",
   "version": "0.1.0",
   "private": true,
-  "main": "electron.js",
   "homepage": ".",
-  "build": {
-    "appId": "com.battlesim.app",
-    "productName": "Battlesim",
-    "mac": {
-      "category": "public.app-category.utilities",
-      "target": {
-        "target": "default",
-        "arch": [
-          "arm64",
-          "x64"
-        ]
-      }
-    },
-    "files": [
-      "electron.js",
-      "out/**/*",
-      "package.json"
-    ],
-    "directories": {
-      "output": "dist"
-    }
-  },
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
