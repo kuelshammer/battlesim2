@@ -14,6 +14,7 @@ import Checkbox from "@/utils/checkbox"
 import { v4 as uuid } from 'uuid'
 import LoadCreatureForm, { saveCreature } from "./loadCreatureForm"
 import SaveBonusModal from "./SaveBonusModal"
+import ImportButton from "./ImportButton"
 
 type PropType = {
     value: Creature,
@@ -28,6 +29,15 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
         const valueClone = clone(value)
         callback(valueClone)
         onChange(valueClone)
+    }
+
+    function handleImport(creature: Creature) {
+        onChange({
+            ...creature,
+            id: value.id, // Keep the same ID
+            mode: 'custom', // Force custom mode
+            count: value.count // Preserve count
+        });
     }
 
     function createAction() {
@@ -86,8 +96,17 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                                 <FontAwesomeIcon icon={faFolder} />
                                 <span className={styles.btnText}>Load</span>
                             </button>
+                            <ImportButton 
+                                onImport={handleImport}
+                                className={styles.importBtn}
+                            />
                         </>
-                    ) : null}
+                    ) : (
+                        <ImportButton 
+                            onImport={handleImport}
+                            className={styles.importBtn}
+                        />
+                    )}
                 </div>
             </section>
             <section>
