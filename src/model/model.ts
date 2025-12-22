@@ -271,10 +271,14 @@ const CombattantSchema = z.object({
     })),
 })
 
-const RoundSchema = z.object({
+export const RoundSchema = z.object({
     team1: z.array(CombattantSchema),
     team2: z.array(CombattantSchema),
 })
+
+export const TargetRoleList = ['Skirmish', 'Standard', 'Elite', 'Boss'] as const
+export const TargetRoleSchema = z.enum(TargetRoleList)
+export type TargetRole = z.infer<typeof TargetRoleSchema>
 
 export const EncounterSchema = z.object({
     type: z.literal('combat').default('combat'),
@@ -284,6 +288,7 @@ export const EncounterSchema = z.object({
     monstersSurprised: z.boolean().optional(),
     playersPrecast: z.boolean().optional(),
     monstersPrecast: z.boolean().optional(),
+    targetRole: TargetRoleSchema.optional().default('Standard'),
 })
 
 export const ShortRestSchema = z.object({
@@ -504,6 +509,7 @@ export const DecileStatsSchema = z.object({
     medianRunVisualization: z.array(CombatantVisualizationSchema),
     medianRunData: EncounterResultSchema.optional().nullable(),
     battleDurationRounds: z.number(),
+    resourceTimeline: z.array(z.number()).default([]),
 })
 
 export const AggregateOutputSchema = z.object({
@@ -513,6 +519,8 @@ export const AggregateOutputSchema = z.object({
     globalMedian: DecileStatsSchema.optional().nullable(),
     battleDurationRounds: z.number(),
     stars: z.number().optional().default(0),
+    tdnw: z.number().optional().default(0),
+    numEncounters: z.number().optional().default(0),
 }).passthrough()
 
 export const AutoAdjustmentResultSchema = z.object({

@@ -84,6 +84,7 @@ mod reliability_tests {
         let encounter = EncounterResult {
             stats: std::collections::HashMap::new(),
             rounds: vec![round],
+            target_role: TargetRole::Standard,
         };
         SimulationResult {
             encounters: vec![encounter],

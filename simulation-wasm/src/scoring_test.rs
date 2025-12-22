@@ -60,6 +60,7 @@ mod tests {
                     team1: vec![create_mock_combattant("p1", 100)],
                     team2: vec![],
                 }],
+                target_role: TargetRole::Standard,
             }],
             score: None,
             num_combat_encounters: 1,
@@ -75,6 +76,7 @@ mod tests {
                     team1: vec![create_mock_combattant("p1", 90)], // Lower HP
                     team2: vec![],
                 }],
+                target_role: TargetRole::Standard,
             }],
             score: None,
             num_combat_encounters: 1,
@@ -102,6 +104,7 @@ mod tests {
                     team1: vec![create_mock_combattant("p1", 100)],
                     team2: vec![],
                 }],
+                target_role: TargetRole::Standard,
             }],
             score: None,
             num_combat_encounters: 1,

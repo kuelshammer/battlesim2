@@ -81,14 +81,16 @@ pub struct AutoAdjustmentResult {
 }
 
 #[wasm_bindgen]
-pub fn auto_adjust_encounter_wasm(players: JsValue, monsters: JsValue) -> Result<JsValue, JsValue> {
+pub fn auto_adjust_encounter_wasm(players: JsValue, monsters: JsValue, timeline: JsValue, encounter_index: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let monsters: Vec<Creature> = serde_wasm_bindgen::from_value(monsters)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse monsters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
     let balancer = crate::auto_balancer::AutoBalancer::new();
-    let (optimized_monsters, analysis) = balancer.balance_encounter(players, monsters);
+    let (optimized_monsters, analysis) = balancer.balance_encounter(players, monsters, timeline, encounter_index);
 
     let result = AutoAdjustmentResult {
         monsters: optimized_monsters,
@@ -456,7 +458,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                 all_events.extend(encounter_result.event_history.clone());
 
                 // Convert to old format for compatibility
-                let legacy_result = convert_to_legacy_simulation_result(&encounter_result, step_idx);
+                let legacy_result = convert_to_legacy_simulation_result(&encounter_result, step_idx, encounter.target_role.clone());
                 encounter_results.push(legacy_result);
 
                 // Update player states for next encounter (no rest here, rest is its own step)
@@ -470,6 +472,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                 encounter_results.push(crate::model::EncounterResult {
                     stats: HashMap::new(),
                     rounds: Vec::new(),
+                    target_role: crate::model::TargetRole::Standard,
                 });
             }
         }
@@ -591,7 +594,7 @@ fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, 
     actions_by_round_actor
 }
 
-fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize) -> crate::model::EncounterResult {
+fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::EncounterResult, _encounter_idx: usize, target_role: crate::model::TargetRole) -> crate::model::EncounterResult {
     let mut rounds = Vec::new();
     
     // Reconstruct actions from event history
@@ -692,6 +695,7 @@ fn convert_to_legacy_simulation_result(encounter_result: &crate::execution::Enco
     crate::model::EncounterResult {
         stats: HashMap::new(), // Would convert from encounter_result.statistics
         rounds,
+        target_role,
     }
 }
 

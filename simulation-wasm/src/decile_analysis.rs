@@ -98,6 +98,7 @@ pub struct DecileStats {
     pub median_run_visualization: Vec<CombatantVisualization>,
     pub median_run_data: Option<EncounterResult>,
     pub battle_duration_rounds: usize,
+    pub resource_timeline: Vec<f64>, // Array of EHP % after each step
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -198,19 +199,6 @@ fn assess_safety_grade(deciles: &[DecileStats], global_median: &Option<DecileSta
     }
 }
 
-fn assess_intensity_tier(deciles: &[DecileStats], global_median: &Option<DecileStats>) -> IntensityTier {
-    if deciles.is_empty() { return IntensityTier::Tier1; }
-    
-    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
-    let resources_left = 100.0 - typical.hp_lost_percent;
-
-    if resources_left > 90.0 { IntensityTier::Tier1 }
-    else if resources_left >= 70.0 { IntensityTier::Tier2 }
-    else if resources_left >= 40.0 { IntensityTier::Tier3 }
-    else if resources_left >= 10.0 { IntensityTier::Tier4 }
-    else { IntensityTier::Tier5 }
-}
-
 fn get_encounter_label(grade: &SafetyGrade, tier: &IntensityTier) -> EncounterLabel {
     match (grade, tier) {
         (SafetyGrade::B, IntensityTier::Tier4) => EncounterLabel::EpicChallenge,
@@ -267,44 +255,83 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
     suggestions
 }
 
-fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, usize, usize) {
+fn calculate_run_stats(run: &SimulationResult, party_size: usize, tdnw: f64) -> (f64, f64, usize, usize, Vec<f64>) {
     let score = crate::aggregation::calculate_score(run);
     
-    // Robust survivors calculation: count them from the actual data
+    // 1. Count survivors from actual final state
     let survivors = if let Some(last_enc) = run.encounters.last() {
         if let Some(last_round) = last_enc.rounds.last() {
             last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
         } else { 
-            // Fallback to score logic if no rounds found
-            ((score / 1_000_000.0).floor() as usize).min(party_size)
+            if score < 0.0 { 0 } else { ((score / 1_000_000.0).floor() as usize).min(party_size) }
         }
     } else { 
-        ((score / 1_000_000.0).floor() as usize).min(party_size)
+        if score < 0.0 { 0 } else { ((score / 1_000_000.0).floor() as usize).min(party_size) }
     };
     
+    // 2. Calculate EHP Timeline
+    let mut timeline = Vec::new();
     let mut run_party_max_hp = 0.0;
-    if let Some(enc) = run.encounters.first() {
-        if let Some(round) = enc.rounds.first() {
-            for c in &round.team1 { run_party_max_hp += c.creature.hp as f64; }
+
+    // Start with Initial State (100% or slightly less if they started damaged)
+    if let Some(first_enc) = run.encounters.first() {
+        if let Some(first_round) = first_enc.rounds.first() {
+            let mut start_ehp = 0.0;
+            for c in &first_round.team1 {
+                run_party_max_hp += c.creature.hp as f64;
+                let ledger = c.creature.initialize_ledger();
+                start_ehp += calculate_serializable_ehp(
+                    c.initial_state.current_hp, 
+                    c.initial_state.temp_hp.unwrap_or(0),
+                    &c.initial_state.resources, 
+                    &ledger.reset_rules
+                );
+            }
+            timeline.push(if tdnw > 0.0 { (start_ehp / tdnw) * 100.0 } else { 100.0 });
         }
     }
 
-    // Robust attrition formula: (max_hp - current_hp) + monster_hp + resource_penalty
-    // This is equivalent to: run_party_max_hp + (survivors * 1,000,000) - score
-    let hp_lost = (run_party_max_hp + (survivors as f64 * 1_000_000.0) - score).max(0.0);
+    // EHP after each step
+    for encounter in &run.encounters {
+        if let Some(last_round) = encounter.rounds.last() {
+            let mut step_ehp = 0.0;
+            for c in &last_round.team1 {
+                let ledger = c.creature.initialize_ledger();
+                step_ehp += calculate_serializable_ehp(
+                    c.final_state.current_hp,
+                    c.final_state.temp_hp.unwrap_or(0),
+                    &c.final_state.resources, 
+                    &ledger.reset_rules
+                );
+            }
+            timeline.push(if tdnw > 0.0 { (step_ehp / tdnw) * 100.0 } else { 0.0 });
+        } else {
+            // Placeholder for empty encounters/steps if needed
+            let prev = timeline.last().cloned().unwrap_or(100.0);
+            timeline.push(prev);
+        }
+    }
+
+    let start_val = timeline.first().cloned().unwrap_or(100.0) * tdnw / 100.0;
+    let end_val = timeline.last().cloned().unwrap_or(0.0) * tdnw / 100.0;
+    let burned_resources = (start_val - end_val).max(-1000.0);
     
     let duration = run.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
     
-    (hp_lost, run_party_max_hp, survivors, duration)
+    (burned_resources, run_party_max_hp, survivors, duration, timeline)
 }
 
 fn calculate_tdnw(run: &SimulationResult) -> f64 {
     let mut total = 0.0;
-    if let Some(first_enc) = run.encounters.first() {
-        if let Some(first_round) = first_enc.rounds.first() {
+    // Find the first encounter that has at least one round
+    for encounter in &run.encounters {
+        if let Some(first_round) = encounter.rounds.first() {
             for c in &first_round.team1 {
                 let ledger = c.creature.initialize_ledger();
-                total += calculate_ledger_max_ehp(&ledger);
+                total += calculate_ledger_max_ehp(&c.creature, &ledger);
+            }
+            if total > 0.0 {
+                return total;
             }
         }
     }
@@ -327,7 +354,17 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     }
 
     let tdnw = calculate_tdnw(&results[0]);
-    let num_encounters = results[0].num_combat_encounters;
+    let num_encounters = results[0].encounters.len();
+    
+    // Weighted Resource Pie Logic
+    let total_day_weight: f64 = results[0].encounters.iter().map(|e| e.target_role.weight()).sum();
+    let current_encounter_weight = if results[0].encounters.len() == 1 {
+        results[0].encounters[0].target_role.weight()
+    } else {
+        // If it's a multi-encounter day view, we use the average weight or 1.0
+        // But for per-encounter analysis, the encounter result will only have 1 encounter.
+        results[0].encounters.get(0).map(|e| e.target_role.weight()).unwrap_or(2.0)
+    };
 
     let total_runs = results.len();
     let is_perfect = total_runs > 0 && (total_runs - 1) % 10 == 0;
@@ -339,7 +376,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     if is_perfect && total_runs >= 11 {
         let median_idx = total_runs / 2;
         let median_run = &results[median_idx];
-        let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
+        let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(median_run, party_size, tdnw);
         let (visualization_data, _) = extract_combatant_visualization(median_run);
         
         global_median = Some(DecileStats {
@@ -348,11 +385,12 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             median_survivors: survivors,
             party_size,
             total_hp_lost: hp_lost,
-            hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
+            hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
             win_rate: if survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
             median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
             battle_duration_rounds: duration,
+            resource_timeline: timeline,
         });
 
         for i in 0..10 {
@@ -360,7 +398,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             let end_idx = start_idx + slice_size;
             if start_idx < total_runs && end_idx <= total_runs {
                 let slice = &results[start_idx..end_idx];
-                deciles.push(calculate_decile_stats(slice, i + 1, party_size));
+                deciles.push(calculate_decile_stats(slice, i + 1, party_size, tdnw));
             }
         }
     } else {
@@ -370,32 +408,32 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
             let slice = &results[start_idx..end_idx.min(total_runs)];
             if !slice.is_empty() {
-                deciles.push(calculate_decile_stats(slice, i + 1, party_size));
+                deciles.push(calculate_decile_stats(slice, i + 1, party_size, tdnw));
             }
         }
         
         let median_idx = total_runs / 2;
         if let Some(median_run) = results.get(median_idx) {
-            let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(median_run, party_size);
+            let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(median_run, party_size, tdnw);
             let (visualization_data, _) = extract_combatant_visualization(median_run);
             
             global_median = Some(DecileStats {
                 decile: 0,
                 label: "Global Median".to_string(),
-                median_survivors: survivors,
-                party_size,
-                total_hp_lost: hp_lost,
-                hp_lost_percent: if max_hp > 0.0 { (hp_lost / max_hp) * 100.0 } else { 0.0 },
-                win_rate: if survivors > 0 { 100.0 } else { 0.0 },
-                median_run_visualization: visualization_data,
+                            median_survivors: survivors,
+                            party_size,
+                            total_hp_lost: hp_lost,
+                            hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
+                            win_rate: if survivors > 0 { 100.0 } else { 0.0 },                median_run_visualization: visualization_data,
                 median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
                 battle_duration_rounds: duration,
+                resource_timeline: timeline,
             });
         }
     }
 
     let safety_grade = assess_safety_grade(&deciles, &global_median);
-    let intensity_tier = assess_intensity_tier(&deciles, &global_median);
+    let intensity_tier = assess_intensity_tier_dynamic(&deciles, &global_median, tdnw, total_day_weight, current_encounter_weight);
     let encounter_label = get_encounter_label(&safety_grade, &intensity_tier);
     let analysis_summary = generate_analysis_summary(&safety_grade, &intensity_tier, &deciles, &global_median);
     let tuning_suggestions = generate_tuning_suggestions(&safety_grade, &intensity_tier, &deciles);
@@ -423,25 +461,56 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     }
 }
 
-fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_size: usize) -> DecileStats {
+fn assess_intensity_tier_dynamic(deciles: &[DecileStats], global_median: &Option<DecileStats>, tdnw: f64, total_weight: f64, encounter_weight: f64) -> IntensityTier {
+    if deciles.is_empty() || tdnw <= 0.0 { return IntensityTier::Tier1; }
+    
+    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
+    
+    // Cost % relative to TDNW
+    let cost_percent = typical.total_hp_lost / tdnw; 
+    
+    // Target Drain = Weight / Total Weight
+    let total_w = if total_weight <= 0.0 { 1.0 } else { total_weight };
+    let target = encounter_weight / total_w;
+
+    if cost_percent < (0.2 * target) { IntensityTier::Tier1 }
+    else if cost_percent < (0.6 * target) { IntensityTier::Tier2 }
+    else if cost_percent < (1.3 * target) { IntensityTier::Tier3 }
+    else if cost_percent < (2.0 * target) { IntensityTier::Tier4 }
+    else { IntensityTier::Tier5 }
+}
+
+fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_size: usize, tdnw: f64) -> DecileStats {
     let mut total_wins = 0.0;
     let mut total_hp_lost = 0.0;
     let mut total_survivors = 0;
     let mut total_duration = 0;
-    let mut total_party_max_hp = 0.0;
+    let mut timelines = Vec::new();
 
     for run in slice {
-        let (hp_lost, max_hp, survivors, duration) = calculate_run_stats(run, party_size);
+        let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(run, party_size, tdnw);
         if survivors > 0 { total_wins += 1.0; }
         total_survivors += survivors;
         total_hp_lost += hp_lost;
-        total_party_max_hp += max_hp;
         total_duration += duration;
+        timelines.push(timeline);
     }
 
     let count = slice.len() as f64;
     let avg_hp_lost = if count > 0.0 { total_hp_lost / count } else { 0.0 };
-    let avg_party_max_hp = if count > 0.0 { total_party_max_hp / count } else { 0.0 };
+
+    // Average the timelines
+    let mut avg_timeline = Vec::new();
+    if !timelines.is_empty() {
+        let steps = timelines[0].len();
+        for s in 0..steps {
+            let mut step_sum = 0.0;
+            for t in &timelines {
+                step_sum += t.get(s).cloned().unwrap_or(0.0);
+            }
+            avg_timeline.push(step_sum / count);
+        }
+    }
 
     let median_in_slice_idx = slice.len() / 2;
     let median_run = &slice[median_in_slice_idx];
@@ -459,11 +528,12 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
         median_survivors: if count > 0.0 { (total_survivors as f64 / count).round() as usize } else { 0 },
         party_size,
         total_hp_lost: avg_hp_lost,
-        hp_lost_percent: if avg_party_max_hp > 0.0 { (avg_hp_lost / avg_party_max_hp) * 100.0 } else { 0.0 },
+        hp_lost_percent: if tdnw > 0.0 { (avg_hp_lost / tdnw) * 100.0 } else { 0.0 },
         win_rate: if count > 0.0 { (total_wins / count) * 100.0 } else { 0.0 },
         median_run_visualization: visualization_data,
         median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
         battle_duration_rounds: if count > 0.0 { (total_duration as f64 / count).round() as usize } else { 0 },
+        resource_timeline: avg_timeline,
     }
 }
 
