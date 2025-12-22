@@ -16,7 +16,7 @@ Goal: Implement the core pacing visuals.
 - [x] Task: Integrate components into `Simulation.tsx` and `EncounterResult.tsx`. (e049873)
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
-## Phase 3: The Descent Graph (SVG)
+## Phase 3: The Descent Graph (SVG) [checkpoint: 6d6bd4e]
 Goal: Visualize attrition and risk.
 
 - [x] Task: Implement `DescentGraph.tsx` using raw SVG. (b76a7ed)
