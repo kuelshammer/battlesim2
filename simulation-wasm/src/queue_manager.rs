@@ -62,7 +62,7 @@ impl SimulationRequest {
         
         // Hash key parameters that determine if simulations are equivalent
         self.parameters.players.len().hash(&mut hasher);
-        self.parameters.encounters.len().hash(&mut hasher);
+        self.parameters.timeline.len().hash(&mut hasher);
         self.parameters.iterations.hash(&mut hasher);
         
         // Hash player characteristics
@@ -72,13 +72,22 @@ impl SimulationRequest {
             player.ac.hash(&mut hasher); // ac is u32
         }
         
-        // Hash encounter characteristics
-        for encounter in &self.parameters.encounters {
-            encounter.monsters.len().hash(&mut hasher);
-            for monster in &encounter.monsters {
-                monster.name.hash(&mut hasher);
-                monster.hp.hash(&mut hasher); // hp is u32
-                monster.ac.hash(&mut hasher); // ac is u32
+        // Hash timeline characteristics
+        for step in &self.parameters.timeline {
+            match step {
+                crate::model::TimelineStep::Combat(encounter) => {
+                    0.hash(&mut hasher);
+                    encounter.monsters.len().hash(&mut hasher);
+                    for monster in &encounter.monsters {
+                        monster.name.hash(&mut hasher);
+                        monster.hp.hash(&mut hasher);
+                        monster.ac.hash(&mut hasher);
+                    }
+                },
+                crate::model::TimelineStep::ShortRest(rest) => {
+                    1.hash(&mut hasher);
+                    rest.id.hash(&mut hasher);
+                }
             }
         }
         
@@ -105,9 +114,9 @@ impl Eq for PriorityRequest {}
 
 impl Ord for PriorityRequest {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        // Reverse order for max-heap (higher priority first)
-        other.request.priority.cmp(&self.request.priority)
-            .then_with(|| other.insertion_order.cmp(&self.insertion_order))
+        // Standard ordering for max-heap (higher priority value first)
+        self.request.priority.cmp(&other.request.priority)
+            .then_with(|| self.insertion_order.cmp(&other.insertion_order))
     }
 }
 
@@ -515,7 +524,7 @@ mod tests {
     fn create_test_parameters(iterations: usize) -> ScenarioParameters {
         ScenarioParameters {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
-            encounters: vec![],
+            timeline: vec![],
             iterations,
         }
     }

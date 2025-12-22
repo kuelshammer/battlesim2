@@ -5,7 +5,6 @@ use std::collections::HashMap;
 #[test]
 fn test_decile_analysis_median_run_visualization() {
     let mut players: Vec<Creature> = Vec::new();
-    let mut results = Vec::new();
 
     // Create a dummy result set
     let scenario_name = "Test Scenario";
@@ -13,7 +12,7 @@ fn test_decile_analysis_median_run_visualization() {
 
     // The run_decile_analysis function expects sorted results.
     // We create dummy results with varying scores.
-    let mut results = Vec::new();
+    let mut results: Vec<SimulationResult> = Vec::new();
     for i in 0..100 {
         results.push(SimulationResult {
             encounters: vec![],

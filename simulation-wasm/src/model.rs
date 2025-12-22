@@ -404,6 +404,7 @@ pub struct Creature {
     pub name: String,
     pub count: f64, // TS uses number, but usually integer.
     pub hp: u32,
+    #[serde(alias = "AC")]
     pub ac: u32,
     #[serde(rename = "speed_fly")]
     pub speed_fly: Option<f64>,
@@ -664,6 +665,16 @@ impl From<crate::resources::ResourceLedger> for SerializableResourceLedger {
     }
 }
 
+impl From<SerializableResourceLedger> for crate::resources::ResourceLedger {
+    fn from(ledger: SerializableResourceLedger) -> Self {
+        crate::resources::ResourceLedger {
+            current: ledger.current,
+            max: ledger.max,
+            reset_rules: HashMap::new(),
+        }
+    }
+}
+
 // We also need a way to convert back if needed, or just use it for output
 // For now, it's mostly for output to frontend.
 
@@ -723,6 +734,20 @@ pub struct Encounter {
     pub players_precast: Option<bool>, // New field
     #[serde(rename = "monstersPrecast")]
     pub monsters_precast: Option<bool>, // New field
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ShortRest {
+    pub id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type")]
+pub enum TimelineStep {
+    #[serde(rename = "combat")]
+    Combat(Encounter),
+    #[serde(rename = "shortRest")]
+    ShortRest(ShortRest),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

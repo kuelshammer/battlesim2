@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScenarioParameters {
     pub players: Vec<crate::model::Creature>,
-    pub encounters: Vec<crate::model::Encounter>,
+    pub timeline: Vec<crate::model::TimelineStep>,
     pub iterations: usize,
 }
 

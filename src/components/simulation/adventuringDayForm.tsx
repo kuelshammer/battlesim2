@@ -1,10 +1,10 @@
 import { FC, useState, useEffect } from "react"
-import { Creature, CreatureSchema, Encounter, EncounterSchema } from "@/model/model"
+import { Creature, CreatureSchema, Encounter, EncounterSchema, TimelineEvent, TimelineEventSchema } from "@/model/model"
 import styles from './adventuringDayForm.module.scss'
 import { sharedStateGenerator, useCalculatedState } from "@/model/utils"
 import { z } from 'zod'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faDownload, faFolder, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faEye } from "@fortawesome/free-solid-svg-icons"
+import { faDownload, faFolder, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faEye, faBed } from "@fortawesome/free-solid-svg-icons"
 import { PlayerTemplates } from "@/data/data"
 import { getMonster } from "@/data/monsters"
 import Modal from "@/utils/modal"
@@ -16,9 +16,9 @@ import { clone } from "@/model/utils"
 
 type PropType = {
     currentPlayers: Creature[],
-    currentEncounters: Encounter[],
+    currentTimeline: TimelineEvent[],
     onCancel: () => void,
-    onApplyChanges: (newPlayers: Creature[], newEncounters: Encounter[]) => void, // Callback to update parent state
+    onApplyChanges: (newPlayers: Creature[], newTimeline: TimelineEvent[]) => void,
     onEditingChange?: (isEditing: boolean) => void,
 }
 
@@ -27,54 +27,22 @@ const SaveFileSchema = z.object({
     name: z.string(),
     filename: z.string().optional(),
     players: z.array(CreatureSchema),
-    encounters: z.array(EncounterSchema),
+    timeline: z.array(TimelineEventSchema),
 })
 type SaveFile = z.infer<typeof SaveFileSchema>
 
-const SaveCollectionSchema = z.array(SaveFileSchema)
-type SaveCollection = z.infer<typeof SaveCollectionSchema>
-
-const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, onCancel, onApplyChanges, onEditingChange }) => {
+const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onCancel, onApplyChanges, onEditingChange }) => {
     const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
-    const [editedEncounters, setEditedEncounters] = useState<Encounter[]>(currentEncounters);
-    const [editingPlayer, setEditingPlayer] = useState<Creature | null>(null);
-    const [editingMonster, setEditingMonster] = useState<Creature | null>(null);
-    const [editingMonsterEncounterIndex, setEditingMonsterEncounterIndex] = useState<number | null>(null);
-
-    const [saveName, setSaveName] = useState('')
-    const [savedDays, setSavedDays] = useState<SaveFile[]>([])
-    const [error, setError] = useState<string | null>(null)
-    const [loading, setLoading] = useState(false)
-
-    useEffect(() => {
-        onEditingChange?.(editingPlayer !== null || editingMonster !== null);
-    }, [editingPlayer, editingMonster, onEditingChange]);
-
-    useEffect(() => {
-        fetchSaves()
-    }, [])
-
-    async function fetchSaves() {
-        setLoading(true)
-        try {
-            const response = await fetch('/api/adventuring-days')
-            const data = await response.json()
-            setSavedDays(data)
-        } catch (e) {
-            setError('Failed to fetch saves')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    // Sync external changes (if parent re-renders with new props)
+    const [editedTimeline, setEditedTimeline] = useState<TimelineEvent[]>(currentTimeline);
+    
+    // Sync external changes
     useEffect(() => {
         setEditedPlayers(currentPlayers);
     }, [currentPlayers]);
 
     useEffect(() => {
-        setEditedEncounters(currentEncounters);
-    }, [currentEncounters]);
+        setEditedTimeline(currentTimeline);
+    }, [currentTimeline]);
 
     function addPlayer() {
         const newPlayer = PlayerTemplates.barbarian(1, { gwm: false, weaponBonus: 0 }); // Default Barbarian with correct options
@@ -92,97 +60,116 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
     }
 
     function addEncounter() {
-        const newEncounter: Encounter = {
+        const newEncounter: TimelineEvent = {
+            type: 'combat',
             id: uuidv4(),
             monsters: [],
             playersSurprised: false,
             monstersSurprised: false,
-            shortRest: false,
             playersPrecast: false,
             monstersPrecast: false,
         };
-        setEditedEncounters([...editedEncounters, newEncounter]);
+        setEditedTimeline([...editedTimeline, newEncounter]);
     }
 
-    function updateEncounter(index: number, updatedEncounter: Encounter) {
-        setEditedEncounters(editedEncounters.map((e, i) => i === index ? updatedEncounter : e));
+    function addShortRest() {
+        const newRest: TimelineEvent = {
+            type: 'shortRest',
+            id: uuidv4(),
+        };
+        setEditedTimeline([...editedTimeline, newRest]);
     }
 
-    function removeEncounter(index: number) {
-        setEditedEncounters(editedEncounters.filter((_, i) => i !== index));
+    function updateTimelineItem(index: number, updatedEvent: TimelineEvent) {
+        setEditedTimeline(editedTimeline.map((e, i) => i === index ? updatedEvent : e));
     }
 
-    function addMonsterToEncounter(encounterIndex: number) {
+    function removeTimelineItem(index: number) {
+        setEditedTimeline(editedTimeline.filter((_, i) => i !== index));
+    }
+
+    function swapTimelineItems(idx1: number, idx2: number) {
+        if (idx1 < 0 || idx1 >= editedTimeline.length || idx2 < 0 || idx2 >= editedTimeline.length) return;
+        const newTimeline = [...editedTimeline];
+        [newTimeline[idx1], newTimeline[idx2]] = [newTimeline[idx2], newTimeline[idx1]];
+        setEditedTimeline(newTimeline);
+    }
+
+    function addMonsterToEncounter(timelineIndex: number) {
+        const item = editedTimeline[timelineIndex];
+        if (item?.type !== 'combat') return;
+
         const bandit = getMonster('Bandit');
         if (!bandit) return;
         const newMonster = clone(bandit);
         newMonster.id = uuidv4();
-        const updatedEncounters = editedEncounters.map((enc, i) => {
-            if (i === encounterIndex) {
-                return { ...enc, monsters: [...enc.monsters, newMonster] };
+        
+        const updatedTimeline = editedTimeline.map((event, i) => {
+            if (i === timelineIndex && event.type === 'combat') {
+                return { ...event, monsters: [...event.monsters, newMonster] };
             }
-            return enc;
+            return event;
         });
-        setEditedEncounters(updatedEncounters);
+        setEditedTimeline(updatedTimeline);
     }
 
-    function updateMonsterInEncounter(encounterIndex: number, updatedMonster: Creature) {
-        const updatedEncounters = editedEncounters.map((enc, i) => {
-            if (i === encounterIndex) {
+    function updateMonsterInEncounter(timelineIndex: number, updatedMonster: Creature) {
+        const updatedTimeline = editedTimeline.map((event, i) => {
+            if (i === timelineIndex && event.type === 'combat') {
                 return {
-                    ...enc,
-                    monsters: enc.monsters.map(m => m.id === updatedMonster.id ? updatedMonster : m)
+                    ...event,
+                    monsters: event.monsters.map(m => m.id === updatedMonster.id ? updatedMonster : m)
                 };
             }
-            return enc;
+            return event;
         });
-        setEditedEncounters(updatedEncounters);
+        setEditedTimeline(updatedTimeline);
         setEditingMonster(null); // Close modal
         setEditingMonsterEncounterIndex(null);
     }
 
-    function removeMonsterFromEncounter(encounterIndex: number, monsterId: string) {
-        const updatedEncounters = editedEncounters.map((enc, i) => {
-            if (i === encounterIndex) {
+    function removeMonsterFromEncounter(timelineIndex: number, monsterId: string) {
+        const updatedTimeline = editedTimeline.map((event, i) => {
+            if (i === timelineIndex && event.type === 'combat') {
                 return {
-                    ...enc,
-                    monsters: enc.monsters.filter(m => m.id !== monsterId)
+                    ...event,
+                    monsters: event.monsters.filter(m => m.id !== monsterId)
                 };
             }
-            return enc;
+            return event;
         });
-        setEditedEncounters(updatedEncounters);
+        setEditedTimeline(updatedTimeline);
     }
 
     const isValidSaveName = !!saveName
 
-    async function saveEditedDay() {
-        if (!isValidSaveName) return;
-
-        try {
-            const response = await fetch('/api/adventuring-days', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: saveName,
-                    players: editedPlayers,
-                    encounters: editedEncounters,
+    async function applyAndSave() {
+        onApplyChanges(editedPlayers, editedTimeline);
+        
+        if (isValidSaveName) {
+            try {
+                await fetch('/api/adventuring-days', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        updated: Date.now(),
+                        name: saveName,
+                        players: editedPlayers,
+                        timeline: editedTimeline,
+                    })
                 })
-            })
-            if (response.ok) {
                 fetchSaves()
-                onApplyChanges(editedPlayers, editedEncounters);
+            } catch (e) {
+                setError('Failed to save')
             }
-        } catch (e) {
-            setError('Failed to save')
         }
     }
 
     function loadSavedDay(save: SaveFile) {
-        onApplyChanges(save.players, save.encounters)
         setEditedPlayers(save.players);
-        setEditedEncounters(save.encounters);
+        setEditedTimeline(save.timeline);
         setSaveName(save.name);
+        onApplyChanges(save.players, save.timeline);
     }
 
     async function deleteSave(filename: string) {
@@ -266,7 +253,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
             <section className={styles.toolbar}>
                 <h3>Save Name:</h3>
                 <input type="text" value={saveName} onChange={e => setSaveName(e.target.value)} />
-                <button disabled={!isValidSaveName} onClick={saveEditedDay}>
+                <button disabled={!isValidSaveName} onClick={applyAndSave}>
                     <FontAwesomeIcon icon={faSave} /> Save
                 </button>
                 <button className="tooltipContainer" onClick={onDownload}>
@@ -283,7 +270,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
                     onChange={(e) => onUpload(e.target.files)} />
             </section>
 
-            {/* Existing Save Files List (still useful for loading others) */}
+            {/* Existing Save Files List */}
             <section className={styles.saveFilesList}>
                 <h3>Saved Days:</h3>
                 {loading ? <p>Loading saves...</p> : 
@@ -312,33 +299,52 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
                 </div>
             </section>
 
-            {/* Encounters Section */}
+            {/* Timeline Section */}
             <section className={styles.encountersSection}>
-                <h2>Encounters</h2>
-                <button onClick={addEncounter}><FontAwesomeIcon icon={faPlus} /> Add Encounter</button>
+                <h2>Timeline</h2>
+                <div className={styles.timelineControls}>
+                    <button onClick={addEncounter}><FontAwesomeIcon icon={faPlus} /> Add Combat</button>
+                    <button onClick={addShortRest} className={styles.restBtn}><FontAwesomeIcon icon={faBed} /> Add Short Rest</button>
+                </div>
+                
                 <div className={styles.encounterList}>
-                    {editedEncounters.map((encounter, encIndex) => (
-                        <div key={encIndex} className={styles.encounterItem}>
-                            <h3>Encounter {encIndex + 1}</h3>
-                            <div className={styles.encounterSettings}>
-                                <Checkbox value={encounter.playersSurprised || false} onToggle={() => updateEncounter(encIndex, { ...encounter, playersSurprised: !encounter.playersSurprised })}>Players Surprised</Checkbox>
-                                <Checkbox value={encounter.monstersSurprised || false} onToggle={() => updateEncounter(encIndex, { ...encounter, monstersSurprised: !encounter.monstersSurprised })}>Monsters Surprised</Checkbox>
-                                <Checkbox value={encounter.playersPrecast || false} onToggle={() => updateEncounter(encIndex, { ...encounter, playersPrecast: !encounter.playersPrecast })}>Players Precast</Checkbox>
-                                <Checkbox value={encounter.monstersPrecast || false} onToggle={() => updateEncounter(encIndex, { ...encounter, monstersPrecast: !encounter.monstersPrecast })}>Monsters Precast</Checkbox>
-                                <Checkbox value={encounter.shortRest || false} onToggle={() => updateEncounter(encIndex, { ...encounter, shortRest: !encounter.shortRest })}>Short Rest After</Checkbox>
+                    {editedTimeline.map((item, index) => (
+                        <div key={item.id} className={item.type === 'combat' ? styles.encounterItem : styles.restItem}>
+                            <div className={styles.itemHeader}>
+                                <h3>{item.type === 'combat' ? `Encounter ${index + 1}` : 'Short Rest'}</h3>
+                                <div className={styles.itemControls}>
+                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
+                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === editedTimeline.length - 1}>↓</button>
+                                    <button onClick={() => removeTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                </div>
                             </div>
-                            <h4>Monsters</h4>
-                            <button onClick={() => addMonsterToEncounter(encIndex)}><FontAwesomeIcon icon={faPlus} /> Add Monster</button>
-                            <div className={styles.monsterList}>
-                                {encounter.monsters.map(monster => (
-                                    <div key={monster.id} className={styles.monsterItem}>
-                                        <span>{monster.name} (x{monster.count})</span>
-                                        <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(encIndex); }}><FontAwesomeIcon icon={faPen} /> Edit</button>
-                                        <button onClick={() => removeMonsterFromEncounter(encIndex, monster.id)}><FontAwesomeIcon icon={faTimes} /> Remove</button>
+
+                            {item.type === 'combat' ? (
+                                <>
+                                    <div className={styles.encounterSettings}>
+                                        <Checkbox value={item.playersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, playersSurprised: !item.playersSurprised })}>Players Surprised</Checkbox>
+                                        <Checkbox value={item.monstersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, monstersSurprised: !item.monstersSurprised })}>Monsters Surprised</Checkbox>
+                                        <Checkbox value={item.playersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, playersPrecast: !item.playersPrecast })}>Players Precast</Checkbox>
+                                        <Checkbox value={item.monstersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, monstersPrecast: !item.monstersPrecast })}>Monsters Precast</Checkbox>
                                     </div>
-                                ))}
-                            </div>
-                            <button onClick={() => removeEncounter(encIndex)}><FontAwesomeIcon icon={faTrash} /> Remove Encounter</button>
+                                    <h4>Monsters</h4>
+                                    <button onClick={() => addMonsterToEncounter(index)}><FontAwesomeIcon icon={faPlus} /> Add Monster</button>
+                                    <div className={styles.monsterList}>
+                                        {item.monsters.map(monster => (
+                                            <div key={monster.id} className={styles.monsterItem}>
+                                                <span>{monster.name} (x{monster.count})</span>
+                                                <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(index); }}><FontAwesomeIcon icon={faPen} /> Edit</button>
+                                                <button onClick={() => removeMonsterFromEncounter(index, monster.id)}><FontAwesomeIcon icon={faTimes} /> Remove</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className={styles.restBody}>
+                                    <p><FontAwesomeIcon icon={faBed} size="2x" /></p>
+                                    <p>Standard 1-hour rest. Characters spend Hit Dice to recover HP and reset "Short Rest" resources.</p>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

@@ -2,12 +2,12 @@ use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
 use crate::background_simulation::{BackgroundSimulationId, SimulationPriority, BackgroundSimulationEngine};
 use crate::progress_ui::{ProgressUIManager, ProgressInfo};
 use crate::queue_manager::QueueManager;
-use crate::model::{Creature, Encounter};
+use crate::model::{Creature, TimelineStep};
 // Simple scenario parameters since storage module was removed
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScenarioParameters {
     pub players: Vec<Creature>,
-    pub encounters: Vec<Encounter>,
+    pub timeline: Vec<TimelineStep>,
     pub iterations: usize,
 }
 use serde::{Deserialize, Serialize};
@@ -275,7 +275,7 @@ impl UserInteractionManager {
         // Get display results
         let display_result = {
             let mut display_manager = self.display_manager.lock().unwrap();
-            display_manager.get_display_results(&parameters.players, &parameters.encounters, parameters.iterations)
+            display_manager.get_display_results(&parameters.players, &parameters.timeline, parameters.iterations)
         };
 
         // Auto-simulate if enabled and no cached results

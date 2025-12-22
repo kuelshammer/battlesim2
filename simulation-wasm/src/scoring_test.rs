@@ -3,7 +3,7 @@ mod tests {
     use crate::model::*;
     use crate::aggregation::calculate_efficiency_score;
     use crate::events::Event;
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
     fn create_mock_combattant(id: &str, current_hp: u32) -> Combattant {
         let creature = Creature {
@@ -89,5 +89,30 @@ mod tests {
         println!("Score B (Low HP): {}", score_b);
         
         assert!(score_b > score_a, "Run B (more efficient) should score higher than Run A despite lower HP");
+    }
+
+    #[test]
+    fn test_hit_die_penalty() {
+        let result = SimulationResult {
+            encounters: vec![EncounterResult {
+                stats: HashMap::new(),
+                rounds: vec![Round {
+                    team1: vec![create_mock_combattant("p1", 100)],
+                    team2: vec![],
+                }],
+            }],
+            score: None,
+        };
+        let events = vec![
+            Event::ResourceConsumed {
+                unit_id: "p1".to_string(),
+                resource_type: "HitDice".to_string(),
+                amount: 2.0,
+            }
+        ];
+
+        let score = calculate_efficiency_score(&result, &events);
+        // Base: 1,000,000 + 100 - (2 * 15) = 1,000,070
+        assert_eq!(score, 1_000_070.0);
     }
 }

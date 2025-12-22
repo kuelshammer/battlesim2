@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
 import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, SimulationResult, AggregateOutput, EncounterResult as EncounterResultType } from "@/model/model"
+import { Creature, CreatureSchema, Encounter, EncounterSchema, TimelineEvent, TimelineEventSchema, SimulationResult, AggregateOutput, EncounterResult as EncounterResultType } from "@/model/model"
 import { parseEventString, SimulationEvent } from "@/model/events"
 import { clone, useStoredState } from "@/model/utils"
 import styles from './simulation.module.scss'
@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
@@ -23,7 +23,8 @@ type PropType = {
     // TODO
 }
 
-const emptyEncounter: Encounter = {
+const emptyCombat: TimelineEvent = {
+    type: 'combat',
     id: uuid(),
     monsters: [],
     monstersSurprised: false,
@@ -32,7 +33,7 @@ const emptyEncounter: Encounter = {
 
 const Simulation: FC<PropType> = memo(({ }) => {
     const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
-    const [encounters, setEncounters] = useStoredState<Encounter[]>('encounters', [emptyEncounter], z.array(EncounterSchema).parse)
+    const [timeline, setTimeline] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], z.array(TimelineEventSchema).parse)
     const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
@@ -54,17 +55,21 @@ const Simulation: FC<PropType> = memo(({ }) => {
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
         const hasPlayers = !!players.length
-        const hasMonsters = !!encounters.find(encounter => !!encounter.monsters.length)
+        const hasMonsters = !!timeline.find(item => item.type === 'combat' && !!item.monsters.length)
         return !hasPlayers && !hasMonsters
-    }, [players.length, encounters])
+    }, [players.length, timeline])
 
     // Memoize combatant names map
     const combatantNames = useMemo(() => {
         const names = new Map<string, string>()
         players.forEach(p => names.set(p.id, p.name))
-        encounters.forEach(e => e.monsters.forEach(m => names.set(m.id, m.name)))
+        timeline.forEach(item => {
+            if (item.type === 'combat') {
+                item.monsters.forEach(m => names.set(m.id, m.name))
+            }
+        })
         return names
-    }, [players, encounters])
+    }, [players, timeline])
 
     const [canSave, setCanSave] = useState(false)
     
@@ -88,17 +93,17 @@ const Simulation: FC<PropType> = memo(({ }) => {
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
-    }, [players, encounters, autoSimulate]);
+    }, [players, timeline, autoSimulate]);
 
     // Trigger simulation when not editing and needs resimulation
     useEffect(() => {
         if (!autoSimulate) return;
         
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
-            worker.runSimulation(players, encounters, 2511);
+            worker.runSimulation(players, timeline, 2511);
             setNeedsResimulation(false);
         }
-    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, encounters, worker, autoSimulate]);
+    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, timeline, worker, autoSimulate]);
 
     // Update display results when worker finishes
     useEffect(() => {
@@ -123,8 +128,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
     }, [worker.results, worker.events]);
 
 
-    function createEncounter() {
-        setEncounters([...encounters, {
+    function createCombat() {
+        setTimeline([...timeline, {
+            type: 'combat',
             id: uuid(), // Ensure new encounters have a unique ID
             monsters: [],
             monstersSurprised: false,
@@ -132,34 +138,32 @@ const Simulation: FC<PropType> = memo(({ }) => {
         }])
     }
 
-    function updateEncounter(index: number, newValue: Encounter) {
-        const encountersClone = clone(encounters)
-        encountersClone[index] = newValue
-        setEncounters(encountersClone)
+    function createShortRest() {
+        setTimeline([...timeline, {
+            type: 'shortRest',
+            id: uuid(),
+        }])
     }
 
-    function deleteEncounter(index: number) {
-        if (encounters.length <= 1) return // Must have at least one encounter
-        const encountersClone = clone(encounters)
-        encountersClone.splice(index, 1)
-        setEncounters(encountersClone)
+    function updateTimelineItem(index: number, newValue: TimelineEvent) {
+        const timelineClone = clone(timeline)
+        timelineClone[index] = newValue
+        setTimeline(timelineClone)
     }
 
-    function swapEncounters(index1: number, index2: number) {
-        const encountersClone = clone(encounters)
-        const tmp = encountersClone[index1]
-        encountersClone[index1] = encountersClone[index2]
-        encountersClone[index2] = tmp
-        setEncounters(encountersClone)
+    function deleteTimelineItem(index: number) {
+        if (timeline.length <= 1) return // Must have at least one item
+        const timelineClone = clone(timeline)
+        timelineClone.splice(index, 1)
+        setTimeline(timelineClone)
+    }
 
-        // Also swap simulation results if they exist to keep them aligned
-        if (simulationResults.length > Math.max(index1, index2)) {
-            const resultsClone = [...simulationResults]
-            const tmpRes = resultsClone[index1]
-            resultsClone[index1] = resultsClone[index2]
-            resultsClone[index2] = tmpRes
-            setSimulationResults(resultsClone)
-        }
+    function swapTimelineItems(index1: number, index2: number) {
+        const timelineClone = clone(timeline)
+        const tmp = timelineClone[index1]
+        timelineClone[index1] = timelineClone[index2]
+        timelineClone[index2] = tmp
+        setTimeline(timelineClone)
     }
 
     // Memoize action names map
@@ -250,73 +254,100 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         </>
                     </EncounterForm>
 
-                    {encounters.map((encounter, index) => (
-                        <div className={styles.encounter} key={index}>
-                            <EncounterForm
-                                mode='monster'
-                                encounter={encounter}
-                                onUpdate={(newValue) => updateEncounter(index, newValue)}
-                                onDelete={(index > 0) ? () => deleteEncounter(index) : undefined}
-                                onMoveUp={(!!encounters.length && !!index) ? () => swapEncounters(index, index - 1) : undefined}
-                                onMoveDown={(!!encounters.length && (index < encounters.length - 1)) ? () => swapEncounters(index, index + 1) : undefined}
-                                onEditingChange={setIsEditing}
-                            />
-                            {(worker.analysis?.encounters?.[index] ? (
-                                <EncounterResult 
-                                    value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]} 
-                                    analysis={worker.analysis.encounters[index]} 
-                                    isStale={isStale}
-                                    isPreliminary={worker.isRunning && worker.progress < 100}
-                                />
-                            ) : (!simulationResults[index] ? null : (
-                                <EncounterResult 
-                                    value={simulationResults[index]} 
-                                    analysis={null} 
-                                    isStale={isStale}
-                                    isPreliminary={worker.isRunning && worker.progress < 100}
-                                />
-                            )))}
-                            <div className={styles.buttonGroup}>
-                                <button
-                                    onClick={() => {
-                                        console.log('Manually rerunning simulation...');
-                                        worker.runSimulation(players, encounters, 2511);
-                                        setIsStale(false);
-                                    }}
-                                    className={styles.rerunButton}
-                                    disabled={worker.isRunning}>
-                                    <FontAwesomeIcon icon={faRedo} spin={worker.isRunning} />
-                                    Rerun
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setSelectedEncounterIndex(index);
-                                        setShowLogModal(true);
-                                    }}
-                                    className={styles.showLogButton}>
-                                    <FontAwesomeIcon icon={faEye} />
-                                    Show Log
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setSelectedEncounterIndex(index);
-                                        setShowDecileModal(true);
-                                    }}
-                                    className={styles.showDecileButton}>
-                                    <FontAwesomeIcon icon={faChartLine} />
-                                    Show Decile Analysis
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-
-<button
-                        onClick={createEncounter}
-                        className={styles.addEncounterBtn}>
-                        <FontAwesomeIcon icon={faPlus} />
-                        Add Encounter
-                    </button>
-
+                                        {timeline.map((item, index) => (
+                                            <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
+                                                {item.type === 'combat' ? (
+                                                    <EncounterForm
+                                                        mode='monster'
+                                                        encounter={item}
+                                                        onUpdate={(newValue) => updateTimelineItem(index, newValue)}
+                                                        onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
+                                                        onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
+                                                        onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
+                                                        onEditingChange={setIsEditing}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.restCard}>
+                                                        <div className={styles.restHeader}>
+                                                            <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
+                                                            <div className={styles.restControls}>
+                                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
+                                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
+                                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                                            </div>
+                                                        </div>
+                                                        <div className={styles.restBody}>
+                                                            Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {(worker.analysis?.encounters?.[index] && (item.type === 'combat' || worker.analysis.encounters[index].deciles?.length > 0) ? (
+                                                    <EncounterResult 
+                                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]} 
+                                                        analysis={worker.analysis.encounters[index]} 
+                                                        isStale={isStale}
+                                                        isPreliminary={worker.isRunning && worker.progress < 100}
+                                                    />
+                                                ) : (!simulationResults[index] ? null : (
+                                                    <EncounterResult 
+                                                        value={simulationResults[index]} 
+                                                        analysis={null} 
+                                                        isStale={isStale}
+                                                        isPreliminary={worker.isRunning && worker.progress < 100}
+                                                    />
+                                                )))}
+                                                
+                                                {item.type === 'combat' && (
+                                                    <div className={styles.buttonGroup}>
+                                                        <button
+                                                            onClick={() => {
+                                                                console.log('Manually rerunning simulation...');
+                                                                worker.runSimulation(players, timeline, 2511);
+                                                                setIsStale(false);
+                                                            }}
+                                                            className={styles.rerunButton}
+                                                            disabled={worker.isRunning}>
+                                                            <FontAwesomeIcon icon={faRedo} spin={worker.isRunning} />
+                                                            Rerun
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedEncounterIndex(index);
+                                                                setShowLogModal(true);
+                                                            }}
+                                                            className={styles.showLogButton}>
+                                                            <FontAwesomeIcon icon={faEye} />
+                                                            Show Log
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedEncounterIndex(index);
+                                                                setShowDecileModal(true);
+                                                            }}
+                                                            className={styles.showDecileButton}>
+                                                            <FontAwesomeIcon icon={faChartLine} />
+                                                            Show Decile Analysis
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                    
+                                        <div className={styles.addButtons}>
+                                            <button
+                                                onClick={createCombat}
+                                                className={styles.addEncounterBtn}>
+                                                <FontAwesomeIcon icon={faPlus} />
+                                                Add Combat
+                                            </button>
+                                            <button
+                                                onClick={createShortRest}
+                                                className={`${styles.addEncounterBtn} ${styles.restBtn}`}>
+                                                <FontAwesomeIcon icon={faBed} />
+                                                Add Short Rest
+                                            </button>
+                                        </div>
 {/* Decile Analysis Display */}
                     {worker.analysis && (
                         <DecileAnalysis analysis={worker.analysis.overall} />
@@ -349,11 +380,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     {(saving || loading) && (
                         <AdventuringDayForm
                             currentPlayers={players}
-                            currentEncounters={encounters}
+                            currentTimeline={timeline}
                             onCancel={() => { setSaving(false); setLoading(false); }}
-                            onApplyChanges={(newPlayers, newEncounters) => {
+                            onApplyChanges={(newPlayers, newTimeline) => {
                                 setPlayers(newPlayers);
-                                setEncounters(newEncounters);
+                                setTimeline(newTimeline);
                                 setSaving(false);
                                 setLoading(false);
                             }}

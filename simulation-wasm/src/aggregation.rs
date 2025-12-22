@@ -220,6 +220,8 @@ pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::ev
                     resource_penalty += *amount * 20.0; // Short rest
                 } else if r_type.contains("rage") || r_type.contains("indomitable") {
                     resource_penalty += *amount * 40.0; // Long rest
+                } else if r_type.contains("hitdice") || r_type.contains("hit die") {
+                    resource_penalty += *amount * 15.0; // Short rest healing
                 }
                 // Generic ClassResource penalty if not matched above
                 else if r_type.contains("classresource") {

@@ -1,6 +1,6 @@
 use crate::storage::{ScenarioParameters, SlotSelection};
 use crate::storage_manager::StorageManager;
-use crate::model::{Creature, Encounter, SimulationResult};
+use crate::model::{Creature, Encounter, SimulationResult, TimelineStep};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -158,12 +158,12 @@ impl DisplayManager {
     pub fn get_display_results(
         &mut self,
         players: &[Creature],
-        encounters: &[Encounter],
+        timeline: &[TimelineStep],
         iterations: usize,
     ) -> DisplayResult {
         let parameters = ScenarioParameters {
             players: players.to_vec(),
-            encounters: encounters.to_vec(),
+            timeline: timeline.to_vec(),
             iterations,
         };
 
@@ -381,8 +381,8 @@ impl DisplayManager {
         factors += 1;
 
         // Compare encounter count
-        let encounter_count_diff = (params1.encounters.len() as f64 - params2.encounters.len() as f64).abs();
-        let encounter_similarity = 1.0 - (encounter_count_diff / params1.encounters.len().max(params2.encounters.len()) as f64).min(1.0);
+        let encounter_count_diff = (params1.timeline.len() as f64 - params2.timeline.len() as f64).abs();
+        let encounter_similarity = 1.0 - (encounter_count_diff / params1.timeline.len().max(params2.timeline.len()) as f64).min(1.0);
         similarity *= encounter_similarity;
         factors += 1;
 
@@ -394,8 +394,8 @@ impl DisplayManager {
         }
 
         // Simple encounter comparison (could be enhanced)
-        if !params1.encounters.is_empty() && !params2.encounters.is_empty() {
-            let encounter_similarity = self.compare_encounter_lists(&params1.encounters, &params2.encounters);
+        if !params1.timeline.is_empty() && !params2.timeline.is_empty() {
+            let encounter_similarity = self.compare_encounter_lists(&params1.timeline, &params2.timeline);
             similarity *= encounter_similarity;
             factors += 1;
         }
@@ -475,7 +475,7 @@ impl DisplayManager {
     }
 
     /// Compare two encounter lists
-    fn compare_encounter_lists(&self, list1: &[Encounter], list2: &[Encounter]) -> f64 {
+    fn compare_encounter_lists(&self, list1: &[TimelineStep], list2: &[TimelineStep]) -> f64 {
         if list1.is_empty() && list2.is_empty() {
             return 1.0;
         }
@@ -487,16 +487,23 @@ impl DisplayManager {
         let max_len = list1.len().max(list2.len());
 
         for i in 0..max_len {
-            let encounter1 = list1.get(i);
-            let encounter2 = list2.get(i);
+            let step1 = list1.get(i);
+            let step2 = list2.get(i);
 
-            match (encounter1, encounter2) {
-                (Some(e1), Some(e2)) => {
+            match (step1, step2) {
+                (Some(TimelineStep::Combat(e1)), Some(TimelineStep::Combat(e2))) => {
                     let similarity = self.compare_encounters(e1, e2);
                     total_similarity += similarity;
                 }
-                _ => {
+                (Some(TimelineStep::ShortRest(_)), Some(TimelineStep::ShortRest(_))) => {
+                    total_similarity += 1.0;
+                }
+                (None, _) | (_, None) => {
                     total_similarity += 0.5;
+                }
+                _ => {
+                    // Different types at same position
+                    total_similarity += 0.0;
                 }
             }
         }
@@ -539,12 +546,12 @@ impl DisplayManager {
         }
 
         // Encounter count difference
-        if params1.encounters.len() != params2.encounters.len() {
+        if params1.timeline.len() != params2.timeline.len() {
             differences.push(ParameterDifference {
                 parameter_name: "Encounter Count".to_string(),
-                current_value: params1.encounters.len().to_string(),
-                stored_value: params2.encounters.len().to_string(),
-                severity: ((params1.encounters.len() as f64 - params2.encounters.len() as f64).abs() / params1.encounters.len().max(params2.encounters.len()) as f64).min(1.0),
+                current_value: params1.timeline.len().to_string(),
+                stored_value: params2.timeline.len().to_string(),
+                severity: ((params1.timeline.len() as f64 - params2.timeline.len() as f64).abs() / params1.timeline.len().max(params2.timeline.len()) as f64).min(1.0),
             });
         }
 
@@ -555,7 +562,7 @@ impl DisplayManager {
     fn parameters_equal(&self, params1: &ScenarioParameters, params2: &ScenarioParameters) -> bool {
         params1.iterations == params2.iterations
             && params1.players.len() == params2.players.len()
-            && params1.encounters.len() == params2.encounters.len()
+            && params1.timeline.len() == params2.timeline.len()
             && self.calculate_similarity(params1, params2) > 0.95
     }
 }
@@ -629,13 +636,13 @@ mod tests {
 
         let params1 = ScenarioParameters {
             players: vec![create_test_creature("Fighter", 50.0, 16.0)],
-            encounters: vec![],
+            timeline: vec![],
             iterations: 100,
         };
 
         let params2 = ScenarioParameters {
             players: vec![create_test_creature("Fighter", 50.0, 16.0), create_test_creature("Cleric", 40.0, 14.0)],
-            encounters: vec![],
+            timeline: vec![],
             iterations: 200,
         };
 
@@ -685,16 +692,16 @@ impl DisplayManagerWrapper {
     pub fn get_display_results(
         &self,
         players: &JsValue,
-        encounters: &JsValue,
+        timeline: &JsValue,
         iterations: usize,
     ) -> Result<JsValue, JsValue> {
         let players: Vec<Creature> = serde_wasm_bindgen::from_value(players.clone())
             .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-        let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters.clone())
-            .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+        let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline.clone())
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
         let result = self.inner.lock().unwrap()
-            .get_display_results(&players, &encounters, iterations);
+            .get_display_results(&players, &timeline, iterations);
         
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))

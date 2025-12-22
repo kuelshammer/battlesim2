@@ -6,7 +6,7 @@ Goal: Transition from "Short Rest After" checkbox to a discrete timeline event.
 - [x] Task: Create `TimelineEvent` model (cc81010)
     - Define a new union type `TimelineEvent` (`Encounter | ShortRest`) in `src/model/model.ts`.
     - Update `AdventuringDay` type to use `TimelineEvent[]`.
-- [ ] Task: Update Rust model for timeline
+- [~] Task: Update Rust model for timeline
     - Implement `TimelineStep` enum in `simulation-wasm/src/model.rs`.
     - Update simulation entry points to accept a vector of timeline steps.
 

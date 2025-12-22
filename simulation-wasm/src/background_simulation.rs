@@ -1,4 +1,4 @@
-use crate::model::{Creature, Encounter, SimulationResult};
+use crate::model::SimulationResult;
 use crate::user_interaction::ScenarioParameters;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
@@ -320,7 +320,7 @@ impl BackgroundSimulationEngine {
         // Use the existing simulation engine
         let runs = crate::run_event_driven_simulation_rust(
             parameters.players.clone(),
-            parameters.encounters.clone(),
+            parameters.timeline.clone(),
             1, // Single iteration
             false, // log_enabled
         );
@@ -389,7 +389,7 @@ mod tests {
     fn test_background_simulation_creation() {
         let parameters = ScenarioParameters {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
-            encounters: vec![],
+            timeline: vec![],
             iterations: 100,
         };
 
@@ -418,7 +418,7 @@ mod tests {
     fn test_cancellation() {
         let parameters = ScenarioParameters {
             players: vec![create_test_creature("Player1", 10.0, 15.0)],
-            encounters: vec![],
+            timeline: vec![],
             iterations: 100,
         };
 

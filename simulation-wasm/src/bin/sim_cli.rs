@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
-use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun};
+use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun, TimelineStep};
 use simulation_wasm::decile_analysis::{run_decile_analysis, run_encounter_analysis, AggregateOutput};
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
@@ -142,7 +142,7 @@ fn main() {
 // --- Aggregate Subcommand ---
 
 fn run_aggregate(scenario_path: &PathBuf) {
-    let (players, encounters, scenario_name) = load_scenario(scenario_path);
+    let (players, timeline, scenario_name) = load_scenario(scenario_path);
 
     // Get party size
     let party_size = players.len();
@@ -150,7 +150,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     // Run 2511 iterations to match frontend and methodology (10 slices of 251 + 1 median)
     let iterations = 2511;
     println!("Running {} iterations for Adventuring Day: {}...", iterations, scenario_name);
-    let mut results = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let mut results = run_event_driven_simulation_rust(players, timeline, iterations, false);
 
     // Sort results by score from worst to best performance
     results.sort_by(|a, b| calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal));
@@ -213,14 +213,14 @@ fn run_aggregate(scenario_path: &PathBuf) {
 // --- Log Subcommand ---
 
 fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
-    let (players, encounters, _) = load_scenario(scenario_path);
+    let (players, timeline, _) = load_scenario(scenario_path);
 
     // If run_index is provided, run that many + 1 and pick the specific one
     // Otherwise, run a single simulation with logging enabled
     let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players, encounters, idx + 1, true)
+        run_event_driven_simulation_rust(players, timeline, idx + 1, true)
     } else {
-        run_event_driven_simulation_rust(players, encounters, 1, true)
+        run_event_driven_simulation_rust(players, timeline, 1, true)
     };
 
     if runs.is_empty() {
@@ -333,12 +333,12 @@ fn print_markdown_log(result: &SimulationResult, events: &[String]) {
 // --- Find Median Subcommand ---
 
 fn run_find_median(scenario_path: &PathBuf) {
-    let (players, encounters, _) = load_scenario(scenario_path);
+    let (players, timeline, _) = load_scenario(scenario_path);
 
     // Run 2511 iterations
     let iterations = 2511;
     println!("Running {} iterations...", iterations);
-    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false);
 
     // Results are sorted by score. Middle decile is around indices 1004-1506.
     // We want to find the run closest to the median of the MIDDLE decile.
@@ -438,14 +438,14 @@ struct ActionStats {
 }
 
 fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
-    let (players, encounters, _) = load_scenario(scenario_path);
+    let (players, timeline, _) = load_scenario(scenario_path);
 
     // Run simulation
     let _idx = run_index.unwrap_or(0);
     let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players.clone(), encounters.clone(), idx + 1, true)
+        run_event_driven_simulation_rust(players.clone(), timeline.clone(), idx + 1, true)
     } else {
-        run_event_driven_simulation_rust(players.clone(), encounters.clone(), 1, true)
+        run_event_driven_simulation_rust(players.clone(), timeline.clone(), 1, true)
     };
 
     // Extract results and events from the runs
@@ -579,13 +579,15 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
 // --- Math Subcommand ---
 
 fn run_math(scenario_path: &PathBuf, attacker_name: &str, defender_name: &str) {
-    let (players, encounters, _) = load_scenario(scenario_path);
+    let (players, timeline, _) = load_scenario(scenario_path);
 
     // Find Attacker and Defender
-    // We search in players and first encounter monsters
+    // We search in players and all combat encounters
     let mut all_creatures: Vec<Creature> = players.clone();
-    if let Some(encounter) = encounters.first() {
-        all_creatures.extend(encounter.monsters.clone());
+    for step in &timeline {
+        if let TimelineStep::Combat(encounter) = step {
+            all_creatures.extend(encounter.monsters.clone());
+        }
     }
 
     let attacker = all_creatures
@@ -698,7 +700,7 @@ fn run_math(scenario_path: &PathBuf, attacker_name: &str, defender_name: &str) {
 
 // --- Helper Functions ---
 
-fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<Encounter>, String) {
+fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<TimelineStep>, String) {
     let content = fs::read_to_string(path).expect("Failed to read scenario file");
     let data: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
 
@@ -709,16 +711,22 @@ fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<Encounter>, String) {
         .to_string();
     let players: Vec<Creature> =
         serde_json::from_value(data["players"].clone()).expect("Failed to parse players");
-    let encounters: Vec<Encounter> =
-        serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
+    
+    let timeline: Vec<TimelineStep> = if let Some(t) = data.get("timeline") {
+        serde_json::from_value(t.clone()).expect("Failed to parse timeline")
+    } else {
+        // Fallback to legacy encounters field
+        let encounters: Vec<Encounter> = serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
+        encounters.into_iter().map(TimelineStep::Combat).collect()
+    };
 
-    (players, encounters, name)
+    (players, timeline, name)
 }
 
 // --- Sweep Subcommand ---
 
 fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: &str) {
-    let (players, encounters, _) = load_scenario(scenario_path);
+    let (players, timeline, _) = load_scenario(scenario_path);
 
     // Parse range (e.g., "10..20")
     let parts: Vec<&str> = range_str.split("..").collect();
@@ -740,7 +748,7 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
     for value in start..=end {
         // Clone and modify scenario
         let mut modified_players = players.clone();
-        let mut modified_encounters = encounters.clone();
+        let mut modified_timeline = timeline.clone();
 
         // Find and modify target in players
         for player in &mut modified_players {
@@ -750,10 +758,12 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
         }
 
         // Find and modify target in monsters
-        for encounter in &mut modified_encounters {
-            for monster in &mut encounter.monsters {
-                if monster.name == target_name || monster.id == target_name {
-                    modify_stat(monster, stat, value as f64);
+        for step in &mut modified_timeline {
+            if let TimelineStep::Combat(encounter) = step {
+                for monster in &mut encounter.monsters {
+                    if monster.name == target_name || monster.id == target_name {
+                        modify_stat(monster, stat, value as f64);
+                    }
                 }
             }
         }
@@ -762,7 +772,7 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
         let iterations = 201;
         let runs = run_event_driven_simulation_rust(
             modified_players,
-            modified_encounters,
+            modified_timeline,
             iterations,
             false,
         );
@@ -834,15 +844,15 @@ fn modify_stat(creature: &mut Creature, stat: &str, value: f64) {
 fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
     println!("=== Scenario Comparison ===\n");
 
-    let (players_a, encounters_a, name_a) = load_scenario(scenario_a_path);
-    let (players_b, encounters_b, name_b) = load_scenario(scenario_b_path);
+    let (players_a, timeline_a, name_a) = load_scenario(scenario_a_path);
+    let (players_b, timeline_b, name_b) = load_scenario(scenario_b_path);
 
     // Run both
     let iterations = 2511;
     println!("Running {} iterations for each scenario...\n", iterations);
 
-    let runs_a = run_event_driven_simulation_rust(players_a, encounters_a, iterations, false);
-    let runs_b = run_event_driven_simulation_rust(players_b, encounters_b, iterations, false);
+    let runs_a = run_event_driven_simulation_rust(players_a, timeline_a, iterations, false);
+    let runs_b = run_event_driven_simulation_rust(players_b, timeline_b, iterations, false);
 
     // Extract results from runs
     let results_a: Vec<SimulationResult> = runs_a.into_iter().map(|run| run.result).collect();

@@ -1,10 +1,10 @@
-use simulation_wasm::model::{Creature, Encounter};
+use simulation_wasm::model::{Creature, Encounter, TimelineStep};
 use simulation_wasm::run_event_driven_simulation_rust;
 use simulation_wasm::decile_analysis::run_decile_analysis;
 use std::fs;
 use std::path::PathBuf;
 
-fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<Encounter>, String) {
+fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<TimelineStep>, String) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("tests/scenarios");
     path.push(filename);
@@ -14,19 +14,24 @@ fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<Encounter>, String) {
 
     let players: Vec<Creature> =
         serde_json::from_value(data["players"].clone()).expect("Failed to parse players");
-    let encounters: Vec<Encounter> =
-        serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
     
-    (players, encounters, filename.to_string())
+    let timeline: Vec<TimelineStep> = if let Some(t) = data.get("timeline") {
+        serde_json::from_value(t.clone()).expect("Failed to parse timeline")
+    } else {
+        let encounters: Vec<Encounter> = serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
+        encounters.into_iter().map(TimelineStep::Combat).collect()
+    };
+    
+    (players, timeline, filename.to_string())
 }
 
 fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     println!("Running regression test for: {}", scenario_file);
-    let (players, encounters, _) = load_scenario(scenario_file);
+    let (players, timeline, _) = load_scenario(scenario_file);
     let iterations = 505; // Sufficient for decile analysis
     
     // Run simulation
-    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false);
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
     
     // Sort results (required for decile analysis)

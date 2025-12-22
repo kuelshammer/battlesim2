@@ -262,6 +262,65 @@
         border-bottom: 1px solid #444;
     }
 
+    .addButtons {
+        display: flex;
+        gap: 1em;
+        margin-top: 1em;
+
+        button {
+            flex: 1;
+            margin: 0;
+        }
+
+        .restBtn {
+            background: var(--bg-secondary, #333);
+            border-color: var(--accent-color, #4a9eff);
+            &:hover { background: var(--bg-tertiary, #444); }
+        }
+    }
+
+    .restCard {
+        border: 1px solid var(--accent-color, #4a9eff);
+        background: rgba(74, 158, 255, 0.05);
+        border-radius: 8px;
+        padding: 1em;
+        margin-bottom: 1em;
+
+        .restHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(74, 158, 255, 0.2);
+            margin-bottom: 0.5em;
+            padding-bottom: 0.5em;
+
+            h3 { margin: 0; color: var(--accent-color, #4a9eff); }
+        }
+
+        .restControls {
+            display: flex;
+            gap: 5px;
+
+            button {
+                padding: 2px 8px;
+                margin: 0;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: #fff;
+
+                &.deleteBtn {
+                    color: #f66;
+                    &:hover { background: rgba(255, 100, 100, 0.2); }
+                }
+            }
+        }
+
+        .restBody {
+            color: #aaa;
+            font-style: italic;
+        }
+    }
+
     .closeButton {
         background: none;
         border: none;

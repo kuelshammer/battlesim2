@@ -792,8 +792,14 @@ mod tests {
             id: "warrior1".to_string(),
             creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
+            final_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
             actions: Vec::new(),
         };
 
@@ -868,17 +874,17 @@ mod tests {
             id: "player1".to_string(),
             creature: player_creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         };
 
-        let combatant2 = Combattant { team: 0, 
+        let combatant2 = Combattant { team: 1, 
             id: "monster1".to_string(),
             creature: monster_creature,
             initiative: 5.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         };
 

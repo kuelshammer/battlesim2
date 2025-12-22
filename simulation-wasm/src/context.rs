@@ -1,7 +1,7 @@
 use crate::enums::CreatureCondition;
 use crate::events::{Event, EventBus};
 use crate::model::{Action, Combattant};
-use crate::resources::{ActionCost, ResetType, ResourceLedger, ResourceType};
+use crate::resources::{ActionCost, ResetType, ResourceLedger};
 use crate::combat_stats::{CombatStatsCache, CombatantStats};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -693,8 +693,8 @@ mod tests {
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         }];
 
@@ -740,8 +740,8 @@ mod tests {
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         }];
 
@@ -791,8 +791,8 @@ mod tests {
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         }];
 
@@ -845,8 +845,8 @@ mod tests {
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         }];
 

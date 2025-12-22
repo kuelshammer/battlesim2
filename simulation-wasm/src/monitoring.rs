@@ -392,7 +392,7 @@ mod tests {
         metrics.retried_iterations = 2;
         
         assert_eq!(metrics.success_rate(), 0.95);
-        assert_eq!(metrics.failure_rate(), 0.05);
+        assert!((metrics.failure_rate() - 0.05).abs() < 0.001);
         assert_eq!(metrics.retry_rate(), 0.4);
         assert!(metrics.reliability_score() > 0.79); // Allow for floating point precision
     }

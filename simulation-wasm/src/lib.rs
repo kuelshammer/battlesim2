@@ -38,8 +38,7 @@ pub mod storage_integration; // Stub storage integration module
 
 use wasm_bindgen::prelude::*;
 use web_sys::console;
-use crate::model::{Creature, Encounter, SimulationResult, Combattant, CreatureState};
-use crate::user_interaction::ScenarioParameters;
+use crate::model::{Creature, SimulationResult, Combattant, CreatureState, TimelineStep};
 use crate::execution::ActionExecutionEngine;
 use crate::storage_manager::StorageManager;
 use crate::resources::ResetType;
@@ -69,13 +68,13 @@ struct PartialOutput {
 }
 
 #[wasm_bindgen]
-pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-    let runs = run_event_driven_simulation_rust(players, encounters, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false);
 
     // Extract results from runs for backward compatibility
     let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
@@ -90,14 +89,14 @@ pub fn run_simulation_wasm(players: JsValue, encounters: JsValue, iterations: us
 #[wasm_bindgen]
 pub fn run_simulation_with_callback(
     players: JsValue,
-    encounters: JsValue,
+    timeline: JsValue,
     iterations: usize,
     callback: &js_sys::Function,
 ) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
     let mut all_events = Vec::new();
     let mut results = Vec::new();
@@ -105,7 +104,7 @@ pub fn run_simulation_with_callback(
     let batch_size = (iterations / 20).max(1); // Report progress every 5%
 
     for i in 0..iterations {
-        let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
         results.push(result);
 
         if i == 0 {
@@ -219,17 +218,17 @@ pub fn run_simulation_with_callback(
 static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[wasm_bindgen]
-pub fn run_event_driven_simulation(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+pub fn run_event_driven_simulation(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
     let mut all_events = Vec::new();
     let mut results = Vec::new();
 
     for i in 0..iterations {
-        let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
         results.push(result);
 
         if i == 0 {
@@ -280,14 +279,14 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
 /// Returns all simulation runs with their results and events
 pub fn run_event_driven_simulation_rust(
     players: Vec<Creature>,
-    encounters: Vec<Encounter>,
+    timeline: Vec<TimelineStep>,
     iterations: usize,
     _log_enabled: bool,
 ) -> Vec<crate::model::SimulationRun> {
     let mut all_runs = Vec::new();
 
     for i in 0..iterations {
-        let (result, events) = run_single_event_driven_simulation(&players, &encounters, i == 0);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
         let run = crate::model::SimulationRun {
             result,
             events,
@@ -305,7 +304,7 @@ pub fn run_event_driven_simulation_rust(
     all_runs
 }
 
-fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encounter], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
+fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::model::TimelineStep], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
     let mut players_with_state = Vec::new();
 
@@ -344,8 +343,8 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
 
             // Create Combattant for ActionExecutionEngine
             let combattant = Combattant {
+                team: 0, 
                 id: id.clone(),
-                team: 0, // Team 0 for players
                 creature: p.clone(),
                 initiative: crate::utilities::roll_initiative(&p),
                 initial_state: state.clone(),
@@ -359,73 +358,84 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
 
     let mut encounter_results = Vec::new();
 
-    for (encounter_idx, encounter) in encounters.iter().enumerate() {
-        // Create enemy combatants - IDs include encounter index to be globally unique
-        let mut enemies = Vec::new();
-        for (group_idx, monster) in encounter.monsters.iter().enumerate() {
-            for i in 0..monster.count as i32 {
-                let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
-                let mut m = monster.clone();
-                m.name = name;
-                let id = format!("enc{}-m-{}-{}-{}", encounter_idx, group_idx, i, monster.id);
+    for (step_idx, step) in timeline.iter().enumerate() {
+        match step {
+            crate::model::TimelineStep::Combat(encounter) => {
+                // Create enemy combatants - IDs include encounter index to be globally unique
+                let mut enemies = Vec::new();
+                for (group_idx, monster) in encounter.monsters.iter().enumerate() {
+                    for i in 0..monster.count as i32 {
+                        let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
+                        let mut m = monster.clone();
+                        m.name = name;
+                        let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
 
-                let enemy_state = CreatureState {
-                    current_hp: m.hp,
-                    temp_hp: None,
-                    buffs: HashMap::new(),
-                    resources: {
-                        let mut r = crate::model::SerializableResourceLedger::from(m.initialize_ledger());
-                        // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-                        let action_uses = crate::actions::get_remaining_uses(&m, "long rest", None);
-                        for (action_id, uses) in action_uses {
-                            r.current.insert(action_id, uses);
-                        }
-                        r
-                    },
-                    upcoming_buffs: HashMap::new(),
-                    used_actions: HashSet::new(),
-                    concentrating_on: None,
-                    actions_used_this_encounter: HashSet::new(),
-                    bonus_action_used: false,
-                    known_ac: HashMap::new(),
-                    arcane_ward_hp: None,
-                };
+                        let enemy_state = CreatureState {
+                            current_hp: m.hp,
+                            temp_hp: None,
+                            buffs: HashMap::new(),
+                            resources: {
+                                let mut r = crate::model::SerializableResourceLedger::from(m.initialize_ledger());
+                                // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+                                let action_uses = crate::actions::get_remaining_uses(&m, "long rest", None);
+                                for (action_id, uses) in action_uses {
+                                    r.current.insert(action_id, uses);
+                                }
+                                r
+                            },
+                            upcoming_buffs: HashMap::new(),
+                            used_actions: HashSet::new(),
+                            concentrating_on: None,
+                            actions_used_this_encounter: HashSet::new(),
+                            bonus_action_used: false,
+                            known_ac: HashMap::new(),
+                            arcane_ward_hp: None,
+                        };
 
-                let enemy_combattant = Combattant {
-                    id: id.clone(),
-                    team: 1, // Team 1 for monsters
-                    creature: m.clone(),
-                    initiative: crate::utilities::roll_initiative(&m),
-                    initial_state: enemy_state.clone(),
-                    final_state: enemy_state,
-                    actions: Vec::new(),
-                };
+                        let enemy_combattant = Combattant {
+                            team: 1, 
+                            id: id.clone(),
+                            creature: m.clone(),
+                            initiative: crate::utilities::roll_initiative(&m),
+                            initial_state: enemy_state.clone(),
+                            final_state: enemy_state,
+                            actions: Vec::new(),
+                        };
 
-                enemies.push(enemy_combattant);
+                        enemies.push(enemy_combattant);
+                    }
+                }
+
+                // Combine all combatants for this encounter
+                let mut all_combatants = players_with_state.clone();
+                all_combatants.extend(enemies);
+
+                // Create ActionExecutionEngine
+                let mut engine = ActionExecutionEngine::new(all_combatants.clone());
+
+                // Run encounter using the ActionExecutionEngine
+                let encounter_result = engine.execute_encounter();
+
+                // Collect events (raw)
+                all_events.extend(encounter_result.event_history.clone());
+
+                // Convert to old format for compatibility
+                let legacy_result = convert_to_legacy_simulation_result(&encounter_result, step_idx);
+                encounter_results.push(legacy_result);
+
+                // Update player states for next encounter (no rest here, rest is its own step)
+                players_with_state = update_player_states_for_next_encounter(&players_with_state, &encounter_result, false);
+            },
+            crate::model::TimelineStep::ShortRest(_) => {
+                // Apply standalone short rest recovery
+                players_with_state = apply_short_rest_standalone(&players_with_state, &mut all_events);
+                
+                // Add an empty encounter result to maintain timeline indexing in results
+                encounter_results.push(crate::model::EncounterResult {
+                    stats: HashMap::new(),
+                    rounds: Vec::new(),
+                });
             }
-        }
-
-        // Combine all combatants for this encounter
-        let mut all_combatants = players_with_state.clone();
-        all_combatants.extend(enemies);
-
-        // Create ActionExecutionEngine
-        let mut engine = ActionExecutionEngine::new(all_combatants.clone());
-
-        // Run encounter using the ActionExecutionEngine
-        let encounter_result = engine.execute_encounter();
-
-        // Collect events (raw)
-        all_events.extend(encounter_result.event_history.clone());
-
-        // Convert to old format for compatibility
-        let legacy_result = convert_to_legacy_simulation_result(&encounter_result, encounter_idx);
-        encounter_results.push(legacy_result);
-
-        // Update player states for next encounter
-        if encounter_idx < encounters.len() - 1 {
-            let is_short_rest = encounters[encounter_idx].short_rest.unwrap_or(false);
-            players_with_state = update_player_states_for_next_encounter(&players_with_state, &encounter_result, is_short_rest);
         }
     }
 
@@ -437,6 +447,57 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     result.score = Some(score);
 
     (result, all_events)
+}
+
+fn apply_short_rest_standalone(players: &[Combattant], events: &mut Vec<crate::events::Event>) -> Vec<Combattant> {
+    let mut updated_players = Vec::new();
+    
+    for player in players {
+        let mut updated_player = player.clone();
+        
+        let mut current_hp = player.final_state.current_hp;
+        let mut resources = crate::resources::ResourceLedger::from(player.final_state.resources.clone());
+
+        // 1. Reset Short Rest resources
+        resources.reset_by_type(&ResetType::ShortRest);
+        
+        // 2. Basic Short Rest healing
+        if current_hp < player.creature.hp {
+            if current_hp == 0 {
+                current_hp = 1; // Wake up
+            }
+            let max_hp = player.creature.hp;
+            let heal_amount = (max_hp / 4).max(1);
+            current_hp = (current_hp + heal_amount).min(max_hp);
+            
+            // Emit recovery events
+            events.push(crate::events::Event::ResourceConsumed {
+                unit_id: player.id.clone(),
+                resource_type: "HitDice".to_string(),
+                amount: 1.0,
+            });
+            events.push(crate::events::Event::HealingApplied {
+                target_id: player.id.clone(),
+                amount: heal_amount as f64,
+                source_id: player.id.clone(),
+            });
+        }
+
+        // Update state
+        let next_state = crate::model::CreatureState {
+            current_hp,
+            temp_hp: None, // Temp HP lost on rest
+            resources: resources.into(),
+            ..player.final_state.clone()
+        };
+        
+        updated_player.initial_state = next_state.clone();
+        updated_player.final_state = next_state;
+        
+        updated_players.push(updated_player);
+    }
+    
+    updated_players
 }
 
 fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
@@ -727,7 +788,7 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayConfig};
 use crate::progress_ui::{ProgressUIManager, ProgressUIConfig};
 use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteractionConfig};
-use crate::background_simulation::{BackgroundSimulationEngine, SimulationPriority};
+use crate::background_simulation::BackgroundSimulationEngine;
 use crate::queue_manager::{QueueManager, QueueManagerConfig};
 use crate::storage_integration::StorageIntegration;
 use std::sync::Arc;
@@ -817,17 +878,17 @@ fn get_gui_integration() -> &'static Mutex<GuiIntegration> {
 
 /// Get display results for current parameters
 #[wasm_bindgen]
-pub fn get_display_results(players: JsValue, encounters: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+pub fn get_display_results(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let gui = get_gui_integration().lock().unwrap();
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
     
     let display_result = {
         let mut display_manager = gui.display_manager.lock().unwrap();
-        display_manager.get_display_results(&players, &encounters, iterations)
+        display_manager.get_display_results(&players, &timeline, iterations)
     };
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -901,7 +962,7 @@ pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn start_background_simulation(
     players: JsValue, 
-    encounters: JsValue, 
+    timeline: JsValue, 
     iterations: usize,
     priority_str: &str
 ) -> Result<JsValue, JsValue> {
@@ -909,21 +970,21 @@ pub fn start_background_simulation(
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
     
     let priority = match priority_str {
-        "Low" => SimulationPriority::Low,
-        "Normal" => SimulationPriority::Normal,
-        "High" => SimulationPriority::High,
-        "Critical" => SimulationPriority::Critical,
+        "Low" => crate::background_simulation::SimulationPriority::Low,
+        "Normal" => crate::background_simulation::SimulationPriority::Normal,
+        "High" => crate::background_simulation::SimulationPriority::High,
+        "Critical" => crate::background_simulation::SimulationPriority::Critical,
         _ => return Err(JsValue::from_str(&format!("Invalid priority: {}", priority_str))),
     };
     
-    let event = UserEvent::RequestSimulation {
-        parameters: ScenarioParameters {
+    let event = crate::user_interaction::UserEvent::RequestSimulation {
+        parameters: crate::user_interaction::ScenarioParameters {
             players: players.clone(),
-            encounters: encounters.clone(),
+            timeline: timeline.clone(),
             iterations,
         },
         priority,
@@ -1155,20 +1216,20 @@ pub fn get_progress_summary() -> Result<JsValue, JsValue> {
 #[wasm_bindgen]
 pub fn handle_parameters_changed(
     players: JsValue,
-    encounters: JsValue,
+    timeline: JsValue,
     iterations: usize,
 ) -> Result<JsValue, JsValue> {
     let gui = get_gui_integration().lock().unwrap();
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
-    let encounters: Vec<Encounter> = serde_wasm_bindgen::from_value(encounters)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse encounters: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
     
-    let event = UserEvent::ParametersChanged {
-        parameters: ScenarioParameters {
+    let event = crate::user_interaction::UserEvent::ParametersChanged {
+        parameters: crate::user_interaction::ScenarioParameters {
             players: players.clone(),
-            encounters: encounters.clone(),
+            timeline: timeline.clone(),
             iterations,
         },
     };

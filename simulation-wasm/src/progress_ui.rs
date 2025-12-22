@@ -591,6 +591,7 @@ mod tests {
     fn test_compact_indicator() {
         let sim_id = BackgroundSimulationId::new();
         let mut progress_info = ProgressInfo::new(sim_id);
+        progress_info.state = ProgressState::Running;
         progress_info.visual.percentage = 0.75;
         progress_info.visual.phase = "Running".to_string();
 
