@@ -20,7 +20,7 @@ Goal: Move monster data to a public JSON file to improve performance.
     - Reduced `src/data/monsters.ts` to only include `DefaultMonsters`.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Monster Data Externalization' (83410)
 
-## Phase 3: Zod Stabilization
+## Phase 3: Zod Stabilization [checkpoint: e08d50d]
 Goal: Downgrade Zod to a stable version and restore type safety.
 
 - [x] Task: Downgrade Zod (84396)
@@ -29,4 +29,4 @@ Goal: Downgrade Zod to a stable version and restore type safety.
     - Re-implement Zod validation in `src/model/import/5etools-schema.ts`.
 - [x] Task: Verify type safety (0cfb06c)
     - Run `npm run type-check`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Zod Stabilization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Zod Stabilization' (e08d50d)
