@@ -17,6 +17,7 @@ import DecileAnalysis from "./decileAnalysis"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
+import FuelGauge from "./FuelGauge"
 
 
 
@@ -74,6 +75,40 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     const [canSave, setCanSave] = useState(false)
     
+    const encounterWeights = useMemo(() => {
+        const weights: number[] = [];
+        timeline.forEach(item => {
+            if (item.type === 'combat') {
+                const role = item.targetRole || 'Standard';
+                const weight = role === 'Skirmish' ? 1 : role === 'Standard' ? 2 : role === 'Elite' ? 3 : 4;
+                weights.push(weight);
+            }
+        });
+        return weights;
+    }, [timeline]);
+
+    const pacingData = useMemo(() => {
+        if (!worker.analysis?.overall.globalMedian?.resourceTimeline) return null;
+        const timeline = worker.analysis.overall.globalMedian.resourceTimeline;
+        const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
+        
+        const actualCosts: number[] = [];
+        for (let i = 0; i < timeline.length - 1; i++) {
+            actualCosts.push(Math.max(0, timeline[i] - timeline[i+1]));
+        }
+
+        let currentDrift = 0;
+        const cumulativeDrifts: number[] = [];
+        
+        actualCosts.forEach((cost, i) => {
+            const target = (encounterWeights[i] / totalWeight) * 100;
+            currentDrift += (cost - target);
+            cumulativeDrifts.push(currentDrift);
+        });
+
+        return { actualCosts, cumulativeDrifts, totalWeight };
+    }, [worker.analysis, encounterWeights]);
+
     useEffect(() => {
         setCanSave(!isEmptyResult)
     }, [isEmptyResult])
@@ -101,8 +136,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
         if (!autoSimulate) return;
         
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
-            worker.runSimulation(players, timeline, 2511);
-            setNeedsResimulation(false);
+            if (Array.isArray(timeline) && timeline.length > 0) {
+                worker.runSimulation(players, timeline, 2511);
+                setNeedsResimulation(false);
+            }
         }
     }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, timeline, worker, autoSimulate]);
 
@@ -254,7 +291,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         onEditingChange={setIsEditing}>
                         <>
                             {!isEmptyResult ? (
-                                <button onClick={() => { setPlayers([]); setEncounters([emptyEncounter]) }}>
+                                <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }}>
                                     <FontAwesomeIcon icon={faTrash} />
                                     Clear Adventuring Day
                                 </button>
@@ -274,10 +311,25 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         </>
                     </EncounterForm>
 
-                                        {timeline.map((item, index) => (
-                                            <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
-                                                {item.type === 'combat' ? (
-                                                    <EncounterForm
+                    {worker.analysis && pacingData && (
+                        <FuelGauge 
+                            plannedWeights={encounterWeights} 
+                            actualCosts={pacingData.actualCosts} 
+                        />
+                    )}
+
+                                        {timeline.map((item, index) => {
+                                            // Find index within combat-only array for pacingData
+                                            const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
+                                            const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
+                                            const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
+                                            const actualPercent = pacingData?.actualCosts[combatIndex];
+                                            const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
+
+                                            return (
+                                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
+                                                    {item.type === 'combat' ? (
+                                                        <EncounterForm
                                                         mode='monster'
                                                         encounter={item}
                                                         onUpdate={(newValue) => updateTimelineItem(index, newValue)}
@@ -287,7 +339,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         onEditingChange={setIsEditing}
                                                         onAutoAdjust={() => {
                                                             setSelectedEncounterIndex(index);
-                                                            worker.autoAdjustEncounter(players, item.monsters);
+                                                            worker.autoAdjustEncounter(players, item.monsters, timeline, index);
                                                         }}
                                                         autoAdjustDisabled={worker.isRunning}
                                                     />
@@ -313,6 +365,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         analysis={worker.analysis.encounters[index]} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
+                                                        targetPercent={targetPercent}
+                                                        actualPercent={actualPercent}
+                                                        cumulativeDrift={cumulativeDrift}
                                                     />
                                                 ) : (simulationResults[index] ? (
                                                     <EncounterResult 
@@ -320,6 +375,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         analysis={null} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
+                                                        targetPercent={targetPercent}
+                                                        actualPercent={actualPercent}
+                                                        cumulativeDrift={cumulativeDrift}
                                                     />
                                                 ) : null))}
                                                 
@@ -357,7 +415,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                     </div>
                                                 )}
                                             </div>
-                                        ))}
+                                        )
+                                    })}
                     
                                         <div className={styles.addButtons}>
                                             <button

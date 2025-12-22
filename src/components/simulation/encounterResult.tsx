@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
 import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
+import DeltaBadge from "./DeltaBadge"
 
 type TeamPropType = {
     round: Round,
@@ -117,9 +118,12 @@ type PropType = {
     analysis?: AggregateOutput | null,
     isStale?: boolean,
     isPreliminary?: boolean,
+    targetPercent?: number,
+    actualPercent?: number,
+    cumulativeDrift?: number,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPreliminary }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -140,6 +144,15 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
     return (
         <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`}>
             {isStale && <div className={styles.staleBadge}>Out of Date</div>}
+            
+            {(targetPercent !== undefined && actualPercent !== undefined) && (
+                <DeltaBadge 
+                    targetCost={targetPercent} 
+                    actualCost={actualPercent} 
+                    cumulativeDrift={cumulativeDrift}
+                />
+            )}
+
             <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} />
             <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
