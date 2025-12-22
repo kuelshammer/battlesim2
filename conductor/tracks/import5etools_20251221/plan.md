@@ -17,7 +17,7 @@ Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 - [x] Task: Implement regex-based parsing for standard attacks (8b865cc)
     - Write tests for extracting hit bonus and damage from descriptions
     - Implement parsing in `src/model/import/5etools-action-parser.ts`
-- [ ] Task: Implement Multiattack mapping
+- [x] Task: Implement Multiattack mapping (0bd955a)
     - Write tests for multiattack routinely logic
     - Integrate with mapper
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Action Conversion' (Protocol in workflow.md)
