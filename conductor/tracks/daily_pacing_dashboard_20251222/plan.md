@@ -12,7 +12,7 @@ Goal: Ensure the simulation result contains the necessary time-series data for t
 Goal: Implement the core pacing visuals.
 
 - [x] Task: Create `DeltaBadge` component with 5-zone logic. (a8da9b7)
-- [ ] Task: Create `FuelGauge` component (Plan vs. Reality segments).
+- [x] Task: Create `FuelGauge` component (Plan vs. Reality segments). (0bfa02a)
 - [ ] Task: Integrate components into `Simulation.tsx` and `EncounterResult.tsx`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
