@@ -277,14 +277,25 @@ const RoundSchema = z.object({
 })
 
 export const EncounterSchema = z.object({
+    type: z.literal('combat').default('combat'),
     id: z.string().optional().default(() => uuid()),
     monsters: TeamSchema,
     playersSurprised: z.boolean().optional(),
     monstersSurprised: z.boolean().optional(),
-    shortRest: z.boolean().optional(),
+    shortRest: z.boolean().optional(), // Deprecated in favor of timeline events
     playersPrecast: z.boolean().optional(),
     monstersPrecast: z.boolean().optional(),
 })
+
+export const ShortRestSchema = z.object({
+    type: z.literal('shortRest').default('shortRest'),
+    id: z.string().optional().default(() => uuid()),
+})
+
+export const TimelineEventSchema = z.discriminatedUnion('type', [
+    EncounterSchema,
+    ShortRestSchema
+])
 const EncounterStatsSchema = z.object({
     damageDealt: z.number(),
     damageTaken: z.number(),
@@ -328,8 +339,17 @@ export type Combattant = z.infer<typeof CombattantSchema>
 export type Round = z.infer<typeof RoundSchema>
 export type EncounterStats = z.infer<typeof EncounterStatsSchema>
 export type Encounter = z.infer<typeof EncounterSchema>
+export type ShortRest = z.infer<typeof ShortRestSchema>
+export type TimelineEvent = z.infer<typeof TimelineEventSchema>
 export type EncounterResult = z.infer<typeof EncounterResultSchema>
 export type SimulationResult = z.infer<typeof SimulationResultSchema>
+
+export const AdventuringDaySchema = z.object({
+    name: z.string(),
+    players: z.array(CreatureSchema),
+    timeline: z.array(TimelineEventSchema),
+})
+export type AdventuringDay = z.infer<typeof AdventuringDaySchema>
 
 // Phase 3: Event System
 export const EventSchema = z.discriminatedUnion('type', [
