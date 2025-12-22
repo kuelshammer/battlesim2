@@ -1,0 +1,53 @@
+.graphContainer {
+    background-color: #2a2a2a;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.graphTitle {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #aaa;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.axis {
+    stroke: #555;
+    stroke-width: 1;
+}
+
+.grid {
+    stroke: #333;
+    stroke-width: 1;
+}
+
+.planLine {
+    fill: none;
+    stroke: #888;
+    stroke-width: 2;
+    stroke-dasharray: 4 4;
+}
+
+.medianLine {
+    fill: none;
+    stroke: #4caf50;
+    stroke-width: 3;
+}
+
+.riskArea {
+    fill: rgba(76, 175, 80, 0.15);
+    stroke: none;
+}
+
+.axisLabel {
+    font-size: 10px;
+    fill: #888;
+}
