@@ -18,6 +18,7 @@ import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
 import FuelGauge from "./FuelGauge"
+import DescentGraph from "./DescentGraph"
 
 
 
@@ -106,7 +107,18 @@ const Simulation: FC<PropType> = memo(({ }) => {
             cumulativeDrifts.push(currentDrift);
         });
 
-        return { actualCosts, cumulativeDrifts, totalWeight };
+        // Plan Timeline: Start at 100, subtract target % each step
+        const planTimeline = [100];
+        let currentPlan = 100;
+        encounterWeights.forEach(w => {
+            const target = (w / totalWeight) * 100;
+            currentPlan -= target;
+            planTimeline.push(Math.max(0, currentPlan));
+        });
+
+        const decileTimelines = worker.analysis.overall.deciles.map(d => d.resourceTimeline);
+
+        return { actualCosts, cumulativeDrifts, totalWeight, planTimeline, decileTimelines };
     }, [worker.analysis, encounterWeights]);
 
     useEffect(() => {
@@ -312,10 +324,16 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     </EncounterForm>
 
                     {worker.analysis && pacingData && (
-                        <FuelGauge 
-                            plannedWeights={encounterWeights} 
-                            actualCosts={pacingData.actualCosts} 
-                        />
+                        <>
+                            <FuelGauge 
+                                plannedWeights={encounterWeights} 
+                                actualCosts={pacingData.actualCosts} 
+                            />
+                            <DescentGraph 
+                                decileTimelines={pacingData.decileTimelines} 
+                                planTimeline={pacingData.planTimeline} 
+                            />
+                        </>
                     )}
 
                                         {timeline.map((item, index) => {
