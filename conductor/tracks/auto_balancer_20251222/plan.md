@@ -21,7 +21,7 @@ Goal: Implement the iterative Hill Climbing algorithm in Rust.
 ## Phase 3: Dice Reconstruction
 Goal: Convert adjusted numeric targets back into valid 5e dice notation.
 
-- [ ] Task: HP Reconstruction Logic
+- [~] Task: HP Reconstruction Logic
     - Back-calculate Hit Dice count based on target HP, fixed die size, and CON mod.
 - [ ] Task: Damage Reconstruction Logic
     - Back-calculate damage dice (e.g., 15 -> 2d10+4) and handle Multiattack adjustments.

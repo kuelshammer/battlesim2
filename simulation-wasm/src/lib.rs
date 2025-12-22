@@ -20,6 +20,7 @@ pub mod scoring_test;
 pub mod creature_adjustment;
 pub mod adjustment_test;
 pub mod auto_balancer;
+pub mod dice_reconstruction;
 pub mod error_handling; // Enhanced error handling system
 pub mod enhanced_validation; // Comprehensive validation
 pub mod recovery; // Error recovery mechanisms

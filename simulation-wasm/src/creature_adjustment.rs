@@ -1,5 +1,6 @@
-use crate::model::{Creature, MonsterRole, Action};
+use crate::model::{Creature, MonsterRole, Action, DiceFormula};
 use crate::combat_stats::CombatantStats;
+use crate::dice_reconstruction::{reconstruct_hp, reconstruct_damage};
 
 pub fn detect_role(creature: &Creature, encounter_total_hp: f64, party_dpr: f64) -> MonsterRole {
     // 🐜 Minion: HP < 20% of Party DPR, Count >= 4
@@ -88,6 +89,34 @@ pub fn adjust_dc(creature: &mut Creature, delta: f64) {
                 }
             },
             _ => {}
+        }
+    }
+}
+
+/// Finalizes numeric adjustments by back-calculating dice expressions
+pub fn finalize_adjustments(creature: &mut Creature) {
+    // 1. Reconstruct HP dice
+    let con_mod = creature.con_modifier.unwrap_or(0.0) as i32;
+    
+    // Attempt to detect original die size from hit_dice string
+    let mut die_size = 8;
+    if let Some(hd_str) = &creature.hit_dice {
+        if let Some(d_pos) = hd_str.find('d') {
+            let part = &hd_str[d_pos+1..];
+            let end = part.find(|c: char| !c.is_numeric()).unwrap_or(part.len());
+            die_size = part[..end].parse().unwrap_or(8);
+        }
+    }
+    
+    creature.hit_dice = Some(crate::dice_reconstruction::reconstruct_hp(creature.hp as f64, die_size, con_mod));
+
+    // 2. Reconstruct Damage dice for all attacks
+    for action in &mut creature.actions {
+        if let Action::Atk(atk) = action {
+            if let DiceFormula::Value(v) = atk.dpr {
+                // For now use a flat +0 modifier reconstruction
+                atk.dpr = DiceFormula::Expr(crate::dice_reconstruction::reconstruct_damage(v, 0));
+            }
         }
     }
 }

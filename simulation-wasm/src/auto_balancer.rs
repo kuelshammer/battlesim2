@@ -1,7 +1,7 @@
 use crate::model::{Creature, Encounter, TimelineStep, MonsterRole};
 use crate::creature_adjustment::{detect_role, adjust_hp, adjust_damage, adjust_dc};
 use crate::decile_analysis::{run_decile_analysis, SafetyGrade, IntensityTier, AggregateOutput};
-use crate::lib::run_event_driven_simulation_rust;
+use crate::run_event_driven_simulation_rust;
 use std::collections::HashMap;
 
 pub struct AutoBalancer {
@@ -61,6 +61,11 @@ impl AutoBalancer {
             }
 
             analysis = self.run_analysis(&players, &monsters);
+        }
+
+        // 4. Finalize dice notation
+        for m in &mut monsters {
+            crate::creature_adjustment::finalize_adjustments(m);
         }
 
         (monsters, analysis)

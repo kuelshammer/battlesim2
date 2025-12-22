@@ -106,6 +106,7 @@ pub struct AggregateOutput {
     pub total_runs: usize,
     pub deciles: Vec<DecileStats>,
     pub global_median: Option<DecileStats>,
+    pub battle_duration_rounds: usize,
     pub safety_grade: SafetyGrade,
     pub intensity_tier: IntensityTier,
     pub encounter_label: EncounterLabel,
@@ -280,9 +281,13 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, 
 
 fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
     if results.is_empty() {
-        return AggregateOutput {
-            scenario_name: scenario_name.to_string(), total_runs: 0, deciles: Vec::new(), global_median: None,
-            safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
+                return AggregateOutput {
+                    scenario_name: scenario_name.to_string(),
+                    total_runs: 0,
+                    deciles: Vec::new(),
+                    global_median: None,
+                    battle_duration_rounds: 0,
+                    safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
             analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false,
         };
     }
@@ -361,8 +366,10 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     let is_good_design = matches!(safety_grade, SafetyGrade::A | SafetyGrade::B) && 
                          matches!(intensity_tier, IntensityTier::Tier3 | IntensityTier::Tier4);
 
+    let battle_duration_rounds = global_median.as_ref().map(|m| m.battle_duration_rounds).unwrap_or(0);
+
     AggregateOutput {
-        scenario_name: scenario_name.to_string(), total_runs, deciles, global_median,
+        scenario_name: scenario_name.to_string(), total_runs, deciles, global_median, battle_duration_rounds,
         safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design,
     }
 }
