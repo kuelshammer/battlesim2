@@ -34,10 +34,10 @@ Goal: Expose the Auto-Balancer to the web application.
 - [x] Task: Update TypeScript Models (2bec118)
     - Define `AdjustmentReport` and updated `Creature` schemas in `src/model/model.ts`.
 
-## Phase 5: UI Implementation
+## Phase 5: UI Implementation [checkpoint: 7ef351f]
 Goal: Add the "Magic Wand" button and results display.
 
 - [x] Task: Add Auto-Adjust button to Encounter cards (6a40a37)
 - [x] Task: Implement "Adjustment Preview" Modal (94a3567)
     - Show side-by-side diff of original vs. balanced monsters.
-- [ ] Task: Final Verification & Polishing
+- [x] Task: Final Verification & Polishing (7ef351f)
