@@ -8,14 +8,14 @@ Goal: Implement the logic to identify monster roles and create numeric adjustmen
 - [x] Task: Create Adjustment Knobs (c318530)
     - Implement functions to apply percentage-based modifications to damage, HP, and DC in `simulation-wasm/src/creature_adjustment.rs`.
 
-## Phase 2: The Optimization Loop
+## Phase 2: The Optimization Loop [checkpoint: 43e5a31]
 Goal: Implement the iterative Hill Climbing algorithm in Rust.
 
-- [~] Task: Implement the "Safety Clamp"
+- [x] Task: Implement the "Safety Clamp" (43e5a31)
     - Loop that nerfs monster damage/DC until the `Safety Grade` is at least B.
-- [ ] Task: Implement the "Intensity Pump"
+- [x] Task: Implement the "Intensity Pump" (43e5a31)
     - Loop that buffs monster HP/Resiliance until the `Intensity Tier` is at least 3.
-- [ ] Task: Implement the "Slog Filter"
+- [x] Task: Implement the "Slog Filter" (43e5a31)
     - Logic to cap HP buffs if median rounds exceed 8.
 
 ## Phase 3: Dice Reconstruction
