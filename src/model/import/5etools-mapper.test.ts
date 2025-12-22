@@ -88,4 +88,19 @@ describe('5etools-mapper', () => {
         expect(creature.actions[1].name).toBe("Claws");
         expect(creature.actions[1].targets).toBe(2);
     });
+
+    it('should handle Abjurer-style source and nested type', () => {
+        const monster: Monster5e = {
+            name: "Abjurer Wizard",
+            source: "MPMM",
+            hp: { average: 104 },
+            ac: [12],
+            type: { type: "humanoid" },
+            str: 9, dex: 14, con: 14, int: 18, wis: 12, cha: 11
+        };
+
+        const creature = mapMonster5eToCreature(monster);
+        expect(creature.src).toBe("MPMM");
+        expect(creature.type).toBe("humanoid");
+    });
 });

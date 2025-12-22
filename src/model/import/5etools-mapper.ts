@@ -62,10 +62,20 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
 
     const avgModifier = (strMod + dexMod + conMod + intMod + wisMod + chaMod) / 6;
 
+    // Map type: could be string or object { type: "humanoid" }
+    let creatureType: any = undefined;
+    if (typeof monster.type === 'string') {
+        creatureType = monster.type;
+    } else if (typeof monster.type === 'object' && monster.type.type) {
+        creatureType = monster.type.type;
+    }
+
     return {
         id: uuid(),
         mode: "monster",
         name: monster.name,
+        src: monster.source || monster.src,
+        type: creatureType,
         count: 1,
         hp: hp,
         ac: ac,

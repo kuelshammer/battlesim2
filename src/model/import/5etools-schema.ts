@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const Monster5eSchema = z.object({
     name: z.string(),
     src: z.string().optional(),
+    source: z.string().optional(), // 5e.tools often uses 'source'
     hp: z.object({
         average: z.number().optional(),
         formula: z.string().optional(),
@@ -14,6 +15,10 @@ export const Monster5eSchema = z.object({
     int: z.number().optional(),
     wis: z.number().optional(),
     cha: z.number().optional(),
+    type: z.union([
+        z.string(),
+        z.object({ type: z.string() }).passthrough()
+    ]).optional(),
     save: z.record(z.string()).optional(),
     action: z.array(z.object({
         name: z.string(),
