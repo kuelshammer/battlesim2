@@ -37,7 +37,8 @@
     "type-check": "tsc --noEmit",
     "build:wasm": "cd simulation-wasm && rm -rf pkg && export PATH=\"$HOME/.cargo/bin:$PATH\" && wasm-pack build --target web --out-dir pkg",
     "build:wasm:dev": "cd simulation-wasm && wasm-pack build --target web --out-dir pkg --dev",
-    "dev:wasm": "npm run build:wasm:dev && npm run dev"
+    "dev:wasm": "npm run build:wasm:dev && npm run dev",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
@@ -63,7 +64,10 @@
   },
   "devDependencies": {
     "@types/uuid": "^9.0.1",
+    "@vitest/coverage-v8": "^4.0.16",
     "eslint-config-next": "16.0.8",
-    "typescript": "^5.9.3"
+    "jsdom": "^27.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }
