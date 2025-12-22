@@ -11,7 +11,7 @@ Goal: Implement the logic to identify monster roles and create numeric adjustmen
 ## Phase 2: The Optimization Loop
 Goal: Implement the iterative Hill Climbing algorithm in Rust.
 
-- [ ] Task: Implement the "Safety Clamp"
+- [~] Task: Implement the "Safety Clamp"
     - Loop that nerfs monster damage/DC until the `Safety Grade` is at least B.
 - [ ] Task: Implement the "Intensity Pump"
     - Loop that buffs monster HP/Resiliance until the `Intensity Tier` is at least 3.
