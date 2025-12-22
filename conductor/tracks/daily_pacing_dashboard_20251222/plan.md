@@ -19,7 +19,7 @@ Goal: Implement the core pacing visuals.
 ## Phase 3: The Descent Graph (SVG)
 Goal: Visualize attrition and risk.
 
-- [ ] Task: Implement `DescentGraph.tsx` using raw SVG.
+- [x] Task: Implement `DescentGraph.tsx` using raw SVG. (b76a7ed)
 - [ ] Task: Add shaded region for 25th–75th percentiles.
 - [ ] Task: Add dotted "Plan" line calculation.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
