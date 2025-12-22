@@ -21,6 +21,6 @@ Goal: Connect the Import Modal to the Custom Form.
 ## Phase 3: Verification
 Goal: Ensure the flow is intuitive and functional.
 
-- [ ] Task: Verify pre-fill functionality
+- [x] Task: Verify pre-fill functionality (a164c54)
     - Paste a partial JSON (like a race) and confirm the form populates available fields.
-- [ ] Task: Conductor - User Manual Verification
+- [x] Task: Conductor - User Manual Verification (a164c54)
