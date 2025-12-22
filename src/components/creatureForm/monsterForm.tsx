@@ -1,9 +1,8 @@
-import { FC, } from "react"
+import { FC, useEffect, useState } from "react"
 import { Creature, CreatureSchema } from "@/model/model"
 import styles from './monsterForm.module.scss'
 import { ChallengeRating, ChallengeRatingList, CreatureType, CreatureTypeList, numericCR } from "@/model/enums"
 import { capitalize, clone, sharedStateGenerator, useCalculatedState } from "@/model/utils"
-import { Monsters } from "@/data/monsters"
 import Range from "@/utils/range"
 import SortTable from "@/utils/sortTable"
 
@@ -20,8 +19,22 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
     const [minCR, setMinCR] = useSharedState<ChallengeRating>(ChallengeRatingList[0])
     const [maxCR, setMaxCR] = useSharedState<ChallengeRating>(ChallengeRatingList[ChallengeRatingList.length - 2])
     const [name, setName] = useSharedState<string>('')
+    const [monsters, setMonsters] = useState<Creature[]>([])
 
-    const searchResults = useCalculatedState(() => Monsters.filter(monster => {
+    useEffect(() => {
+        const loadMonsters = async () => {
+            try {
+                const response = await fetch('./data/monsters.json');
+                const data = await response.json();
+                setMonsters(data);
+            } catch (error) {
+                console.error("Failed to load monsters:", error);
+            }
+        };
+        loadMonsters();
+    }, []);
+
+    const searchResults = useCalculatedState(() => monsters.filter(monster => {
         if (!monster.name.toLocaleLowerCase().includes(name.toLocaleLowerCase())) return false
         if (!monster.cr) return false
         if (numericCR(monster.cr) > numericCR(maxCR)) return false
@@ -30,7 +43,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
         if (!creatureType[monster.type]) return false
 
         return true
-    }), [creatureType, minCR, maxCR, name])
+    }), [creatureType, minCR, maxCR, name, monsters])
     
     function toggleCreatureType(type: CreatureType) {
         const newValue = clone(creatureType)

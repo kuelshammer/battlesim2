@@ -264,7 +264,7 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
 
 fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, usize, usize) {
     let score = crate::aggregation::calculate_score(run);
-    let survivors = ((score / 10000.0).floor() as usize).min(party_size);
+    let survivors = ((score / 1_000_000.0).floor() as usize).min(party_size);
     
     let mut run_party_max_hp = 0.0;
     if let Some(enc) = run.encounters.first() {
@@ -272,7 +272,7 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize) -> (f64, f64, 
             for c in &round.team1 { run_party_max_hp += c.creature.hp as f64; }
         }
     }
-    let hp_lost = (run_party_max_hp - (score - (survivors as f64 * 10000.0))).max(0.0);
+    let hp_lost = (run_party_max_hp - (score - (survivors as f64 * 1_000_000.0))).max(0.0);
     let duration = run.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
     
     (hp_lost, run_party_max_hp, survivors, duration)
@@ -423,7 +423,10 @@ pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize
     let mut encounter_results: Vec<SimulationResult> = results.iter()
         .filter_map(|run| {
             if encounter_idx < run.encounters.len() { 
-                Some(SimulationResult { encounters: vec![run.encounters[encounter_idx].clone()] }) 
+                Some(SimulationResult { 
+                    encounters: vec![run.encounters[encounter_idx].clone()],
+                    score: run.score 
+                }) 
             } else { 
                 None 
             }

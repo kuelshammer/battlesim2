@@ -2,10 +2,11 @@
 import ClassOptions from '../model/classOptions'
 import { Action, AtkAction, Creature, DiceFormula, HealAction } from "../model/model"
 import { z } from 'zod'
-import { getMonster } from './monsters'
+import { getMonster, DefaultMonsters } from './monsters'
 import { v4 as uuid } from 'uuid'
 import { ActionSlots } from '../model/enums'
 import { calculateSpellSlots } from '../model/spellSlots'
+import { clone } from '../model/utils'
 
 // TODO: 
 // 1) Add more options to the templates
@@ -546,10 +547,10 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
     }
 
     const wildshape = scale<Creature>(level, {
-        2: getMonster('Dire Wolf')!,
-        6: getMonster('Giant Constrictor Snake')!,
-        9: getMonster('Giant Scorpion')!,
-        10: getMonster('Fire Elemental')!,
+        2: DefaultMonsters.find(m => m.name === 'Dire Wolf')!,
+        6: DefaultMonsters.find(m => m.name === 'Giant Constrictor Snake')!,
+        9: DefaultMonsters.find(m => m.name === 'Giant Scorpion')!,
+        10: DefaultMonsters.find(m => m.name === 'Fire Elemental')!,
     })
 
     const wildShapeAction: Action = {

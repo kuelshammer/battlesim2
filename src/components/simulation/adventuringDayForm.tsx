@@ -12,6 +12,7 @@ import Checkbox from "@/utils/checkbox"
 import PlayerForm from "../creatureForm/playerForm"
 import { v4 as uuidv4 } from 'uuid';
 import MonsterForm from "../creatureForm/monsterForm"
+import { clone } from "@/model/utils"
 
 type PropType = {
     currentPlayers: Creature[],
@@ -92,6 +93,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
 
     function addEncounter() {
         const newEncounter: Encounter = {
+            id: uuidv4(),
             monsters: [],
             playersSurprised: false,
             monstersSurprised: false,
@@ -111,7 +113,9 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentEncounters, o
     }
 
     function addMonsterToEncounter(encounterIndex: number) {
-        const newMonster = getMonster('Bandit')!; // Default Monster
+        const bandit = getMonster('Bandit');
+        if (!bandit) return;
+        const newMonster = clone(bandit);
         newMonster.id = uuidv4();
         const updatedEncounters = editedEncounters.map((enc, i) => {
             if (i === encounterIndex) {

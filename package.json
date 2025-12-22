@@ -23,7 +23,6 @@
     "@fortawesome/react-fontawesome": "^3.1.1",
     "@hookform/resolvers": "^3.1.0",
     "@ts-react/form": "^1.6.4",
-    "@types/node": "18.11.9",
     "@types/react": "18.0.24",
     "@types/react-dom": "18.0.8",
     "dice-roller-parser": "^0.1.8",
@@ -37,11 +36,12 @@
     "sass": "^1.56.0",
     "simulation-wasm": "file:simulation-wasm/pkg",
     "uuid": "^13.0.0",
-    "zod": "^4.1.13"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.1",
+    "@types/node": "^25.0.3",
     "@types/uuid": "^9.0.1",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.16",

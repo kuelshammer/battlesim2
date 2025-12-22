@@ -40,8 +40,8 @@ mod tests {
             id: name.to_string(),
             name: name.to_string(),
             count: 1.0,
-            hp: 100.0,
-            ac: 15.0,
+            hp: 100,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -64,7 +64,8 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        Combattant {
+        Combattant { 
+            team: 0, 
             id: name.to_string(),
             creature: creature.clone(),
             initiative: 10.0,

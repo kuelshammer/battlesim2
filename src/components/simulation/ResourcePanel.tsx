@@ -13,9 +13,9 @@ const ResourcePanel: FC<ResourcePanelProps> = ({ combatant }) => {
     const { creature, finalState } = combatant;
     const { resources } = finalState;
 
-    const currentHP = finalState.currentHP;
+    const currentHP = finalState.currentHp;
     const maxHP = creature.hp;
-    const tempHP = finalState.tempHP || 0;
+    const tempHP = finalState.tempHp || 0;
 
     // Helper to parse resource keys
     const parseResourceKey = (key: string) => {

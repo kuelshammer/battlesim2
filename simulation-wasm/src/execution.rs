@@ -764,8 +764,8 @@ mod tests {
             id: "warrior1".to_string(),
             name: "Test Warrior".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -788,7 +788,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatant = Combattant {
+        let combatant = Combattant { team: 0, 
             id: "warrior1".to_string(),
             creature,
             initiative: 10.0,
@@ -811,8 +811,8 @@ mod tests {
             id: "player1".to_string(),
             name: "Test Player".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -840,8 +840,8 @@ mod tests {
             id: "monster1".to_string(),
             name: "Test Monster".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -864,7 +864,7 @@ mod tests {
             mode: "monster".to_string(), // MONSTER team
         };
 
-        let combatant1 = Combattant {
+        let combatant1 = Combattant { team: 0, 
             id: "player1".to_string(),
             creature: player_creature,
             initiative: 10.0,
@@ -873,7 +873,7 @@ mod tests {
             actions: Vec::new(),
         };
 
-        let combatant2 = Combattant {
+        let combatant2 = Combattant { team: 0, 
             id: "monster1".to_string(),
             creature: monster_creature,
             initiative: 5.0,
@@ -894,8 +894,8 @@ mod tests {
             id: "test".to_string(), // Added ID
             name: "Test".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -918,7 +918,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatant1 = Combattant {
+        let combatant1 = Combattant { team: 0, 
             id: "fast".to_string(),
             creature: creature.clone(),
             initiative: 15.0,
@@ -927,7 +927,7 @@ mod tests {
             actions: Vec::new(),
         };
 
-        let combatant2 = Combattant {
+        let combatant2 = Combattant { team: 0, 
             id: "slow".to_string(),
             creature,
             initiative: 5.0,

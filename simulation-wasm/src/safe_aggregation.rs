@@ -387,9 +387,9 @@ pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, Simulation
             .filter(|c| c.final_state.current_hp > 0)
             .count() as f64;
 
-        // Tiered scoring: (Survivors × 10,000) + Total Party HP - Total Monster HP
-        // This ensures that keeping players alive is mathematically more valuable than any amount of HP
-        let score = (survivors * 10_000.0) + player_hp - monster_hp;
+        // Tiered scoring: (Survivors × 1,000,000) + Total Party HP - Total Monster HP
+        // This ensures that keeping players alive is mathematically more valuable than any amount of HP or resources
+        let score = (survivors * 1_000_000.0) + player_hp - monster_hp;
         
         if score.is_nan() {
             return Err(SimulationError::UnexpectedState("Score calculation resulted in NaN".to_string()));

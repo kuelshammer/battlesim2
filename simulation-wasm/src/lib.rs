@@ -16,6 +16,7 @@ pub mod validation; // New module for requirement validation
 pub mod utilities;
 pub mod decile_analysis;
 pub mod combat_stats;
+pub mod scoring_test;
 pub mod error_handling; // Enhanced error handling system
 pub mod enhanced_validation; // Comprehensive validation
 pub mod recovery; // Error recovery mechanisms
@@ -429,7 +430,13 @@ fn run_single_event_driven_simulation(players: &[Creature], encounters: &[Encoun
     }
 
     // SimulationResult is now SimulationRunData struct
-    (SimulationResult { encounters: encounter_results }, all_events)
+    let mut result = SimulationResult { encounters: encounter_results, score: None };
+    
+    // Calculate efficiency score
+    let score = crate::aggregation::calculate_efficiency_score(&result, &all_events);
+    result.score = Some(score);
+
+    (result, all_events)
 }
 
 fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {

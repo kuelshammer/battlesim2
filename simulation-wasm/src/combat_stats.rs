@@ -248,8 +248,8 @@ mod tests {
             id: id.to_string(),
             name: id.to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac,
+            hp: 30,
+            ac: ac as u32,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -322,7 +322,7 @@ mod tests {
     fn test_cache_operations() {
         let mut cache = CombatStatsCache::new();
         let creature = create_test_creature("goblin", 15.0, 10.0, 5.0);
-        let combatant = Combattant {
+        let combatant = Combattant { team: 0, 
             id: "goblin1".to_string(),
             creature: creature.clone(),
             initiative: 10.0,
@@ -360,7 +360,7 @@ mod tests {
         let creature2 = create_test_creature("orc", 12.0, 15.0, 3.0);
         
         let combatants = vec![
-            Combattant {
+            Combattant { team: 0, 
                 id: "goblin1".to_string(),
                 creature: creature1,
                 initiative: 10.0,
@@ -368,7 +368,7 @@ mod tests {
                 final_state: crate::model::CreatureState::default(),
                 actions: vec![],
             },
-            Combattant {
+            Combattant { team: 0, 
                 id: "orc1".to_string(),
                 creature: creature2,
                 initiative: 5.0,

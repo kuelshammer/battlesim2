@@ -168,11 +168,69 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
 }
 
 pub fn calculate_score(result: &SimulationResult) -> f64 {
+    // If we already have a pre-computed score, use it
+    if let Some(s) = result.score {
+        return s;
+    }
+
     // Use safe calculation with fallback to -1000000 for compatibility
     match crate::safe_aggregation::calculate_score_safe(result) {
         Ok(score) => score,
         Err(_) => -1_000_000.0, // Return extremely low score for empty/failed runs to sort them to the bottom
     }
+}
+
+/// Calculate efficiency-aware score based on survival and resource consumption
+pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::events::Event]) -> f64 {
+    // 1. Base Survival Score (matches calculate_score_safe logic)
+    let last_encounter = match result.encounters.last() {
+        Some(e) => e,
+        None => return -1_000_000.0,
+    };
+    
+    let last_round = match last_encounter.rounds.last() {
+        Some(r) => r,
+        None => return -1_000_000.0,
+    };
+
+    let player_hp: f64 = last_round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
+    let monster_hp: f64 = last_round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
+    let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count() as f64;
+
+    // Life value is 1,000,000 to ensure survival is always top priority
+    let base_score = (survivors * 1_000_000.0) + player_hp - monster_hp;
+
+    // 2. Resource Penalty Calculation
+    let mut resource_penalty = 0.0;
+
+    for event in events {
+        match event {
+            crate::events::Event::SpellCast { spell_level, .. } => {
+                // Formula: 15 * (Level ^ 1.6)
+                // Lvl 1 = 15, Lvl 3 = 87, Lvl 9 = 500
+                let cost = 15.0 * (*spell_level as f64).powf(1.6);
+                resource_penalty += cost;
+            }
+            crate::events::Event::ResourceConsumed { resource_type, amount, .. } => {
+                // Identify resources by name/type
+                let r_type = resource_type.to_lowercase();
+                if r_type.contains("potion") {
+                    resource_penalty += *amount * 20.0;
+                } else if r_type.contains("action surge") || r_type.contains("ki") || r_type.contains("channel divinity") {
+                    resource_penalty += *amount * 20.0; // Short rest
+                } else if r_type.contains("rage") || r_type.contains("indomitable") {
+                    resource_penalty += *amount * 40.0; // Long rest
+                }
+                // Generic ClassResource penalty if not matched above
+                else if r_type.contains("classresource") {
+                    resource_penalty += *amount * 20.0;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    base_score - resource_penalty
 }
 
 #[cfg(not(target_arch = "wasm32"))]

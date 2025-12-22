@@ -225,7 +225,7 @@ export const UIToggleProvider: FC<UIToggleProviderProps> = ({ children }) => {
   }
 
   const getToggleState = (id: UIToggleType): boolean => {
-    return toggles[id]?.enabled ?? defaultUIToggleConfig[id].enabled
+    return toggles[id]?.enabled ?? (defaultUIToggleConfig[id]?.enabled || false)
   }
 
   const getTogglesByCategory = (category: 'display' | 'analysis'): UIToggleState[] => {

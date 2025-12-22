@@ -19,13 +19,20 @@ We simulate the combat **2,510 times**. This "Magic Number" is mathematically el
 *   **The Median Trick:** Since **251** is an **odd number**, every 10% slice (Decile) has an *exact* center (the 126th run in that slice). We never have to average two runs together; we can always point to a real, specific simulation.
 *   **The Precision:** It provides a Margin of Error $\approx 2\%$, high enough for reliable "Deadly" labels while remaining fast enough for chained combat calculations.
 
-### Step 1: The Tiered Scoring (Value of a Life)
-To accurately sort "Bad" runs from "Good" runs, we prioritize **Survival** over **Hit Points**.
+### Step 1: The Tiered Scoring (Value of a Life & Efficiency)
+To accurately sort "Bad" runs from "Good" runs, we prioritize **Survival** over **Resource Efficiency**, and **Resource Efficiency** over **Hit Points**.
 
-$$ \text{Score} = (\text{Survivors} \times 10,000) + \text{Total Party HP} - \text{Total Monster HP} $$
+$$ \text{Score} = (\text{Survivors} \times 1,000,000) + \text{Total Party HP} - \text{Resource Penalty} - \text{Total Monster HP} $$
 
-*   **The 10,000 Bonus:** Ensures keeping a party member alive is mathematically more valuable than any amount of Hit Points.
-*   **The Result:** Simulation results are sorted primarily by **Death Count**, and secondarily by **Resource Cost**.
+*   **The 1,000,000 Bonus:** Ensures keeping a party member alive is mathematically more valuable than any amount of Hit Points or resource conservation.
+*   **The Resource Penalty:** Factors in the "cost" of victory (Spell Slots, Class Features, Potions).
+*   **The Result:** Simulation results are sorted primarily by **Death Count**, and secondarily by **Resource Cost** (Efficiency).
+
+#### Resource Penalty Weights:
+- **Spell Slots:** $15 \times (\text{Level}^{1.6})$ (e.g., Lvl 1 = 15, Lvl 3 = 87, Lvl 9 = 500)
+- **Short Rest Class Features:** 20 points (e.g., Action Surge, Ki)
+- **Long Rest Class Features:** 40 points (e.g., Rage, Indomitable)
+- **Consumables (Potions):** 20 points
 
 ### Step 2: Mapping 10 Slices to 5 Battle Cards
 We divide the 2,510 sorted runs into 10 deciles (slices of 251 runs) but display only **5 Rows** to maintain a clean UI. We pick the **Medians** of specific slices to recreate a **Statistical Box Plot**:

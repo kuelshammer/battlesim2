@@ -665,8 +665,8 @@ mod tests {
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -689,7 +689,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant {
+        let combatants = vec![Combattant { team: 0, 
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
@@ -712,8 +712,8 @@ mod tests {
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -736,7 +736,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant {
+        let combatants = vec![Combattant { team: 0, 
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
@@ -763,8 +763,8 @@ mod tests {
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -787,7 +787,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant {
+        let combatants = vec![Combattant { team: 0, 
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
@@ -817,8 +817,8 @@ mod tests {
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
-            hp: 30.0,
-            ac: 15.0,
+            hp: 30,
+            ac: 15,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -841,7 +841,7 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant {
+        let combatants = vec![Combattant { team: 0, 
             id: "player1".to_string(),
             creature,
             initiative: 10.0,
@@ -873,6 +873,6 @@ mod tests {
         // Update effects (should apply damage)
         context.update_effects();
         let combatant = context.get_combatant("player1").unwrap();
-        assert_eq!(combatant.current_hp, 25.0); // 30 - 5 = 25
+        assert_eq!(combatant.current_hp, 25); // 30 - 5 = 25
     }
 }

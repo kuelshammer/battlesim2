@@ -9,6 +9,7 @@ import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo } from "@fortawesome/free-solid-svg-icons"
+import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
@@ -23,6 +24,7 @@ type PropType = {
 }
 
 const emptyEncounter: Encounter = {
+    id: uuid(),
     monsters: [],
     monstersSurprised: false,
     playersSurprised: false,
@@ -223,7 +225,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
                     <EncounterForm
                         mode='player'
-                        encounter={{ monsters: players }}
+                        encounter={{ id: 'players', monsters: players }}
                         onUpdate={(newValue) => setPlayers(newValue.monsters)}
                         onEditingChange={setIsEditing}>
                         <>

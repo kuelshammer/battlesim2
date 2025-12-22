@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [x] Track: Fix Simulation Error after Import
-*Link: [./conductor/tracks/fix_import_sim_error_20251222/][./conductor/tracks/fix_import_sim_error_20251222/]*
+## [ ] Track: Efficiency-Based Performance Scoring
+*Link: [./conductor/tracks/efficiency_scoring_20251222/](./conductor/tracks/efficiency_scoring_20251222/)*

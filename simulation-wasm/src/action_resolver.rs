@@ -753,8 +753,8 @@ mod tests {
         let attacker = Creature {
             id: "orc".to_string(),
             name: "Orc".to_string(),
-            hp: 20.0,
-            ac: 10.0,
+            hp: 20,
+            ac: 10,
             count: 1.0,
             actions: vec![],
             triggers: vec![],
@@ -780,8 +780,8 @@ mod tests {
         let defender = Creature {
             id: "warlock".to_string(),
             name: "Warlock".to_string(),
-            hp: 20.0,
-            ac: 10.0,
+            hp: 20,
+            ac: 10,
             count: 1.0,
             actions: vec![],
             triggers: vec![],
@@ -807,7 +807,7 @@ mod tests {
 
         let mut context = TurnContext::new(
             vec![
-                Combattant {
+                Combattant { team: 0, 
                     id: "orc".to_string(),
                     creature: attacker,
                     initiative: 10.0,
@@ -815,13 +815,13 @@ mod tests {
                     final_state: CreatureState::default(),
                     actions: vec![],
                 },
-                Combattant {
+                Combattant { team: 0, 
                     id: "warlock".to_string(),
                     creature: defender.clone(),
                     initiative: 10.0,
                     initial_state: {
                         let mut s = CreatureState::default();
-                        s.temp_hp = Some(10.0); // Pre-give Temp HP
+                        s.temp_hp = Some(10); // Pre-give Temp HP
                         s
                     },
                     final_state: CreatureState::default(),
@@ -912,7 +912,7 @@ mod tests {
         // Check Temp HP reduced on Warlock
         let warlock = context.combatants.get("warlock").unwrap();
         assert!(
-            warlock.temp_hp < 10.0,
+            warlock.temp_hp < 10,
             "Temp HP should be reduced by attack damage"
         );
     }
@@ -928,8 +928,8 @@ mod tests {
         let attacker_c = Creature {
             id: "attacker".to_string(),
             name: "Attacker".to_string(),
-            hp: 100.0,
-            ac: 15.0,
+            hp: 100,
+            ac: 15,
             count: 1.0,
             actions: vec![],
             triggers: vec![],
@@ -955,8 +955,8 @@ mod tests {
         let victim_tpl = Creature {
             id: "victim".to_string(),
             name: "Victim".to_string(),
-            hp: 10.0,
-            ac: 10.0,
+            hp: 10,
+            ac: 10,
             count: 1.0,
             actions: vec![],
             triggers: vec![],
@@ -982,7 +982,7 @@ mod tests {
 
         let mut context = TurnContext::new(
             vec![
-                Combattant {
+                Combattant { team: 0, 
                     id: "attacker".to_string(),
                     creature: attacker_c,
                     initiative: 20.0,
@@ -990,7 +990,7 @@ mod tests {
                     final_state: CreatureState::default(),
                     actions: vec![],
                 },
-                Combattant {
+                Combattant { team: 0, 
                     id: "v1".to_string(),
                     creature: victim_tpl.clone(),
                     initiative: 10.0,
@@ -998,7 +998,7 @@ mod tests {
                     final_state: CreatureState::default(),
                     actions: vec![],
                 },
-                Combattant {
+                Combattant { team: 0, 
                     id: "v2".to_string(),
                     creature: victim_tpl.clone(),
                     initiative: 10.0,
@@ -1006,7 +1006,7 @@ mod tests {
                     final_state: CreatureState::default(),
                     actions: vec![],
                 },
-                Combattant {
+                Combattant { team: 0, 
                     id: "v3".to_string(),
                     creature: victim_tpl.clone(),
                     initiative: 10.0,

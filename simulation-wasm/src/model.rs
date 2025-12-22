@@ -688,6 +688,7 @@ impl Default for CreatureState {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Combattant {
     pub id: String,
+    #[serde(default)]
     pub team: u32, // 0 for Team 1 (Players), 1 for Team 2 (Monsters)
     pub creature: Creature,
     #[serde(default)]
@@ -761,6 +762,8 @@ pub struct EncounterResult {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SimulationRunData {
     pub encounters: Vec<EncounterResult>,
+    #[serde(default)]
+    pub score: Option<f64>,
 }
 
 impl std::ops::Deref for SimulationRunData {

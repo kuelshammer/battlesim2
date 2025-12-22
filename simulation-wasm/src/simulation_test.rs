@@ -44,7 +44,7 @@ mod tests {
 
         // Simulate wizard death (HP <= 0.0)
         let mut dead_wizard = wizard.clone();
-        dead_wizard.final_state.current_hp = 0.0;
+        dead_wizard.final_state.current_hp = 0;
 
         let mut team1 = vec![fighter_with_shield];
         let _team2 = vec![dead_wizard];
@@ -71,8 +71,8 @@ mod tests {
                 id: id.to_string(),
                 name: name.to_string(),
                 count: 1.0,
-                hp: 10.0,
-                ac: 10.0, // Ensure float
+                hp: 10,
+                ac: 10, // Ensure float
                 speed_fly: None,
                 save_bonus: 0.0,
                 str_save_bonus: None,
@@ -96,12 +96,12 @@ mod tests {
             },
             initial_state: {
                 let mut state = CreatureState::default();
-                state.current_hp = 10.0;
+                state.current_hp = 10;
                 state
             },
             final_state: {
                 let mut state = CreatureState::default();
-                state.current_hp = 10.0;
+                state.current_hp = 10;
                 state
             },
             actions: vec![],
@@ -210,7 +210,7 @@ mod tests {
 
         // Run 1: Alive
         let mut c1 = caster.clone();
-        c1.final_state.current_hp = 10.0;
+        c1.final_state.current_hp = 10;
         c1.final_state.concentrating_on = Some(buff_id.to_string());
         
         let mut t1 = target.clone();
@@ -221,7 +221,7 @@ mod tests {
 
         // Run 2: Dead
         let mut c2 = caster.clone();
-        c2.final_state.current_hp = 0.0;
+        c2.final_state.current_hp = 0;
         c2.final_state.concentrating_on = None; 
         
         let mut t2 = target.clone();
@@ -232,7 +232,7 @@ mod tests {
 
         // Run 3: Dead
         let mut c3 = caster.clone();
-        c3.final_state.current_hp = 0.0;
+        c3.final_state.current_hp = 0;
         c3.final_state.concentrating_on = None;
         
         let mut t3 = target.clone();
@@ -275,7 +275,7 @@ mod tests {
 
         // All runs: Caster dead, but Target has buff (simulating error/lingering)
         let mut c = caster.clone();
-        c.final_state.current_hp = 0.0;
+        c.final_state.current_hp = 0;
         c.final_state.concentrating_on = None;
         
         let mut t = target.clone();
@@ -306,8 +306,8 @@ mod tests {
             id: "p1".to_string(),
             name: "Player".to_string(),
             count: 1.0,
-            hp: 20.0,
-            ac: 10.0,
+            hp: 20,
+            ac: 10,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -350,7 +350,7 @@ mod tests {
             id: "m1".to_string(),
             name: "Goblin".to_string(),
             count: 1.0,
-            hp: 10.0,
+            hp: 10,
             ac: 8.0, // Ensure float
             speed_fly: None,
             save_bonus: 0.0,
@@ -412,8 +412,8 @@ mod tests {
             id: "p1".to_string(),
             name: "Victim".to_string(),
             count: 1.0,
-            hp: 10.0,
-            ac: 10.0, // Ensure float
+            hp: 10,
+            ac: 10, // Ensure float
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -441,8 +441,8 @@ mod tests {
             id: "m1".to_string(),
             name: "Overkiller".to_string(),
             count: 1.0,
-            hp: 100.0,
-            ac: 10.0,
+            hp: 100,
+            ac: 10,
             speed_fly: None,
             save_bonus: 0.0,
             str_save_bonus: None,
@@ -561,7 +561,7 @@ mod tests {
         let paladin = create_combattant(paladin_creature, "paladin_1".to_string());
         let healthy_ally = create_dummy_combattant("Healthy Ally", "ally_1");
         let mut dying_ally = create_dummy_combattant("Dying Ally", "ally_2");
-        dying_ally.final_state.current_hp = 0.0;
+        dying_ally.final_state.current_hp = 0;
 
         let enemy = create_dummy_combattant("Enemy", "enemy_1");
 
@@ -667,8 +667,8 @@ mod tests {
         let barbarian_creature = Creature {
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
-            hp: 100.0,
-            ac: 15.0, // Ensure float
+            hp: 100,
+            ac: 15, // Ensure float
             speed_fly: None,
             save_bonus: 5.0,
             str_save_bonus: None,
@@ -766,8 +766,8 @@ mod tests {
         let barbarian_creature = Creature {
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
-            hp: 100.0,
-            ac: 15.0, // Ensure float
+            hp: 100,
+            ac: 15, // Ensure float
             speed_fly: None,
             save_bonus: 5.0,
             str_save_bonus: None,
@@ -996,7 +996,7 @@ mod tests {
         let goblin = Creature {
             id: "goblin".to_string(),
             name: "Goblin".to_string(),
-            hp: 20.0,
+            hp: 20,
             ac: 12.0, // Ensure float
             speed_fly: None,
             save_bonus: 0.0,

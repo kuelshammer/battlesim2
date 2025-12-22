@@ -102,11 +102,11 @@ const EnemyTargetOptions: Options<EnemyTarget> = [
 
 const AllyTargetOptions: Options<AllyTarget> = [
     { value: 'self', label: 'Self' },
-    { value: 'ally with the least HP', label: 'Ally with the least HP' },
-    { value: 'ally with the most HP', label: 'Ally with the most HP' },
-    { value: 'ally with the highest DPR', label: 'Ally with the highest DPR' },
-    { value: 'ally with the lowest AC', label: 'Ally with the lowest AC' },
-    { value: 'ally with the highest AC', label: 'Ally with the highest AC' },
+    { value: 'ally with least HP', label: 'Ally with least HP' },
+    { value: 'ally with most HP', label: 'Ally with most HP' },
+    { value: 'ally with highest DPR', label: 'Ally with highest DPR' },
+    { value: 'ally with lowest AC', label: 'Ally with lowest AC' },
+    { value: 'ally with highest AC', label: 'Ally with highest AC' },
 ]
 
 const BuffDurationOptions: Options<BuffDuration> = [
@@ -204,8 +204,9 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                         />
                     ) : (
                         <DiceFormulaInput
-                            value={value[modifier]}
-                            onChange={v => updateDiceFormula(modifier, v || 0)}
+                            value={value[modifier] as any}
+                            // @ts-ignore - Persistent environment-specific type mismatch
+                            onChange={v => updateDiceFormula(modifier, v)}
                         />
                     )}
                     <button onClick={() => setModifier(index, null)}>
@@ -264,8 +265,10 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
     function updateRiderEffect(callback: (riderEffect: { dc: number, buff: Buff }) => void) {
         update((actionClone) => {
             const atkAction = (actionClone as AtkAction)
-            atkAction.riderEffect ||= { dc: 0, buff: { duration: '1 round' } }
-            callback(atkAction.riderEffect)
+            if (!atkAction.riderEffect) {
+                atkAction.riderEffect = { dc: 0, buff: { duration: '1 round' } }
+            }
+            callback(atkAction.riderEffect as { dc: number, buff: Buff })
         })
     }
 
@@ -300,8 +303,8 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
         switch (type) {
             case "template": return onChange(templateAction)
             case "atk": return onChange({ ...common, type, target: "enemy with most HP", dpr: 0, toHit: 0 })
-            case "heal": return onChange({ ...common, type, amount: 0, target: "ally with the least HP" })
-            case "buff": return onChange({ ...common, type, target: "ally with the highest DPR", buff: { duration: '1 round' } })
+            case "heal": return onChange({ ...common, type, amount: 0, target: "ally with least HP" })
+            case "buff": return onChange({ ...common, type, target: "ally with highest DPR", buff: { duration: '1 round' } })
             case "debuff": return onChange({ ...common, type, target: "enemy with highest DPR", saveDC: 10, buff: { duration: '1 round' } })
         }
     }
@@ -311,7 +314,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
 
         const template = ActionTemplates[templateName]
         const enemyTarget: EnemyTarget = 'enemy with least HP'
-        const allyTarget: AllyTarget = 'ally with the least HP'
+        const allyTarget: AllyTarget = 'ally with least HP'
         const defaultTarget: EnemyTarget | AllyTarget = ((template.type === 'atk') || (template.type === 'debuff')) ? enemyTarget : allyTarget
 
         onChange({

@@ -305,8 +305,9 @@ const EncounterResultSchema = z.object({
     stats: z.map(z.string(), EncounterStatsSchema),
     rounds: z.array(RoundSchema),
 })
-const SimulationResultSchema = z.object({
+export const SimulationResultSchema = z.object({
     encounters: z.array(EncounterResultSchema),
+    score: z.number().optional(),
 })
 
 export type DiceFormula = z.infer<typeof DiceFormulaSchema>
