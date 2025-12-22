@@ -1,0 +1,27 @@
+.summaryContainer {
+    background-color: #2a2a2a;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #555;
+
+    &.green { border-left-color: #28a745; }
+    &.yellow { border-left-color: #ffc107; }
+    &.blue { border-left-color: #007bff; }
+    &.cyan { border-left-color: #17a2b8; }
+    &.red { border-left-color: #dc3545; }
+}
+
+.title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #aaa;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.message {
+    font-size: 1rem;
+    color: #eee;
+    line-height: 1.4;
+}
