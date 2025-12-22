@@ -11,11 +11,11 @@ Goal: Prepare the Custom Form to receive imported data.
 ## Phase 2: Integration
 Goal: Connect the Import Modal to the Custom Form.
 
-- [ ] Task: Add Import trigger to `CustomForm.tsx`
+- [x] Task: Add Import trigger to `CustomForm.tsx` (123121d)
     - Add a "Pre-fill from 5e.tools JSON" button at the top of the custom creature form.
-- [ ] Task: Implement pre-fill logic
+- [x] Task: Implement pre-fill logic (123121d)
     - When JSON is imported, map it to the form's state using `mapMonster5eToCreature`.
-- [ ] Task: Remove Import from `MonsterForm.tsx`
+- [x] Task: Remove Import from `MonsterForm.tsx` (123121d)
     - Clean up the old entry point to prevent confusion.
 
 ## Phase 3: Verification
