@@ -27,7 +27,7 @@ Goal: Visualize attrition and risk.
 ## Phase 4: Natural Language Summary & Polishing
 Goal: Add the "Assistant" voice and final styling.
 
-- [ ] Task: Implement `AssistantSummary` logic.
+- [x] Task: Implement `AssistantSummary` logic. (1012044)
 - [ ] Task: Add cumulative drift calculation to `DeltaBadge`.
 - [ ] Task: Final Verification & Polishing.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
