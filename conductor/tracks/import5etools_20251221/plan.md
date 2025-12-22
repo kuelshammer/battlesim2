@@ -1,6 +1,6 @@
 # Plan: 5e.tools Monster Import
 
-## Phase 1: Core Data Parsing
+## Phase 1: Core Data Parsing [checkpoint: 0d1d260]
 Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Abilities).
 
 - [x] Task: Define Zod schemas for 5e.tools monster format (9a88260)
@@ -9,12 +9,12 @@ Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Ab
 - [x] Task: Implement mapping logic for core stats (865215f)
     - Write tests for mapping HP, AC, and Abilities
     - Implement mapper in `src/model/import/5etools-mapper.ts`
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Core Data Parsing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Core Data Parsing' (0d1d260)
 
 ## Phase 2: Action Conversion
 Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 
-- [ ] Task: Implement regex-based parsing for standard attacks
+- [~] Task: Implement regex-based parsing for standard attacks
     - Write tests for extracting hit bonus and damage from descriptions
     - Implement parsing in `src/model/import/5etools-action-parser.ts`
 - [ ] Task: Implement Multiattack mapping
