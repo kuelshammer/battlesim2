@@ -14,7 +14,7 @@ Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Ab
 ## Phase 2: Action Conversion
 Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 
-- [~] Task: Implement regex-based parsing for standard attacks
+- [x] Task: Implement regex-based parsing for standard attacks (8b865cc)
     - Write tests for extracting hit bonus and damage from descriptions
     - Implement parsing in `src/model/import/5etools-action-parser.ts`
 - [ ] Task: Implement Multiattack mapping
