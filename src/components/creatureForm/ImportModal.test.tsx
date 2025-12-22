@@ -27,6 +27,28 @@ describe('ImportModal', () => {
         expect(importedCreature.ac).toBe(15);
     });
 
+    it('should handle dirty JSON input (like leading j artifact)', () => {
+        const onImport = vi.fn();
+        const onCancel = vi.fn();
+        render(<ImportModal onImport={onImport} onCancel={onCancel} />);
+
+        const textarea = screen.getByPlaceholderText(/name/);
+        const dirtyJson = 'j' + JSON.stringify({
+            name: "Dirty Monster",
+            hp: { average: 5 },
+            ac: [10]
+        });
+
+        fireEvent.change(textarea, { target: { value: dirtyJson } });
+        
+        const importBtn = screen.getByText('Import Creature');
+        fireEvent.click(importBtn);
+
+        expect(onImport).toHaveBeenCalled();
+        const importedCreature = onImport.mock.calls[0][0];
+        expect(importedCreature.name).toBe("Dirty Monster");
+    });
+
     it('should show error message when invalid JSON is pasted', () => {
         const onImport = vi.fn();
         const onCancel = vi.fn();
@@ -38,7 +60,7 @@ describe('ImportModal', () => {
         const importBtn = screen.getByText('Import Creature');
         fireEvent.click(importBtn);
 
-        expect(screen.getByText(/Failed to parse JSON/)).toBeDefined();
+        expect(screen.getByText(/No valid JSON found/)).toBeDefined();
         expect(onImport).not.toHaveBeenCalled();
     });
 });

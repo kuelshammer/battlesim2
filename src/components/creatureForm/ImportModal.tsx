@@ -4,6 +4,7 @@ import styles from "./importModal.module.scss";
 import { Monster5eSchema } from "@/model/import/5etools-schema";
 import { mapMonster5eToCreature } from "@/model/import/5etools-mapper";
 import { Creature } from "@/model/model";
+import { cleanJsonInput } from "@/model/import/utils";
 
 type PropType = {
     onImport: (creature: Creature) => void;
@@ -16,7 +17,13 @@ const ImportModal: FC<PropType> = ({ onImport, onCancel }) => {
 
     const handleImport = () => {
         try {
-            const rawData = JSON.parse(jsonText);
+            const cleaned = cleanJsonInput(jsonText);
+            if (!cleaned) {
+                setError("No valid JSON found in input. Please ensure you pasted the monster's JSON.");
+                return;
+            }
+
+            const rawData = JSON.parse(cleaned);
             const validation = Monster5eSchema.safeParse(rawData);
             
             if (!validation.success) {
