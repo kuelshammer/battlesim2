@@ -7,9 +7,10 @@ import PlayerForm from "./playerForm"
 import MonsterForm from "./monsterForm"
 import CustomForm from "./customForm"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faCheck, faTrash, faWrench } from "@fortawesome/free-solid-svg-icons"
+import { faCheck, faFileImport, faTrash, faWrench } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import Modal from "../utils/modal"
+import ImportModal from "./ImportModal"
 
 type PropType = {
     onSubmit: (value: Creature) => void,
@@ -36,6 +37,8 @@ function newCreature(mode: 'player'|'monster'): Creature {
 const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialValue, onDelete }) => {
     const [value, setValue] = useState<Creature>(initialValue || newCreature(initialMode || 'player'))
     const [isValid, setIsValid] = useState(false)
+    const [showImport, setShowImport] = useState(false)
+
     useEffect(() => {
         if (!CreatureSchema.safeParse(value).success) {
             setIsValid(false)
@@ -58,8 +61,22 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
         setValue(clonedValue)
     }
 
+    function handleImport(creature: Creature) {
+        setValue({
+            ...creature,
+            count: value.count // Preserve existing count
+        });
+        setShowImport(false);
+    }
+
     return (
         <Modal onCancel={onCancel} className={styles.creatureForm}>
+            {showImport && (
+                <ImportModal 
+                    onImport={handleImport} 
+                    onCancel={() => setShowImport(false)} 
+                />
+            )}
             <div className={styles.modes}>
                 <button
                     className={(value.mode === 'player') ? styles.active : undefined}
@@ -78,6 +95,13 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                     onClick={() => update(c => { c.mode = 'custom' })}
                 >
                     Custom
+                </button>
+                <button
+                    className={styles.importTab}
+                    onClick={() => setShowImport(true)}
+                    title="Import from 5e.tools"
+                >
+                    <FontAwesomeIcon icon={faFileImport} />
                 </button>
             </div>
 
