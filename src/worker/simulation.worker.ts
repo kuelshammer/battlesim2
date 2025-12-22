@@ -12,9 +12,9 @@ async function ensureWasmInitialized() {
 }
 
 self.onmessage = async (e: MessageEvent) => {
-    const { type, players, timeline, monsters, iterations } = e.data;
+    const { type: messageType, players, timeline, monsters, iterations, encounterIndex } = e.data;
 
-    if (type === 'START_SIMULATION') {
+    if (messageType === 'START_SIMULATION') {
         try {
             await ensureWasmInitialized();
 
@@ -52,13 +52,14 @@ self.onmessage = async (e: MessageEvent) => {
                 error: error instanceof Error ? error.message : String(error)
             });
         }
-    } else if (type === 'AUTO_ADJUST_ENCOUNTER') {
+    } else if (messageType === 'AUTO_ADJUST_ENCOUNTER') {
+        const { players, monsters, timeline, encounterIndex } = e.data;
         try {
             await ensureWasmInitialized();
-            const result = auto_adjust_encounter_wasm(players, monsters);
+            const adjustmentResult = auto_adjust_encounter_wasm(players, monsters, timeline, encounterIndex);
             self.postMessage({
                 type: 'AUTO_ADJUST_COMPLETE',
-                result
+                result: adjustmentResult
             });
         } catch (error) {
             console.error('Worker auto-adjust error:', error);

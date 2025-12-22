@@ -1,10 +1,9 @@
-import { FC, useState, useEffect } from "react"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, TimelineEvent, TimelineEventSchema } from "@/model/model"
+import { FC, useState, useEffect, useCallback } from "react"
+import { Creature, CreatureSchema, TimelineEvent, TimelineEventSchema } from "@/model/model"
 import styles from './adventuringDayForm.module.scss'
-import { sharedStateGenerator, useCalculatedState } from "@/model/utils"
 import { z } from 'zod'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faDownload, faFolder, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faEye, faBed } from "@fortawesome/free-solid-svg-icons"
+import { faDownload, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faBed } from "@fortawesome/free-solid-svg-icons"
 import { PlayerTemplates } from "@/data/data"
 import { getMonster } from "@/data/monsters"
 import Modal from "@/utils/modal"
@@ -34,7 +33,34 @@ type SaveFile = z.infer<typeof SaveFileSchema>
 const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onCancel, onApplyChanges, onEditingChange }) => {
     const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
     const [editedTimeline, setEditedTimeline] = useState<TimelineEvent[]>(currentTimeline);
+    const [saveName, setSaveName] = useState("");
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [savedDays, setSavedDays] = useState<SaveFile[]>([]);
     
+    const [editingPlayer, setEditingPlayer] = useState<Creature | null>(null);
+    const [editingMonster, setEditingMonster] = useState<Creature | null>(null);
+    const [editingMonsterEncounterIndex, setEditingMonsterEncounterIndex] = useState<number | null>(null);
+
+    const fetchSaves = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/adventuring-days');
+            if (response.ok) {
+                const data = await response.json();
+                setSavedDays(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch saves:", e);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchSaves();
+    }, [fetchSaves]);
+
     // Sync external changes
     useEffect(() => {
         setEditedPlayers(currentPlayers);
@@ -45,14 +71,14 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
     }, [currentTimeline]);
 
     function addPlayer() {
-        const newPlayer = PlayerTemplates.barbarian(1, { gwm: false, weaponBonus: 0 }); // Default Barbarian with correct options
+        const newPlayer = PlayerTemplates.barbarian(1, { gwm: false, weaponBonus: 0 }); 
         newPlayer.id = uuidv4();
         setEditedPlayers([...editedPlayers, newPlayer]);
     }
 
     function updatePlayer(updatedPlayer: Creature) {
         setEditedPlayers(editedPlayers.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
-        setEditingPlayer(null); // Close modal
+        setEditingPlayer(null); 
     }
 
     function removePlayer(id: string) {
@@ -124,7 +150,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
             return event;
         });
         setEditedTimeline(updatedTimeline);
-        setEditingMonster(null); // Close modal
+        setEditingMonster(null); 
         setEditingMonsterEncounterIndex(null);
     }
 
@@ -190,7 +216,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
             updated: Date.now(),
             name: saveName,
             players: editedPlayers,
-            encounters: editedEncounters,
+            timeline: editedTimeline,
         }
 
         const file = new Blob([JSON.stringify(newSaveFile)], { type: 'json' })
@@ -231,13 +257,13 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
                 body: JSON.stringify({
                     name: newSave.name,
                     players: newSave.players,
-                    encounters: newSave.encounters,
+                    timeline: newSave.timeline,
                 })
             })
             fetchSaves()
-            onApplyChanges(newSave.players, newSave.encounters)
+            onApplyChanges(newSave.players, newSave.timeline)
             setEditedPlayers(newSave.players);
-            setEditedEncounters(newSave.encounters);
+            setEditedTimeline(newSave.timeline);
             setSaveName(newSave.name);
         } catch (e) {
             setError('Failed to upload')

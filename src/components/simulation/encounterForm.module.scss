@@ -137,5 +137,23 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+
+        .roleSelection {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            label {
+                font-size: 0.8em;
+                font-weight: bold;
+                color: #aaa;
+                text-transform: uppercase;
+            }
+
+            .roleSelect {
+                color: black;
+            }
+        }
     }
 }

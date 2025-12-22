@@ -12,18 +12,21 @@ pub struct AutoBalancer {
 impl AutoBalancer {
     pub fn new() -> Self {
         Self {
-            max_iterations: 15,
-            target_simulations: 2510,
+            max_iterations: 30,
+            target_simulations: 503,
         }
     }
 
     pub fn balance_encounter(
         &self, 
         players: Vec<Creature>, 
-        mut monsters: Vec<Creature>
+        mut monsters: Vec<Creature>,
+        full_day_timeline: Vec<TimelineStep>,
+        encounter_index: usize,
     ) -> (Vec<Creature>, AggregateOutput) {
-        // 1. Initial Simulation
-        let mut analysis = self.run_analysis(&players, &monsters);
+        // 1. Initial Simulation with full context
+        let mut analysis = self.run_analysis(&players, &monsters, &full_day_timeline, encounter_index);
+        let initial_grade = analysis.safety_grade.clone();
 
         // 2. Role Detection for each monster
         let total_hp: f64 = monsters.iter().map(|m| m.hp as f64 * m.count).sum();
@@ -39,7 +42,7 @@ impl AutoBalancer {
 
         // 3. Optimization Loop
         for _ in 0..self.max_iterations {
-            if self.is_balanced(&analysis) {
+            if self.is_balanced(&analysis, &initial_grade) {
                 break;
             }
 
@@ -60,7 +63,7 @@ impl AutoBalancer {
                 break;
             }
 
-            analysis = self.run_analysis(&players, &monsters);
+            analysis = self.run_analysis(&players, &mut monsters, &full_day_timeline, encounter_index);
         }
 
         // 4. Finalize dice notation
@@ -71,33 +74,42 @@ impl AutoBalancer {
         (monsters, analysis)
     }
 
-    fn run_analysis(&self, players: &[Creature], monsters: &[Creature]) -> AggregateOutput {
-        let timeline = vec![TimelineStep::Combat(Encounter {
-            monsters: monsters.to_vec(),
-            players_surprised: None,
-            monsters_surprised: None,
-            short_rest: None,
-            players_precast: None,
-            monsters_precast: None,
-        })];
+    fn run_analysis(&self, players: &[Creature], monsters: &[Creature], full_day_timeline: &[TimelineStep], encounter_index: usize) -> AggregateOutput {
+        // Construct a timeline that is identical to the full day, 
+        // EXCEPT the target encounter uses the currently-being-optimized monsters.
+        let mut modified_timeline = full_day_timeline.to_vec();
+        if let Some(step) = modified_timeline.get_mut(encounter_index) {
+            if let TimelineStep::Combat(enc) = step {
+                enc.monsters = monsters.to_vec();
+            }
+        }
         
         let runs = run_event_driven_simulation_rust(
             players.to_vec(), 
-            timeline, 
+            modified_timeline, 
             self.target_simulations, 
             false
         );
         let raw_results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
-        run_decile_analysis(&raw_results, "Auto-Balance", players.len())
+        
+        // We analyze the SPECIFIC encounter at encounter_index
+        crate::decile_analysis::run_encounter_analysis(&raw_results, encounter_index, "Auto-Balance", players.len())
     }
 
-    fn is_balanced(&self, analysis: &AggregateOutput) -> bool {
-        matches!(analysis.safety_grade, SafetyGrade::A | SafetyGrade::B) &&
-        matches!(analysis.intensity_tier, IntensityTier::Tier3 | IntensityTier::Tier4)
+    fn is_balanced(&self, analysis: &AggregateOutput, initial_grade: &SafetyGrade) -> bool {
+        let safety_ok = if *initial_grade == SafetyGrade::F {
+            matches!(analysis.safety_grade, SafetyGrade::A)
+        } else {
+            matches!(analysis.safety_grade, SafetyGrade::A | SafetyGrade::B)
+        };
+
+        safety_ok && matches!(analysis.intensity_tier, IntensityTier::Tier3)
     }
 
     fn is_too_deadly(&self, analysis: &AggregateOutput) -> bool {
-        matches!(analysis.safety_grade, SafetyGrade::C | SafetyGrade::D | SafetyGrade::F)
+        // Too deadly if grade is bad OR if it's Tier 4/5 (should be Tier 3)
+        matches!(analysis.safety_grade, SafetyGrade::C | SafetyGrade::D | SafetyGrade::F) ||
+        matches!(analysis.intensity_tier, IntensityTier::Tier4 | IntensityTier::Tier5)
     }
 
     fn is_too_easy(&self, analysis: &AggregateOutput) -> bool {
@@ -107,16 +119,22 @@ impl AutoBalancer {
     fn apply_adjustment(&self, monsters: &mut Vec<Creature>, roles: &[MonsterRole], step: f64, is_nerf: bool) {
         for (m, role) in monsters.iter_mut().zip(roles.iter()) {
             match (role, is_nerf) {
-                (MonsterRole::Boss, true) => adjust_damage(m, step),
+                (MonsterRole::Boss, true) => {
+                    adjust_damage(m, step);
+                    adjust_hp(m, step); // Nerf both for bosses
+                },
                 (MonsterRole::Boss, false) => adjust_hp(m, step),
                 
-                (MonsterRole::Brute, true) => adjust_damage(m, step),
+                (MonsterRole::Brute, true) => {
+                    adjust_damage(m, step);
+                    adjust_hp(m, step); // Nerf both for brutes
+                },
                 (MonsterRole::Brute, false) => adjust_hp(m, step),
                 
                 (MonsterRole::Striker, true) => adjust_damage(m, step), // accuracy would be better but dpr is knob for now
                 (MonsterRole::Striker, false) => adjust_damage(m, step),
                 
-                (MonsterRole::Controller, true) => adjust_dc(m, -1.0),
+                (MonsterRole::Controller, true) => adjust_dc(m, -0.5),
                 (MonsterRole::Controller, false) => adjust_hp(m, step),
                 
                 (MonsterRole::Minion, true) => { if m.count > 1.0 { m.count -= 1.0; } },

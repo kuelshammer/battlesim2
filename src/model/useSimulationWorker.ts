@@ -120,6 +120,11 @@ export function useSimulationWorker() {
             actions: p.actions.map(getFinalAction)
         }));
 
+        if (!Array.isArray(timeline)) {
+            console.error("runSimulation called with non-array timeline:", timeline);
+            return;
+        }
+
         const cleanTimeline = timeline.map(event => {
             if (event.type === 'combat') {
                 return {
@@ -141,7 +146,7 @@ export function useSimulationWorker() {
         });
     }, [terminateAndRestart]);
 
-    const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[]) => {
+    const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => {
         // Terminate existing worker if running
         terminateAndRestart();
         
@@ -166,10 +171,30 @@ export function useSimulationWorker() {
             actions: m.actions.map(getFinalAction)
         }));
 
+        if (!Array.isArray(timeline)) {
+            console.error("autoAdjustEncounter called with non-array timeline:", timeline);
+            return;
+        }
+
+        const cleanTimeline = timeline.map(event => {
+            if (event.type === 'combat') {
+                return {
+                    ...event,
+                    monsters: event.monsters.map(m => ({
+                        ...m,
+                        actions: m.actions.map(getFinalAction)
+                    }))
+                };
+            }
+            return event; 
+        });
+
         workerRef.current?.postMessage({
             type: 'AUTO_ADJUST_ENCOUNTER',
             players: cleanPlayers,
-            monsters: cleanMonsters
+            monsters: cleanMonsters,
+            timeline: cleanTimeline,
+            encounterIndex
         });
     }, [terminateAndRestart]);
 

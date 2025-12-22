@@ -14,7 +14,7 @@ Goal: Implement the core pacing visuals.
 - [x] Task: Create `DeltaBadge` component with 5-zone logic. (a8da9b7)
 - [x] Task: Create `FuelGauge` component (Plan vs. Reality segments). (0bfa02a)
 - [x] Task: Integrate components into `Simulation.tsx` and `EncounterResult.tsx`. (e049873)
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: The Descent Graph (SVG)
 Goal: Visualize attrition and risk.

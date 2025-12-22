@@ -34,6 +34,12 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
     let mut aggregated_encounters = Vec::with_capacity(num_encounters);
 
     for enc_idx in 0..num_encounters {
+        // Use first available encounter as template for metadata
+        let template_encounter = match results.iter().find_map(|r| r.get(enc_idx)) {
+            Some(e) => e,
+            None => continue, // Skip if this encounter index is missing in all results
+        };
+
         let max_rounds = results
             .iter()
             .map(|r| r.get(enc_idx).map(|e| e.rounds.len()).unwrap_or(0))
@@ -45,15 +51,13 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
             aggregated_encounters.push(EncounterResult {
                 stats: HashMap::new(),
                 rounds: Vec::new(),
+                target_role: template_encounter.target_role.clone(),
             });
             continue;
         }
 
         let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
         
-        // Use first available encounter as template for metadata
-        let template_encounter = results.iter().find_map(|r| r.get(enc_idx)).unwrap();
-
         for round_idx in 0..max_rounds {
             let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
             let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
@@ -102,9 +106,14 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
             if count == 0 { continue; }
             let threshold = count / 2;
             let template_round = if round_idx < template_encounter.rounds.len() {
-                &template_encounter.rounds[round_idx]
+                Some(&template_encounter.rounds[round_idx])
             } else {
-                template_encounter.rounds.last().unwrap()
+                template_encounter.rounds.last()
+            };
+
+            let template_round = match template_round {
+                Some(r) => r,
+                None => continue,
             };
 
             let mut t1 = Vec::new();
@@ -161,6 +170,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
         aggregated_encounters.push(EncounterResult {
             stats: HashMap::new(), // TODO: Aggregate stats if needed
             rounds: aggregated_rounds,
+            target_role: template_encounter.target_role.clone(),
         });
     }
 

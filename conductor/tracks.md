@@ -4,5 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Encounter Auto-Balancer Engine
-*Link: [./conductor/tracks/auto_balancer_20251222/][./conductor/tracks/auto_balancer_20251222/]*
+## [~] Track: Daily Pacing Dashboard
+*Link: [./conductor/tracks/daily_pacing_dashboard_20251222/](./conductor/tracks/daily_pacing_dashboard_20251222/)*
+

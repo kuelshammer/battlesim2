@@ -1,5 +1,5 @@
 import { FC, ReactNode, useState } from "react"
-import { Creature, Encounter } from "@/model/model"
+import { Creature, Encounter, TargetRoleList } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp, faPen, faPlus, faTrash, faMagicWandSparkles } from "@fortawesome/free-solid-svg-icons"
@@ -7,6 +7,7 @@ import CreatureForm from "./../creatureForm/creatureForm"
 import { clone } from "@/model/utils"
 import Checkbox from "@/utils/checkbox"
 import Range from "@/utils/range"
+import Select from "react-select"
 
 type PropType = {
     mode: 'player' | 'monster',
@@ -125,11 +126,15 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAu
                                 <Checkbox value={!!encounter.monstersSurprised} onToggle={() => update(e => { e.monstersSurprised = !e.monstersSurprised })}>
                                     The enemies are surprised
                                 </Checkbox>
-                                {!onDelete ? null : (
-                                    <Checkbox value={!!encounter.shortRest} onToggle={() => update(e => { e.shortRest = !e.shortRest })}>
-                                        The players get a short rest
-                                    </Checkbox>
-                                )}
+                                <div className={styles.roleSelection}>
+                                    <label>Encounter Role:</label>
+                                    <Select
+                                        className={styles.roleSelect}
+                                        value={{ value: encounter.targetRole || 'Standard', label: encounter.targetRole || 'Standard' }}
+                                        options={TargetRoleList.map(r => ({ value: r, label: r }))}
+                                        onChange={val => update(e => { e.targetRole = (val?.value as any) || 'Standard' })}
+                                    />
+                                </div>
                             </>
                         ) : null)}
                     </div>

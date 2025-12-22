@@ -14,6 +14,7 @@
         - **5e.tools Integration:** Rapidly import monsters and NPCs from 5e.tools JSON data to pre-fill custom creature forms, allowing for easy adjustment before adding to combat.
         - **Timeline-Based Simulation:** Sequence multiple combat encounters and short rests in a linear timeline to simulate a full adventuring day, accounting for resource recovery and Hit Die consumption.
         - **Modular Action System:** Leverage the existing flexible action system to support complex creature abilities and unique gameplans.
+        - **Auto-Balancer Engine:** Automatically optimize encounter difficulty by iteratively adjusting monster stats (HP, damage, AC) to hit specific "Safety" and "Intensity" targets.
 
 ## Visualization & Reporting
 - **Detailed Combat Logs:** Round-by-round breakdown of probability-weighted actions for debugging and strategy review.

@@ -23,7 +23,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               filename: file,
               updated: stats.mtime.getTime(),
               players: content.players,
-              encounters: content.encounters
+              timeline: content.timeline || content.encounters || []
             }
           } catch (e) {
             return null
@@ -37,7 +37,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   } else if (req.method === 'POST') {
     try {
-      const { name, players, encounters } = req.body
+      const { name, players, timeline } = req.body
       if (!name) {
         return res.status(400).json({ error: 'Name is required' })
       }
@@ -50,7 +50,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       const content = {
         name,
         players,
-        encounters,
+        timeline,
         updated: Date.now()
       }
       

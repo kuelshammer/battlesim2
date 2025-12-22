@@ -22,7 +22,7 @@ mod tests {
         current.insert("ClassResource(Action Surge)".to_string(), 1.0);
         rules.insert("ClassResource(Action Surge)".to_string(), ResetType::ShortRest);
 
-        let ehp = calculate_ehp_points(&current, &rules);
+        let ehp = calculate_ehp_points(10, 0, &current, &rules);
         
         // HP: 10 * 1 = 10
         // HD: 1 * 8 = 8
@@ -40,7 +40,7 @@ mod tests {
         // 1 Lvl 3 Spell Slot
         current.insert("SpellSlot(3)".to_string(), 1.0);
         
-        let ehp = calculate_ehp_points(&current, &rules);
+        let ehp = calculate_ehp_points(0, 0, &current, &rules);
         
         // 15 * 3^1.5 = 15 * 5.196 = 77.94
         assert!((ehp - 77.94).abs() < 0.01);

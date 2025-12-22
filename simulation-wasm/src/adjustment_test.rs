@@ -56,4 +56,68 @@ mod tests {
         let role = detect_role(&brute, 200.0, 50.0);
         assert_eq!(role, MonsterRole::Brute);
     }
+
+    #[test]
+    fn test_adjust_template_action() {
+        use crate::creature_adjustment::adjust_damage;
+        let mut dragon = create_test_creature("Black Dragon", 200, 19, 1.0);
+        dragon.actions.push(Action::Template(TemplateAction {
+            id: "breath".to_string(),
+            name: "Acid Breath".to_string(),
+            action_slot: None,
+            cost: vec![],
+            requirements: vec![],
+            tags: vec![],
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            template_options: TemplateOptions {
+                template_name: "Line".to_string(),
+                target: None,
+                save_dc: Some(18.0),
+                amount: Some(DiceFormula::Value(54.0)),
+            },
+        }));
+
+        adjust_damage(&mut dragon, 0.10); // +10%
+
+        let action = &dragon.actions[0];
+        if let Action::Template(t) = action {
+            // Currently this will FAIL because adjust_damage ignores Template
+            assert!(t.template_options.amount.is_some());
+            if let Some(DiceFormula::Value(v)) = t.template_options.amount {
+                assert!(v > 54.0, "Expected damage {} to be greater than 54.0 after adjustment", v);
+            }
+        }
+    }
+
+    #[test]
+    fn test_adjust_template_dc() {
+        use crate::creature_adjustment::adjust_dc;
+        let mut dragon = create_test_creature("Black Dragon", 200, 19, 1.0);
+        dragon.actions.push(Action::Template(TemplateAction {
+            id: "breath".to_string(),
+            name: "Acid Breath".to_string(),
+            action_slot: None,
+            cost: vec![],
+            requirements: vec![],
+            tags: vec![],
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            template_options: TemplateOptions {
+                template_name: "Line".to_string(),
+                target: None,
+                save_dc: Some(18.0),
+                amount: Some(DiceFormula::Value(54.0)),
+            },
+        }));
+
+        adjust_dc(&mut dragon, -2.0); // Nerf DC by 2
+
+        let action = &dragon.actions[0];
+        if let Action::Template(t) = action {
+            assert_eq!(t.template_options.save_dc, Some(16.0));
+        }
+    }
 }

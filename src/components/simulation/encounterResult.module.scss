@@ -110,6 +110,21 @@
             font-size: 1.4em;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
         }
+
+        .intensityBolts {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+
+            .boltFilled {
+                color: #4facfe; // Electric blue for lightning/energy
+                filter: drop-shadow(0 0 3px rgba(79, 172, 254, 0.8));
+            }
+
+            .boltEmpty {
+                color: rgba(255, 255, 255, 0.1);
+            }
+        }
     }
 
     .ratingTitle {

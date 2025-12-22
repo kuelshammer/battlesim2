@@ -15,6 +15,31 @@ pub enum MonsterRole {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TargetRole {
+    Skirmish,
+    Standard,
+    Elite,
+    Boss,
+}
+
+impl TargetRole {
+    pub fn weight(&self) -> f64 {
+        match self {
+            TargetRole::Skirmish => 1.0,
+            TargetRole::Standard => 2.0,
+            TargetRole::Elite => 3.0,
+            TargetRole::Boss => 4.0,
+        }
+    }
+}
+
+impl Default for TargetRole {
+    fn default() -> Self {
+        TargetRole::Standard
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum DiceFormula {
     Value(f64),
@@ -742,6 +767,8 @@ pub struct Encounter {
     pub players_precast: Option<bool>, // New field
     #[serde(rename = "monstersPrecast")]
     pub monsters_precast: Option<bool>, // New field
+    #[serde(rename = "targetRole", default)]
+    pub target_role: TargetRole,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -790,6 +817,8 @@ pub struct Round {
 pub struct EncounterResult {
     pub stats: HashMap<String, EncounterStats>,
     pub rounds: Vec<Round>,
+    #[serde(rename = "targetRole", default)]
+    pub target_role: TargetRole,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

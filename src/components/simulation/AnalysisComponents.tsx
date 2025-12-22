@@ -2,7 +2,7 @@ import { FC, memo, useMemo } from "react"
 import { AggregateOutput, DecileStats, CombatantVisualization } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBrain, faTrophy, faCheckCircle, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons"
+import { faBrain, faTrophy, faCheckCircle, faExclamationTriangle, faBolt } from "@fortawesome/free-solid-svg-icons"
 
 const formatLabel = (label: string): string => {
     switch (label) {
@@ -36,31 +36,32 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     const ratingInfo = useMemo(() => {
         if (!analysis || !analysis.deciles?.length) return null;
 
-        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign } = analysis as any;
+        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign, stars = 0 } = analysis as any;
         
         const getGradeColor = (grade: string) => {
-            if (grade.startsWith('A')) return "#28a745";
-            if (grade.startsWith('B')) return "#20c997";
-            if (grade.startsWith('C')) return "#ffc107";
-            if (grade.startsWith('D')) return "#fd7e14";
-            return "#dc3545";
+            if (grade.startsWith('A')) return "#28a745"; // Green
+            if (grade.startsWith('B')) return "#fd7e14"; // Orange (changed from tealish)
+            return "#dc3545"; // Red for C, D, F
         };
 
         let displayLabel = formatLabel(encounterLabel);
         let statusIcon = null;
 
         if (isDaySummary) {
-            if (safetyGrade === 'B' && intensityTier === 'Tier5') {
-                displayLabel = "🏆 PERFECT ADVENTURING DAY";
+            if (safetyGrade === 'A' && intensityTier === 'Tier4') {
+                displayLabel = "🌟 A+++ PERFECT DAY 🌟";
                 statusIcon = faTrophy;
             } else if (isGoodDesign) {
                 displayLabel = "✅ WELL BALANCED DAY";
                 statusIcon = faCheckCircle;
             } else {
-                displayLabel = "⚠️ IMBALANCED DAY";
+                displayLabel = "❌ IMBALANCED DAY";
                 statusIcon = faExclamationTriangle;
             }
         }
+
+        // Logic: Tier 1 = 0, Tier 2 = 1, Tier 3 = 2, Tier 4 = 3, Tier 5 = 4
+        const boltCount = intensityTier === 'Tier5' ? 4 : Math.max(0, parseInt(intensityTier.replace('Tier', '')) - 1);
 
         return {
             title: displayLabel,
@@ -68,7 +69,8 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
             tier: formatTier(intensityTier || "Tier1"),
             summary: analysisSummary,
             color: getGradeColor(String(safetyGrade || 'A')),
-            statusIcon
+            statusIcon,
+            stars: boltCount
         };
     }, [analysis, isDaySummary]);
 
@@ -81,6 +83,15 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
                 <span className={styles.ratingTitle}>
                     {ratingInfo.title}
                 </span>
+                <div className={styles.intensityBolts}>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <FontAwesomeIcon 
+                            key={i} 
+                            icon={faBolt} 
+                            className={i < ratingInfo.stars ? styles.boltFilled : styles.boltEmpty} 
+                        />
+                    ))}
+                </div>
                 {isPreliminary && <span className={styles.preliminaryNotice}> (ESTIMATING...)</span>}
             </div>
             
