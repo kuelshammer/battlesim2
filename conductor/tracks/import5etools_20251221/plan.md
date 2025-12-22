@@ -20,7 +20,7 @@ Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 - [x] Task: Implement Multiattack mapping (0bd955a)
     - Write tests for multiattack routinely logic
     - Integrate with mapper
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Action Conversion' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Action Conversion' (Protocol in workflow.md)
 
 ## Phase 3: UI Integration
 Goal: Provide a way for users to use the import feature in the browser.
