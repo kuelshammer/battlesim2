@@ -38,15 +38,24 @@ describe('5etools-mapper', () => {
         expect(creature.ac).toBe(12); // Should take the first base AC for now
     });
 
-    it('should handle AC as object', () => {
+    it('should map basic actions correctly', () => {
         const monster: Monster5e = {
-            name: "Animated Armor",
-            hp: { average: 33 },
-            ac: [{ ac: 18, from: ["natural armor"] }],
-            str: 14, dex: 11, con: 13, int: 1, wis: 3, cha: 1
+            name: "Aarakocra",
+            hp: { average: 13 },
+            ac: [12],
+            str: 10, dex: 14, con: 10, int: 11, wis: 12, cha: 11,
+            action: [
+                {
+                    name: "Talon",
+                    entries: ["{@hit 4} to hit, reach 5 ft., one target. {@h}5 ({@damage 1d6 + 2}) piercing damage."]
+                }
+            ]
         };
 
         const creature = mapMonster5eToCreature(monster);
-        expect(creature.ac).toBe(18);
+        expect(creature.actions.length).toBe(1);
+        expect(creature.actions[0].name).toBe("Talon");
+        expect(creature.actions[0].toHit).toBe(4);
+        expect(creature.actions[0].dpr).toBe(5.5);
     });
 });

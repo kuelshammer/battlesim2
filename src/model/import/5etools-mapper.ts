@@ -1,6 +1,7 @@
-import { Creature } from "../model";
+import { Creature, Action } from "../model";
 import { Monster5e } from "./5etools-schema";
 import { v4 as uuid } from 'uuid';
+import { parse5eAttack } from "./5etools-action-parser";
 
 export function mapMonster5eToCreature(monster: Monster5e): Creature {
     // Extract base AC: usually the first number in the array
@@ -16,6 +17,20 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
 
     // Extract HP
     const hp = monster.hp.average || 0;
+
+    // Map actions
+    const actions: Action[] = [];
+    if (monster.action) {
+        for (const act of monster.action) {
+            if (act.entries && act.entries.length > 0 && typeof act.entries[0] === 'string') {
+                // For now, we only look at the first entry of an action
+                const parsedAction = parse5eAttack(act.name, act.entries[0]);
+                if (parsedAction.toHit > 0 || parsedAction.dpr > 0) {
+                    actions.push(parsedAction);
+                }
+            }
+        }
+    }
 
     // Calculate save bonus (average of ability modifiers as a placeholder)
     // In a real scenario, we would parse 'save' property or calculate from abilities
@@ -35,7 +50,7 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
         count: 1,
         hp: hp,
         ac: ac,
-        actions: [],
+        actions: actions,
         saveBonus: parseFloat(avgModifier.toFixed(3)),
         strSaveBonus: strMod,
         dexSaveBonus: dexMod,
