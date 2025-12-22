@@ -24,7 +24,7 @@ Goal: Visualize attrition and risk.
 - [x] Task: Add dotted "Plan" line calculation. (b76a7ed)
 - [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
-## Phase 4: Natural Language Summary & Polishing
+## Phase 4: Natural Language Summary & Polishing [checkpoint: dedc630]
 Goal: Add the "Assistant" voice and final styling.
 
 - [x] Task: Implement `AssistantSummary` logic. (1012044)
