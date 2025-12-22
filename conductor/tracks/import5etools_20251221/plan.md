@@ -3,7 +3,7 @@
 ## Phase 1: Core Data Parsing
 Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Abilities).
 
-- [ ] Task: Define Zod schemas for 5e.tools monster format
+- [x] Task: Define Zod schemas for 5e.tools monster format (9a88260)
     - Write tests for schema validation
     - Implement schemas in `src/model/import/5etools-schema.ts`
 - [ ] Task: Implement mapping logic for core stats
