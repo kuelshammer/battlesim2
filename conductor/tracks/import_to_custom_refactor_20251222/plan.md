@@ -3,7 +3,7 @@
 ## Phase 1: Preparation
 Goal: Prepare the Custom Form to receive imported data.
 
-- [ ] Task: Update `Creature` model for optional fields
+- [x] Task: Update `Creature` model for optional fields (c8b8445)
     - Ensure fields like `hp` and `ac` can handle partial initialization if needed.
 - [ ] Task: Create `ImportButton` component
     - Extract the import button logic to be reusable or move it to `CustomForm`.
