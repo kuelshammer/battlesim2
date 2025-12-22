@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { SimulationResult, FullAnalysisOutput, Creature, Encounter } from '@/model/model';
+import { SimulationResult, FullAnalysisOutput, Creature, TimelineEvent } from '@/model/model';
 import { getFinalAction } from "@/data/actions";
 
 export interface SimulationWorkerState {
@@ -89,7 +89,7 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], encounters: Encounter[], iterations: number = 2511) => {
+    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511) => {
         // Terminate existing worker if running
         terminateAndRestart();
         
@@ -108,18 +108,23 @@ export function useSimulationWorker() {
             actions: p.actions.map(getFinalAction)
         }));
 
-        const cleanEncounters = encounters.map(e => ({
-            ...e,
-            monsters: e.monsters.map(m => ({
-                ...m,
-                actions: m.actions.map(getFinalAction)
-            }))
-        }));
+        const cleanTimeline = timeline.map(event => {
+            if (event.type === 'combat') {
+                return {
+                    ...event,
+                    monsters: event.monsters.map(m => ({
+                        ...m,
+                        actions: m.actions.map(getFinalAction)
+                    }))
+                };
+            }
+            return event; // shortRest needs no specific cleaning for now
+        });
 
         workerRef.current?.postMessage({
             type: 'START_SIMULATION',
             players: cleanPlayers,
-            encounters: cleanEncounters,
+            timeline: cleanTimeline,
             iterations
         });
     }, [terminateAndRestart]);

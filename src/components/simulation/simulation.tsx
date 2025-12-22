@@ -131,7 +131,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     function createCombat() {
         setTimeline([...timeline, {
             type: 'combat',
-            id: uuid(), // Ensure new encounters have a unique ID
+            id: uuid(), // Ensure new items have a unique ID
             monsters: [],
             monstersSurprised: false,
             playersSurprised: false,
@@ -173,12 +173,16 @@ const Simulation: FC<PropType> = memo(({ }) => {
             const name = a.type === 'template' ? a.templateOptions.templateName : a.name
             names.set(a.id, name)
         }))
-        encounters.forEach(e => e.monsters.forEach(m => m.actions.forEach(a => {
-            const name = a.type === 'template' ? a.templateOptions.templateName : a.name
-            names.set(a.id, name)
-        })))
+        timeline.forEach(item => {
+            if (item.type === 'combat') {
+                item.monsters.forEach(m => m.actions.forEach(a => {
+                    const name = a.type === 'template' ? a.templateOptions.templateName : a.name
+                    names.set(a.id, name)
+                }))
+            }
+        })
         return names
-    }, [players, encounters])
+    }, [players, timeline])
 
     return (
         <UIToggleProvider>
@@ -282,21 +286,21 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                     </div>
                                                 )}
                                                 
-                                                {(worker.analysis?.encounters?.[index] && (item.type === 'combat' || worker.analysis.encounters[index].deciles?.length > 0) ? (
+                                                {item.type === 'combat' && (worker.analysis?.encounters?.[index] ? (
                                                     <EncounterResult 
                                                         value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]} 
                                                         analysis={worker.analysis.encounters[index]} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                     />
-                                                ) : (!simulationResults[index] ? null : (
+                                                ) : (simulationResults[index] ? (
                                                     <EncounterResult 
                                                         value={simulationResults[index]} 
                                                         analysis={null} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                     />
-                                                )))}
+                                                ) : null))}
                                                 
                                                 {item.type === 'combat' && (
                                                     <div className={styles.buttonGroup}>

@@ -12,7 +12,7 @@ async function ensureWasmInitialized() {
 }
 
 self.onmessage = async (e: MessageEvent) => {
-    const { type, players, encounters, iterations } = e.data;
+    const { type, players, timeline, iterations } = e.data;
 
     if (type === 'START_SIMULATION') {
         try {
@@ -31,7 +31,7 @@ self.onmessage = async (e: MessageEvent) => {
 
             const output = run_simulation_with_callback(
                 players,
-                encounters,
+                timeline,
                 iterations,
                 progressCallback
             );

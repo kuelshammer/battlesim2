@@ -5,6 +5,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum MonsterRole {
+    Boss,
+    Brute,
+    Striker,
+    Controller,
+    Minion,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum DiceFormula {
     Value(f64),
