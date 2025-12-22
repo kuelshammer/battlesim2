@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [ ] Track: Implement 5e.tools Monster Import
+## [~] Track: Implement 5e.tools Monster Import
 *Link: [./conductor/tracks/import5etools_20251221/](./conductor/tracks/import5etools_20251221/)*

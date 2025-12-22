@@ -9,7 +9,7 @@ Goal: Implement the logic to parse 5e.tools JSON and map basic stats (HP, AC, Ab
 - [x] Task: Implement mapping logic for core stats (865215f)
     - Write tests for mapping HP, AC, and Abilities
     - Implement mapper in `src/model/import/5etools-mapper.ts`
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Data Parsing' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Core Data Parsing' (Protocol in workflow.md)
 
 ## Phase 2: Action Conversion
 Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
