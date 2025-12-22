@@ -16,6 +16,7 @@ import { getFinalAction } from "@/data/actions"
 import DecileAnalysis from "./decileAnalysis"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
+import AdjustmentPreview from "./AdjustmentPreview"
 
 
 
@@ -164,6 +165,21 @@ const Simulation: FC<PropType> = memo(({ }) => {
         timelineClone[index1] = timelineClone[index2]
         timelineClone[index2] = tmp
         setTimeline(timelineClone)
+    }
+
+    function applyOptimizedResult() {
+        if (selectedEncounterIndex === null || !worker.optimizedResult) return;
+        
+        const timelineClone = clone(timeline);
+        const item = timelineClone[selectedEncounterIndex];
+        
+        if (item.type === 'combat') {
+            item.monsters = worker.optimizedResult.monsters;
+            setTimeline(timelineClone);
+        }
+        
+        worker.clearOptimizedResult();
+        setSelectedEncounterIndex(null);
     }
 
     // Memoize action names map
@@ -418,6 +434,19 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {/* Adjustment Preview Modal */}
+                    {worker.optimizedResult && selectedEncounterIndex !== null && timeline[selectedEncounterIndex].type === 'combat' && (
+                        <AdjustmentPreview
+                            originalMonsters={(timeline[selectedEncounterIndex] as Encounter).monsters}
+                            adjustmentResult={worker.optimizedResult}
+                            onApply={applyOptimizedResult}
+                            onCancel={() => {
+                                worker.clearOptimizedResult();
+                                setSelectedEncounterIndex(null);
+                            }}
+                        />
                     )}
                 </semiPersistentContext.Provider>
             </div>

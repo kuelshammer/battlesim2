@@ -1,0 +1,133 @@
+.previewModal {
+    max-width: 600px;
+    width: 90%;
+    background: #2a2a2a;
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+    .header {
+        padding: 1.5em;
+        border-bottom: 1px solid #444;
+        text-align: center;
+
+        h2 {
+            margin: 0;
+            color: #4facfe;
+        }
+
+        p {
+            margin: 0.5em 0 0 0;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+    }
+
+    .body {
+        padding: 1.5em;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .monsterDiffs {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .monsterCard {
+        background: #333;
+        padding: 1em;
+        border-radius: 8px;
+        border: 1px solid #444;
+
+        h3 {
+            margin: 0 0 0.75em 0;
+            font-size: 1.1em;
+            color: #fff;
+        }
+    }
+
+    .statsGrid {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 0.5em;
+        align-items: center;
+    }
+
+    .statLabel {
+        color: #aaa;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+
+    .statValue {
+        display: flex;
+        align-items: center;
+        gap: 0.75em;
+        font-family: monospace;
+        font-size: 1.1em;
+    }
+
+    .oldValue {
+        color: #777;
+        text-decoration: line-through;
+    }
+
+    .arrow {
+        color: #555;
+        font-size: 0.8em;
+    }
+
+    .buff {
+        color: #4caf50;
+        font-weight: bold;
+    }
+
+    .nerf {
+        color: #f44336;
+        font-weight: bold;
+    }
+
+    .footer {
+        padding: 1.5em;
+        display: flex;
+        gap: 1em;
+        border-top: 1px solid #444;
+
+        button {
+            flex: 1;
+            padding: 0.75em;
+            border-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cancelBtn {
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+
+            &:hover {
+                background: #555;
+            }
+        }
+
+        .applyBtn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(79, 172, 254, 0.3);
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 15px rgba(79, 172, 254, 0.4);
+            }
+        }
+    }
+}
