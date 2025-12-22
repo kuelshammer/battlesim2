@@ -1,11 +1,11 @@
 # Plan: Encounter Auto-Balancer Engine
 
-## Phase 1: Role Detection & Adjustment Framework
+## Phase 1: Role Detection & Adjustment Framework [checkpoint: c318530]
 Goal: Implement the logic to identify monster roles and create numeric adjustment knobs.
 
-- [~] Task: Implement Role Detection
+- [x] Task: Implement Role Detection (c318530)
     - Add `MonsterRole` enum and detection logic in `simulation-wasm/src/model.rs`.
-- [ ] Task: Create Adjustment Knobs
+- [x] Task: Create Adjustment Knobs (c318530)
     - Implement functions to apply percentage-based modifications to damage, HP, and DC in `simulation-wasm/src/creature_adjustment.rs`.
 
 ## Phase 2: The Optimization Loop
