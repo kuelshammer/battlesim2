@@ -8,4 +8,7 @@ Goal: Create a robust cleaning utility for JSON strings.
     - Implement utility in `src/model/import/utils.ts`
 - [x] Task: Update `ImportModal` to use the cleaning utility (a643a61)
     - Update `src/components/creatureForm/ImportModal.tsx`
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Logic & Tests' (Protocol in workflow.md)
+- [x] Task: Improve schema and mapper for Abjurer-style fields (source, nested type) (f185ec5)
+    - Update `src/model/import/5etools-schema.ts`
+    - Update `src/model/import/5etools-mapper.ts`
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Logic & Tests' (f185ec5)

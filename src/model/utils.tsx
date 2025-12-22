@@ -6,36 +6,29 @@ export function clone<T>(obj: T): T {
 }
 
 export function useStoredState<T>(key: string, defaultValue: T, parser: (str: any) => T | null) {
-    const [state, setState] = useState<T>(() => {
-        if (typeof window === 'undefined') return defaultValue;
-        const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return defaultValue;
-        try {
-            const parsed = JSON.parse(storedValue);
-            const parsedValue = parser(parsed);
-            return parsedValue !== null ? parsedValue : defaultValue;
-        } catch (e) {
-            console.error(`Error loading state for key "${key}":`, e);
-            return defaultValue;
-        }
-    });
+    const [state, setState] = useState<T>(defaultValue);
 
-    // We still keep the useEffect to sync if localStorage changes externally (optional)
-    // but the main loading is now in the initializer.
+    // Load state from localStorage only after the initial render (client-side only)
     useEffect(() => {
-        if (!localStorage) return;
+        if (typeof window === 'undefined') return;
         const storedValue = localStorage.getItem(key);
         if (storedValue === null) return;
         try {
-            const parsedValue = parser(JSON.parse(storedValue));
-            if (parsedValue !== null) setState(parsedValue);
-        } catch (e) {}
-    }, [key]); // Added key dependency for safety
+            const parsed = JSON.parse(storedValue);
+            const parsedValue = parser(parsed);
+            if (parsedValue !== null) {
+                setState(parsedValue);
+            }
+        } catch (e) {
+            console.error(`Error loading state for key "${key}":`, e);
+        }
+    }, [key]); 
 
     const stateSaver = (newValue: T) => {
         setState(newValue);
-        if (!localStorage) return;
-        localStorage.setItem(key, JSON.stringify(newValue));
+        if (typeof window !== 'undefined' && localStorage) {
+            localStorage.setItem(key, JSON.stringify(newValue));
+        }
     };
 
     return [state, stateSaver] as const;

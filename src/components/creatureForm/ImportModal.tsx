@@ -16,6 +16,7 @@ const ImportModal: FC<PropType> = ({ onImport, onCancel }) => {
     const [error, setError] = useState<string | null>(null);
 
     const handleImport = () => {
+        setError(null);
         try {
             const cleaned = cleanJsonInput(jsonText);
             if (!cleaned) {
@@ -23,19 +24,25 @@ const ImportModal: FC<PropType> = ({ onImport, onCancel }) => {
                 return;
             }
 
-            const rawData = JSON.parse(cleaned);
+            let rawData;
+            try {
+                rawData = JSON.parse(cleaned);
+            } catch (e) {
+                setError("Failed to parse JSON syntax. Please check for missing braces or extra characters.");
+                return;
+            }
+
             const validation = Monster5eSchema.safeParse(rawData);
-            
             if (!validation.success) {
-                setError("Invalid 5e.tools monster format. Please check your JSON.");
-                console.error(validation.error);
+                setError("Monster data format is invalid. Some required fields might be missing.");
                 return;
             }
 
             const creature = mapMonster5eToCreature(validation.data);
             onImport(creature);
         } catch (e) {
-            setError("Failed to parse JSON. Please ensure you pasted valid JSON text.");
+            setError("An unexpected error occurred during import.");
+            console.error("Import error:", e);
         }
     };
 

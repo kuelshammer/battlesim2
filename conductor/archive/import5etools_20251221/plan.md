@@ -31,4 +31,4 @@ Goal: Provide a way for users to use the import feature in the browser.
 - [x] Task: Integrate Import button into Creature Form (c2da424)
     - Write tests for form population from imported data
     - Update `src/components/creatureForm/creatureForm.tsx`
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: UI Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: UI Integration' (c2da424)

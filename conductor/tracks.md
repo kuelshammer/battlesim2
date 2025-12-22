@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-## [~] Track: Implement 5e.tools Monster Import
-*Link: [./conductor/tracks/import5etools_20251221/](./conductor/tracks/import5etools_20251221/)*
+## [~] Track: Project Cleanup and Performance Optimization
+*Link: [./conductor/tracks/cleanup_performance_20251222/](./conductor/tracks/cleanup_performance_20251222/)*

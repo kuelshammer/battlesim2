@@ -57,63 +57,73 @@ export const defaultUIToggleConfig: UIToggleConfig = {
   },
   'quintile-1': {
     id: 'quintile-1',
+    enabled: true,
     label: 'Decile 1 (Worst Case)',
     defaultValue: true,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-2': {
     id: 'quintile-2',
+    enabled: false,
     label: 'Decile 2',
     defaultValue: false,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-3': {
     id: 'quintile-3',
+    enabled: true,
     label: 'Decile 3 (Struggle)',
     defaultValue: true,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-4': {
     id: 'quintile-4',
+    enabled: false,
     label: 'Decile 4',
     defaultValue: false,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-5': {
     id: 'quintile-5',
+    enabled: true,
     label: 'Decile 5 (Typical Case)',
     defaultValue: true,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-6': {
     id: 'quintile-6',
+    enabled: false,
     label: 'Decile 6',
     defaultValue: false,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-7': {
     id: 'quintile-7',
+    enabled: false,
     label: 'Decile 7',
     defaultValue: false,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-8': {
     id: 'quintile-8',
+    enabled: true,
     label: 'Decile 8 (Heroic)',
     defaultValue: true,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-9': {
     id: 'quintile-9',
+    enabled: false,
     label: 'Decile 9',
     defaultValue: false,
-    group: 'Simulation'
+    category: 'analysis'
   },
   'quintile-10': {
     id: 'quintile-10',
+    enabled: true,
     label: 'Decile 10 (Best Case)',
     defaultValue: true,
-    group: 'Simulation'
+    category: 'analysis'
   },
 }
 

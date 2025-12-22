@@ -2,34 +2,44 @@ export function cleanJsonInput(input: string): string {
     let cleaned = input.trim();
 
     // 1. Handle markdown code blocks
-    // Matches ```json { ... } ``` or ``` { ... } ```
     const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
     const codeBlockMatch = cleaned.match(codeBlockRegex);
     if (codeBlockMatch) {
         cleaned = codeBlockMatch[1].trim();
     }
 
-    // 2. Extract the actual JSON object/array
-    // This handles leading characters (like 'j') or trailing garbage
-    // It finds the first '{' or '[' and the last '}' or ']'
-    const firstBrace = cleaned.indexOf('{');
-    const firstBracket = cleaned.indexOf('[');
+    // 2. Robust extraction: Find the outer-most { } or [ ]
+    return extractJsonObject(cleaned);
+}
+
+function extractJsonObject(str: string): string {
+    const firstBrace = str.indexOf('{');
+    const firstBracket = str.indexOf('[');
     
-    let start = -1;
-    let end = -1;
+    // Determine if we are looking for an object or an array
+    const isArray = firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace);
+    const startChar = isArray ? '[' : '{';
+    const endChar = isArray ? ']' : '}';
+    const startIndex = isArray ? firstBracket : firstBrace;
 
-    if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-        start = firstBrace;
-        end = cleaned.lastIndexOf('}');
-    } else if (firstBracket !== -1) {
-        start = firstBracket;
-        end = cleaned.lastIndexOf(']');
+    if (startIndex === -1) return "";
+
+    // Find the matching closing character by tracking depth
+    let depth = 0;
+    for (let i = startIndex; i < str.length; i++) {
+        if (str[i] === startChar) depth++;
+        else if (str[i] === endChar) depth--;
+
+        if (depth === 0) {
+            return str.substring(startIndex, i + 1);
+        }
     }
 
-    if (start !== -1 && end !== -1 && end > start) {
-        return cleaned.substring(start, end + 1);
+    // Fallback to simple lastIndexOf if depth tracking fails (e.g. malformed but maybe parseable)
+    const lastIndex = str.lastIndexOf(endChar);
+    if (lastIndex > startIndex) {
+        return str.substring(startIndex, lastIndex + 1);
     }
 
-    // If no valid start/end found but the original trim might be valid JSON (though unlikely if previous logic failed)
-    return (cleaned.startsWith('{') || cleaned.startsWith('[')) ? cleaned : "";
+    return "";
 }
