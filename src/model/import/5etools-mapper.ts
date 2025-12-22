@@ -1,7 +1,7 @@
 import { Creature, Action } from "../model";
 import { Monster5e } from "./5etools-schema";
 import { v4 as uuid } from 'uuid';
-import { parse5eAttack } from "./5etools-action-parser";
+import { parse5eAttack, parse5eMultiattack } from "./5etools-action-parser";
 
 export function mapMonster5eToCreature(monster: Monster5e): Creature {
     // Extract base AC: usually the first number in the array
@@ -20,12 +20,31 @@ export function mapMonster5eToCreature(monster: Monster5e): Creature {
 
     // Map actions
     const actions: Action[] = [];
+    let multiattackInfo: { total: number, details: string } | null = null;
+
     if (monster.action) {
+        // First pass: find multiattack
         for (const act of monster.action) {
+            if (act.name === "Multiattack" && act.entries && act.entries.length > 0) {
+                multiattackInfo = parse5eMultiattack(act.entries[0]);
+            }
+        }
+
+        // Second pass: map attacks
+        for (const act of monster.action) {
+            if (act.name === "Multiattack") continue;
+
             if (act.entries && act.entries.length > 0 && typeof act.entries[0] === 'string') {
-                // For now, we only look at the first entry of an action
                 const parsedAction = parse5eAttack(act.name, act.entries[0]);
                 if (parsedAction.toHit > 0 || parsedAction.dpr > 0) {
+                    // Apply multiattack: if this attack is mentioned in multiattack details,
+                    // or if it's the only attack and total > 1
+                    if (multiattackInfo) {
+                        const isMentioned = multiattackInfo.details.toLowerCase().includes(act.name.toLowerCase());
+                        if (isMentioned || (monster.action.length === 2 && multiattackInfo.total > 1)) {
+                            parsedAction.targets = multiattackInfo.total;
+                        }
+                    }
                     actions.push(parsedAction);
                 }
             }

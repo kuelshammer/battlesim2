@@ -58,4 +58,34 @@ describe('5etools-mapper', () => {
         expect(creature.actions[0].toHit).toBe(4);
         expect(creature.actions[0].dpr).toBe(5.5);
     });
+
+    it('should map multiattack correctly', () => {
+        const monster: Monster5e = {
+            name: "Owlbear",
+            hp: { average: 59 },
+            ac: [13],
+            str: 20, dex: 12, con: 17, int: 3, wis: 12, cha: 7,
+            action: [
+                {
+                    name: "Multiattack",
+                    entries: ["The owlbear makes two attacks: one with its beak and one with its claws."]
+                },
+                {
+                    name: "Beak",
+                    entries: ["{@hit 7} to hit, reach 5 ft., one target. {@h}10 ({@damage 1d10 + 5}) piercing damage."]
+                },
+                {
+                    name: "Claws",
+                    entries: ["{@hit 7} to hit, reach 5 ft., one target. {@h}14 ({@damage 2d8 + 5}) slashing damage."]
+                }
+            ]
+        };
+
+        const creature = mapMonster5eToCreature(monster);
+        expect(creature.actions.length).toBe(2);
+        expect(creature.actions[0].name).toBe("Beak");
+        expect(creature.actions[0].targets).toBe(2); // OWlbear makes two attacks total, we map it to 'targets' for simplicity in this engine
+        expect(creature.actions[1].name).toBe("Claws");
+        expect(creature.actions[1].targets).toBe(2);
+    });
 });

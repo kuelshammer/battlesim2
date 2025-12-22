@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parse5eAttack } from './5etools-action-parser';
+import { parse5eAttack, parse5eMultiattack } from './5etools-action-parser';
 
 describe('5etools-action-parser', () => {
     it('should parse a standard melee attack', () => {
@@ -27,5 +27,19 @@ describe('5etools-action-parser', () => {
         expect(result.name).toBe("Fire Sword");
         expect(result.toHit).toBe(7);
         expect(result.dpr).toBe(9.5); // 1d10 + 4 = 5.5 + 4 = 9.5
+    });
+
+    describe('parse5eMultiattack', () => {
+        it('should parse simple multiattack (The creature makes two attacks: one with its bite and one with its claws.)', () => {
+            const entry = "The creature makes two attacks: one with its bite and one with its claws.";
+            const result = parse5eMultiattack(entry);
+            expect(result).toEqual({ total: 2, details: "bite and claws" });
+        });
+
+        it('should parse numeric multiattack (The creature makes three melee attacks.)', () => {
+            const entry = "The creature makes three melee attacks.";
+            const result = parse5eMultiattack(entry);
+            expect(result).toEqual({ total: 3, details: "melee attacks" });
+        });
     });
 });
