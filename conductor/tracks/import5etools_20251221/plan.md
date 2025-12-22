@@ -25,10 +25,10 @@ Goal: Convert 5e.tools actions and multiattack into BattleSim actions.
 ## Phase 3: UI Integration
 Goal: Provide a way for users to use the import feature in the browser.
 
-- [~] Task: Create Import Modal component
+- [x] Task: Create Import Modal component (c2da424)
     - Write tests for modal interaction and input handling
     - Implement `src/components/creatureForm/ImportModal.tsx`
-- [ ] Task: Integrate Import button into Creature Form
+- [x] Task: Integrate Import button into Creature Form (c2da424)
     - Write tests for form population from imported data
     - Update `src/components/creatureForm/creatureForm.tsx`
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: UI Integration' (Protocol in workflow.md)
