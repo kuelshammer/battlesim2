@@ -28,6 +28,6 @@ Goal: Visualize attrition and risk.
 Goal: Add the "Assistant" voice and final styling.
 
 - [x] Task: Implement `AssistantSummary` logic. (1012044)
-- [ ] Task: Add cumulative drift calculation to `DeltaBadge`.
-- [ ] Task: Final Verification & Polishing.
+- [x] Task: Add cumulative drift calculation to `DeltaBadge`. (a8da9b7)
+- [~] Task: Final Verification & Polishing.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)

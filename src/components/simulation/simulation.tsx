@@ -19,6 +19,7 @@ import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
 import FuelGauge from "./FuelGauge"
 import DescentGraph from "./DescentGraph"
+import AssistantSummary from "./AssistantSummary"
 
 
 
@@ -118,7 +119,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
         const decileTimelines = worker.analysis.overall.deciles.map(d => d.resourceTimeline);
 
-        return { actualCosts, cumulativeDrifts, totalWeight, planTimeline, decileTimelines };
+        const finalResources = timeline[timeline.length - 1];
+
+        return { actualCosts, cumulativeDrifts, totalWeight, planTimeline, decileTimelines, finalResources };
     }, [worker.analysis, encounterWeights]);
 
     useEffect(() => {
@@ -325,6 +328,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
                     {worker.analysis && pacingData && (
                         <>
+                            <AssistantSummary 
+                                actualCosts={pacingData.actualCosts} 
+                                targetWeights={encounterWeights} 
+                                finalResources={pacingData.finalResources} 
+                            />
                             <FuelGauge 
                                 plannedWeights={encounterWeights} 
                                 actualCosts={pacingData.actualCosts} 
