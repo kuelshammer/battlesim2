@@ -18,12 +18,12 @@ Goal: Implement the iterative Hill Climbing algorithm in Rust.
 - [x] Task: Implement the "Slog Filter" (43e5a31)
     - Logic to cap HP buffs if median rounds exceed 8.
 
-## Phase 3: Dice Reconstruction
+## Phase 3: Dice Reconstruction [checkpoint: 4af3d7c]
 Goal: Convert adjusted numeric targets back into valid 5e dice notation.
 
-- [~] Task: HP Reconstruction Logic
+- [x] Task: HP Reconstruction Logic (4af3d7c)
     - Back-calculate Hit Dice count based on target HP, fixed die size, and CON mod.
-- [ ] Task: Damage Reconstruction Logic
+- [x] Task: Damage Reconstruction Logic (4af3d7c)
     - Back-calculate damage dice (e.g., 15 -> 2d10+4) and handle Multiattack adjustments.
 
 ## Phase 4: WASM Bindings & Frontend Models
