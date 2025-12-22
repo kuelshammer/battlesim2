@@ -8,7 +8,7 @@ Goal: Ensure the simulation result contains the necessary time-series data for t
 - [x] Task: Unit Test - Verify that a 3-encounter day returns a timeline with 4 points (Start, E1, E2, E3). (879fc82)
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md) (879fc82)
 
-## Phase 2: UI Components (Gauges & Badges)
+## Phase 2: UI Components (Gauges & Badges) [checkpoint: e43aacd]
 Goal: Implement the core pacing visuals.
 
 - [x] Task: Create `DeltaBadge` component with 5-zone logic. (a8da9b7)
