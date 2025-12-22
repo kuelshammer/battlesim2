@@ -37,7 +37,7 @@ Goal: Expose the Auto-Balancer to the web application.
 ## Phase 5: UI Implementation
 Goal: Add the "Magic Wand" button and results display.
 
-- [ ] Task: Add Auto-Adjust button to Encounter cards
+- [x] Task: Add Auto-Adjust button to Encounter cards (6a40a37)
 - [ ] Task: Implement "Adjustment Preview" Modal
     - Show side-by-side diff of original vs. balanced monsters.
 - [ ] Task: Final Verification & Polishing
