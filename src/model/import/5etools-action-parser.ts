@@ -1,4 +1,5 @@
 import { evaluateDiceFormula } from "../dice";
+import { v4 as uuid } from 'uuid';
 
 export function parse5eAttack(name: string, entry: string): any {
     // Extract toHit bonus: {@hit 4}
@@ -20,6 +21,7 @@ export function parse5eAttack(name: string, entry: string): any {
     }
 
     return {
+        id: uuid(),
         name,
         type: "atk",
         actionSlot: 0,

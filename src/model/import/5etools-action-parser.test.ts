@@ -6,6 +6,7 @@ describe('5etools-action-parser', () => {
         const entry = "{@hit 4} to hit, reach 5 ft., one target. {@h}5 ({@damage 1d6 + 2}) piercing damage.";
         const result = parse5eAttack("Bite", entry);
         
+        expect(result.id).toBeDefined();
         expect(result.name).toBe("Bite");
         expect(result.toHit).toBe(4);
         expect(result.dpr).toBe(5.5); // 1d6 + 2 = 3.5 + 2 = 5.5
