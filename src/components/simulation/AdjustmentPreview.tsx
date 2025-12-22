@@ -23,6 +23,21 @@ const AdjustmentPreview: FC<PropType> = ({ originalMonsters, adjustmentResult, o
             </div>
 
             <div className={styles.body}>
+                <div className={styles.analysisSummary}>
+                    <div className={styles.summaryItem}>
+                        <span className={styles.label}>Projected Win Rate</span>
+                        <span className={styles.value}>
+                            {Math.round((adjustmentResult.analysis.globalMedian?.winRate ?? 0) * 100)}%
+                        </span>
+                    </div>
+                    <div className={styles.summaryItem}>
+                        <span className={styles.label}>Median Duration</span>
+                        <span className={styles.value}>
+                            {adjustmentResult.analysis.battleDurationRounds} Rounds
+                        </span>
+                    </div>
+                </div>
+
                 <div className={styles.monsterDiffs}>
                     {originalMonsters.map((original, idx) => {
                         const optimized = optimizedMonsters.find(m => m.name === original.name) || optimizedMonsters[idx];
