@@ -20,8 +20,8 @@ Goal: Implement the core pacing visuals.
 Goal: Visualize attrition and risk.
 
 - [x] Task: Implement `DescentGraph.tsx` using raw SVG. (b76a7ed)
-- [ ] Task: Add shaded region for 25th–75th percentiles.
-- [ ] Task: Add dotted "Plan" line calculation.
+- [x] Task: Add shaded region for 25th–75th percentiles. (b76a7ed)
+- [x] Task: Add dotted "Plan" line calculation. (b76a7ed)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
 ## Phase 4: Natural Language Summary & Polishing
