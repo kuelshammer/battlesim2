@@ -1,0 +1,53 @@
+.fuelGaugeContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.gaugeRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rowLabel {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.barContainer {
+    position: relative;
+}
+
+.bar {
+    display: flex;
+    height: 12px;
+    background-color: #444;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.segment {
+    height: 100%;
+    transition: width 0.3s ease;
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+
+    &:last-child {
+        border-right: none;
+    }
+}
+
+.emptyMarker {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #dc3545;
+    text-align: right;
+}
