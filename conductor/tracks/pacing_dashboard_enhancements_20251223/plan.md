@@ -1,11 +1,11 @@
 # Plan: Daily Pacing Dashboard Enhancements
 
-## Phase 1: Data Logic Refactor
+## Phase 1: Data Logic Refactor [checkpoint: ec0e894]
 Goal: Refactor pacing data calculation to support the "Grand Total" budget and accurate segment mapping.
 
 - [x] Task: Update `pacingData` in `Simulation.tsx` to calculate `GrandTotalBudget` (Initial + Recovery) and generate structured segment lists. (80bfc3c)
 - [x] Task: Unit Test - Verify `pacingData` normalization correctly handles recoveries and multiple encounters. (80bfc3c)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1' (ec0e894)
 
 ## Phase 2: FuelGauge Component Updates
 Goal: Implement the new visual requirements in the `FuelGauge` component.
