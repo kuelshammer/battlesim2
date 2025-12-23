@@ -14,33 +14,35 @@ import {
     faRunning,
     faBan,
     faEye,
-    faEyeSlash
+    faEyeSlash,
+    faChevronDown,
+    faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import { useUIToggle } from '@/model/uiToggleState';
+import { LogFormatter } from '@/model/logFormatter';
 
 type Props = {
     events: Event[];
     combatantNames: Record<string, string>; // Map ID to Name for display
     actionNames?: Record<string, string>; // Map ActionID to Name
+    isModal?: boolean; // New prop to handle modal context
 };
 
 type EventFilter = 'all' | 'combat' | 'spell' | 'status' | 'lifecycle';
 
-const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
+const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal = false }) => {
     const [filter, setFilter] = useState<EventFilter>('all');
     const [combatLogVisible, setCombatLogVisible] = useUIToggle('combat-log');
+    const [expandedEvents, setExpandedEvents] = useState<Set<number>>(new Set());
 
-    const getName = (id: string) => {
-        if (combatantNames[id]) return combatantNames[id];
-        // Try UUID prefix (36 chars) if ID looks like UUID-Suffix
-        if (id.length > 36 && id[36] === '-') {
-            const baseId = id.substring(0, 36);
-            if (combatantNames[baseId]) {
-                // specific suffix handling if desired, e.g. append #Index
-                return combatantNames[baseId];
-            }
+    const toggleEvent = (index: number) => {
+        const newExpanded = new Set(expandedEvents);
+        if (newExpanded.has(index)) {
+            newExpanded.delete(index);
+        } else {
+            newExpanded.add(index);
         }
-        return id;
+        setExpandedEvents(newExpanded);
     };
 
     const getActionName = (id: string) => actionNames[id] || id;
@@ -65,104 +67,100 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
     }, [events, filter]);
 
     const renderEvent = (event: Event, index: number) => {
+        const isExpanded = expandedEvents.has(index);
+        const hasDetails = ['AttackHit', 'AttackMissed'].includes(event.type); // Events with enriched data
+        
+        let icon = faExclamationTriangle;
+        let eventClass = '';
+
         switch (event.type) {
             case 'ActionStarted':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.action}`}>
-                        <FontAwesomeIcon icon={faFistRaised} />
-                        <span><strong>{getName(event.actor_id)}</strong> uses <strong>{getActionName(event.action_id)}</strong></span>
-                    </div>
-                );
+                icon = faFistRaised;
+                eventClass = styles.action;
+                break;
             case 'AttackHit':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.hit}`}>
-                        <FontAwesomeIcon icon={faFistRaised} className={styles.iconHit} />
-                        <span>Attack hits <strong>{getName(event.target_id)}</strong> for <strong>{event.damage.toFixed(1)}</strong> damage!</span>
-                    </div>
-                );
+                icon = faFistRaised;
+                eventClass = styles.hit;
+                break;
             case 'AttackMissed':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.miss}`}>
-                        <FontAwesomeIcon icon={faBan} className={styles.iconMiss} />
-                        <span>Attack missed <strong>{getName(event.target_id)}</strong></span>
-                    </div>
-                );
+                icon = faBan;
+                eventClass = styles.miss;
+                break;
             case 'DamageTaken':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.damage}`}>
-                        <FontAwesomeIcon icon={faHeart} className={styles.iconDamage} />
-                        <span><strong>{getName(event.target_id)}</strong> takes <strong>{event.damage.toFixed(1)}</strong> {event.damage_type} damage</span>
-                    </div>
-                );
+                icon = faHeart;
+                eventClass = styles.damage;
+                break;
             case 'HealingApplied':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.heal}`}>
-                        <FontAwesomeIcon icon={faHeart} className={styles.iconHeal} />
-                        <span><strong>{getName(event.target_id)}</strong> heals <strong>{event.amount.toFixed(1)}</strong> HP from {getName(event.source_id)}</span>
-                    </div>
-                );
+                icon = faHeart;
+                eventClass = styles.heal;
+                break;
             case 'UnitDied':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.death}`}>
-                        <FontAwesomeIcon icon={faSkull} />
-                        <span><strong>{getName(event.unit_id)}</strong> has died!</span>
-                    </div>
-                );
+                icon = faSkull;
+                eventClass = styles.death;
+                break;
             case 'RoundStarted':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.round}`}>
-                        <FontAwesomeIcon icon={faHourglassStart} />
-                        <span>=== Round {event.round_number} Started ===</span>
-                    </div>
-                );
+                icon = faHourglassStart;
+                eventClass = styles.round;
+                break;
             case 'TurnStarted':
-                return (
-                    <div key={index} className={styles.event}>
-                        <FontAwesomeIcon icon={faRunning} />
-                        <span><strong>{getName(event.unit_id)}</strong> starts turn</span>
-                    </div>
-                )
+                icon = faRunning;
+                break;
+            case 'SpellCast':
+                icon = faMagic;
+                eventClass = styles.spell;
+                break;
+            case 'BuffApplied':
+                icon = faShieldAlt;
+                eventClass = styles.buff;
+                break;
+            case 'ConditionAdded':
+                icon = faExclamationTriangle;
+                eventClass = styles.buff;
+                break;
+            case 'ConditionRemoved':
+                icon = faShieldAlt;
+                eventClass = styles.buff;
+                break;
+            case 'EncounterEnded':
+                icon = faHourglassEnd;
+                eventClass = styles.round;
+                break;
             case 'TurnEnded':
             case 'RoundEnded':
-                return null; // Don't spam logs with these
-            case 'EncounterStarted':
-                return (
-                    <div key={index} className={styles.event}>
-                        <FontAwesomeIcon icon={faExclamationTriangle} />
-                        <span>Encounter Started!</span>
-                    </div>
-                )
-            case 'EncounterEnded':
-                return (
-                    <div key={index} className={styles.event}>
-                        <FontAwesomeIcon icon={faExclamationTriangle} />
-                        <span>Encounter Ended! Winner: {event.winner ? getName(event.winner) : 'None'}</span>
-                    </div>
-                )
-            case 'SpellCast':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.spell}`}>
-                        <FontAwesomeIcon icon={faMagic} />
-                        <span><strong>{getName(event.caster_id)}</strong> casts <strong>{event.spell_id}</strong> (Lvl {event.spell_level})</span>
-                    </div>
-                );
-            case 'BuffApplied':
-                return (
-                    <div key={index} className={`${styles.event} ${styles.buff}`}>
-                        <FontAwesomeIcon icon={faShieldAlt} />
-                        <span><strong>{getName(event.target_id)}</strong> gains <strong>{event.buff_id}</strong></span>
-                    </div>
-                );
-            default:
-                return (
-                    <div key={index} className={styles.event}>
-                        <span>{event.type}: {JSON.stringify(event)}</span>
-                    </div>
-                );
+                return null;
         }
+
+        const summary = LogFormatter.toSummary(event, combatantNames);
+        const details = hasDetails ? LogFormatter.toDetails(event, combatantNames) : null;
+
+        return (
+            <div 
+                key={index} 
+                className={`${styles.event} ${eventClass} ${hasDetails ? styles.clickable : ''}`}
+                onClick={hasDetails ? () => toggleEvent(index) : undefined}
+            >
+                <div className={styles.eventContent}>
+                    <div className={styles.eventSummary}>
+                        <FontAwesomeIcon icon={icon} className={event.type === 'AttackHit' ? styles.iconHit : event.type === 'AttackMissed' ? styles.iconMiss : ''} />
+                        <span>{summary}</span>
+                        {hasDetails && (
+                            <FontAwesomeIcon 
+                                icon={isExpanded ? faChevronDown : faChevronRight} 
+                                style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.5 }} 
+                            />
+                        )}
+                    </div>
+                    {isExpanded && details && (
+                        <div className={styles.eventDetails}>
+                            {details}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     };
 
-    if (!combatLogVisible) {
+    if (!combatLogVisible && !isModal) {
         return (
             <div className={styles.eventLogContainer}>
                 <div className={styles.header}>
@@ -189,29 +187,31 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {} }) => {
     }
 
     return (
-        <div className={styles.eventLogContainer}>
-            <div className={styles.header}>
-                <h3>Combat Log</h3>
-                <div className={styles.controls}>
-                    <div className={styles.filters}>
-                        <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>All</button>
-                        <button className={filter === 'combat' ? styles.active : ''} onClick={() => setFilter('combat')}>Combat</button>
-                        <button className={filter === 'spell' ? styles.active : ''} onClick={() => setFilter('spell')}>Magic</button>
-                        <button className={filter === 'status' ? styles.active : ''} onClick={() => setFilter('status')}>Status</button>
-                    </div>
-                    <div className={styles.toggleContainer}>
-                        <button
-                            onClick={() => setCombatLogVisible(false)}
-                            className={styles.toggleButton}
-                            aria-label="Hide combat log"
-                            title="Hide combat log"
-                        >
-                            <FontAwesomeIcon icon={faEyeSlash} />
-                            <span>Hide Log</span>
-                        </button>
+        <div className={`${styles.eventLogContainer} ${isModal ? styles.modalMode : ''}`}>
+            {!isModal && (
+                <div className={styles.header}>
+                    <h3>Combat Log</h3>
+                    <div className={styles.controls}>
+                        <div className={styles.filters}>
+                            <button className={filter === 'all' ? styles.active : ''} onClick={() => setFilter('all')}>All</button>
+                            <button className={filter === 'combat' ? styles.active : ''} onClick={() => setFilter('combat')}>Combat</button>
+                            <button className={filter === 'spell' ? styles.active : ''} onClick={() => setFilter('spell')}>Magic</button>
+                            <button className={filter === 'status' ? styles.active : ''} onClick={() => setFilter('status')}>Status</button>
+                        </div>
+                        <div className={styles.toggleContainer}>
+                            <button
+                                onClick={() => setCombatLogVisible(false)}
+                                className={styles.toggleButton}
+                                aria-label="Hide combat log"
+                                title="Hide combat log"
+                            >
+                                <FontAwesomeIcon icon={faEyeSlash} />
+                                <span>Hide Log</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
             <div className={styles.logBody}>
                 {filteredEvents.length === 0 ? (
                     <div className={styles.emptyState}>
