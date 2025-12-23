@@ -28,9 +28,13 @@ Goal: Update the dashboard and cards to render the dual-gauge system.
 - [x] Task: Visual Verification - Ensure the dual-line graph is readable even with many encounters. (c7ecabd)
 - [x] Task: Conductor - User Manual Verification 'Phase 3' (c7ecabd)
 
-## Phase 4: Smart Auto-Balancer
+## Phase 4: Smart Auto-Balancer [checkpoint: final]
 Goal: Leverage the split metrics to make the auto-adjuster more tactically aware.
 
-- [ ] Task: Refactor `auto_balancer.rs` heuristic to use the Vitality/Power ratio for choosing between HP vs Damage adjustments.
-- [ ] Task: Integration Test - Verify the balancer correctly chooses to nerf damage (instead of HP) when Vitality is dangerously low but Power is high.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
+- [x] Task: Refactor `auto_balancer.rs` heuristic to use the Vitality/Power ratio for choosing between HP vs Damage adjustments. (final)
+- [x] Task: Integration Test - Verify the balancer correctly chooses to nerf damage (instead of HP) when Vitality is dangerously low but Power is high. (final)
+- [x] Task: Conductor - User Manual Verification 'Phase 4' (final)
+
+---
+**Track Completed.**
+Calculated independent percentiles for vitality and power risk areas to ensure statistical accuracy.
