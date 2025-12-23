@@ -9,13 +9,13 @@ Goal: Update the Rust backend to capture, sort, and slice events cumulatively fo
 - [x] Task: Unit Test (Rust) - Verify that the 11 logs for Encounter 2 are correctly sorted by the combined score of E1+E2 and bounded correctly. (7ad8c01)
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (7ad8c01)
 
-## Phase 2: Frontend Infrastructure
+## Phase 2: Frontend Infrastructure [checkpoint: d436da2]
 Goal: Update the TypeScript interfaces and worker to handle the expanded log data.
 
-- [ ] Task: Update Zod schemas in `model.ts` to support the new `decileLogs` mapping within encounter analysis.
-- [ ] Task: Update `useSimulationWorker.ts` to store and expose the per-encounter log data.
-- [ ] Task: Unit Test (Vitest) - Verify the simulation worker correctly parses the new multi-log structure.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Update Zod schemas in `model.ts` to support the new `decileLogs` mapping within encounter analysis. (d436da2)
+- [x] Task: Update `useSimulationWorker.ts` to store and expose the per-encounter log data. (d436da2)
+- [x] Task: Unit Test (Vitest) - Verify the simulation worker correctly parses the new multi-log structure. (d436da2)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (d436da2)
 
 ## Phase 3: Modal UI & Navigation
 Goal: Implement the log modal with decile navigation and percentile labels.
