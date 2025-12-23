@@ -1,66 +1,71 @@
 import React from 'react';
 import styles from './fuelGauge.module.scss';
+import { PacingSegment } from './pacingUtils';
 
 interface FuelGaugeProps {
-    plannedWeights: number[];
-    actualCosts: number[];
+    plannedSegments: PacingSegment[];
+    actualSegments: PacingSegment[];
 }
 
-const FuelGauge: React.FC<FuelGaugeProps> = ({ plannedWeights, actualCosts }) => {
-    const totalWeight = plannedWeights.reduce((a, b) => a + b, 0);
-    const totalActual = actualCosts.reduce((a, b) => a + b, 0);
+const FuelGauge: React.FC<FuelGaugeProps> = ({ plannedSegments, actualSegments }) => {
+    // We use two shades of Orange/Red for alternating combat segments
+    const combatColors = ['#f28e2c', '#e15759']; 
+    const restColor = '#59a14f'; // Green for filling the tank
 
-    const colors = ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc949', '#af7aa1', '#ff9da7', '#9c755f', '#bab0ab'];
+    const renderBar = (segments: PacingSegment[]) => {
+        let combatCounter = 0;
+        return (
+            <div className={styles.bar}>
+                {segments.map((seg, i) => {
+                    const isCombat = seg.type === 'combat';
+                    const color = isCombat ? combatColors[combatCounter++ % 2] : restColor;
+                    
+                    if (seg.type === 'shortRest') {
+                        return (
+                            <div 
+                                key={seg.id || i} 
+                                className={styles.restDivider} 
+                                style={{ backgroundColor: color }}
+                                title="Short Rest (Refill)"
+                            />
+                        );
+                    }
 
-    const getPlannedSegments = () => {
-        if (totalWeight === 0) return [];
-        return plannedWeights.map((w, i) => ({
-            width: (w / totalWeight) * 100,
-            color: colors[i % colors.length],
-            label: `Enc ${i + 1}`
-        }));
+                    return (
+                        <div
+                            key={seg.id || i}
+                            className={styles.segment}
+                            style={{ width: `${seg.percent}%`, backgroundColor: color }}
+                            title={`${seg.label}: ${Math.round(seg.percent)}%`}
+                        >
+                            {seg.percent > 8 && (
+                                <span className={styles.segmentLabel}>
+                                    {seg.label}: {Math.round(seg.percent)}%
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        );
     };
 
-    const getActualSegments = () => {
-        return actualCosts.map((c, i) => ({
-            width: c, // width in percentage of the bar
-            color: colors[i % colors.length],
-            label: `Enc ${i + 1}`
-        }));
-    };
+    const totalActual = actualSegments.reduce((sum, s) => sum + s.percent, 0);
 
     return (
         <div className={styles.fuelGaugeContainer}>
             <div className={styles.gaugeRow}>
                 <div className={styles.rowLabel}>The Plan</div>
-                <div className={styles.bar}>
-                    {getPlannedSegments().map((seg, i) => (
-                        <div
-                            key={i}
-                            className={styles.segment}
-                            style={{ width: `${seg.width}%`, backgroundColor: seg.color }}
-                            title={`${seg.label}: ${Math.round(seg.width)}%`}
-                        />
-                    ))}
-                </div>
+                {renderBar(plannedSegments)}
             </div>
 
             <div className={styles.gaugeRow}>
                 <div className={styles.rowLabel}>The Reality</div>
                 <div className={styles.barContainer}>
-                    <div className={styles.bar}>
-                        {getActualSegments().map((seg, i) => (
-                            <div
-                                key={i}
-                                className={styles.segment}
-                                style={{ width: `${seg.width}%`, backgroundColor: seg.color }}
-                                title={`${seg.label}: ${Math.round(seg.width)}%`}
-                            />
-                        ))}
-                    </div>
-                    {totalActual > 100 && (
+                    {renderBar(actualSegments)}
+                    {totalActual > 100.1 && (
                         <div className={styles.emptyMarker}>
-                            ⚠️ Tank Empty! ({Math.round(totalActual)}%)
+                            ⚠️ Tank Overdrawn! ({Math.round(totalActual)}%)
                         </div>
                     )}
                 </div>

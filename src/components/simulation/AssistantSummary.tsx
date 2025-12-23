@@ -1,21 +1,27 @@
 import React from 'react';
 import styles from './assistantSummary.module.scss';
+import { PacingData } from './pacingUtils';
 
 interface AssistantSummaryProps {
-    actualCosts: number[];
-    targetWeights: number[];
-    finalResources: number; // EHP % at the end
+    pacingData: PacingData;
 }
 
-const AssistantSummary: React.FC<AssistantSummaryProps> = ({ actualCosts, targetWeights, finalResources }) => {
-    const totalWeight = targetWeights.reduce((a, b) => a + b, 0);
-    const deltas = actualCosts.map((cost, i) => {
-        const target = (targetWeights[i] / (totalWeight || 1)) * 100;
-        return cost - target;
+const AssistantSummary: React.FC<AssistantSummaryProps> = ({ pacingData }) => {
+    const { actualSegments, plannedSegments, finalResources } = pacingData;
+    
+    // Calculate deltas only for combat encounters
+    const deltas: number[] = [];
+    actualSegments.forEach((actual, i) => {
+        if (actual.type === 'combat') {
+            const planned = plannedSegments[i];
+            if (planned && planned.type === 'combat') {
+                deltas.push(actual.percent - planned.percent);
+            }
+        }
     });
 
-    const maxDelta = Math.max(...deltas);
-    const minDelta = Math.min(...deltas);
+    const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
+    const minDelta = deltas.length > 0 ? Math.min(...deltas) : 0;
     
     const getSummary = () => {
         if (finalResources <= 0) {

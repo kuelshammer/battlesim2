@@ -20,6 +20,7 @@ import AdjustmentPreview from "./AdjustmentPreview"
 import FuelGauge from "./FuelGauge"
 import DescentGraph from "./DescentGraph"
 import AssistantSummary from "./AssistantSummary"
+import { calculatePacingData } from "./pacingUtils"
 
 
 
@@ -94,39 +95,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
     }, [timeline]);
 
     const pacingData = useMemo(() => {
-        if (!worker.analysis?.overall.globalMedian?.resourceTimeline) return null;
-        const timeline = worker.analysis.overall.globalMedian.resourceTimeline;
-        const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
-        
-        const actualCosts: number[] = [];
-        for (let i = 0; i < timeline.length - 1; i++) {
-            actualCosts.push(Math.max(0, timeline[i] - timeline[i+1]));
-        }
-
-        let currentDrift = 0;
-        const cumulativeDrifts: number[] = [];
-        
-        actualCosts.forEach((cost, i) => {
-            const target = (encounterWeights[i] / totalWeight) * 100;
-            currentDrift += (cost - target);
-            cumulativeDrifts.push(currentDrift);
-        });
-
-        // Plan Timeline: Start at 100, subtract target % each step
-        const planTimeline = [100];
-        let currentPlan = 100;
-        encounterWeights.forEach(w => {
-            const target = (w / totalWeight) * 100;
-            currentPlan -= target;
-            planTimeline.push(Math.max(0, currentPlan));
-        });
-
-        const decileTimelines = worker.analysis.overall.deciles.map(d => d.resourceTimeline);
-
-        const finalResources = timeline[timeline.length - 1];
-
-        return { actualCosts, cumulativeDrifts, totalWeight, planTimeline, decileTimelines, finalResources };
-    }, [worker.analysis, encounterWeights]);
+        return calculatePacingData(timeline, worker.analysis, encounterWeights);
+    }, [worker.analysis, timeline, encounterWeights]);
 
     useEffect(() => {
         setCanSave(!isEmptyResult)
@@ -356,17 +326,19 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     {worker.analysis && pacingData && (
                         <>
                             <AssistantSummary 
-                                actualCosts={pacingData.actualCosts} 
-                                targetWeights={encounterWeights} 
-                                finalResources={pacingData.finalResources} 
+                                pacingData={pacingData} 
                             />
                             <FuelGauge 
-                                plannedWeights={encounterWeights} 
-                                actualCosts={pacingData.actualCosts} 
+                                plannedSegments={pacingData.plannedSegments} 
+                                actualSegments={pacingData.actualSegments} 
                             />
                             <DescentGraph 
-                                decileTimelines={pacingData.decileTimelines} 
-                                planTimeline={pacingData.planTimeline} 
+                                decileTimelines={worker.analysis.overall.deciles.map(d => d.resourceTimeline)} 
+                                planTimeline={pacingData.plannedSegments.reduce((acc, curr) => {
+                                    const last = acc[acc.length - 1];
+                                    acc.push(last - curr.percent);
+                                    return acc;
+                                }, [100])} 
                             />
                         </>
                     )}

@@ -5,26 +5,30 @@ import React from 'react';
 
 describe('FuelGauge Component', () => {
     it('should render planned segments based on weights', () => {
-        render(<FuelGauge plannedWeights={[1, 1, 2]} actualCosts={[20, 20, 40]} />);
-        // Planned: 25%, 25%, 50%
-        // We can check if elements with certain styles or labels exist
+        const planned: any[] = [{ type: 'combat', percent: 25, label: 'Enc 1' }];
+        const actual: any[] = [{ type: 'combat', percent: 20, label: 'Enc 1' }];
+        render(<FuelGauge plannedSegments={planned} actualSegments={actual} />);
         expect(screen.getByText(/The Plan/i)).toBeDefined();
+        expect(screen.getByText(/Enc 1: 25%/i)).toBeDefined();
     });
 
     it('should render actual segments based on costs', () => {
-        render(<FuelGauge plannedWeights={[1, 1, 2]} actualCosts={[20, 30, 40]} />);
-        // Actual: 20%, 30%, 40% (Total 90%)
+        const planned: any[] = [{ type: 'combat', percent: 25, label: 'Enc 1' }];
+        const actual: any[] = [{ type: 'combat', percent: 20, label: 'Enc 1' }];
+        render(<FuelGauge plannedSegments={planned} actualSegments={actual} />);
         expect(screen.getByText(/The Reality/i)).toBeDefined();
+        expect(screen.getByText(/Enc 1: 20%/i)).toBeDefined();
     });
 
-    it('should show "Tank Empty" if total cost > 100%', () => {
-        render(<FuelGauge plannedWeights={[1, 1]} actualCosts={[60, 50]} />);
-        // Total Actual: 110%
-        expect(screen.getByText(/Tank Empty/i)).toBeDefined();
+    it('should show "Tank Overdrawn" if total cost > 100%', () => {
+        const planned: any[] = [{ type: 'combat', percent: 50 }];
+        const actual: any[] = [{ type: 'combat', percent: 60 }, { type: 'combat', percent: 50 }];
+        render(<FuelGauge plannedSegments={planned} actualSegments={actual} />);
+        expect(screen.getByText(/Tank Overdrawn/i)).toBeDefined();
     });
 
     it('should handle zero total weight', () => {
-        render(<FuelGauge plannedWeights={[]} actualCosts={[20]} />);
+        render(<FuelGauge plannedSegments={[]} actualSegments={[]} />);
         expect(screen.getByText(/The Plan/i)).toBeDefined();
     });
 });

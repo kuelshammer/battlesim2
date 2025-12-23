@@ -5,26 +5,43 @@ import React from 'react';
 
 describe('AssistantSummary Component', () => {
     it('should display "Balanced" message for green status', () => {
-        // Target: 25% each (Total 50%)
-        render(<AssistantSummary actualCosts={[25, 25]} targetWeights={[1, 1, 2]} finalResources={50} />);
+        const pacingData: any = {
+            actualSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
+            plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
+            finalResources: 50
+        };
+        render(<AssistantSummary pacingData={pacingData} />);
         expect(screen.getByText(/Balanced/i)).toBeDefined();
         expect(screen.getByText(/50%/)).toBeDefined();
     });
 
     it('should display "Minor Pacing Drift" for yellow status', () => {
-        // Target: 25% each. Actual: 32% (Delta +7)
-        render(<AssistantSummary actualCosts={[32, 25]} targetWeights={[1, 1, 2]} finalResources={43} />);
+        const pacingData: any = {
+            actualSegments: [{ type: 'combat', percent: 32 }, { type: 'combat', percent: 25 }],
+            plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
+            finalResources: 43
+        };
+        render(<AssistantSummary pacingData={pacingData} />);
         expect(screen.getByText(/Minor Pacing Drift/i)).toBeDefined();
     });
 
     it('should display "Overtuned" for delta > 10%', () => {
-        // Target: 25% each. Actual: 40% (Delta +15)
-        render(<AssistantSummary actualCosts={[40, 25]} targetWeights={[1, 1, 2]} finalResources={35} />);
+        const pacingData: any = {
+            actualSegments: [{ type: 'combat', percent: 40 }, { type: 'combat', percent: 25 }],
+            plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
+            finalResources: 35
+        };
+        render(<AssistantSummary pacingData={pacingData} />);
         expect(screen.getByText(/Overtuned/i)).toBeDefined();
     });
 
     it('should display "Impossible Day" for red status', () => {
-        render(<AssistantSummary actualCosts={[60, 50]} targetWeights={[1, 1]} finalResources={0} />);
+        const pacingData: any = {
+            actualSegments: [{ type: 'combat', percent: 60 }, { type: 'combat', percent: 50 }],
+            plannedSegments: [{ type: 'combat', percent: 50 }, { type: 'combat', percent: 50 }],
+            finalResources: 0
+        };
+        render(<AssistantSummary pacingData={pacingData} />);
         expect(screen.getByText(/Impossible Day/i)).toBeDefined();
     });
 });
