@@ -30,5 +30,5 @@ Goal: Update the Web UI to display the new "Compact Card" and "Detailed Modal" u
 Goal: Update the file logger to include the formatted human-readable strings.
 
 - [x] Task: Create tests for file logging output (Red) 18f9bc3
-- [ ] Task: Implement `FileLogger` using `LogFormatter` (Green)
+- [x] Task: Implement FileLogger using LogFormatter (Green) a4bbf4d
 - [ ] Task: Conductor - User Manual Verification 'File Logging Integration' (Protocol in workflow.md)
