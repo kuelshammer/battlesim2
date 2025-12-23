@@ -526,6 +526,7 @@ export const AggregateOutputSchema = z.object({
     globalMedian: DecileStatsSchema.optional().nullable(),
     vitalityRange: TimelineRangeSchema.optional().nullable(),
     powerRange: TimelineRangeSchema.optional().nullable(),
+    decileLogs: z.array(z.array(EventSchema)).default([]),
     battleDurationRounds: z.number(),
     stars: z.number().optional().default(0),
     tdnw: z.number().optional().default(0),
