@@ -135,18 +135,15 @@ pub fn run_simulation_with_callback(
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-    let mut all_events = Vec::new();
     let mut results = Vec::new();
+    let mut all_run_events = Vec::new();
 
     let batch_size = (iterations / 20).max(1); // Report progress every 5%
 
     for i in 0..iterations {
-        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, true);
         results.push(result);
-
-        if i == 0 {
-            all_events = events;
-        }
+        all_run_events.push(events);
 
         let is_last_iteration = i == iterations - 1;
         let should_report_progress = (i + 1) % batch_size == 0 || is_last_iteration;
@@ -162,6 +159,11 @@ pub fn run_simulation_with_callback(
             // Perform intermediate analysis if scheduled
             let mut js_partial_data = JsValue::NULL;
             if should_report_analysis {
+                // For partial analysis, we currently don't need the complex slicing logic
+                // but we need to pass the events if we want logs.
+                // However, the existing PartialOutput doesn't have events.
+                // Let's keep it simple for partial and only do full log extraction at the end.
+                
                 let mut temp_results = results.clone();
                 temp_results.sort_by(|a, b| {
                     let score_a = crate::aggregation::calculate_score(a);
@@ -208,21 +210,28 @@ pub fn run_simulation_with_callback(
     }
 
     // FINAL ANALYSIS
-    results.sort_by(|a, b| {
-        let score_a = crate::aggregation::calculate_score(a);
-        let score_b = crate::aggregation::calculate_score(b);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
-    });
+    // Combine results and events into a single vector for easier sorting
+    let mut runs: Vec<_> = results.into_iter().zip(all_run_events.into_iter())
+        .map(|(result, events)| crate::model::SimulationRun { result, events })
+        .collect();
 
-    let overall = decile_analysis::run_decile_analysis(&results, "Current Scenario", players.len());
-    let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
+    let overall = decile_analysis::run_decile_analysis_with_logs(&mut runs, "Current Scenario", players.len());
+    
+    let num_encounters = runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
-        let analysis = decile_analysis::run_encounter_analysis(&results, i, &format!("Encounter {}", i + 1), players.len());
+        let analysis = decile_analysis::run_encounter_analysis_with_logs(&mut runs, i, &format!("Encounter {}", i + 1), players.len());
         encounters_analysis.push(analysis);
     }
 
-    let total_runs = results.len();
+    // Sort the final runs by global score for the results extraction
+    runs.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(&a.result);
+        let score_b = crate::aggregation::calculate_score(&b.result);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    let total_runs = runs.len();
     let median_idx = total_runs / 2;
     let representative_indices = if total_runs == 2511 {
         vec![125, 627, 1255, 1883, 2385]
@@ -232,7 +241,7 @@ pub fn run_simulation_with_callback(
     };
     let mut reduced_results = Vec::new();
     for &idx in &representative_indices {
-        if idx < total_runs { reduced_results.push(results[idx].clone()); }
+        if idx < total_runs { reduced_results.push(runs[idx].result.clone()); }
     }
 
     let output = FullSimulationOutput {
@@ -241,7 +250,7 @@ pub fn run_simulation_with_callback(
             overall,
             encounters: encounters_analysis,
         },
-        firstRunEvents: all_events,
+        firstRunEvents: runs[median_idx].events.clone(), // Use global median events as default fallback
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()

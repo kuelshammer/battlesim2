@@ -190,6 +190,24 @@ pub fn calculate_score(result: &SimulationResult) -> f64 {
     }
 }
 
+pub fn calculate_cumulative_score(result: &SimulationResult, encounter_idx: usize) -> f64 {
+    let encounter = match result.encounters.get(encounter_idx) {
+        Some(e) => e,
+        None => return -1_000_000.0,
+    };
+    
+    let last_round = match encounter.rounds.last() {
+        Some(r) => r,
+        None => return -1_000_000.0,
+    };
+
+    let player_hp: f64 = last_round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
+    let monster_hp: f64 = last_round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
+    let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count() as f64;
+
+    (survivors * 1_000_000.0) + player_hp - monster_hp
+}
+
 /// Calculate efficiency-aware score based on survival and resource consumption
 pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::events::Event]) -> f64 {
     // 1. Base Survival Score (matches calculate_score_safe logic)

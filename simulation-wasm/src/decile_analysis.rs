@@ -119,6 +119,7 @@ pub struct AggregateOutput {
     pub global_median: Option<DecileStats>,
     pub vitality_range: Option<TimelineRange>,
     pub power_range: Option<TimelineRange>,
+    pub decile_logs: Vec<Vec<crate::events::Event>>, // 11 logs: [P5, P15, ..., P50, ..., P95]
     pub battle_duration_rounds: usize,
     pub safety_grade: SafetyGrade,
     pub intensity_tier: IntensityTier,
@@ -398,7 +399,103 @@ fn calculate_tdnw(run: &SimulationResult) -> f64 {
     total
 }
 
-fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_decile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    analyze_results(results, scenario_name, party_size, None)
+}
+
+pub fn run_decile_analysis_with_logs(runs: &mut [crate::model::SimulationRun], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    let results: Vec<_> = runs.iter().map(|r| r.result.clone()).collect();
+    analyze_results(&results, scenario_name, party_size, Some(runs))
+}
+
+pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+    analyze_results(results, scenario_name, party_size, None)
+}
+
+pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
+    let mut encounter_results: Vec<SimulationResult> = results.iter()
+        .filter_map(|run| {
+            if encounter_idx < run.encounters.len() { 
+                Some(SimulationResult { 
+                    encounters: vec![run.encounters[encounter_idx].clone()],
+                    score: run.score,
+                    num_combat_encounters: run.num_combat_encounters,
+                }) 
+            } else { 
+                None 
+            }
+        })
+        .collect();
+
+    encounter_results.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(a);
+        let score_b = crate::aggregation::calculate_score(b);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    analyze_results(&encounter_results, scenario_name, party_size, None)
+}
+
+pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
+    // 1. Sort the runs based on cumulative score up to encounter_idx
+    runs.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_cumulative_score(&a.result, encounter_idx);
+        let score_b = crate::aggregation::calculate_cumulative_score(&b.result, encounter_idx);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // 2. Extract results for analysis
+    let results: Vec<_> = runs.iter().map(|run| {
+        if encounter_idx < run.result.encounters.len() {
+            SimulationResult {
+                encounters: vec![run.result.encounters[encounter_idx].clone()],
+                score: run.result.score,
+                num_combat_encounters: 1,
+            }
+        } else {
+            SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0 }
+        }
+    }).collect();
+
+    // 3. Perform analysis and extract sliced logs
+    let mut output = analyze_results(&results, scenario_name, party_size, Some(runs));
+    
+    // 4. Slice the logs to only include events for this specific encounter
+    for log in &mut output.decile_logs {
+        *log = slice_events_for_encounter(log, encounter_idx);
+    }
+    
+    output
+}
+
+fn slice_events_for_encounter(events: &[crate::events::Event], encounter_idx: usize) -> Vec<crate::events::Event> {
+    let mut sliced = Vec::new();
+    let mut current_encounter = 0;
+    let mut recording = false;
+
+    for event in events {
+        if let crate::events::Event::EncounterStarted { .. } = event {
+            if current_encounter == encounter_idx {
+                recording = true;
+            }
+        }
+        
+        if recording {
+            sliced.push(event.clone());
+        }
+
+        if let crate::events::Event::EncounterEnded { .. } = event {
+            if recording {
+                recording = false;
+                break;
+            }
+            current_encounter += 1;
+        }
+    }
+    sliced
+}
+
+fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size: usize, runs: Option<&[crate::model::SimulationRun]>) -> AggregateOutput {
     if results.is_empty() {
                 return AggregateOutput {
                     scenario_name: scenario_name.to_string(),
@@ -407,6 +504,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
                     global_median: None,
                     vitality_range: None,
                     power_range: None,
+                    decile_logs: Vec::new(),
                     battle_duration_rounds: 0,
                     safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
             analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
@@ -470,6 +568,48 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     
     let mut deciles = Vec::with_capacity(10);
     let mut global_median = None;
+    let mut decile_logs = Vec::new();
+
+    // Extract 11 logs if runs are provided
+    if let Some(all_runs) = runs {
+        let log_indices = if total_runs >= 11 && (total_runs - 1) % 10 == 0 {
+            // Perfect 10n + 1 system
+            let n = (total_runs - 1) / 10;
+            vec![
+                n / 2,           // 5%
+                n + n / 2,       // 15%
+                2 * n + n / 2,   // 25%
+                3 * n + n / 2,   // 35%
+                4 * n + n / 2,   // 45%
+                5 * n,           // 50% (True Median)
+                5 * n + n / 2 + 1, // 55%
+                6 * n + n / 2 + 1, // 65%
+                7 * n + n / 2 + 1, // 75%
+                8 * n + n / 2 + 1, // 85%
+                9 * n + n / 2 + 1, // 95%
+            ]
+        } else {
+            // Fallback for non-perfect counts
+            vec![
+                (total_runs as f64 * 0.05) as usize,
+                (total_runs as f64 * 0.15) as usize,
+                (total_runs as f64 * 0.25) as usize,
+                (total_runs as f64 * 0.35) as usize,
+                (total_runs as f64 * 0.45) as usize,
+                (total_runs as f64 * 0.50) as usize,
+                (total_runs as f64 * 0.55) as usize,
+                (total_runs as f64 * 0.65) as usize,
+                (total_runs as f64 * 0.75) as usize,
+                (total_runs as f64 * 0.85) as usize,
+                (total_runs as f64 * 0.95) as usize,
+            ]
+        };
+        
+        for idx in log_indices {
+            let safe_idx = idx.min(total_runs - 1);
+            decile_logs.push(all_runs[safe_idx].events.clone());
+        }
+    }
 
     if is_perfect && total_runs >= 11 {
         let median_idx = total_runs / 2;
@@ -558,6 +698,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     AggregateOutput {
         scenario_name: scenario_name.to_string(), total_runs, deciles, global_median, 
         vitality_range, power_range,
+        decile_logs,
         battle_duration_rounds,
         safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
         tdnw,
@@ -654,36 +795,4 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
         vitality_timeline: avg_vitality_timeline,
         power_timeline: avg_power_timeline,
     }
-}
-
-pub fn run_decile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
-    analyze_results(results, scenario_name, party_size)
-}
-
-pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
-    analyze_results(results, scenario_name, party_size)
-}
-
-pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
-    let mut encounter_results: Vec<SimulationResult> = results.iter()
-        .filter_map(|run| {
-            if encounter_idx < run.encounters.len() { 
-                Some(SimulationResult { 
-                    encounters: vec![run.encounters[encounter_idx].clone()],
-                    score: run.score,
-                    num_combat_encounters: run.num_combat_encounters,
-                }) 
-            } else { 
-                None 
-            }
-        })
-        .collect();
-
-    encounter_results.sort_by(|a, b| {
-        let score_a = crate::aggregation::calculate_score(a);
-        let score_b = crate::aggregation::calculate_score(b);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
-    });
-
-    analyze_results(&encounter_results, scenario_name, party_size)
 }
