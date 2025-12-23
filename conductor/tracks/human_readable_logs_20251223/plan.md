@@ -26,9 +26,9 @@ Goal: Update the Web UI to display the new "Compact Card" and "Detailed Modal" u
 - [x] Task: Integrate components into the main simulation view (Green)
 - [x] Task: Conductor - User Manual Verification 'Frontend UI Implementation' (Protocol in workflow.md)
 
-## Phase 4: File Logging Integration
+## Phase 4: File Logging Integration [checkpoint: e01e63c]
 Goal: Update the file logger to include the formatted human-readable strings.
 
 - [x] Task: Create tests for file logging output (Red) 18f9bc3
 - [x] Task: Implement FileLogger using LogFormatter (Green) a4bbf4d
-- [ ] Task: Conductor - User Manual Verification 'File Logging Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'File Logging Integration' (Protocol in workflow.md)
