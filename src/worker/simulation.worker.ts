@@ -1,6 +1,6 @@
 
 import init, { run_simulation_with_callback, auto_adjust_encounter_wasm } from 'simulation-wasm';
-const wasmUrl = require('simulation-wasm/simulation_wasm_bg.wasm');
+import wasmUrl from 'simulation-wasm/simulation_wasm_bg.wasm';
 
 let wasmInitialized = false;
 
@@ -11,7 +11,7 @@ async function ensureWasmInitialized() {
     }
 }
 
-self.onmessage = async (e: MessageEvent) => {
+export const handleMessage = async (e: MessageEvent) => {
     const { type: messageType, players, timeline, monsters, iterations, encounterIndex } = e.data;
 
     if (messageType === 'START_SIMULATION') {
@@ -70,3 +70,5 @@ self.onmessage = async (e: MessageEvent) => {
         }
     }
 };
+
+self.onmessage = handleMessage;

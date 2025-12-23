@@ -10,6 +10,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     alias: {
+      'simulation-wasm/simulation_wasm_bg.wasm': path.resolve(__dirname, 'src/__mocks__/wasmMock.js'),
       '@/utils': path.resolve(__dirname, './src/components/utils'),
       '@/components': path.resolve(__dirname, './src/components'),
       '@/model': path.resolve(__dirname, './src/model'),
