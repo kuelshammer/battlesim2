@@ -1,23 +1,24 @@
 import React from 'react';
 import styles from './descentGraph.module.scss';
+import { PacingData } from './pacingUtils';
 
 interface DescentGraphProps {
     decileTimelines: number[][]; // 10 timelines, each an array of EHP %
-    planTimeline: number[]; // Array of EHP % representing the plan
+    pacingData: PacingData;
 }
 
-const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, planTimeline }) => {
+const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData }) => {
+    const { plannedTimeline, labels } = pacingData;
     const width = 400;
     const height = 200;
     const padding = 30;
 
-    const steps = planTimeline.length;
+    const steps = plannedTimeline.length;
     const xScale = (step: number) => padding + (step * (width - 2 * padding)) / (steps - 1);
     const yScale = (percent: number) => height - padding - (percent * (height - 2 * padding)) / 100;
 
     // Median is decile 4 (50th percentile)
     const medianTimeline = decileTimelines[4] || [];
-    // 25th percentile (decile 2) and 75th percentile (decile 7)
     const p25Timeline = decileTimelines[2] || [];
     const p75Timeline = decileTimelines[7] || [];
 
@@ -42,6 +43,23 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, planTimeli
         <div className={styles.graphContainer}>
             <div className={styles.graphTitle}>Resource Attrition (The Descent)</div>
             <svg viewBox={`0 0 ${width} ${height}`} className={styles.svg}>
+                {/* Rest Background Highlighting */}
+                {labels.map((label, i) => {
+                    if (label === 'Rest' && i > 0) {
+                        return (
+                            <rect 
+                                key={`rest-bg-${i}`}
+                                x={xScale(i-1)} 
+                                y={padding} 
+                                width={xScale(i) - xScale(i-1)} 
+                                height={height - 2 * padding}
+                                className={styles.restBackground}
+                            />
+                        );
+                    }
+                    return null;
+                })}
+
                 {/* Grid Lines */}
                 {[0, 25, 50, 75, 100].map(p => (
                     <g key={p}>
@@ -57,13 +75,18 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, planTimeli
                 <path d={getAreaData(p75Timeline, p25Timeline)} className={styles.riskArea} />
 
                 {/* Plan Line (Dotted) */}
-                <path d={getPathData(planTimeline)} className={styles.planLine} strokeDasharray="4 4" />
+                <path d={getPathData(plannedTimeline)} className={styles.planLine} strokeDasharray="4 4" />
 
                 {/* Median Line (Solid) */}
                 <path d={getPathData(medianTimeline)} className={styles.medianLine} />
 
+                {/* Data Points (Dots) */}
+                {medianTimeline.map((p, i) => (
+                    <circle key={`dot-${i}`} cx={xScale(i)} cy={yScale(p)} r="3" className={styles.medianDot} />
+                ))}
+
                 {/* X-Axis Labels */}
-                {planTimeline.map((_, i) => (
+                {labels.map((label, i) => (
                     <text 
                         key={i} 
                         x={xScale(i)} 
@@ -71,10 +94,15 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, planTimeli
                         className={styles.axisLabel} 
                         textAnchor="middle"
                     >
-                        {i === 0 ? 'Start' : `E${i}`}
+                        {label}
                     </text>
                 ))}
             </svg>
+            <div className={styles.legend}>
+                <span className={styles.legendItem}><span className={styles.medianLineKey}></span> Reality</span>
+                <span className={styles.legendItem}><span className={styles.planLineKey}></span> Plan</span>
+                <span className={styles.legendItem}><span className={styles.riskAreaKey}></span> Risk (25-75th)</span>
+            </div>
         </div>
     );
 };

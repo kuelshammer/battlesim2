@@ -334,11 +334,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             />
                             <DescentGraph 
                                 decileTimelines={worker.analysis.overall.deciles.map(d => d.resourceTimeline)} 
-                                planTimeline={pacingData.plannedSegments.reduce((acc, curr) => {
-                                    const last = acc[acc.length - 1];
-                                    acc.push(last - curr.percent);
-                                    return acc;
-                                }, [100])} 
+                                pacingData={pacingData} 
                             />
                         </>
                     )}

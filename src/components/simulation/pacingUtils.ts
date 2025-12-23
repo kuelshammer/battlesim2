@@ -17,6 +17,8 @@ export interface PacingData {
     finalResources: number;
     actualCosts: number[]; // Combat-only costs
     cumulativeDrifts: number[]; // Combat-only drifts
+    plannedTimeline: number[]; // Points for the line chart
+    labels: string[]; // Labels for the X-axis
 }
 
 export function calculatePacingData(
@@ -33,7 +35,7 @@ export function calculatePacingData(
     const initialEhp = (resTimeline[0] / 100) * tdnw;
 
     let totalRecovery = 0;
-    const absoluteChanges: { type: 'combat' | 'shortRest', val: number, id: string }[] = [];
+    const stepChanges: { type: 'combat' | 'shortRest', val: number, id: string }[] = [];
 
     // Map each timeline event to its resource change
     timeline.forEach((item, i) => {
@@ -45,9 +47,9 @@ export function calculatePacingData(
             totalRecovery += change;
         }
 
-        absoluteChanges.push({
+        stepChanges.push({
             type: item.type === 'combat' ? 'combat' : 'shortRest',
-            val: Math.abs(change),
+            val: change,
             id: item.id || `step-${i}`
         });
     });
@@ -57,14 +59,16 @@ export function calculatePacingData(
     // Map actual segments
     let actualCombatCount = 0;
     const actualCosts: number[] = [];
-    const actualSegments: PacingSegment[] = absoluteChanges.map((change) => {
-        const percent = grandTotalBudget > 0 ? (change.val / grandTotalBudget) * 100 : 0;
+    const actualSegments: PacingSegment[] = stepChanges.map((change) => {
+        const absVal = Math.abs(change.val);
+        const percentOfBudget = grandTotalBudget > 0 ? (absVal / grandTotalBudget) * 100 : 0;
+        
         if (change.type === 'combat') {
             actualCombatCount++;
-            actualCosts.push(percent);
+            actualCosts.push(percentOfBudget);
             return {
                 type: 'combat',
-                percent,
+                percent: percentOfBudget,
                 label: `Enc ${actualCombatCount}`,
                 id: change.id
             };
@@ -111,6 +115,30 @@ export function calculatePacingData(
         cumulativeDrifts.push(currentDrift);
     });
 
+    // Calculate Planned Timeline points
+    // Y-axis is % of TDNW (Max HP)
+    const plannedTimeline = [resTimeline[0]];
+    const labels = ['Start'];
+    let currentPlannedEhp = initialEhp;
+    let combatIdx = 0;
+
+    timeline.forEach((item, i) => {
+        if (item.type === 'combat') {
+            const weight = encounterWeights[combatIdx];
+            const weightPercent = totalWeight > 0 ? (weight / totalWeight) : 0;
+            const plannedDrain = weightPercent * grandTotalBudget;
+            currentPlannedEhp -= plannedDrain;
+            combatIdx++;
+            labels.push(`E${combatIdx}`);
+        } else {
+            // Apply recovery to plan
+            const recovery = stepChanges[i].val; // Actual recovery used as target
+            currentPlannedEhp += recovery;
+            labels.push('Rest');
+        }
+        plannedTimeline.push(tdnw > 0 ? (currentPlannedEhp / tdnw) * 100 : 0);
+    });
+
     return {
         actualSegments,
         plannedSegments,
@@ -120,6 +148,8 @@ export function calculatePacingData(
         totalWeight,
         finalResources: resTimeline[resTimeline.length - 1],
         actualCosts,
-        cumulativeDrifts
+        cumulativeDrifts,
+        plannedTimeline,
+        labels
     };
 }

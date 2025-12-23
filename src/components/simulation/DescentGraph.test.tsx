@@ -18,12 +18,16 @@ describe('DescentGraph Component', () => {
     ];
 
     const mockPlanTimeline = [100, 90, 80];
+    const mockPacingData: any = {
+        plannedTimeline: mockPlanTimeline,
+        labels: ['Start', 'E1', 'E2']
+    };
 
     it('should render an SVG element', () => {
         const { container } = render(
             <DescentGraph 
                 decileTimelines={mockDecileTimelines} 
-                planTimeline={mockPlanTimeline} 
+                pacingData={mockPacingData} 
             />
         );
         expect(container.querySelector('svg')).toBeDefined();
@@ -33,7 +37,7 @@ describe('DescentGraph Component', () => {
         const { container } = render(
             <DescentGraph 
                 decileTimelines={mockDecileTimelines} 
-                planTimeline={mockPlanTimeline} 
+                pacingData={mockPacingData} 
             />
         );
         // Look for a path with stroke-dasharray (dotted line)
@@ -45,10 +49,10 @@ describe('DescentGraph Component', () => {
         const { container } = render(
             <DescentGraph 
                 decileTimelines={mockDecileTimelines} 
-                planTimeline={mockPlanTimeline} 
+                pacingData={mockPacingData} 
             />
         );
-        const riskArea = container.querySelector('path:not([stroke]):not([stroke-dasharray])');
+        const riskArea = container.querySelector('path[class*="riskArea"]');
         expect(riskArea).toBeDefined();
     });
 
@@ -56,7 +60,7 @@ describe('DescentGraph Component', () => {
         const { container } = render(
             <DescentGraph 
                 decileTimelines={[]} 
-                planTimeline={[]} 
+                pacingData={{ plannedTimeline: [], labels: [] } as any} 
             />
         );
         expect(container.querySelector('svg')).toBeDefined();
