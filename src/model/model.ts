@@ -514,11 +514,18 @@ export const DecileStatsSchema = z.object({
     powerTimeline: z.array(z.number()).default([]),
 })
 
+export const TimelineRangeSchema = z.object({
+    p25: z.array(z.number()),
+    p75: z.array(z.number()),
+})
+
 export const AggregateOutputSchema = z.object({
     scenarioName: z.string(),
     totalRuns: z.number(),
     deciles: z.array(DecileStatsSchema),
     globalMedian: DecileStatsSchema.optional().nullable(),
+    vitalityRange: TimelineRangeSchema.optional().nullable(),
+    powerRange: TimelineRangeSchema.optional().nullable(),
     battleDurationRounds: z.number(),
     stars: z.number().optional().default(0),
     tdnw: z.number().optional().default(0),

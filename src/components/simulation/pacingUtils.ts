@@ -19,6 +19,8 @@ export interface PacingData {
     totalRecovery: number;
     totalWeight: number;
     finalResources: number;
+    finalVitality: number;
+    finalPower: number;
     
     actualCosts: number[]; // Combat-only costs
     cumulativeDrifts: number[]; // Combat-only drifts
@@ -27,6 +29,9 @@ export interface PacingData {
     vitalityTimeline: number[];
     powerTimeline: number[];
     
+    vitalityRange?: { p25: number[], p75: number[] };
+    powerRange?: { p25: number[], p75: number[] };
+
     labels: string[]; // Labels for the X-axis
 }
 
@@ -183,11 +188,15 @@ export function calculatePacingData(
         totalRecovery,
         totalWeight,
         finalResources: resTimeline[resTimeline.length - 1],
+        finalVitality: vitTimeline[vitTimeline.length - 1],
+        finalPower: powTimeline[powTimeline.length - 1],
         actualCosts,
         cumulativeDrifts,
         plannedTimeline,
         vitalityTimeline: vitTimeline,
         powerTimeline: powTimeline,
+        vitalityRange: analysis.overall.vitalityRange || undefined,
+        powerRange: analysis.overall.powerRange || undefined,
         labels
     };
 }

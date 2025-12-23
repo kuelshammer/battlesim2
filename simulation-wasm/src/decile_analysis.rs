@@ -105,11 +105,20 @@ pub struct DecileStats {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct TimelineRange {
+    pub p25: Vec<f64>,
+    pub p75: Vec<f64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregateOutput {
     pub scenario_name: String,
     pub total_runs: usize,
     pub deciles: Vec<DecileStats>,
     pub global_median: Option<DecileStats>,
+    pub vitality_range: Option<TimelineRange>,
+    pub power_range: Option<TimelineRange>,
     pub battle_duration_rounds: usize,
     pub safety_grade: SafetyGrade,
     pub intensity_tier: IntensityTier,
@@ -396,6 +405,8 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
                     total_runs: 0,
                     deciles: Vec::new(),
                     global_median: None,
+                    vitality_range: None,
+                    power_range: None,
                     battle_duration_rounds: 0,
                     safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
             analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
@@ -407,6 +418,42 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     let tdnw = calculate_tdnw(&results[0]);
     let num_encounters = results[0].encounters.len();
     
+    // Collect all timelines for independent percentile calculation
+    let mut all_vits = Vec::new();
+    let mut all_pows = Vec::new();
+    for run in results {
+        let (_, _, _, _, _, vit, pow) = calculate_run_stats(run, party_size, tdnw);
+        all_vits.push(vit);
+        all_pows.push(pow);
+    }
+
+    let num_steps = if !all_vits.is_empty() { all_vits[0].len() } else { 0 };
+    let mut vit_p25 = Vec::new();
+    let mut vit_p75 = Vec::new();
+    let mut pow_p25 = Vec::new();
+    let mut pow_p75 = Vec::new();
+
+    for j in 0..num_steps {
+        let mut step_vits: Vec<f64> = all_vits.iter().map(|t| t[j]).collect();
+        let mut step_pows: Vec<f64> = all_pows.iter().map(|t| t[j]).collect();
+        
+        step_vits.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        step_pows.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+        let p25_idx = (step_vits.len() as f64 * 0.25) as usize;
+        let p75_idx = (step_vits.len() as f64 * 0.75) as usize;
+
+        if !step_vits.is_empty() {
+            vit_p25.push(step_vits[p25_idx.min(step_vits.len() - 1)]);
+            vit_p75.push(step_vits[p75_idx.min(step_vits.len() - 1)]);
+            pow_p25.push(step_pows[p25_idx.min(step_pows.len() - 1)]);
+            pow_p75.push(step_pows[p75_idx.min(step_pows.len() - 1)]);
+        }
+    }
+
+    let vitality_range = Some(TimelineRange { p25: vit_p25, p75: vit_p75 });
+    let power_range = Some(TimelineRange { p25: pow_p25, p75: pow_p75 });
+
     // Weighted Resource Pie Logic
     let total_day_weight: f64 = results[0].encounters.iter().map(|e| e.target_role.weight()).sum();
     let current_encounter_weight = if results[0].encounters.len() == 1 {
@@ -509,7 +556,9 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     let battle_duration_rounds = global_median.as_ref().map(|m| m.battle_duration_rounds).unwrap_or(0);
 
     AggregateOutput {
-        scenario_name: scenario_name.to_string(), total_runs, deciles, global_median, battle_duration_rounds,
+        scenario_name: scenario_name.to_string(), total_runs, deciles, global_median, 
+        vitality_range, power_range,
+        battle_duration_rounds,
         safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
         tdnw,
         num_encounters,

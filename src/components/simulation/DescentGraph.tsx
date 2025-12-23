@@ -9,7 +9,7 @@ interface DescentGraphProps {
 }
 
 const DescentGraph: React.FC<DescentGraphProps> = ({ pacingData, deciles }) => {
-    const { plannedTimeline, labels, vitalityTimeline, powerTimeline } = pacingData;
+    const { plannedTimeline, labels, vitalityTimeline, powerTimeline, vitalityRange, powerRange } = pacingData;
     const width = 400;
     const height = 200;
     const padding = 30;
@@ -18,13 +18,13 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ pacingData, deciles }) => {
     const xScale = (step: number) => padding + (step * (width - 2 * padding)) / (steps - 1);
     const yScale = (percent: number) => height - padding - (percent * (height - 2 * padding)) / 100;
 
-    // Vitality Deciles
-    const v25 = deciles[2]?.vitalityTimeline || [];
-    const v75 = deciles[7]?.vitalityTimeline || [];
+    // Vitality Ranges (prefer independent calculation from pacingData)
+    const v25 = vitalityRange?.p25 || deciles[2]?.vitalityTimeline || [];
+    const v75 = vitalityRange?.p75 || deciles[7]?.vitalityTimeline || [];
     
-    // Power Deciles
-    const p25 = deciles[2]?.powerTimeline || [];
-    const p75 = deciles[7]?.powerTimeline || [];
+    // Power Ranges
+    const p25 = powerRange?.p25 || deciles[2]?.powerTimeline || [];
+    const p75 = powerRange?.p75 || deciles[7]?.powerTimeline || [];
 
     const getPathData = (timeline: number[]) => {
         if (!timeline || timeline.length === 0) return '';

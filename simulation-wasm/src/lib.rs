@@ -468,10 +468,15 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                 // Apply standalone short rest recovery
                 players_with_state = apply_short_rest_standalone(&players_with_state, &mut all_events);
                 
-                // Add an empty encounter result to maintain timeline indexing in results
+                // Add an encounter result with one round snapshot to capture the state after rest
+                let after_rest_team1 = players_with_state.iter().cloned().collect();
+                
                 encounter_results.push(crate::model::EncounterResult {
                     stats: HashMap::new(),
-                    rounds: Vec::new(),
+                    rounds: vec![crate::model::Round {
+                        team1: after_rest_team1,
+                        team2: Vec::new(),
+                    }],
                     target_role: crate::model::TargetRole::Standard,
                 });
             }
