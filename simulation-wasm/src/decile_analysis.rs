@@ -99,6 +99,8 @@ pub struct DecileStats {
     pub median_run_data: Option<EncounterResult>,
     pub battle_duration_rounds: usize,
     pub resource_timeline: Vec<f64>, // Array of EHP % after each step
+    pub vitality_timeline: Vec<f64>, // Array of Vitality % after each step
+    pub power_timeline: Vec<f64>, // Array of Power % after each step
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -255,7 +257,7 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
     suggestions
 }
 
-fn calculate_run_stats(run: &SimulationResult, party_size: usize, tdnw: f64) -> (f64, f64, usize, usize, Vec<f64>) {
+fn calculate_run_stats(run: &SimulationResult, party_size: usize, tdnw: f64) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
     let score = crate::aggregation::calculate_score(run);
     
     // 1. Count survivors from actual final state
@@ -269,46 +271,95 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize, tdnw: f64) -> 
         if score < 0.0 { 0 } else { ((score / 1_000_000.0).floor() as usize).min(party_size) }
     };
     
-    // 2. Calculate EHP Timeline
+    // 2. Calculate Timelines
     let mut timeline = Vec::new();
+    let mut vitality_timeline = Vec::new();
+    let mut power_timeline = Vec::new();
     let mut run_party_max_hp = 0.0;
 
-    // Start with Initial State (100% or slightly less if they started damaged)
+    // Start with Initial State
     if let Some(first_enc) = run.encounters.first() {
         if let Some(first_round) = first_enc.rounds.first() {
             let mut start_ehp = 0.0;
+            let mut start_vit_sum = 0.0;
+            let mut start_pow_sum = 0.0;
+            let mut p_count = 0.0;
+
             for c in &first_round.team1 {
+                p_count += 1.0;
                 run_party_max_hp += c.creature.hp as f64;
                 let ledger = c.creature.initialize_ledger();
+                
                 start_ehp += calculate_serializable_ehp(
                     c.initial_state.current_hp, 
                     c.initial_state.temp_hp.unwrap_or(0),
                     &c.initial_state.resources, 
                     &ledger.reset_rules
                 );
+
+                start_vit_sum += calculate_vitality(
+                    c.initial_state.current_hp, 
+                    &c.initial_state.resources.current, 
+                    c.creature.hp, 
+                    &c.initial_state.resources.max, 
+                    c.creature.con_modifier.unwrap_or(0.0)
+                );
+
+                start_pow_sum += calculate_power(
+                    &c.initial_state.resources.current, 
+                    &c.initial_state.resources.max, 
+                    &ledger.reset_rules
+                );
             }
             timeline.push(if tdnw > 0.0 { (start_ehp / tdnw) * 100.0 } else { 100.0 });
+            vitality_timeline.push(if p_count > 0.0 { start_vit_sum / p_count } else { 100.0 });
+            power_timeline.push(if p_count > 0.0 { start_pow_sum / p_count } else { 100.0 });
         }
     }
 
-    // EHP after each step
+    // Per step
     for encounter in &run.encounters {
         if let Some(last_round) = encounter.rounds.last() {
             let mut step_ehp = 0.0;
+            let mut step_vit_sum = 0.0;
+            let mut step_pow_sum = 0.0;
+            let mut p_count = 0.0;
+
             for c in &last_round.team1 {
+                p_count += 1.0;
                 let ledger = c.creature.initialize_ledger();
+                
                 step_ehp += calculate_serializable_ehp(
                     c.final_state.current_hp,
                     c.final_state.temp_hp.unwrap_or(0),
                     &c.final_state.resources, 
                     &ledger.reset_rules
                 );
+
+                step_vit_sum += calculate_vitality(
+                    c.final_state.current_hp, 
+                    &c.final_state.resources.current, 
+                    c.creature.hp, 
+                    &c.final_state.resources.max, 
+                    c.creature.con_modifier.unwrap_or(0.0)
+                );
+
+                step_pow_sum += calculate_power(
+                    &c.final_state.resources.current, 
+                    &c.final_state.resources.max, 
+                    &ledger.reset_rules
+                );
             }
             timeline.push(if tdnw > 0.0 { (step_ehp / tdnw) * 100.0 } else { 0.0 });
+            vitality_timeline.push(if p_count > 0.0 { step_vit_sum / p_count } else { 0.0 });
+            power_timeline.push(if p_count > 0.0 { step_pow_sum / p_count } else { 0.0 });
         } else {
-            // Placeholder for empty encounters/steps if needed
             let prev = timeline.last().cloned().unwrap_or(100.0);
             timeline.push(prev);
+            let prev_vit = vitality_timeline.last().cloned().unwrap_or(100.0);
+            vitality_timeline.push(prev_vit);
+            let prev_pow = power_timeline.last().cloned().unwrap_or(100.0);
+            power_timeline.push(prev_pow);
         }
     }
 
@@ -318,7 +369,7 @@ fn calculate_run_stats(run: &SimulationResult, party_size: usize, tdnw: f64) -> 
     
     let duration = run.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
     
-    (burned_resources, run_party_max_hp, survivors, duration, timeline)
+    (burned_resources, run_party_max_hp, survivors, duration, timeline, vitality_timeline, power_timeline)
 }
 
 fn calculate_tdnw(run: &SimulationResult) -> f64 {
@@ -376,7 +427,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
     if is_perfect && total_runs >= 11 {
         let median_idx = total_runs / 2;
         let median_run = &results[median_idx];
-        let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(median_run, party_size, tdnw);
+        let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats(median_run, party_size, tdnw);
         let (visualization_data, _) = extract_combatant_visualization(median_run);
         
         global_median = Some(DecileStats {
@@ -391,6 +442,8 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
             median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
             battle_duration_rounds: duration,
             resource_timeline: timeline,
+            vitality_timeline: vit_timeline,
+            power_timeline: pow_timeline,
         });
 
         for i in 0..10 {
@@ -414,7 +467,7 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
         
         let median_idx = total_runs / 2;
         if let Some(median_run) = results.get(median_idx) {
-            let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(median_run, party_size, tdnw);
+            let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats(median_run, party_size, tdnw);
             let (visualization_data, _) = extract_combatant_visualization(median_run);
             
             global_median = Some(DecileStats {
@@ -428,6 +481,8 @@ fn analyze_results(results: &[SimulationResult], scenario_name: &str, party_size
                 median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
                 battle_duration_rounds: duration,
                 resource_timeline: timeline,
+                vitality_timeline: vit_timeline,
+                power_timeline: pow_timeline,
             });
         }
     }
@@ -486,14 +541,18 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
     let mut total_survivors = 0;
     let mut total_duration = 0;
     let mut timelines = Vec::new();
+    let mut vitality_timelines = Vec::new();
+    let mut power_timelines = Vec::new();
 
     for run in slice {
-        let (hp_lost, _max_hp, survivors, duration, timeline) = calculate_run_stats(run, party_size, tdnw);
+        let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats(run, party_size, tdnw);
         if survivors > 0 { total_wins += 1.0; }
         total_survivors += survivors;
         total_hp_lost += hp_lost;
         total_duration += duration;
         timelines.push(timeline);
+        vitality_timelines.push(vit_timeline);
+        power_timelines.push(pow_timeline);
     }
 
     let count = slice.len() as f64;
@@ -501,14 +560,23 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
 
     // Average the timelines
     let mut avg_timeline = Vec::new();
+    let mut avg_vitality_timeline = Vec::new();
+    let mut avg_power_timeline = Vec::new();
+
     if !timelines.is_empty() {
         let steps = timelines[0].len();
         for s in 0..steps {
             let mut step_sum = 0.0;
-            for t in &timelines {
-                step_sum += t.get(s).cloned().unwrap_or(0.0);
+            let mut vit_step_sum = 0.0;
+            let mut pow_step_sum = 0.0;
+            for i in 0..timelines.len() {
+                step_sum += timelines[i].get(s).cloned().unwrap_or(0.0);
+                vit_step_sum += vitality_timelines[i].get(s).cloned().unwrap_or(0.0);
+                pow_step_sum += power_timelines[i].get(s).cloned().unwrap_or(0.0);
             }
             avg_timeline.push(step_sum / count);
+            avg_vitality_timeline.push(vit_step_sum / count);
+            avg_power_timeline.push(pow_step_sum / count);
         }
     }
 
@@ -534,6 +602,8 @@ fn calculate_decile_stats(slice: &[SimulationResult], decile_num: usize, party_s
         median_run_data: if !median_run.encounters.is_empty() { Some(median_run.encounters[0].clone()) } else { None },
         battle_duration_rounds: if count > 0.0 { (total_duration as f64 / count).round() as usize } else { 0 },
         resource_timeline: avg_timeline,
+        vitality_timeline: avg_vitality_timeline,
+        power_timeline: avg_power_timeline,
     }
 }
 

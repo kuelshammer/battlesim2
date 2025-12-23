@@ -70,3 +70,73 @@ pub fn calculate_serializable_ehp(
 ) -> f64 {
     calculate_ehp_points(hp, temp_hp, &ledger.current, reset_rules)
 }
+
+pub fn calculate_vitality(
+    hp: u32,
+    current: &HashMap<String, f64>,
+    max_hp: u32,
+    max: &HashMap<String, f64>,
+    con_modifier: f64,
+) -> f64 {
+    let mut current_hd_val = 0.0;
+    let mut max_hd_val = 0.0;
+
+    for (key, &max_amt) in max {
+        if key.starts_with("HitDice") {
+            let die_size = if key.contains("D6") { 6.0 }
+                else if key.contains("D8") { 8.0 }
+                else if key.contains("D10") { 10.0 }
+                else if key.contains("D12") { 12.0 }
+                else { 8.0 };
+            
+            let avg_val = die_size / 2.0 + 0.5 + con_modifier;
+            current_hd_val += current.get(key).cloned().unwrap_or(0.0) * avg_val;
+            max_hd_val += max_amt * avg_val;
+        }
+    }
+
+    let total_current = hp as f64 + current_hd_val;
+    let total_max = max_hp as f64 + max_hd_val;
+
+    if total_max > 0.0 {
+        (total_current / total_max) * 100.0
+    } else {
+        0.0
+    }
+}
+
+pub fn calculate_power(
+    current: &HashMap<String, f64>,
+    max: &HashMap<String, f64>,
+    reset_rules: &HashMap<String, ResetType>,
+) -> f64 {
+    let mut current_val = 0.0;
+    let mut max_val = 0.0;
+
+    for (key, &max_amt) in max {
+        let weight = if key.starts_with("SpellSlot") {
+            if let Some(level_str) = extract_level(key) {
+                if let Ok(level) = level_str.parse::<f64>() {
+                    (15.0 * 1.6_f64.powf(level)).round()
+                } else { 0.0 }
+            } else { 0.0 }
+        } else if key.starts_with("ClassResource") || key.starts_with("Custom") {
+            match reset_rules.get(key) {
+                Some(ResetType::ShortRest) => 10.0,
+                Some(ResetType::LongRest) => 30.0,
+                _ => 0.0
+            }
+        } else { 0.0 };
+
+        if weight > 0.0 {
+            current_val += current.get(key).cloned().unwrap_or(0.0) * weight;
+            max_val += max_amt * weight;
+        }
+    }
+
+    if max_val > 0.0 {
+        (current_val / max_val) * 100.0
+    } else {
+        100.0 // Default to full power if no limited resources exist
+    }
+}
