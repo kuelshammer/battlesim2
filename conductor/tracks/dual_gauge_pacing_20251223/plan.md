@@ -19,14 +19,14 @@ Goal: Update the TypeScript bridge and processing utilities to support the dual-
 - [x] Task: Unit Test (Vitest) - Ensure `calculatePacingData` correctly parses the dual timelines from WASM. (4a952b9)
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (4a952b9)
 
-## Phase 3: Visual Implementation
+## Phase 3: Visual Implementation [checkpoint: c7ecabd]
 Goal: Update the dashboard and cards to render the dual-gauge system.
 
-- [ ] Task: Update `DescentGraph.tsx` to render two lines (Red/Blue) with corresponding uncertainty areas.
-- [ ] Task: Update `FuelGauge.tsx` to display parallel bars for Vitality and Power in both Plan and Reality rows.
-- [ ] Task: Update `AssistantSummary.tsx` and `EncounterResult.tsx` to display the dynamic "State Labels" (e.g., Glass Cannon).
-- [ ] Task: Visual Verification - Ensure the dual-line graph is readable even with many encounters.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+- [x] Task: Update `DescentGraph.tsx` to render two lines (Red/Blue) with corresponding uncertainty areas. (c7ecabd)
+- [x] Task: Update `FuelGauge.tsx` to display parallel bars for Vitality and Power in both Plan and Reality rows. (c7ecabd)
+- [x] Task: Update `AssistantSummary.tsx` and `EncounterResult.tsx` to display the dynamic "State Labels" (e.g., Glass Cannon). (c7ecabd)
+- [x] Task: Visual Verification - Ensure the dual-line graph is readable even with many encounters. (c7ecabd)
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (c7ecabd)
 
 ## Phase 4: Smart Auto-Balancer
 Goal: Leverage the split metrics to make the auto-adjuster more tactically aware.
