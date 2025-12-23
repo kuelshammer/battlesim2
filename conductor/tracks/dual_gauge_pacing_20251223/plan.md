@@ -11,13 +11,13 @@ Goal: Implement the math for split metrics in the Rust backend and export dual t
 - [x] Task: Unit Test (Rust) - Verify Vitality and Power calculations match the 5e statistical averages specified. (bc071a5)
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (bc071a5)
 
-## Phase 2: Frontend Data & Infrastructure
+## Phase 2: Frontend Data & Infrastructure [checkpoint: 4a952b9]
 Goal: Update the TypeScript bridge and processing utilities to support the dual-metric data.
 
-- [ ] Task: Update TypeScript interfaces in `model.ts` and `usesimulationworker.ts` to include the new dual timeline fields.
-- [ ] Task: Refactor `pacingUtils.ts` to generate `vitalitySegments` and `powerSegments` for the UI.
-- [ ] Task: Unit Test (Vitest) - Ensure `calculatePacingData` correctly parses the dual timelines from WASM.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Update TypeScript interfaces in `model.ts` and `usesimulationworker.ts` to include the new dual timeline fields. (4a952b9)
+- [x] Task: Refactor `pacingUtils.ts` to generate `vitalitySegments` and `powerSegments` for the UI. (4a952b9)
+- [x] Task: Unit Test (Vitest) - Ensure `calculatePacingData` correctly parses the dual timelines from WASM. (4a952b9)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (4a952b9)
 
 ## Phase 3: Visual Implementation
 Goal: Update the dashboard and cards to render the dual-gauge system.
