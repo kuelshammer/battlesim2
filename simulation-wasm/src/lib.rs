@@ -40,6 +40,7 @@ pub mod phase3_working; // Phase 3 GUI Integration working implementation
 pub mod storage; // Stub storage module
 pub mod storage_manager; // Stub storage manager module
 pub mod storage_integration; // Stub storage integration module
+pub mod log_reproduction_test;
 
 
 use wasm_bindgen::prelude::*;
@@ -583,7 +584,7 @@ fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, 
                 }
             },
             crate::events::Event::AttackHit { attacker_id, target_id, .. } | 
-            crate::events::Event::AttackMissed { attacker_id, target_id } => {
+            crate::events::Event::AttackMissed { attacker_id, target_id, .. } => {
                 if let Some((_, targets)) = current_actor_actions.get_mut(attacker_id) {
                     *targets.entry(target_id.clone()).or_insert(0) += 1;
                 }

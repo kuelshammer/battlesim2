@@ -1,6 +1,6 @@
 use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::dice;
-use crate::events::Event;
+use crate::events::{Event, RollResult, DieRoll};
 use crate::model::{Action, AtkAction, BuffAction, DebuffAction, HealAction, TemplateAction};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ struct AttackRollResult {
     total: f64,
     is_critical: bool,
     is_miss: bool,
+    roll_detail: RollResult,
 }
 
 /// Result of action resolution containing all generated events
@@ -99,12 +100,14 @@ impl ActionResolver {
 
             if is_hit {
                 // Hit!
-                let damage = self.calculate_damage(attack, attack_result.is_critical);
+                let (damage, damage_roll) = self.calculate_damage(attack, attack_result.is_critical);
 
                 let hit_event = Event::AttackHit {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
                     damage,
+                    attack_roll: Some(attack_result.roll_detail),
+                    damage_roll: Some(damage_roll),
                 };
                 context.record_event(hit_event.clone());
                 events.push(hit_event);
@@ -127,6 +130,7 @@ impl ActionResolver {
                 let miss_event = Event::AttackMissed {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
+                    attack_roll: Some(attack_result.roll_detail),
                 };
                 context.record_event(miss_event.clone());
                 events.push(miss_event);
@@ -576,12 +580,20 @@ impl ActionResolver {
     fn roll_attack(&self, attack: &AtkAction) -> AttackRollResult {
         let mut rng = rand::thread_rng();
         let natural_roll = rng.gen_range(1..=20);
-        let bonus = dice::average(&attack.to_hit); // Keep using average for bonus part
+        
+        // Detailed roll for the bonus/modifiers
+        let mut roll_detail = dice::evaluate_detailed(&attack.to_hit, 1);
+        
+        // Add the d20 roll to the breakdown
+        roll_detail.total += natural_roll as f64;
+        roll_detail.rolls.insert(0, DieRoll { sides: 20, value: natural_roll });
+        roll_detail.modifiers.insert(0, ("d20".to_string(), natural_roll as f64));
 
         AttackRollResult {
-            total: natural_roll as f64 + bonus,
+            total: roll_detail.total,
             is_critical: natural_roll == 20,
             is_miss: natural_roll == 1,
+            roll_detail,
         }
     }
 
@@ -594,15 +606,16 @@ impl ActionResolver {
     }
 
     /// Calculate damage from attack
-    fn calculate_damage(&self, attack: &AtkAction, is_critical: bool) -> f64 {
-        let base_damage = dice::average(&attack.dpr);
+    fn calculate_damage(&self, attack: &AtkAction, is_critical: bool) -> (f64, RollResult) {
+        let mut damage_roll = dice::evaluate_detailed(&attack.dpr, if is_critical { 2 } else { 1 });
 
         if is_critical {
-            // For critical hits, double the damage (simple approximation)
-            base_damage * 2.0
-        } else {
-            base_damage
+            // If it's a critical hit, we've already doubled the dice in evaluate_detailed (via multiplier)
+            // But we might want to label it.
+            damage_roll.modifiers.push(("Critical".to_string(), 0.0));
         }
+
+        (damage_roll.total, damage_roll)
     }
 
     /// Apply effect directly to combatant through the context system

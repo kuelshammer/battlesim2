@@ -1,10 +1,23 @@
 use crate::model::DiceFormula;
+use crate::events::{RollResult, DieRoll};
 use rand::Rng;
 
 pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
     match formula {
         DiceFormula::Value(v) => *v,
         DiceFormula::Expr(s) => parse_and_roll(s, dice_multiplier),
+    }
+}
+
+pub fn evaluate_detailed(formula: &DiceFormula, dice_multiplier: u32) -> RollResult {
+    match formula {
+        DiceFormula::Value(v) => RollResult {
+            total: *v,
+            rolls: Vec::new(),
+            modifiers: vec![("Base".to_string(), *v)],
+            formula: v.to_string(),
+        },
+        DiceFormula::Expr(s) => parse_and_roll_detailed(s, dice_multiplier),
     }
 }
 
@@ -66,24 +79,24 @@ fn parse_term_average(term: &str) -> f64 {
 }
 
 fn parse_and_roll(expr: &str, dice_multiplier: u32) -> f64 {
-    // Very basic parser for now. Supports "XdY+Z", "XdY-Z", "XdY", "Z"
-    // TODO: Implement full parser if needed (e.g. using a crate like `caith` or writing a recursive descent parser)
+    parse_and_roll_detailed(expr, dice_multiplier).total
+}
 
-    // Remove whitespace
+fn parse_and_roll_detailed(expr: &str, dice_multiplier: u32) -> RollResult {
     let s = expr.replace(" ", "");
-
-    // Handle simple addition/subtraction of terms
-    // This is a naive implementation and won't handle order of operations correctly for mixed * and +
-    // But D&D formulas are usually Sum of Terms.
-
-    let mut sum = 0.0;
+    let mut total = 0.0;
+    let mut rolls = Vec::new();
+    let mut modifiers = Vec::new();
     let mut current_term = String::new();
     let mut sign = 1.0;
 
     for c in s.chars() {
         if c == '+' || c == '-' {
             if !current_term.is_empty() {
-                sum += sign * parse_term(&current_term, dice_multiplier);
+                let (val, term_rolls, term_mods) = parse_term_detailed(&current_term, dice_multiplier, sign);
+                total += val;
+                rolls.extend(term_rolls);
+                modifiers.extend(term_mods);
                 current_term.clear();
             }
             sign = if c == '+' { 1.0 } else { -1.0 };
@@ -92,42 +105,60 @@ fn parse_and_roll(expr: &str, dice_multiplier: u32) -> f64 {
         }
     }
     if !current_term.is_empty() {
-        sum += sign * parse_term(&current_term, dice_multiplier);
+        let (val, term_rolls, term_mods) = parse_term_detailed(&current_term, dice_multiplier, sign);
+        total += val;
+        rolls.extend(term_rolls);
+        modifiers.extend(term_mods);
     }
 
-    sum
+    RollResult {
+        total,
+        rolls,
+        modifiers,
+        formula: expr.to_string(),
+    }
 }
 
-fn parse_term(term: &str, dice_multiplier: u32) -> f64 {
-    // Strip bracket notation: "3[PB]" -> "3", "1d4[Bless]" -> "1d4"
-    let cleaned_term = if let Some(bracket_pos) = term.find('[') {
-        &term[..bracket_pos]
+fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec<DieRoll>, Vec<(String, f64)>) {
+    let (cleaned_term, name) = if let Some(bracket_pos) = term.find('[') {
+        let name = term[bracket_pos + 1..term.len() - 1].to_string();
+        (&term[..bracket_pos], Some(name))
     } else {
-        term
+        (term, None)
     };
 
     if cleaned_term.contains('d') {
         let parts: Vec<&str> = cleaned_term.split('d').collect();
         if parts.len() == 2 {
-            let count = parts[0].parse::<i32>().unwrap_or(1); // "d8" -> count 1
-            let count = if count == 0 && parts[0].is_empty() {
-                1
-            } else {
-                count
-            };
-
+            let count = parts[0].parse::<i32>().unwrap_or(1);
+            let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
             let sides = parts[1].parse::<i32>().unwrap_or(6);
 
             let mut rng = rand::thread_rng();
-            let mut total = 0.0;
+            let mut term_total = 0.0;
+            let mut term_rolls = Vec::new();
             for _ in 0..(count * dice_multiplier as i32) {
-                total += rng.gen_range(1..=sides) as f64;
+                let val = rng.gen_range(1..=sides) as u32;
+                term_total += val as f64;
+                term_rolls.push(DieRoll { sides: sides as u32, value: val });
             }
-            return total;
+            
+            let val = sign * term_total;
+            let mut modifiers = Vec::new();
+            if let Some(n) = name {
+                modifiers.push((n, val));
+            }
+            
+            return (val, term_rolls, modifiers);
         }
     }
 
-    cleaned_term.parse::<f64>().unwrap_or(0.0)
+    let val = sign * cleaned_term.parse::<f64>().unwrap_or(0.0);
+    let mut modifiers = Vec::new();
+    if let Some(n) = name {
+        modifiers.push((n, val));
+    }
+    (val, Vec::new(), modifiers)
 }
 
 #[cfg(test)]

@@ -3,6 +3,20 @@ use crate::model::Action;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DieRoll {
+    pub sides: u32,
+    pub value: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct RollResult {
+    pub total: f64,
+    pub rolls: Vec<DieRoll>,
+    pub modifiers: Vec<(String, f64)>, // (Name, Value)
+    pub formula: String,
+}
+
 /// Comprehensive event enum covering all combat interactions
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Event {
@@ -15,10 +29,13 @@ pub enum Event {
         attacker_id: String,
         target_id: String,
         damage: f64,
+        attack_roll: Option<RollResult>,
+        damage_roll: Option<RollResult>,
     },
     AttackMissed {
         attacker_id: String,
         target_id: String,
+        attack_roll: Option<RollResult>,
     },
     DamageTaken {
         target_id: String,
@@ -291,18 +308,44 @@ impl Event {
                 attacker_id: _,
                 target_id,
                 damage,
-            } => Some(format!(
-                "* ⚔️ Attack vs **{}**: ✅ **HIT**\n  * 🩸 Damage: **{:.0}**",
-                get_name(target_id),
-                damage
-            )),
+                attack_roll,
+                damage_roll,
+            } => {
+                let attack_details = if let Some(roll) = attack_roll {
+                    format!(" (Roll: {} = {:.0} vs AC)", roll.formula, roll.total)
+                } else {
+                    "".to_string()
+                };
+                let damage_details = if let Some(roll) = damage_roll {
+                    format!(" (Roll: {} = {:.0})", roll.formula, roll.total)
+                } else {
+                    "".to_string()
+                };
+
+                Some(format!(
+                    "* ⚔️ Attack vs **{}**: ✅ **HIT**{}\n  * 🩸 Damage: **{:.0}**{}",
+                    get_name(target_id),
+                    attack_details,
+                    damage,
+                    damage_details
+                ))
+            }
             Event::AttackMissed {
                 attacker_id: _,
                 target_id,
-            } => Some(format!(
-                "* ⚔️ Attack vs **{}**: ❌ **MISS**",
-                get_name(target_id)
-            )),
+                attack_roll,
+            } => {
+                let attack_details = if let Some(roll) = attack_roll {
+                    format!(" (Roll: {} = {:.0} vs AC)", roll.formula, roll.total)
+                } else {
+                    "".to_string()
+                };
+                Some(format!(
+                    "* ⚔️ Attack vs **{}**: ❌ **MISS**{}",
+                    get_name(target_id),
+                    attack_details
+                ))
+            }
             Event::DamageTaken {
                 target_id,
                 damage,
@@ -670,6 +713,8 @@ mod tests {
             attacker_id: "attacker".to_string(),
             target_id: "target".to_string(),
             damage: 10.0,
+            attack_roll: None,
+            damage_roll: None,
         };
 
         assert_eq!(event.get_source_id(), Some("attacker".to_string()));
@@ -688,6 +733,8 @@ mod tests {
             attacker_id: "attacker".to_string(),
             target_id: "target".to_string(),
             damage: 10.0,
+            attack_roll: None,
+            damage_roll: None,
         };
 
         assert_eq!(event.get_type(), "AttackHit");
