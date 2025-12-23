@@ -160,6 +160,52 @@
                 }
             }
         }
+
+        .simulationMode {
+            margin-top: 0.75em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1em;
+            padding: 0.5em 0.75em;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+
+            .modeIndicator {
+                display: flex;
+                align-items: center;
+                gap: 0.5em;
+                font-size: 0.9em;
+                font-weight: 600;
+
+                &.fast { color: #ffd700; }
+                &.precise { color: #00f2fe; }
+            }
+
+            .preciseButton {
+                padding: 0.4em 0.8em;
+                background: rgba(0, 242, 254, 0.2);
+                border: 1px solid rgba(0, 242, 254, 0.4);
+                border-radius: 4px;
+                color: #00f2fe;
+                font-size: 0.8em;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s;
+                margin: 0;
+
+                &:hover:not(:disabled) {
+                    background: rgba(0, 242, 254, 0.3);
+                    border-color: rgba(0, 242, 254, 0.6);
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            }
+        }
     }
 
     .encounter {

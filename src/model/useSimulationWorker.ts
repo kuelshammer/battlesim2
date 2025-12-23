@@ -7,6 +7,7 @@ export interface SimulationWorkerState {
     progress: number;
     completed: number;
     total: number;
+    currentIterations: number;
     results: SimulationResult[] | null;
     analysis: FullAnalysisOutput | null;
     events: any[] | null;
@@ -20,6 +21,7 @@ export function useSimulationWorker() {
         progress: 0,
         completed: 0,
         total: 0,
+        currentIterations: 0,
         results: null,
         analysis: null,
         events: null,
@@ -110,6 +112,7 @@ export function useSimulationWorker() {
             progress: 0,
             completed: 0,
             total: iterations,
+            currentIterations: iterations,
             error: null,
             optimizedResult: null
         }));

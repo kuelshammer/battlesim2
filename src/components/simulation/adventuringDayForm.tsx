@@ -94,6 +94,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
             monstersSurprised: false,
             playersPrecast: false,
             monstersPrecast: false,
+            targetRole: 'Standard',
         };
         setEditedTimeline([...editedTimeline, newEncounter]);
     }

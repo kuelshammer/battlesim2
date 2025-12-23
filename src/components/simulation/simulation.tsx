@@ -8,7 +8,7 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
@@ -33,7 +33,11 @@ const emptyCombat: TimelineEvent = {
     monsters: [],
     monstersSurprised: false,
     playersSurprised: false,
+    targetRole: 'Standard',
 }
+
+const FAST_ITERATIONS = 31;
+const PRECISE_ITERATIONS = 2511;
 
 const Simulation: FC<PropType> = memo(({ }) => {
     const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
@@ -152,7 +156,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
         
         if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
             if (Array.isArray(timeline) && timeline.length > 0) {
-                worker.runSimulation(players, timeline, 2511);
+                // Default to FAST mode for auto-simulation
+                worker.runSimulation(players, timeline, FAST_ITERATIONS);
                 setNeedsResimulation(false);
             }
         }
@@ -188,6 +193,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
             monsters: [],
             monstersSurprised: false,
             playersSurprised: false,
+            targetRole: 'Standard',
         }])
     }
 
@@ -295,13 +301,34 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </span>
                             </label>
                         </div>
+
+                        {worker.analysis && !worker.isRunning && (
+                            <div className={styles.simulationMode}>
+                                <div className={`${styles.modeIndicator} ${worker.currentIterations <= FAST_ITERATIONS ? styles.fast : styles.precise}`}>
+                                    {worker.currentIterations <= FAST_ITERATIONS ? (
+                                        <><FontAwesomeIcon icon={faBolt} /> Fast Sim ({worker.currentIterations} Runs)</>
+                                    ) : (
+                                        <><FontAwesomeIcon icon={faBullseye} /> Precise Sim ({worker.currentIterations} Runs)</>
+                                    )}
+                                </div>
+                                {worker.currentIterations <= FAST_ITERATIONS && (
+                                    <button 
+                                        className={styles.preciseButton}
+                                        onClick={() => worker.runSimulation(players, timeline, PRECISE_ITERATIONS)}
+                                        disabled={worker.isRunning}>
+                                        Run Precise Sim
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
                         {isEditing && <div className={styles.editingNotice}>⚠️ Simulation paused while editing</div>}
                         {worker.error && <div className={styles.errorNotice}>❌ Simulation Error: {worker.error}</div>}
                     </div>
 
                     <EncounterForm
                         mode='player'
-                        encounter={{ id: 'players', monsters: players }}
+                        encounter={{ id: 'players', monsters: players, type: 'combat', targetRole: 'Standard' }}
                         onUpdate={(newValue) => setPlayers(newValue.monsters)}
                         onEditingChange={setIsEditing}>
                         <>
@@ -412,13 +439,13 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         <button
                                                             onClick={() => {
                                                                 console.log('Manually rerunning simulation...');
-                                                                worker.runSimulation(players, timeline, 2511);
+                                                                worker.runSimulation(players, timeline, PRECISE_ITERATIONS);
                                                                 setIsStale(false);
                                                             }}
                                                             className={styles.rerunButton}
                                                             disabled={worker.isRunning}>
                                                             <FontAwesomeIcon icon={faRedo} spin={worker.isRunning} />
-                                                            Rerun
+                                                            Rerun (Precise)
                                                         </button>
                                                         <button
                                                             onClick={() => {

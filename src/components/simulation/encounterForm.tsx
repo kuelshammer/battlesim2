@@ -132,7 +132,7 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAu
                                         className={styles.roleSelect}
                                         value={{ value: encounter.targetRole || 'Standard', label: encounter.targetRole || 'Standard' }}
                                         options={TargetRoleList.map(r => ({ value: r, label: r }))}
-                                        onChange={val => update(e => { e.targetRole = (val?.value as any) || 'Standard' })}
+                                        onChange={(val: any) => update(e => { e.targetRole = val?.value || 'Standard' })}
                                     />
                                 </div>
                             </>
