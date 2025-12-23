@@ -510,6 +510,8 @@ export const DecileStatsSchema = z.object({
     medianRunData: EncounterResultSchema.optional().nullable(),
     battleDurationRounds: z.number(),
     resourceTimeline: z.array(z.number()).default([]),
+    vitalityTimeline: z.array(z.number()).default([]),
+    powerTimeline: z.array(z.number()).default([]),
 })
 
 export const AggregateOutputSchema = z.object({

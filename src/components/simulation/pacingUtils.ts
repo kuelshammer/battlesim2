@@ -10,14 +10,23 @@ export interface PacingSegment {
 export interface PacingData {
     actualSegments: PacingSegment[];
     plannedSegments: PacingSegment[];
+    
+    vitalitySegments: PacingSegment[];
+    powerSegments: PacingSegment[];
+
     grandTotalBudget: number;
     initialEhp: number;
     totalRecovery: number;
     totalWeight: number;
     finalResources: number;
+    
     actualCosts: number[]; // Combat-only costs
     cumulativeDrifts: number[]; // Combat-only drifts
     plannedTimeline: number[]; // Points for the line chart
+    
+    vitalityTimeline: number[];
+    powerTimeline: number[];
+    
     labels: string[]; // Labels for the X-axis
 }
 
@@ -29,6 +38,8 @@ export function calculatePacingData(
     if (!analysis?.overall?.globalMedian?.resourceTimeline) return null;
 
     const resTimeline = analysis.overall.globalMedian.resourceTimeline;
+    const vitTimeline = analysis.overall.globalMedian.vitalityTimeline || resTimeline;
+    const powTimeline = analysis.overall.globalMedian.powerTimeline || resTimeline;
     const tdnw = analysis.overall.tdnw;
     
     // Initial EHP is what the party started with at step 0
@@ -36,6 +47,8 @@ export function calculatePacingData(
 
     let totalRecovery = 0;
     const stepChanges: { type: 'combat' | 'shortRest', val: number, id: string }[] = [];
+    const vitChanges: number[] = [];
+    const powChanges: number[] = [];
 
     // Map each timeline event to its resource change
     timeline.forEach((item, i) => {
@@ -52,11 +65,30 @@ export function calculatePacingData(
             val: change,
             id: item.id || `step-${i}`
         });
+
+        vitChanges.push(vitTimeline[i] - vitTimeline[i + 1]);
+        powChanges.push(powTimeline[i] - powTimeline[i + 1]);
     });
 
     const grandTotalBudget = initialEhp + totalRecovery;
 
-    // Map actual segments
+    const createSegments = (changes: number[], isStepCombat: (idx: number) => boolean) => {
+        let combatCount = 0;
+        return changes.map((change, i) => {
+            const isCombat = isStepCombat(i);
+            if (isCombat) combatCount++;
+            return {
+                type: isCombat ? 'combat' as const : 'shortRest' as const,
+                percent: Math.max(0, change), // Show drain
+                label: isCombat ? `Enc ${combatCount}` : 'Rest',
+                id: timeline[i].id || `step-${i}`
+            };
+        });
+    };
+
+    const isCombat = (i: number) => timeline[i].type === 'combat';
+
+    // Map actual segments (Total EHP)
     let actualCombatCount = 0;
     const actualCosts: number[] = [];
     const actualSegments: PacingSegment[] = stepChanges.map((change) => {
@@ -81,6 +113,9 @@ export function calculatePacingData(
             };
         }
     });
+
+    const vitalitySegments = createSegments(vitChanges, isCombat);
+    const powerSegments = createSegments(powChanges, isCombat);
 
     // Map planned segments (using weights)
     const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
@@ -116,7 +151,6 @@ export function calculatePacingData(
     });
 
     // Calculate Planned Timeline points
-    // Y-axis is % of TDNW (Max HP)
     const plannedTimeline = [resTimeline[0]];
     const labels = ['Start'];
     let currentPlannedEhp = initialEhp;
@@ -132,7 +166,7 @@ export function calculatePacingData(
             labels.push(`E${combatIdx}`);
         } else {
             // Apply recovery to plan
-            const recovery = stepChanges[i].val; // Actual recovery used as target
+            const recovery = stepChanges[i].val; 
             currentPlannedEhp += recovery;
             labels.push('Rest');
         }
@@ -142,6 +176,8 @@ export function calculatePacingData(
     return {
         actualSegments,
         plannedSegments,
+        vitalitySegments,
+        powerSegments,
         grandTotalBudget,
         initialEhp,
         totalRecovery,
@@ -150,6 +186,8 @@ export function calculatePacingData(
         actualCosts,
         cumulativeDrifts,
         plannedTimeline,
+        vitalityTimeline: vitTimeline,
+        powerTimeline: powTimeline,
         labels
     };
 }

@@ -22,7 +22,9 @@ describe('calculatePacingData', () => {
                 tdnw: 100,
                 globalMedian: {
                     // Start 100%, After Enc1 60%, After Rest 80%, After Enc2 30%
-                    resourceTimeline: [100, 60, 80, 30]
+                    resourceTimeline: [100, 60, 80, 30],
+                    vitalityTimeline: [100, 70, 90, 40],
+                    powerTimeline: [100, 50, 50, 10]
                 }
             }
         };
@@ -44,6 +46,16 @@ describe('calculatePacingData', () => {
             expect(result.actualSegments[0].percent).toBeCloseTo(33.33, 1);
             expect(result.actualSegments[1].percent).toBe(0);
             expect(result.actualSegments[2].percent).toBeCloseTo(41.66, 1);
+
+            // Vitality Segments (Drops: 30, -20, 50)
+            expect(result.vitalitySegments[0].percent).toBe(30);
+            expect(result.vitalitySegments[1].percent).toBe(0); // Recovery handled as negative drain? No, createSegments uses Math.max(0, change)
+            expect(result.vitalitySegments[2].percent).toBe(50);
+
+            // Power Segments (Drops: 50, 0, 40)
+            expect(result.powerSegments[0].percent).toBe(50);
+            expect(result.powerSegments[1].percent).toBe(0);
+            expect(result.powerSegments[2].percent).toBe(40);
 
             // Combat-only actual costs
             expect(result.actualCosts[0]).toBeCloseTo(33.33, 1);
