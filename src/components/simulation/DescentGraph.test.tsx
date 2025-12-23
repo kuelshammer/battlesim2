@@ -4,29 +4,23 @@ import DescentGraph from './DescentGraph';
 import React from 'react';
 
 describe('DescentGraph Component', () => {
-    const mockDecileTimelines = [
-        [100, 80, 60], // Decile 0
-        [100, 82, 62],
-        [100, 84, 64],
-        [100, 86, 66],
-        [100, 88, 68], // Decile 4 (Median)
-        [100, 90, 70],
-        [100, 92, 72],
-        [100, 94, 74],
-        [100, 96, 76],
-        [100, 98, 78], // Decile 9
+    const mockDeciles: any[] = [
+        {}, {}, { vitalityTimeline: [100, 80], powerTimeline: [100, 90] },
+        {}, {}, {}, {},
+        { vitalityTimeline: [100, 90], powerTimeline: [100, 95] }
     ];
 
-    const mockPlanTimeline = [100, 90, 80];
     const mockPacingData: any = {
-        plannedTimeline: mockPlanTimeline,
-        labels: ['Start', 'E1', 'E2']
+        plannedTimeline: [100, 80],
+        labels: ['Start', 'E1'],
+        vitalityTimeline: [100, 85],
+        powerTimeline: [100, 92]
     };
 
     it('should render an SVG element', () => {
         const { container } = render(
             <DescentGraph 
-                decileTimelines={mockDecileTimelines} 
+                deciles={mockDeciles} 
                 pacingData={mockPacingData} 
             />
         );
@@ -36,31 +30,30 @@ describe('DescentGraph Component', () => {
     it('should render the plan line', () => {
         const { container } = render(
             <DescentGraph 
-                decileTimelines={mockDecileTimelines} 
+                deciles={mockDeciles} 
                 pacingData={mockPacingData} 
             />
         );
-        // Look for a path with stroke-dasharray (dotted line)
         const planLine = container.querySelector('path[stroke-dasharray]');
         expect(planLine).toBeDefined();
     });
 
-    it('should render the risk area', () => {
+    it('should render the risk areas', () => {
         const { container } = render(
             <DescentGraph 
-                decileTimelines={mockDecileTimelines} 
+                deciles={mockDeciles} 
                 pacingData={mockPacingData} 
             />
         );
-        const riskArea = container.querySelector('path[class*="riskArea"]');
-        expect(riskArea).toBeDefined();
+        const riskAreas = container.querySelectorAll('path[class*="riskArea"]');
+        expect(riskAreas.length).toBeGreaterThan(0);
     });
 
     it('should handle empty timelines', () => {
         const { container } = render(
             <DescentGraph 
-                decileTimelines={[]} 
-                pacingData={{ plannedTimeline: [], labels: [] } as any} 
+                deciles={[]} 
+                pacingData={{ plannedTimeline: [], labels: [], vitalityTimeline: [], powerTimeline: [] } as any} 
             />
         );
         expect(container.querySelector('svg')).toBeDefined();

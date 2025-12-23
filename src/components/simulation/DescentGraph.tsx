@@ -1,14 +1,15 @@
 import React from 'react';
 import styles from './descentGraph.module.scss';
 import { PacingData } from './pacingUtils';
+import { DecileStats } from '@/model/model';
 
 interface DescentGraphProps {
-    decileTimelines: number[][]; // 10 timelines, each an array of EHP %
     pacingData: PacingData;
+    deciles: DecileStats[];
 }
 
-const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData }) => {
-    const { plannedTimeline, labels } = pacingData;
+const DescentGraph: React.FC<DescentGraphProps> = ({ pacingData, deciles }) => {
+    const { plannedTimeline, labels, vitalityTimeline, powerTimeline } = pacingData;
     const width = 400;
     const height = 200;
     const padding = 30;
@@ -17,20 +18,23 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData
     const xScale = (step: number) => padding + (step * (width - 2 * padding)) / (steps - 1);
     const yScale = (percent: number) => height - padding - (percent * (height - 2 * padding)) / 100;
 
-    // Median is decile 4 (50th percentile)
-    const medianTimeline = decileTimelines[4] || [];
-    const p25Timeline = decileTimelines[2] || [];
-    const p75Timeline = decileTimelines[7] || [];
+    // Vitality Deciles
+    const v25 = deciles[2]?.vitalityTimeline || [];
+    const v75 = deciles[7]?.vitalityTimeline || [];
+    
+    // Power Deciles
+    const p25 = deciles[2]?.powerTimeline || [];
+    const p75 = deciles[7]?.powerTimeline || [];
 
     const getPathData = (timeline: number[]) => {
-        if (timeline.length === 0) return '';
+        if (!timeline || timeline.length === 0) return '';
         return timeline
             .map((percent, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(percent)}`)
             .join(' ');
     };
 
     const getAreaData = (topTimeline: number[], bottomTimeline: number[]) => {
-        if (topTimeline.length === 0 || bottomTimeline.length === 0) return '';
+        if (!topTimeline || topTimeline.length === 0 || !bottomTimeline || bottomTimeline.length === 0) return '';
         const topPath = topTimeline.map((percent, i) => `L ${xScale(i)} ${yScale(percent)}`);
         const bottomPath = [...bottomTimeline]
             .reverse()
@@ -43,23 +47,6 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData
         <div className={styles.graphContainer}>
             <div className={styles.graphTitle}>Resource Attrition (The Descent)</div>
             <svg viewBox={`0 0 ${width} ${height}`} className={styles.svg}>
-                {/* Rest Background Highlighting */}
-                {labels.map((label, i) => {
-                    if (label === 'Rest' && i > 0) {
-                        return (
-                            <rect 
-                                key={`rest-bg-${i}`}
-                                x={xScale(i-1)} 
-                                y={padding} 
-                                width={xScale(i) - xScale(i-1)} 
-                                height={height - 2 * padding}
-                                className={styles.restBackground}
-                            />
-                        );
-                    }
-                    return null;
-                })}
-
                 {/* Grid Lines */}
                 {[0, 25, 50, 75, 100].map(p => (
                     <g key={p}>
@@ -71,25 +58,30 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData
                     </g>
                 ))}
 
-                {/* Shaded Risk Area (25th to 75th) */}
-                <path d={getAreaData(p75Timeline, p25Timeline)} className={styles.riskArea} />
+                {/* Risk Areas */}
+                <path d={getAreaData(v75, v25)} className={`${styles.riskArea} ${styles.vitalityRisk}`} />
+                <path d={getAreaData(p75, p25)} className={`${styles.riskArea} ${styles.powerRisk}`} />
 
-                {/* Plan Line (Dotted) */}
+                {/* Plan Line (Dotted) - Still representing Total EHP for context */}
                 <path d={getPathData(plannedTimeline)} className={styles.planLine} strokeDasharray="4 4" />
 
-                {/* Median Line (Solid) */}
-                <path d={getPathData(medianTimeline)} className={styles.medianLine} />
+                {/* Metric Lines */}
+                <path d={getPathData(vitalityTimeline)} className={`${styles.metricLine} ${styles.vitalityLine}`} />
+                <path d={getPathData(powerTimeline)} className={`${styles.metricLine} ${styles.powerLine}`} />
 
-                {/* Data Points (Dots) */}
-                {medianTimeline.map((p, i) => (
-                    <circle key={`dot-${i}`} cx={xScale(i)} cy={yScale(p)} r="3" className={styles.medianDot} />
+                {/* Data Points */}
+                {vitalityTimeline.map((p, i) => (
+                    <circle key={`v-dot-${i}`} cx={xScale(i)} cy={yScale(p)} r="2" className={styles.vitalityDot} />
+                ))}
+                {powerTimeline.map((p, i) => (
+                    <circle key={`p-dot-${i}`} cx={xScale(i)} cy={yScale(p)} r="2" className={styles.powerDot} />
                 ))}
 
-                {/* X-Axis Labels */}
-                {labels.map((label, i) => (
+                {/* X-Axis Labels (Centered between points) */}
+                {labels.slice(1).map((label, i) => (
                     <text 
-                        key={i} 
-                        x={xScale(i)} 
+                        key={`seg-label-${i}`} 
+                        x={(xScale(i) + xScale(i+1)) / 2} 
                         y={height - padding + 15} 
                         className={styles.axisLabel} 
                         textAnchor="middle"
@@ -98,10 +90,11 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ decileTimelines, pacingData
                     </text>
                 ))}
             </svg>
+            
             <div className={styles.legend}>
-                <span className={styles.legendItem}><span className={styles.medianLineKey}></span> Reality</span>
-                <span className={styles.legendItem}><span className={styles.planLineKey}></span> Plan</span>
-                <span className={styles.legendItem}><span className={styles.riskAreaKey}></span> Risk (25-75th)</span>
+                <span className={styles.legendItem}><span className={styles.vitalityKey}></span> Vitality (Hull)</span>
+                <span className={styles.legendItem}><span className={styles.powerKey}></span> Power (Ammo)</span>
+                <span className={styles.legendItem}><span className={styles.planKey}></span> Planned Attrition</span>
             </div>
         </div>
     );

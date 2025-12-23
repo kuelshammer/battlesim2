@@ -7,7 +7,7 @@ interface AssistantSummaryProps {
 }
 
 const AssistantSummary: React.FC<AssistantSummaryProps> = ({ pacingData }) => {
-    const { actualSegments, plannedSegments, finalResources } = pacingData;
+    const { actualSegments, plannedSegments, finalResources, finalVitality, finalPower } = pacingData;
     
     // Calculate deltas only for combat encounters
     const deltas: number[] = [];
@@ -23,6 +23,15 @@ const AssistantSummary: React.FC<AssistantSummaryProps> = ({ pacingData }) => {
     const maxDelta = deltas.length > 0 ? Math.max(...deltas) : 0;
     const minDelta = deltas.length > 0 ? Math.min(...deltas) : 0;
     
+    const getPartyState = (vitality: number, power: number) => {
+        if (vitality >= 50 && power >= 50) return { label: 'Fresh', desc: 'The party is ready for anything.', class: styles.green };
+        if (vitality >= 50 && power < 50) return { label: 'Exhausted', desc: 'The party is healthy, but they are out of resources. Expect a slog.', class: styles.yellow };
+        if (vitality < 50 && power >= 50) return { label: 'Glass Cannon', desc: 'High firepower, but one bad round could mean TPK.', class: styles.yellow };
+        return { label: 'Doomed', desc: 'The party needs a Long Rest immediately.', class: styles.red };
+    };
+
+    const state = getPartyState(finalVitality, finalPower);
+
     const getSummary = () => {
         if (finalResources <= 0) {
             return {
@@ -54,9 +63,20 @@ const AssistantSummary: React.FC<AssistantSummaryProps> = ({ pacingData }) => {
     const summary = getSummary();
 
     return (
-        <div className={`${styles.summaryContainer} ${summary.statusClass}`}>
-            <div className={styles.title}>Assistant Assessment</div>
-            <div className={styles.message}>{summary.message}</div>
+        <div className={styles.summaryContainer}>
+            <div className={`${styles.assessment} ${summary.statusClass}`}>
+                <div className={styles.title}>Assistant Assessment</div>
+                <div className={styles.message}>{summary.message}</div>
+            </div>
+            
+            <div className={`${styles.partyState} ${state.class}`}>
+                <div className={styles.title}>Party State: {state.label}</div>
+                <div className={styles.message}>{state.desc}</div>
+                <div className={styles.metrics}>
+                    <span>❤️ Vitality: {Math.round(finalVitality)}%</span>
+                    <span>⚡ Power: {Math.round(finalPower)}%</span>
+                </div>
+            </div>
         </div>
     );
 };

@@ -1,24 +1,21 @@
 import React from 'react';
 import styles from './fuelGauge.module.scss';
-import { PacingSegment } from './pacingUtils';
+import { PacingData, PacingSegment } from './pacingUtils';
 
 interface FuelGaugeProps {
-    plannedSegments: PacingSegment[];
-    actualSegments: PacingSegment[];
+    pacingData: PacingData;
 }
 
-const FuelGauge: React.FC<FuelGaugeProps> = ({ plannedSegments, actualSegments }) => {
-    // We use two shades of Orange/Red for alternating combat segments
-    const combatColors = ['#f28e2c', '#e15759']; 
-    const restColor = '#59a14f'; // Green for filling the tank
+const FuelGauge: React.FC<FuelGaugeProps> = ({ pacingData }) => {
+    const { vitalitySegments, powerSegments, plannedSegments } = pacingData;
 
-    const renderBar = (segments: PacingSegment[]) => {
+    const renderBar = (segments: PacingSegment[], baseColors: [string, string], restColor: string) => {
         let combatCounter = 0;
         return (
             <div className={styles.bar}>
                 {segments.map((seg, i) => {
                     const isCombat = seg.type === 'combat';
-                    const color = isCombat ? combatColors[combatCounter++ % 2] : restColor;
+                    const color = isCombat ? baseColors[combatCounter++ % 2] : restColor;
                     
                     if (seg.type === 'shortRest') {
                         return (
@@ -38,7 +35,7 @@ const FuelGauge: React.FC<FuelGaugeProps> = ({ plannedSegments, actualSegments }
                             style={{ width: `${seg.percent}%`, backgroundColor: color }}
                             title={`${seg.label}: ${Math.round(seg.percent)}%`}
                         >
-                            {seg.percent > 8 && (
+                            {seg.percent > 10 && (
                                 <span className={styles.segmentLabel}>
                                     {seg.label}: {Math.round(seg.percent)}%
                                 </span>
@@ -50,25 +47,26 @@ const FuelGauge: React.FC<FuelGaugeProps> = ({ plannedSegments, actualSegments }
         );
     };
 
-    const totalActual = actualSegments.reduce((sum, s) => sum + s.percent, 0);
+    const vitColors: [string, string] = ['#e15759', '#c0392b'];
+    const powColors: [string, string] = ['#4e79a7', '#2980b9'];
+    const planColors: [string, string] = ['#7f8c8d', '#95a5a6'];
+    const restColor = '#59a14f';
 
     return (
         <div className={styles.fuelGaugeContainer}>
             <div className={styles.gaugeRow}>
-                <div className={styles.rowLabel}>The Plan</div>
-                {renderBar(plannedSegments)}
+                <div className={styles.rowLabel}>Daily Budget Plan (Total EHP)</div>
+                {renderBar(plannedSegments, planColors, restColor)}
             </div>
 
             <div className={styles.gaugeRow}>
-                <div className={styles.rowLabel}>The Reality</div>
-                <div className={styles.barContainer}>
-                    {renderBar(actualSegments)}
-                    {totalActual > 100.1 && (
-                        <div className={styles.emptyMarker}>
-                            ⚠️ Tank Overdrawn! ({Math.round(totalActual)}%)
-                        </div>
-                    )}
-                </div>
+                <div className={styles.rowLabel}>❤️ Vitality Attrition</div>
+                {renderBar(vitalitySegments, vitColors, restColor)}
+            </div>
+
+            <div className={styles.gaugeRow}>
+                <div className={styles.rowLabel}>⚡ Power Attrition</div>
+                {renderBar(powerSegments, powColors, restColor)}
             </div>
         </div>
     );

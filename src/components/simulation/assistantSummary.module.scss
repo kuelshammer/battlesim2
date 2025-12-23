@@ -1,27 +1,46 @@
 .summaryContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.assessment, .partyState {
     background-color: #2a2a2a;
     padding: 16px;
     border-radius: 8px;
-    margin-bottom: 20px;
     border-left: 4px solid #555;
 
     &.green { border-left-color: #28a745; }
     &.yellow { border-left-color: #ffc107; }
-    &.blue { border-left-color: #007bff; }
-    &.cyan { border-left-color: #17a2b8; }
     &.red { border-left-color: #dc3545; }
 }
 
 .title {
-    font-size: 0.8rem;
-    font-weight: bold;
-    color: #aaa;
-    margin-bottom: 8px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #888;
+    margin-bottom: 6px;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .message {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #eee;
     line-height: 1.4;
+}
+
+.metrics {
+    margin-top: 10px;
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    font-weight: bold;
+
+    span {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
 }

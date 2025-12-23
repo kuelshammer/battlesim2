@@ -88,6 +88,42 @@
     }
 }
 
+// Split Metrics Pill
+.splitMetrics {
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    margin-bottom: 1em;
+
+    .metricPill {
+        background: #333;
+        border: 1px solid #444;
+        padding: 0.4em 0.8em;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        font-size: 0.9em;
+        font-weight: bold;
+        color: #eee;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+        .icon {
+            font-size: 1.1em;
+        }
+
+        .label {
+            color: #888;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .value {
+            color: #fff;
+        }
+    }
+}
+
 // Encounter Rating Styles - Refined Hierarchy
 .encounterRating {
     width: 100%;
