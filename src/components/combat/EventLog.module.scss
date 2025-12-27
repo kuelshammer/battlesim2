@@ -1,69 +1,184 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// THE GRIMOIRE LOG - Avant-Garde Event Display
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&family=MedievalSharp&display=swap');
+
+// ─────────────────────────────────────────────────────────────────────────────────
+// TYPOGRAPHY
+// ─────────────────────────────────────────────────────────────────────────────────
+$font-heading: 'IM Fell English SC', 'Cinzel Decorative', serif;
+$font-body: 'Crimson Text', 'Georgia', serif;
+$font-accent: 'MedievalSharp', cursive;
+$font-monastic: 'Cinzel Decorative', serif;
+
+// ─────────────────────────────────────────────────────────────────────────────────
+// PALETTE - Parchment & Ink
+// ─────────────────────────────────────────────────────────────────────────────────
+$color-void: #0a0a0f;
+$color-parchment: #1a1a1f;
+$color-ink: #2a2520;
+$color-aged-paper: #f4efe4;
+$color-parchment-light: #e8e4d9;
+$color-gold: #c9a227;
+$color-gold-dim: #8a7020;
+$color-blood: #8b1a1a;
+$color-herbs: #4a6741;
+$color-mystical: #6b5b95;
+$color-visions: #9b7ab4;
+$color-spirit: #a8a8a8;
+
+// ─────────────────────────────────────────────────────────────────────────────────
+// MAIN CONTAINER
+// ─────────────────────────────────────────────────────────────────────────────────
 .eventLogContainer {
     display: flex;
     flex-direction: column;
     height: 100%;
-    background-color: #1e1e1e;
-    border-radius: 8px;
+    background: linear-gradient(135deg, $color-parchment 0%, $color-void 100%);
+    position: relative;
     overflow: hidden;
-    border: 1px solid #333;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    // Ornamental border treatment
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        border: 2px solid $color-gold-dim;
+        pointer-events: none;
+        opacity: 0.3;
+        background-image:
+            linear-gradient($color-gold-dim 2px, transparent 2px),
+            linear-gradient(90deg, $color-gold-dim 2px, transparent 2px);
+        background-size: 20px 20px;
+        background-position: -1px -1px;
+    }
+
+    &::after {
+        content: '⚜ ⚜';
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        font-family: $font-accent;
+        color: $color-gold-dim;
+        font-size: 0.7rem;
+        opacity: 0.4;
+        letter-spacing: 0.3em;
+        pointer-events: none;
+    }
 
     &.modalMode {
         background: transparent;
-        border: none;
-        border-radius: 0;
-        height: auto;
-        
+
+        &::before, &::after {
+            display: none;
+        }
+
         .logBody {
             padding: 0;
-            overflow: visible;
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────
+    // HEADER - The Chronicle Title
+    // ─────────────────────────────────────────────────────────────────────────────────
     .header {
-        padding: 10px;
-        background-color: #252526;
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        padding: 20px 24px 16px;
+        background: linear-gradient(to bottom, rgba(10, 10, 15, 0.95), rgba(10, 10, 15, 0.8));
+        border-bottom: 1px solid $color-gold-dim;
+        position: relative;
+
+        // Decorative corner flourishes
+        &::before, &::after {
+            content: '❧';
+            position: absolute;
+            font-family: $font-accent;
+            color: $color-gold-dim;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        &::before {
+            top: 12px;
+            left: 8px;
+        }
+
+        &::after {
+            top: 12px;
+            right: 8px;
+            transform: scaleX(-1);
+        }
 
         h3 {
             margin: 0;
-            color: #eee;
-            font-size: 1rem;
-        }
+            font-family: $font-heading;
+            font-size: 1.4rem;
+            font-weight: 400;
+            color: $color-gold;
+            text-align: center;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+            padding-bottom: 4px;
 
-        .filters {
-            display: flex;
-            gap: 5px;
-
-            button {
-                background: #333;
-                border: none;
-                color: #aaa;
-                padding: 4px 8px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 0.8rem;
-                transition: all 0.2s;
-
-                &:hover {
-                    background: #444;
-                    color: #fff;
-                }
-
-                &.active {
-                    background: #0e639c;
-                    color: #fff;
-                }
+            // Underline decoration
+            &::after {
+                content: '';
+                display: block;
+                width: 60%;
+                height: 1px;
+                margin: 8px auto 0;
+                background: linear-gradient(to right, transparent, $color-gold-dim, transparent);
             }
         }
 
         .controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 4px;
+
+            button {
+                background: transparent;
+                border: 1px solid transparent;
+                color: $color-spirit;
+                padding: 6px 14px;
+                font-family: $font-accent;
+                font-size: 0.75rem;
+                letter-spacing: 0.1em;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+
+                &::before {
+                    content: '✦';
+                    margin-right: 6px;
+                    opacity: 0.5;
+                    font-size: 0.6rem;
+                }
+
+                &:hover {
+                    color: $color-gold;
+                    text-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+                }
+
+                &.active {
+                    color: $color-gold;
+                    border-color: $color-gold-dim;
+                    background: rgba(201, 162, 39, 0.08);
+                    box-shadow: inset 0 0 15px rgba(201, 162, 39, 0.1);
+
+                    &::before {
+                        opacity: 1;
+                        content: '✧';
+                    }
+                }
+            }
         }
 
         .toggleContainer {
@@ -72,180 +187,360 @@
         }
 
         .toggleButton {
-            background: #333;
-            border: none;
-            color: #aaa;
-            padding: 6px 8px;
-            border-radius: 4px;
+            background: transparent;
+            border: 1px solid $color-gold-dim;
+            color: $color-gold;
+            padding: 6px 14px;
+            font-family: $font-accent;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
 
             &:hover {
-                background: #444;
-                color: #fff;
+                background: rgba(201, 162, 39, 0.1);
+                box-shadow: 0 0 15px rgba(201, 162, 39, 0.2);
             }
 
             svg {
-                width: 12px;
-                height: 12px;
+                width: 14px;
+                height: 14px;
             }
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────
+    // LOG BODY - The Chronicle Entries
+    // ─────────────────────────────────────────────────────────────────────────────────
     .logBody {
         flex: 1;
         overflow-y: auto;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
+        padding: 16px 24px 40px;
+
+        // Custom scrollbar
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: rgba(201, 162, 39, 0.05);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, $color-gold-dim, $color-gold);
+            border-radius: 4px;
+
+            &:hover {
+                background: linear-gradient(to bottom, $color-gold, $color-gold-dim);
+            }
+        }
 
         .emptyState {
-            color: #666;
             text-align: center;
-            padding: 40px 20px;
+            padding: 60px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-
-            svg {
-                width: 32px;
-                height: 32px;
-                opacity: 0.5;
-            }
+            gap: 16px;
+            font-family: $font-body;
 
             p {
                 margin: 0;
-                font-size: 0.9rem;
+                color: $color-spirit;
+                font-size: 1rem;
+                font-style: italic;
+                line-height: 1.6;
             }
 
             .emptyHint {
-                font-size: 0.8rem;
-                color: #888;
-            }
-        }
+                font-size: 0.9rem;
+                color: $color-spirit;
+                opacity: 0.7;
 
-        .event {
-            padding: 6px 8px;
-            border-radius: 4px;
-            background-color: #2a2a2a;
-            color: #ccc;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            border-left: 3px solid transparent;
-
-            &.clickable {
-                cursor: pointer;
-                transition: background-color 0.2s;
-                &:hover {
-                    background-color: #333;
+                &::before, &::after {
+                    content: '—';
+                    margin: 0 8px;
                 }
             }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────────
+    // EVENT ENTRIES - Asymmetric Chronicle Layout
+    // ─────────────────────────────────────────────────────────────────────────────────
+    .event {
+        position: relative;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        font-family: $font-body;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: $color-aged-paper;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transition: all 0.3s ease;
+
+        // Asymmetric treatment - alternate alignment
+        &:nth-child(odd) {
+            margin-left: 0;
+            padding-left: 20px;
+            border-left: 2px solid rgba(201, 162, 39, 0.2);
+        }
+
+        &:nth-child(even) {
+            margin-left: 20px;
+            padding-right: 20px;
+            border-right: 2px solid rgba(201, 162, 39, 0.2);
+            justify-content: flex-end;
+            text-align: right;
 
             .eventContent {
-                display: flex;
-                flex-direction: column;
-                flex: 1;
-                gap: 2px;
+                align-items: flex-end;
             }
 
             .eventSummary {
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                flex-direction: row-reverse;
             }
 
             .eventDetails {
-                margin-top: 6px;
-                padding-top: 6px;
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-                font-size: 0.8rem;
-                color: #aaa;
-                white-space: pre-wrap;
-                line-height: 1.4;
+                text-align: right;
+            }
+        }
+
+        &.clickable {
+            cursor: pointer;
+
+            &:hover {
+                background: rgba(201, 162, 39, 0.05);
+                padding-left: 24px;
+
+                .eventGlyph {
+                    color: $color-gold;
+                    text-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+                }
+            }
+        }
+
+        .eventContent {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            gap: 6px;
+        }
+
+        .eventGlyph {
+            font-family: $font-accent;
+            font-size: 1.2rem;
+            min-width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: $color-gold-dim;
+            transition: all 0.3s ease;
+        }
+
+        .eventSummary {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            span {
+                strong {
+                    color: $color-gold;
+                    font-weight: 600;
+                    font-style: italic;
+                }
+            }
+        }
+
+        .eventDetails {
+            margin-top: 8px;
+            padding: 12px;
+            background: rgba(10, 10, 15, 0.6);
+            border: 1px solid rgba(201, 162, 39, 0.15);
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: rgba(244, 239, 228, 0.7);
+            white-space: pre-wrap;
+            line-height: 1.5;
+            border-radius: 2px;
+            position: relative;
+
+            // Corner decorations
+            &::before, &::after {
+                content: '❖';
+                position: absolute;
+                font-size: 0.5rem;
+                color: $color-gold-dim;
+                opacity: 0.4;
+            }
+
+            &::before {
+                top: 4px;
+                left: 6px;
+            }
+
+            &::after {
+                bottom: 4px;
+                right: 6px;
             }
 
             strong {
-                color: #fff;
-                font-weight: 600;
-            }
-
-            svg {
-                width: 16px;
-                opacity: 0.8;
-            }
-
-            &.action {
-                border-left-color: #0e639c;
-                background-color: rgba(14, 99, 156, 0.1);
-            }
-
-            &.hit {
-                border-left-color: #d64040; // Red
-                .iconHit { color: #d64040; }
-            }
-
-            &.miss {
-                border-left-color: #888;
-                color: #888;
-                .iconMiss { color: #888; }
-            }
-
-            &.damage {
-                border-left-color: #d64040;
-                background-color: rgba(214, 64, 64, 0.05);
-                .iconDamage { color: #d64040; }
-            }
-
-            &.heal {
-                border-left-color: #4ec9b0; // Green/Teal
-                background-color: rgba(78, 201, 176, 0.05);
-                .iconHeal { color: #4ec9b0; }
-            }
-
-            &.death {
-                border-left-color: #000;
-                background-color: #330000;
-                color: #ffcccc;
-                font-weight: bold;
-                border: 1px solid #500;
-            }
-
-            &.round {
-                background-color: #444;
-                justify-content: center;
-                font-weight: bold;
-                margin: 10px 0;
-                border-radius: 12px;
-                color: #fff;
-            }
-
-            &.spell {
-                border-left-color: #b180d7; // Purple
-                background-color: rgba(177, 128, 215, 0.1);
-                color: #e0c0ff;
-            }
-
-            &.buff {
-                border-left-color: #4fc1ff; // Light Blue
-            }
-
-            &.skipped {
-                border-left-color: #f1c40f; // Yellow
-                background-color: rgba(241, 196, 15, 0.05);
-                color: #f1c40f;
-                font-size: 0.85rem;
-                font-style: italic;
-                opacity: 0.8;
+                color: $color-visions;
             }
         }
+
+        svg {
+            display: none; // Hide FontAwesome icons, use glyphs instead
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────────────
+        // EVENT TYPE STYLING
+        // ─────────────────────────────────────────────────────────────────────────────────
+
+        &.action {
+            .eventGlyph { color: #7b9fd4; }
+            &:hover .eventGlyph { color: #9bbbf4; }
+        }
+
+        &.hit {
+            .eventGlyph {
+                color: $color-blood;
+                text-shadow: 0 0 8px rgba(139, 26, 26, 0.5);
+            }
+            &:hover .eventGlyph { text-shadow: 0 0 15px rgba(139, 26, 26, 0.8); }
+        }
+
+        &.miss {
+            opacity: 0.5;
+            .eventGlyph { color: $color-spirit; }
+        }
+
+        &.damage {
+            background: linear-gradient(to right, rgba(139, 26, 26, 0.1), transparent);
+            .eventGlyph { color: #b83b3b; }
+        }
+
+        &.heal {
+            background: linear-gradient(to right, rgba(74, 103, 65, 0.1), transparent);
+            .eventGlyph { color: #6b9d5a; }
+        }
+
+        &.death {
+            background: rgba(139, 26, 26, 0.15);
+            border: 1px solid rgba(139, 26, 26, 0.4);
+            padding: 16px 20px;
+            margin: 20px 0;
+
+            .eventGlyph {
+                color: $color-blood;
+                font-size: 1.6rem;
+                text-shadow: 0 0 20px rgba(139, 26, 26, 0.8);
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            .eventSummary span {
+                color: #f4b8b8;
+                font-style: italic;
+            }
+        }
+
+        &.round {
+            text-align: center;
+            justify-content: center;
+            margin: 24px 20%;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            position: relative;
+
+            .eventGlyph {
+                font-size: 1rem;
+            }
+
+            .eventSummary {
+                font-family: $font-heading;
+                font-size: 1.1rem;
+                color: $color-gold;
+                letter-spacing: 0.3em;
+                text-transform: uppercase;
+
+                &::before, &::after {
+                    content: '—';
+                    margin: 0 12px;
+                    opacity: 0.5;
+                }
+            }
+
+            // Ornamental divider
+            &::before {
+                content: '✦';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                transform: translateY(-50%);
+                color: $color-gold-dim;
+                font-size: 0.6rem;
+            }
+
+            &::after {
+                content: '✦';
+                position: absolute;
+                top: 50%;
+                right: 0;
+                transform: translateY(-50%);
+                color: $color-gold-dim;
+                font-size: 0.6rem;
+            }
+        }
+
+        &.spell {
+            .eventGlyph { color: $color-visions; }
+            background: linear-gradient(to right, rgba(107, 91, 149, 0.1), transparent);
+        }
+
+        &.buff {
+            .eventGlyph { color: #7ba8d4; }
+        }
+
+        &.skipped {
+            opacity: 0.6;
+            font-style: italic;
+            font-size: 0.85rem;
+            margin-left: 40px;
+
+            .eventGlyph {
+                color: $color-spirit;
+                font-size: 0.9rem;
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────────
+    // ANIMATIONS
+    // ─────────────────────────────────────────────────────────────────────────────────
+    @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .event {
+        animation: fadeIn 0.4s ease-out backwards;
     }
 }

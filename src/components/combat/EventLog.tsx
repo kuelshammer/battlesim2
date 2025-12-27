@@ -1,23 +1,6 @@
 import { FC, useState, useMemo } from 'react';
 import { Event } from '@/model/model';
 import styles from './EventLog.module.scss';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faFistRaised,
-    faSkull,
-    faMagic,
-    faShieldAlt,
-    faHeart,
-    faHourglassStart,
-    faHourglassEnd,
-    faExclamationTriangle,
-    faRunning,
-    faBan,
-    faEye,
-    faEyeSlash,
-    faChevronDown,
-    faChevronRight
-} from '@fortawesome/free-solid-svg-icons';
 import { useUIToggle } from '@/model/uiToggleState';
 import { LogFormatter } from '@/model/logFormatter';
 
@@ -70,63 +53,63 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
         const isExpanded = expandedEvents.has(index);
         const hasDetails = ['AttackHit', 'AttackMissed', 'ActionStarted'].includes(event.type); // Events with enriched data
 
-        let icon = faExclamationTriangle;
+        let glyph = '◆'; // Default glyph
         let eventClass = '';
 
         switch (event.type) {
             case 'ActionStarted':
-                icon = faFistRaised;
+                glyph = '⚔'; // Swords for action
                 eventClass = styles.action;
                 break;
             case 'ActionSkipped':
-                icon = faExclamationTriangle;
+                glyph = '⚠'; // Warning
                 eventClass = styles.skipped;
                 break;
             case 'AttackHit':
-                icon = faFistRaised;
+                glyph = '⚔'; // Swords
                 eventClass = styles.hit;
                 break;
             case 'AttackMissed':
-                icon = faBan;
+                glyph = '✗'; // X mark
                 eventClass = styles.miss;
                 break;
             case 'DamageTaken':
-                icon = faHeart;
+                glyph = '♥'; // Heart for damage
                 eventClass = styles.damage;
                 break;
             case 'HealingApplied':
-                icon = faHeart;
+                glyph = '✚'; // Ankh/cross for healing
                 eventClass = styles.heal;
                 break;
             case 'UnitDied':
-                icon = faSkull;
+                glyph = '†'; // Cross/dagger
                 eventClass = styles.death;
                 break;
             case 'RoundStarted':
-                icon = faHourglassStart;
+                glyph = '☽'; // Moon/cycle
                 eventClass = styles.round;
                 break;
             case 'TurnStarted':
-                icon = faRunning;
+                glyph = '→'; // Arrow
                 break;
             case 'SpellCast':
-                icon = faMagic;
+                glyph = '✦'; // Star
                 eventClass = styles.spell;
                 break;
             case 'BuffApplied':
-                icon = faShieldAlt;
+                glyph = '⚑'; // Shield/buff
                 eventClass = styles.buff;
                 break;
             case 'ConditionAdded':
-                icon = faExclamationTriangle;
+                glyph = '⚠'; // Warning
                 eventClass = styles.buff;
                 break;
             case 'ConditionRemoved':
-                icon = faShieldAlt;
+                glyph = '⚑'; // Shield
                 eventClass = styles.buff;
                 break;
             case 'EncounterEnded':
-                icon = faHourglassEnd;
+                glyph = '☾'; // Full moon/end
                 eventClass = styles.round;
                 break;
             case 'TurnEnded':
@@ -143,15 +126,14 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
                 className={`${styles.event} ${eventClass} ${hasDetails ? styles.clickable : ''}`}
                 onClick={hasDetails ? () => toggleEvent(index) : undefined}
             >
+                <div className={styles.eventGlyph}>{glyph}</div>
                 <div className={styles.eventContent}>
                     <div className={styles.eventSummary}>
-                        <FontAwesomeIcon icon={icon} className={event.type === 'AttackHit' ? styles.iconHit : event.type === 'AttackMissed' ? styles.iconMiss : ''} />
                         <span>{summary}</span>
                         {hasDetails && (
-                            <FontAwesomeIcon
-                                icon={isExpanded ? faChevronDown : faChevronRight}
-                                style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.5 }}
-                            />
+                            <span style={{ marginLeft: 'auto', fontSize: '0.8rem', opacity: 0.5 }}>
+                                {isExpanded ? '▼' : '▶'}
+                            </span>
                         )}
                     </div>
                     {isExpanded && details && (
@@ -176,15 +158,15 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
                             aria-label="Show combat log"
                             title="Show combat log"
                         >
-                            <FontAwesomeIcon icon={faEye} />
+                            <span>⊕</span>
                             <span>Show Log</span>
                         </button>
                     </div>
                 </div>
                 <div className={styles.emptyState}>
-                    <FontAwesomeIcon icon={faEyeSlash} className={styles.emptyIcon} />
-                    <p>Combat log is hidden</p>
-                    <p className={styles.emptyHint}>Click "Show Log" to view combat events</p>
+                    <p style={{ fontSize: '2rem', fontFamily: '"MedievalSharp", cursive', opacity: 0.3 }}>❧</p>
+                    <p>The chronicle lies hidden</p>
+                    <p className={styles.emptyHint}>Click "Show Log" to reveal the events</p>
                 </div>
             </div>
         );
@@ -209,7 +191,7 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
                                 aria-label="Hide combat log"
                                 title="Hide combat log"
                             >
-                                <FontAwesomeIcon icon={faEyeSlash} />
+                                <span>⊖</span>
                                 <span>Hide Log</span>
                             </button>
                         </div>
