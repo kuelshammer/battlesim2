@@ -25,6 +25,9 @@ clap = { version = "4", features = ["derive"] }
 uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
 # lz4_flex removed as storage functionality is no longer needed
 
+[dev-dependencies]
+proptest = "1.4"
+
 [profile.release]
 opt-level = "z"
 lto = true
