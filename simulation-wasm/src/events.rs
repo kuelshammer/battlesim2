@@ -333,7 +333,7 @@ impl Event {
                     if scores.len() > 4 {
                         output.push_str(", ...");
                     }
-                    output.push_str("]");
+                    output.push(']');
                 }
 
                 Some(output)

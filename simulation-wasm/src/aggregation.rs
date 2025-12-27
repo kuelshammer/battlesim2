@@ -184,10 +184,7 @@ pub fn calculate_score(result: &SimulationResult) -> f64 {
     }
 
     // Use safe calculation with fallback to -1000000 for compatibility
-    match crate::safe_aggregation::calculate_score_safe(result) {
-        Ok(score) => score,
-        Err(_) => -1_000_000.0, // Return extremely low score for empty/failed runs to sort them to the bottom
-    }
+    crate::safe_aggregation::calculate_score_safe(result).unwrap_or(-1_000_000.0)
 }
 
 pub fn calculate_cumulative_score(result: &SimulationResult, encounter_idx: usize) -> f64 {

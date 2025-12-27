@@ -753,13 +753,13 @@ impl ActionExecutionEngine {
         // Determine winner based on side HP sums
         if team1_hp > 0 && team2_hp == 0 {
             // All of side 1 are dead, side 0 wins
-            return Some("Players".to_string());
+            Some("Players".to_string())
         } else if team2_hp > 0 && team1_hp == 0 {
-            // All of side 0 are dead, side 1 wins  
-            return Some("Monsters".to_string());
+            // All of side 0 are dead, side 1 wins
+            Some("Monsters".to_string())
         } else if team1_hp == 0 && team2_hp == 0 {
             // Everyone is dead, draw
-            return None;
+            None
         } else {
             // Multiple survivors on both sides - for now return None (draw)
             None

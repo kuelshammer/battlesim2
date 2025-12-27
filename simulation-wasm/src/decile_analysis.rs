@@ -287,16 +287,18 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
                 last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
             } else { 0 }
         } else { 0 }
-    } else {
-        if let Some(last_enc) = run.encounters.last() {
-            if let Some(last_round) = last_enc.rounds.last() {
-                last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
-            } else { 
-                if score < 0.0 { 0 } else { ((score / 1_000_000.0).floor() as usize).min(party_size) }
-            }
-        } else { 
-            if score < 0.0 { 0 } else { ((score / 1_000_000.0).floor() as usize).min(party_size) }
+    } else if let Some(last_enc) = run.encounters.last() {
+        if let Some(last_round) = last_enc.rounds.last() {
+            last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
+        } else if score < 0.0 {
+            0
+        } else {
+            ((score / 1_000_000.0).floor() as usize).min(party_size)
         }
+    } else if score < 0.0 {
+        0
+    } else {
+        ((score / 1_000_000.0).floor() as usize).min(party_size)
     };
     
     // 2. Calculate Timelines
@@ -538,16 +540,16 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
     };
 
     let total_runs = results.len();
-    let is_perfect = total_runs > 0 && (total_runs - 1) % 10 == 0;
+    let is_perfect = total_runs > 0 && (total_runs - 1).is_multiple_of(10);
     let slice_size = if is_perfect { (total_runs - 1) / 10 } else { (total_runs / 10).max(1) };
-    
+
     let mut deciles = Vec::with_capacity(10);
     let mut global_median = None;
     let mut decile_logs = Vec::new();
 
     // Extract 11 logs if runs are provided
     if let Some(all_runs) = runs {
-        let log_indices = if total_runs >= 11 && (total_runs - 1) % 10 == 0 {
+        let log_indices = if total_runs >= 11 && (total_runs - 1).is_multiple_of(10) {
             // Perfect 10n + 1 system
             let n = (total_runs - 1) / 10;
             vec![

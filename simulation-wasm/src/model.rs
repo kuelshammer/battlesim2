@@ -14,9 +14,10 @@ pub enum MonsterRole {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub enum TargetRole {
     Skirmish,
+    #[default]
     Standard,
     Elite,
     Boss,
@@ -30,12 +31,6 @@ impl TargetRole {
             TargetRole::Elite => 3.0,
             TargetRole::Boss => 4.0,
         }
-    }
-}
-
-impl Default for TargetRole {
-    fn default() -> Self {
-        TargetRole::Standard
     }
 }
 
@@ -556,7 +551,7 @@ impl Creature {
         if let Some(slots) = &self.spell_slots {
             for (level_str, count) in slots {
                 // Try to extract digit from string (e.g. "1st" -> 1)
-                let cleaned_level = level_str.chars().filter(|c| c.is_digit(10)).collect::<String>();
+                let cleaned_level = level_str.chars().filter(|c| c.is_ascii_digit()).collect::<String>();
                 if let Ok(level) = cleaned_level.parse::<u8>() {
                     let resource_type = ResourceType::SpellSlot; 
                     ledger.register_resource(
