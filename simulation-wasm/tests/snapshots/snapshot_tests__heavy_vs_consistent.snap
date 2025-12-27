@@ -1,0 +1,10 @@
+---
+source: tests/snapshot_tests.rs
+expression: data
+---
+{
+  "description": "Burst Damage (Player) beats Low Dmg/High Hit (Monster)",
+  "median_win_rate": 100.0,
+  "median_survivors": 1,
+  "party_size": 1
+}

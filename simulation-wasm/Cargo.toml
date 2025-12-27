@@ -27,6 +27,7 @@ uuid = { version = "1.0", features = ["v4", "wasm-bindgen"] }
 
 [dev-dependencies]
 proptest = "1.4"
+insta = { version = "1.38", features = ["json", "redactions"] }
 
 [profile.release]
 opt-level = "z"
