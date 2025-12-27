@@ -1037,4 +1037,262 @@ mod tests {
         assert_eq!(order[0], "fast"); // Higher initiative first
         assert_eq!(order[1], "slow");
     }
+
+    #[test]
+    fn test_execute_encounter_basic() {
+        let player_creature = Creature {
+            id: "player1".to_string(),
+            name: "Test Player".to_string(),
+            count: 1.0,
+            hp: 30,
+            ac: 15,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "player".to_string(),
+        };
+
+        let monster_creature = Creature {
+            id: "monster1".to_string(),
+            name: "Test Monster".to_string(),
+            count: 1.0,
+            hp: 10,
+            ac: 12,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "monster".to_string(),
+        };
+
+        let player = Combattant {
+            team: 0,
+            id: "player1".to_string(),
+            creature: player_creature,
+            initiative: 10.0,
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            actions: Vec::new(),
+        };
+
+        let monster = Combattant {
+            team: 1,
+            id: "monster1".to_string(),
+            creature: monster_creature,
+            initiative: 5.0,
+            initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
+            actions: Vec::new(),
+        };
+
+        let mut engine = ActionExecutionEngine::new(vec![player, monster]);
+
+        // Execute the encounter
+        let result = engine.execute_encounter();
+
+        // Verify structure
+        assert!(!result.round_snapshots.is_empty(), "Should have at least one round");
+        assert!(result.total_rounds <= 100, "Should not exceed max rounds");
+
+        // Verify combatants exist in results
+        assert_eq!(result.final_combatant_states.len(), 2, "Should have 2 combatants");
+    }
+
+    #[test]
+    fn test_empty_combatants() {
+        let mut engine = ActionExecutionEngine::new(vec![]);
+
+        // Should complete immediately with no combatants
+        assert!(engine.is_encounter_complete());
+
+        let result = engine.execute_encounter();
+        // Empty encounter should have no rounds or very few
+        assert_eq!(result.total_rounds, 0);
+        assert_eq!(result.final_combatant_states.len(), 0);
+    }
+
+    #[test]
+    fn test_single_combatant() {
+        let creature = Creature {
+            id: "solo".to_string(),
+            name: "Solo".to_string(),
+            count: 1.0,
+            hp: 30,
+            ac: 15,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "monster".to_string(),
+        };
+
+        let combatant = Combattant {
+            team: 0,
+            id: "solo".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            actions: Vec::new(),
+        };
+
+        let mut engine = ActionExecutionEngine::new(vec![combatant]);
+
+        // Single combatant should complete immediately
+        assert!(engine.is_encounter_complete());
+
+        let result = engine.execute_encounter();
+        // Should handle gracefully - no rounds because there's nothing to fight
+        assert!(result.round_snapshots.is_empty() || result.total_rounds <= 100);
+    }
+
+    #[test]
+    fn test_get_context_stats() {
+        let creature = Creature {
+            id: "test".to_string(),
+            name: "Test".to_string(),
+            count: 1.0,
+            hp: 30,
+            ac: 15,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "monster".to_string(),
+        };
+
+        let combatant = Combattant {
+            team: 0,
+            id: "test".to_string(),
+            creature,
+            initiative: 10.0,
+            initial_state: CreatureState::default(),
+            final_state: CreatureState::default(),
+            actions: Vec::new(),
+        };
+
+        let engine = ActionExecutionEngine::new(vec![combatant]);
+
+        let stats = engine.get_context_stats();
+        assert_eq!(stats.total_combatants, 1);
+        assert_eq!(stats.round_number, 0);
+    }
+
+    #[test]
+    fn test_same_team_combatants() {
+        // Two combatants on the same team should not fight
+        let creature = Creature {
+            id: "ally".to_string(),
+            name: "Ally".to_string(),
+            count: 1.0,
+            hp: 30,
+            ac: 15,
+            speed_fly: None,
+            save_bonus: 0.0,
+            str_save_bonus: None,
+            dex_save_bonus: None,
+            con_save_bonus: None,
+            int_save_bonus: None,
+            wis_save_bonus: None,
+            cha_save_bonus: None,
+            con_save_advantage: None,
+            save_advantage: None,
+            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_advantage: false,
+            actions: Vec::new(),
+            triggers: Vec::new(),
+            spell_slots: None,
+            class_resources: None,
+            hit_dice: None,
+            con_modifier: None,
+            arrival: None,
+            mode: "player".to_string(),
+        };
+
+        let combatant1 = Combattant {
+            team: 0,
+            id: "ally1".to_string(),
+            creature: creature.clone(),
+            initiative: 10.0,
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            actions: Vec::new(),
+        };
+
+        let combatant2 = Combattant {
+            team: 0,
+            id: "ally2".to_string(),
+            creature,
+            initiative: 5.0,
+            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            actions: Vec::new(),
+        };
+
+        let engine = ActionExecutionEngine::new(vec![combatant1, combatant2]);
+
+        // Same team combatants should complete immediately (no enemies)
+        assert!(engine.is_encounter_complete());
+    }
 }
