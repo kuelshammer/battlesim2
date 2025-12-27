@@ -1,8 +1,0 @@
-{
-  "track_id": "cleanup_performance_20251222",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2025-12-22T08:30:00Z",
-  "updated_at": "2025-12-22T08:30:00Z",
-  "description": "Cleanup abandoned Electron code, optimize monster data loading, and fix Zod version"
-}

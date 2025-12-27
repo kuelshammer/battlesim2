@@ -3,7 +3,7 @@ use simulation_wasm::aggregation::calculate_score;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
 use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun, TimelineStep};
-use simulation_wasm::decile_analysis::{run_decile_analysis, run_encounter_analysis, AggregateOutput};
+use simulation_wasm::decile_analysis::run_decile_analysis;
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
 use std::fs;
@@ -85,6 +85,14 @@ enum Commands {
         /// Path to the scenario JSON file
         scenario: PathBuf,
     },
+    /// Generate detailed event logs for multiple random simulation runs
+    BatchLog {
+        /// Path to the scenario JSON file
+        scenario: PathBuf,
+        /// Number of runs to generate (default 10)
+        #[arg(short, long, default_value = "10")]
+        count: usize,
+    },
 }
 
 // --- Main Entry Point ---
@@ -95,6 +103,9 @@ fn main() {
     match cli.command {
         Commands::Aggregate { scenario } => {
             run_aggregate(&scenario);
+        }
+        Commands::BatchLog { scenario, count } => {
+            run_batch_log(&scenario, count);
         }
         Commands::Log {
             scenario,
@@ -243,18 +254,10 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
 
     match format {
         "json" => {
-            // TODO: Serialize raw events or formatted events?
-            // Let's serialize formatted for now to match previous behavior roughly
-            // Since we now store events in SimulationRun, get events from the selected run
             let events = &run.events;
-            let formatted_events: Vec<String> = events
-                .iter()
-                .filter_map(|e| e.format_for_log(&combatant_names))
-                .collect();
-
             let output = serde_json::json!({
                 "result": result,
-                "events": formatted_events,
+                "events": events,
             });
             println!("{}", serde_json::to_string_pretty(&output).unwrap());
         }
@@ -484,6 +487,7 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
             Event::ActionStarted {
                 actor_id,
                 action_id,
+                ..
             } => {
                 current_action.insert(actor_id.clone(), action_id.clone());
                 breakdown
@@ -1091,3 +1095,18 @@ fn validate_creature(
 }
 
 
+
+fn run_batch_log(scenario_path: &PathBuf, count: usize) {
+    let (players, timeline, _) = load_scenario(scenario_path);
+    let runs = run_event_driven_simulation_rust(players, timeline, count, true);
+    let output = serde_json::json!({
+        "runs": runs.iter().enumerate().map(|(i, run)| {
+            serde_json::json!({
+                "index": i,
+                "result": run.result,
+                "events": run.events,
+            })
+        }).collect::<Vec<_>>()
+    });
+    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+}

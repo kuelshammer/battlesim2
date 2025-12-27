@@ -122,7 +122,7 @@ pub struct DisplayResult {
 /// Manager for displaying simulation results with various modes
 pub struct DisplayManager {
     /// Storage manager for accessing simulation data
-    storage_manager: std::sync::Arc<std::sync::Mutex<StorageManager>>,
+    _storage_manager: std::sync::Arc<std::sync::Mutex<StorageManager>>,
     /// Display configuration
     config: DisplayConfig,
     /// Current display mode
@@ -143,7 +143,7 @@ impl DisplayManager {
     /// Create a new display manager
     pub fn new(storage_manager: StorageManager, config: DisplayConfig) -> Self {
         Self {
-            storage_manager: std::sync::Arc::new(std::sync::Mutex::new(storage_manager)),
+            _storage_manager: std::sync::Arc::new(std::sync::Mutex::new(storage_manager)),
             config: config.clone(),
             current_mode: config.default_mode,
             last_parameters: None,
@@ -518,6 +518,7 @@ impl DisplayManager {
     }
 
     /// Calculate parameter differences for display
+    #[allow(dead_code)]
     fn calculate_parameter_differences(&self, params1: &ScenarioParameters, params2: &ScenarioParameters) -> Vec<ParameterDifference> {
         let mut differences = Vec::new();
 

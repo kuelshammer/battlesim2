@@ -22,7 +22,8 @@ pub mod adjustment_test;
 pub mod auto_balancer;
 pub mod dice_reconstruction;
 pub mod intensity_calculation;
-pub mod intensity_test;
+#[cfg(test)]
+mod intensity_test;
 pub mod error_handling; // Enhanced error handling system
 pub mod enhanced_validation; // Comprehensive validation
 pub mod recovery; // Error recovery mechanisms
@@ -64,7 +65,7 @@ struct FullAnalysisOutput {
 struct FullSimulationOutput {
     results: Vec<SimulationResult>,
     analysis: FullAnalysisOutput,
-    firstRunEvents: Vec<crate::events::Event>,
+    first_run_events: Vec<crate::events::Event>,
 }
 
 #[derive(serde::Serialize)]
@@ -251,7 +252,7 @@ pub fn run_simulation_with_callback(
             overall,
             encounters: encounters_analysis,
         },
-        firstRunEvents: runs[median_idx].events.clone(), // Use global median events as default fallback
+        first_run_events: runs[median_idx].events.clone(), // Use global median events as default fallback
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -568,7 +569,7 @@ fn reconstruct_actions(event_history: &[crate::events::Event]) -> HashMap<(u32, 
             crate::events::Event::RoundStarted { round_number } => {
                 current_round = *round_number;
             },
-            crate::events::Event::ActionStarted { actor_id, action_id } => {
+            crate::events::Event::ActionStarted { actor_id, action_id, .. } => {
                 if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(actor_id) {
                      actions_by_round_actor.entry((current_round, actor_id.clone()))
                         .or_default()
@@ -907,7 +908,7 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
         let progress_ui_manager_arc = Arc::new(Mutex::new(progress_ui_manager));
         
         // Create storage manager arc for user interaction
-        let storage_manager_arc = Arc::new(Mutex::new(storage_copy.clone()));
+        let _storage_manager_arc = Arc::new(Mutex::new(storage_copy.clone()));
 
         // Create user interaction manager
         let interaction_config = UserInteractionConfig::default();

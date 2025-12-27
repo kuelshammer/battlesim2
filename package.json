@@ -15,6 +15,8 @@
     "build:wasm": "cd simulation-wasm && rm -rf pkg && export PATH=\"$HOME/.cargo/bin:$PATH\" && wasm-pack build --target web --out-dir pkg",
     "build:wasm:dev": "cd simulation-wasm && wasm-pack build --target web --out-dir pkg --dev",
     "dev:wasm": "npm run build:wasm:dev && npm run dev",
+    "sim:log": "node scripts/simulate_and_log.js",
+    "sim:audit": "node scripts/audit_rules.js",
     "test": "vitest run"
   },
   "dependencies": {

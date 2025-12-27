@@ -53,6 +53,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [showLogModal, setShowLogModal] = useState(false)
     const [showDecileModal, setShowDecileModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
+    const [selectedDecileIndex, setSelectedDecileIndex] = useState<number>(5) // Default to 50% Median
     
     // Web Worker Simulation
     const worker = useSimulationWorker();
@@ -71,12 +72,33 @@ const Simulation: FC<PropType> = memo(({ }) => {
     // Memoize combatant names map
     const combatantNames = useMemo(() => {
         const names = new Map<string, string>()
-        players.forEach(p => names.set(p.id, p.name))
-        timeline.forEach(item => {
+        
+        // Add players - IDs are prefixed with 'p-' and numbered if count > 1
+        players.forEach((p, group_idx) => {
+            for (let i = 0; i < (p.count || 1); i++) {
+                const id = `p-${group_idx}-${i}-${p.id}`
+                const name = (p.count || 1) > 1 ? `${p.name} ${i + 1}` : p.name
+                names.set(id, name)
+            }
+            // Fallback for base ID
+            names.set(p.id, p.name)
+        })
+
+        // Add monsters - IDs include encounter index and are numbered if count > 1
+        timeline.forEach((item, step_idx) => {
             if (item.type === 'combat') {
-                item.monsters.forEach(m => names.set(m.id, m.name))
+                item.monsters.forEach((m, group_idx) => {
+                    for (let i = 0; i < (m.count || 1); i++) {
+                        const id = `step${step_idx}-m-${group_idx}-${i}-${m.id}`
+                        const name = (m.count || 1) > 1 ? `${m.name} ${i + 1}` : m.name
+                        names.set(id, name)
+                    }
+                    // Fallback for base ID
+                    names.set(m.id, m.name)
+                })
             }
         })
+        
         return names
     }, [players, timeline])
 
@@ -329,11 +351,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 pacingData={pacingData} 
                             />
                             <FuelGauge 
-                                plannedSegments={pacingData.plannedSegments} 
-                                actualSegments={pacingData.actualSegments} 
+                                pacingData={pacingData} 
                             />
                             <DescentGraph 
-                                decileTimelines={worker.analysis.overall.deciles.map(d => d.resourceTimeline)} 
+                                deciles={worker.analysis.overall.deciles} 
                                 pacingData={pacingData} 
                             />
                         </>
@@ -418,6 +439,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         <button
                                                             onClick={() => {
                                                                 setSelectedEncounterIndex(index);
+                                                                setSelectedDecileIndex(5); // Reset to Median
                                                                 setShowLogModal(true);
                                                             }}
                                                             className={styles.showLogButton}>
@@ -463,7 +485,28 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         <div className={styles.logModalOverlay}>
                             <div className={styles.logModal}>
                                 <div className={styles.modalHeader}>
-                                    <h3>Combat Log - Encounter {selectedEncounterIndex + 1}</h3>
+                                    <div className={styles.modalHeaderTitle}>
+                                        <h3>Combat Log - Encounter {selectedEncounterIndex + 1}</h3>
+                                        <div className={styles.decileNav}>
+                                            <button 
+                                                disabled={selectedDecileIndex === 0}
+                                                onClick={() => setSelectedDecileIndex(selectedDecileIndex - 1)}
+                                                className={styles.navBtn}
+                                            >
+                                                &larr; Worse Run
+                                            </button>
+                                            <span className={styles.percentileLabel}>
+                                                {selectedDecileIndex === 5 ? "50% (Median)" : `${selectedDecileIndex * 10 + (selectedDecileIndex < 5 ? 5 : -5)}% Run`}
+                                            </span>
+                                            <button 
+                                                disabled={selectedDecileIndex === 10}
+                                                onClick={() => setSelectedDecileIndex(selectedDecileIndex + 1)}
+                                                className={styles.navBtn}
+                                            >
+                                                Better Run &rarr;
+                                            </button>
+                                        </div>
+                                    </div>
                                     <button 
                                         onClick={() => setShowLogModal(false)}
                                         className={styles.closeButton}>
@@ -472,9 +515,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </div>
                                 <div className={styles.logBody}>
                                     <EventLog
-                                        events={simulationEvents}
+                                        events={worker.analysis?.encounters[selectedEncounterIndex]?.decileLogs?.[selectedDecileIndex] || []}
                                         combatantNames={Object.fromEntries(combatantNames)}
                                         actionNames={Object.fromEntries(actionNames)}
+                                        isModal={true}
                                     />
                                 </div>
                             </div>

@@ -1,8 +1,8 @@
-use crate::model::{Creature, Encounter, TimelineStep, MonsterRole};
+use crate::model::{Creature, TimelineStep, MonsterRole};
 use crate::creature_adjustment::{detect_role, adjust_hp, adjust_damage, adjust_dc};
-use crate::decile_analysis::{run_decile_analysis, SafetyGrade, IntensityTier, AggregateOutput};
+use crate::decile_analysis::{SafetyGrade, IntensityTier, AggregateOutput};
 use crate::run_event_driven_simulation_rust;
-use std::collections::HashMap;
+
 
 pub struct AutoBalancer {
     pub max_iterations: usize,
@@ -46,18 +46,22 @@ impl AutoBalancer {
                 break;
             }
 
+            let typical = analysis.global_median.as_ref().unwrap();
+            let vitality = typical.vitality_timeline.last().cloned().unwrap_or(100.0);
+            let power = typical.power_timeline.last().cloned().unwrap_or(100.0);
+
             if self.is_too_deadly(&analysis) {
                 // Safety Clamp (Nerf)
                 let step = if analysis.safety_grade == SafetyGrade::F { -0.15 } else { -0.05 };
-                self.apply_adjustment(&mut monsters, &roles, step, true);
+                self.apply_adjustment(&mut monsters, &roles, step, true, vitality, power);
             } else if self.is_too_easy(&analysis) {
                 // Intensity Pump (Buff)
                 // Slog Filter: Stop buffing HP if rounds > 8
                 if analysis.battle_duration_rounds > 8 {
                     // Switch to damage buff instead of HP buff to avoid slog
-                    self.apply_adjustment(&mut monsters, &roles, 0.05, false);
+                    self.apply_adjustment(&mut monsters, &roles, 0.05, false, vitality, power);
                 } else {
-                    self.apply_adjustment(&mut monsters, &roles, 0.10, false);
+                    self.apply_adjustment(&mut monsters, &roles, 0.10, false, vitality, power);
                 }
             } else {
                 break;
@@ -116,32 +120,60 @@ impl AutoBalancer {
         matches!(analysis.intensity_tier, IntensityTier::Tier1 | IntensityTier::Tier2)
     }
 
-    fn apply_adjustment(&self, monsters: &mut Vec<Creature>, roles: &[MonsterRole], step: f64, is_nerf: bool) {
+    fn apply_adjustment(
+        &self, 
+        monsters: &mut Vec<Creature>, 
+        roles: &[MonsterRole], 
+        step: f64, 
+        is_nerf: bool,
+        vitality: f64,
+        power: f64
+    ) {
+        let is_burst_risk = vitality < power - 15.0; // Significant gap
+        let is_slog_risk = power < vitality - 15.0;
+
         for (m, role) in monsters.iter_mut().zip(roles.iter()) {
             match (role, is_nerf) {
                 (MonsterRole::Boss, true) => {
-                    adjust_damage(m, step);
-                    adjust_hp(m, step); // Nerf both for bosses
+                    if is_burst_risk { adjust_damage(m, step); }
+                    else if is_slog_risk { adjust_hp(m, step); }
+                    else { adjust_damage(m, step); adjust_hp(m, step); }
                 },
-                (MonsterRole::Boss, false) => adjust_hp(m, step),
+                (MonsterRole::Boss, false) => {
+                    if is_burst_risk { adjust_hp(m, step); }
+                    else if is_slog_risk { adjust_damage(m, step); }
+                    else { adjust_hp(m, step); }
+                },
                 
                 (MonsterRole::Brute, true) => {
-                    adjust_damage(m, step);
-                    adjust_hp(m, step); // Nerf both for brutes
+                    if is_burst_risk { adjust_damage(m, step); }
+                    else { adjust_hp(m, step); }
                 },
-                (MonsterRole::Brute, false) => adjust_hp(m, step),
+                (MonsterRole::Brute, false) => {
+                    if is_slog_risk { adjust_damage(m, step); }
+                    else { adjust_hp(m, step); }
+                },
                 
-                (MonsterRole::Striker, true) => adjust_damage(m, step), // accuracy would be better but dpr is knob for now
+                (MonsterRole::Striker, true) => adjust_damage(m, step),
                 (MonsterRole::Striker, false) => adjust_damage(m, step),
                 
-                (MonsterRole::Controller, true) => adjust_dc(m, -0.5),
+                (MonsterRole::Controller, true) => {
+                    if is_burst_risk { adjust_dc(m, -0.5); }
+                    else { adjust_hp(m, step); }
+                },
                 (MonsterRole::Controller, false) => adjust_hp(m, step),
                 
                 (MonsterRole::Minion, true) => { if m.count > 1.0 { m.count -= 1.0; } },
                 (MonsterRole::Minion, false) => { m.count += 1.0; },
                 
-                (MonsterRole::Unknown, true) => adjust_damage(m, step),
-                (MonsterRole::Unknown, false) => adjust_hp(m, step),
+                (MonsterRole::Unknown, true) => {
+                    if is_burst_risk { adjust_damage(m, step); }
+                    else { adjust_hp(m, step); }
+                },
+                (MonsterRole::Unknown, false) => {
+                    if is_slog_risk { adjust_damage(m, step); }
+                    else { adjust_hp(m, step); }
+                },
             }
         }
     }

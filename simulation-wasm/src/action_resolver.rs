@@ -1,7 +1,7 @@
 use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::dice;
-use crate::events::{Event, RollResult, DieRoll};
-use crate::model::{Action, AtkAction, BuffAction, DebuffAction, HealAction, TemplateAction};
+use crate::events::{DieRoll, Event, RollResult};
+use crate::model::{Action, AtkAction, Buff, BuffAction, DebuffAction, HealAction, TemplateAction};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -88,7 +88,7 @@ impl ActionResolver {
             };
 
             // Perform attack roll
-            let attack_result = self.roll_attack(attack);
+            let attack_result = self.roll_attack(attack, context, actor_id);
             let target_ac = self.get_target_ac(&target_id, context);
 
             // Check for hit:
@@ -108,6 +108,7 @@ impl ActionResolver {
                     damage,
                     attack_roll: Some(attack_result.roll_detail),
                     damage_roll: Some(damage_roll),
+                    target_ac,
                 };
                 context.record_event(hit_event.clone());
                 events.push(hit_event);
@@ -131,6 +132,7 @@ impl ActionResolver {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
                     attack_roll: Some(attack_result.roll_detail),
+                    target_ac,
                 };
                 context.record_event(miss_event.clone());
                 events.push(miss_event);
@@ -226,7 +228,42 @@ impl ActionResolver {
         context: &mut TurnContext,
         actor_id: &str,
     ) -> Vec<Event> {
-        self.resolve_effect(debuff_action, context, actor_id, false)
+        let mut events = Vec::new();
+
+        use crate::enums::TargetType;
+        let target_type = TargetType::Enemy(debuff_action.target.clone());
+        let targets =
+            self.get_targets_by_type(context, actor_id, &target_type, debuff_action.targets);
+
+        for target_id in targets {
+            // 1. Perform saving throw
+            let mut rng = rand::thread_rng();
+            let roll = rng.gen_range(1..=20) as f64;
+            let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
+            let total_save = roll + save_bonus;
+
+            if total_save < debuff_action.save_dc {
+                // Save failed! Apply buff
+                let effect = ActiveEffect {
+                    id: format!("{}-{}-{}", debuff_action.name, actor_id, target_id),
+                    source_id: actor_id.to_string(),
+                    target_id: target_id.clone(),
+                    effect_type: EffectType::Buff(debuff_action.buff.clone()),
+                    remaining_duration: 10,
+                    conditions: Vec::new(),
+                };
+
+                events.push(context.apply_effect(effect));
+            } else {
+                // Save succeeded
+                events.push(Event::SpellSaved {
+                    target_id: target_id.clone(),
+                    spell_id: debuff_action.name.clone(),
+                });
+            }
+        }
+
+        events
     }
 
     /// Resolve template actions
@@ -264,48 +301,77 @@ impl ActionResolver {
             self.get_targets_by_type(context, actor_id, &target_type, template_action.targets);
 
         for target_id in targets {
-            // Apply effect
-            let effect_type = if template_name == "bane" {
-                EffectType::Custom("bane".to_string())
-            } else {
-                use crate::enums::BuffDuration;
-                use crate::model::Buff;
-                EffectType::Buff(Buff {
-                    display_name: Some(template_name.clone()),
-                    duration: BuffDuration::EntireEncounter,
-                    ac: None,
-                    to_hit: None,
-                    damage: None,
-                    damage_reduction: None,
-                    damage_multiplier: None,
-                    damage_taken_multiplier: None,
-                    dc: None,
-                    save: None,
-                    condition: None,
-                    magnitude: None,
-                    source: Some(actor_id.to_string()),
-                    concentration: true,
-                    triggers: Vec::new(),
-                })
+            // Apply effect based on template name
+            let mut buff = Buff {
+                display_name: Some(template_action.template_options.template_name.clone()),
+                duration: crate::enums::BuffDuration::EntireEncounter,
+                ac: None,
+                to_hit: None,
+                damage: None,
+                damage_reduction: None,
+                damage_multiplier: None,
+                damage_taken_multiplier: None,
+                dc: None,
+                save: None,
+                condition: None,
+                magnitude: None,
+                source: Some(actor_id.to_string()),
+                concentration: true,
+                triggers: Vec::new(),
             };
 
-            let effect = ActiveEffect {
-                id: format!("{}-{}-{}", template_name, actor_id, target_id), // Unique ID per target/source
-                source_id: actor_id.to_string(),
-                target_id: target_id.clone(),
-                effect_type,
-                remaining_duration: 10, // Default duration
-                conditions: Vec::new(),
-            };
+            // Customize buff based on name
+            match template_name.as_str() {
+                "bless" => {
+                    buff.to_hit = Some(crate::model::DiceFormula::Expr("1d4".to_string()));
+                    buff.save = Some(crate::model::DiceFormula::Expr("1d4".to_string()));
+                }
+                "bane" => {
+                    buff.to_hit = Some(crate::model::DiceFormula::Expr("-1d4".to_string()));
+                    buff.save = Some(crate::model::DiceFormula::Expr("-1d4".to_string()));
+                }
+                "haste" => {
+                    buff.ac = Some(crate::model::DiceFormula::Value(2.0));
+                }
+                _ => {}
+            }
 
-            events.push(context.apply_effect(effect));
+            // Perform saving throw for debuffs (bane)
+            let mut should_apply = true;
+            if template_name == "bane" {
+                let mut rng = rand::thread_rng();
+                let roll = rng.gen_range(1..=20) as f64;
+                let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
+                let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
+                
+                if roll + save_bonus >= save_dc {
+                    should_apply = false;
+                    events.push(Event::SpellSaved {
+                        target_id: target_id.clone(),
+                        spell_id: template_action.template_options.template_name.clone(),
+                    });
+                }
+            }
+
+            if should_apply {
+                let effect = ActiveEffect {
+                    id: format!("{}-{}-{}", template_action.template_options.template_name, actor_id, target_id),
+                    source_id: actor_id.to_string(),
+                    target_id: target_id.clone(),
+                    effect_type: EffectType::Buff(buff),
+                    remaining_duration: 10,
+                    conditions: Vec::new(),
+                };
+
+                events.push(context.apply_effect(effect));
+            }
         }
 
         events.push(Event::Custom {
             event_type: "TemplateActionExecuted".to_string(),
             data: {
                 let mut data = HashMap::new();
-                data.insert("template_name".to_string(), template_action.name.clone());
+                data.insert("template_name".to_string(), template_action.template_options.template_name.clone());
                 data.insert("actor_id".to_string(), actor_id.to_string());
                 data
             },
@@ -577,17 +643,50 @@ impl ActionResolver {
     }
 
     /// Roll attack value
-    fn roll_attack(&self, attack: &AtkAction) -> AttackRollResult {
+    fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str) -> AttackRollResult {
         let mut rng = rand::thread_rng();
         let natural_roll = rng.gen_range(1..=20);
         
         // Detailed roll for the bonus/modifiers
         let mut roll_detail = dice::evaluate_detailed(&attack.to_hit, 1);
         
+        // Prepend 1d20 to formula
+        if roll_detail.formula == "0" {
+            roll_detail.formula = "1d20".to_string();
+        } else {
+            let base_formula = roll_detail.formula.clone();
+            let sign = if base_formula.starts_with('-') || base_formula.starts_with('+') { "" } else { "+" };
+            roll_detail.formula = format!("1d20{}{}", sign, base_formula);
+        }
+
         // Add the d20 roll to the breakdown
         roll_detail.total += natural_roll as f64;
         roll_detail.rolls.insert(0, DieRoll { sides: 20, value: natural_roll });
         roll_detail.modifiers.insert(0, ("d20".to_string(), natural_roll as f64));
+
+        // Apply buffs
+        let effects = context.get_effects_on_target(actor_id);
+        for effect in effects {
+            if let EffectType::Buff(buff) = &effect.effect_type {
+                if let Some(to_hit_formula) = &buff.to_hit {
+                    let buff_roll = dice::evaluate_detailed(to_hit_formula, 1);
+                    roll_detail.total += buff_roll.total;
+                    roll_detail.rolls.extend(buff_roll.rolls);
+                    
+                    let name = buff.display_name.clone().unwrap_or_else(|| "Buff".to_string());
+                    roll_detail.modifiers.push((name.clone(), buff_roll.total));
+                    
+                    // Update formula string with bracketed name
+                    let mut buff_expr = buff_roll.formula.clone();
+                    if !buff_expr.contains('[') {
+                        buff_expr = format!("{}[{}]", buff_expr, name);
+                    }
+                    
+                    let sign = if buff_expr.starts_with('-') || buff_expr.starts_with('+') { "" } else { "+" };
+                    roll_detail.formula = format!("{}{}{}", roll_detail.formula, sign, buff_expr);
+                }
+            }
+        }
 
         AttackRollResult {
             total: roll_detail.total,

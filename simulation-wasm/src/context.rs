@@ -293,11 +293,22 @@ impl TurnContext {
     pub fn apply_effect(&mut self, effect: ActiveEffect) -> Event {
         // Determine event based on effect type
         let event = match &effect.effect_type {
-            EffectType::Buff(buff) => Event::BuffApplied {
-                target_id: effect.target_id.clone(),
-                buff_id: buff.display_name.clone().unwrap_or(effect.id.clone()),
-                source_id: effect.source_id.clone(),
-            },
+            EffectType::Buff(buff) => {
+                // Handle concentration
+                if buff.concentration {
+                    if let Some(source) = self.combatants.get_mut(&effect.source_id) {
+                        // If already concentrating on something else, we should break it
+                        // But for now, just overwrite the concentration ID
+                        source.concentration = Some(buff.display_name.clone().unwrap_or(effect.id.clone()));
+                    }
+                }
+
+                Event::BuffApplied {
+                    target_id: effect.target_id.clone(),
+                    buff_id: buff.display_name.clone().unwrap_or(effect.id.clone()),
+                    source_id: effect.source_id.clone(),
+                }
+            }
             EffectType::Condition(condition) => Event::ConditionAdded {
                 target_id: effect.target_id.clone(),
                 condition: *condition,

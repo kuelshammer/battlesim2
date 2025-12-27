@@ -290,6 +290,7 @@ impl ReactionManager {
         context.record_event(Event::ActionStarted {
             actor_id: combatant_id.to_string(),
             action_id: reaction.id.clone(),
+            decision_trace: HashMap::new(),
         });
 
         // Execute the action (simplified - in a full implementation, this would go through the action resolver)

@@ -17,30 +17,30 @@ pub enum ActionSlot {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum EnemyTarget {
-    #[serde(rename = "enemy with least HP")]
+    #[serde(rename = "enemy with least HP", alias = "enemy with the least HP")]
     EnemyWithLeastHP,
-    #[serde(rename = "enemy with most HP")]
+    #[serde(rename = "enemy with most HP", alias = "enemy with the most HP")]
     EnemyWithMostHP,
-    #[serde(rename = "enemy with highest DPR")]
+    #[serde(rename = "enemy with highest DPR", alias = "enemy with the highest DPR")]
     EnemyWithHighestDPR,
-    #[serde(rename = "enemy with lowest AC")]
+    #[serde(rename = "enemy with lowest AC", alias = "enemy with the lowest AC")]
     EnemyWithLowestAC,
-    #[serde(rename = "enemy with highest AC")]
+    #[serde(rename = "enemy with highest AC", alias = "enemy with the highest AC")]
     EnemyWithHighestAC,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AllyTarget {
-    #[serde(rename = "ally with least HP")]
+    #[serde(rename = "ally with least HP", alias = "ally with the least HP")]
     AllyWithLeastHP,
-    #[serde(rename = "ally with most HP")]
+    #[serde(rename = "ally with most HP", alias = "ally with the most HP")]
     AllyWithMostHP,
-    #[serde(rename = "ally with highest DPR")]
+    #[serde(rename = "ally with highest DPR", alias = "ally with the highest DPR")]
     AllyWithHighestDPR,
-    #[serde(rename = "ally with lowest AC")]
+    #[serde(rename = "ally with lowest AC", alias = "ally with the lowest AC")]
     AllyWithLowestAC,
-    #[serde(rename = "ally with highest AC")]
+    #[serde(rename = "ally with highest AC", alias = "ally with the highest AC")]
     AllyWithHighestAC,
     #[serde(rename = "self")]
     Self_,
@@ -136,6 +136,8 @@ pub enum ActionType {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum BuffDuration {
+    #[serde(rename = "instant")]
+    Instant,
     #[serde(rename = "until next attack made")]
     UntilNextAttackMade,
     #[serde(rename = "until next attack taken")]

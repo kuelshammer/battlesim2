@@ -53,7 +53,7 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
         return events.filter(e => {
             switch (filter) {
                 case 'combat':
-                    return ['AttackHit', 'AttackMissed', 'DamageTaken', 'DamagePrevented', 'ActionStarted'].includes(e.type);
+                    return ['AttackHit', 'AttackMissed', 'DamageTaken', 'DamagePrevented', 'ActionStarted', 'ActionSkipped'].includes(e.type);
                 case 'spell':
                     return ['SpellCast', 'SpellSaved', 'ConcentrationBroken', 'SpellFailed'].includes(e.type);
                 case 'status':
@@ -68,8 +68,8 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
 
     const renderEvent = (event: Event, index: number) => {
         const isExpanded = expandedEvents.has(index);
-        const hasDetails = ['AttackHit', 'AttackMissed'].includes(event.type); // Events with enriched data
-        
+        const hasDetails = ['AttackHit', 'AttackMissed', 'ActionStarted'].includes(event.type); // Events with enriched data
+
         let icon = faExclamationTriangle;
         let eventClass = '';
 
@@ -77,6 +77,10 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
             case 'ActionStarted':
                 icon = faFistRaised;
                 eventClass = styles.action;
+                break;
+            case 'ActionSkipped':
+                icon = faExclamationTriangle;
+                eventClass = styles.skipped;
                 break;
             case 'AttackHit':
                 icon = faFistRaised;
@@ -130,12 +134,12 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
                 return null;
         }
 
-        const summary = LogFormatter.toSummary(event, combatantNames);
-        const details = hasDetails ? LogFormatter.toDetails(event, combatantNames) : null;
+        const summary = LogFormatter.toSummary(event, combatantNames, actionNames);
+        const details = hasDetails ? LogFormatter.toDetails(event, combatantNames, actionNames) : null;
 
         return (
-            <div 
-                key={index} 
+            <div
+                key={index}
                 className={`${styles.event} ${eventClass} ${hasDetails ? styles.clickable : ''}`}
                 onClick={hasDetails ? () => toggleEvent(index) : undefined}
             >
@@ -144,9 +148,9 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
                         <FontAwesomeIcon icon={icon} className={event.type === 'AttackHit' ? styles.iconHit : event.type === 'AttackMissed' ? styles.iconMiss : ''} />
                         <span>{summary}</span>
                         {hasDetails && (
-                            <FontAwesomeIcon 
-                                icon={isExpanded ? faChevronDown : faChevronRight} 
-                                style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.5 }} 
+                            <FontAwesomeIcon
+                                icon={isExpanded ? faChevronDown : faChevronRight}
+                                style={{ marginLeft: 'auto', fontSize: '0.7rem', opacity: 0.5 }}
                             />
                         )}
                     </div>

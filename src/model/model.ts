@@ -356,23 +356,49 @@ export const AdventuringDaySchema = z.object({
 export type AdventuringDay = z.infer<typeof AdventuringDaySchema>
 
 // Phase 3: Event System
+export const DieRollSchema = z.object({
+    sides: z.number(),
+    value: z.number(),
+})
+export type DieRoll = z.infer<typeof DieRollSchema>
+
+export const RollResultSchema = z.object({
+    total: z.number(),
+    rolls: z.array(DieRollSchema),
+    modifiers: z.array(z.tuple([z.string(), z.number()])),
+    formula: z.string(),
+})
+export type RollResult = z.infer<typeof RollResultSchema>
+
 export const EventSchema = z.discriminatedUnion('type', [
     // Combat Events
     z.object({
         type: z.literal('ActionStarted'),
         actor_id: z.string(),
         action_id: z.string(),
+        decision_trace: z.record(z.string(), z.number()).optional(),
+    }),
+    z.object({
+        type: z.literal('ActionSkipped'),
+        actor_id: z.string(),
+        action_id: z.string(),
+        reason: z.string(),
     }),
     z.object({
         type: z.literal('AttackHit'),
         attacker_id: z.string(),
         target_id: z.string(),
         damage: z.number(),
+        attack_roll: RollResultSchema.optional(),
+        damage_roll: RollResultSchema.optional(),
+        target_ac: z.number().optional(),
     }),
     z.object({
         type: z.literal('AttackMissed'),
         attacker_id: z.string(),
         target_id: z.string(),
+        attack_roll: RollResultSchema.optional(),
+        target_ac: z.number().optional(),
     }),
     z.object({
         type: z.literal('DamageTaken'),
@@ -472,7 +498,8 @@ export const EventSchema = z.discriminatedUnion('type', [
     z.object({
         type: z.literal('EncounterEnded'),
         winner: z.string().optional(),
-        rounds: z.number(),
+        reason: z.string().optional(),
+        rounds: z.number().optional(),
     }),
 
     // Custom/Other

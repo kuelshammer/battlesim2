@@ -1,6 +1,5 @@
 use crate::model::{Creature, MonsterRole, Action, DiceFormula};
 use crate::combat_stats::CombatantStats;
-use crate::dice_reconstruction::{reconstruct_hp, reconstruct_damage};
 
 pub fn detect_role(creature: &Creature, encounter_total_hp: f64, party_dpr: f64) -> MonsterRole {
     // 🐜 Minion: HP < 20% of Party DPR, Count >= 4

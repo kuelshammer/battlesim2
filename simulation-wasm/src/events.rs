@@ -19,11 +19,19 @@ pub struct RollResult {
 
 /// Comprehensive event enum covering all combat interactions
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type")]
 pub enum Event {
     // Combat Events
     ActionStarted {
         actor_id: String,
         action_id: String,
+        #[serde(default)]
+        decision_trace: HashMap<String, f64>,
+    },
+    ActionSkipped {
+        actor_id: String,
+        action_id: String,
+        reason: String,
     },
     AttackHit {
         attacker_id: String,
@@ -31,11 +39,13 @@ pub enum Event {
         damage: f64,
         attack_roll: Option<RollResult>,
         damage_roll: Option<RollResult>,
+        target_ac: f64,
     },
     AttackMissed {
         attacker_id: String,
         target_id: String,
         attack_roll: Option<RollResult>,
+        target_ac: f64,
     },
     DamageTaken {
         target_id: String,
@@ -186,6 +196,7 @@ impl Event {
     pub fn get_source_id(&self) -> Option<String> {
         match self {
             Event::ActionStarted { actor_id, .. } => Some(actor_id.clone()),
+            Event::ActionSkipped { actor_id, .. } => Some(actor_id.clone()),
             Event::AttackHit { attacker_id, .. } => Some(attacker_id.clone()),
             Event::AttackMissed { attacker_id, .. } => Some(attacker_id.clone()),
             Event::SpellCast { caster_id, .. } => Some(caster_id.clone()),
@@ -245,6 +256,7 @@ impl Event {
     pub fn get_type(&self) -> &'static str {
         match self {
             Event::ActionStarted { .. } => "ActionStarted",
+            Event::ActionSkipped { .. } => "ActionSkipped",
             Event::AttackHit { .. } => "AttackHit",
             Event::AttackMissed { .. } => "AttackMissed",
             Event::DamageTaken { .. } => "DamageTaken",
@@ -300,19 +312,42 @@ impl Event {
             Event::ActionStarted {
                 actor_id: _,
                 action_id,
-            } => Some(format!(
-                "    - Uses Action: {}",
-                action_id.split('-').next_back().unwrap_or(action_id)
-            )),
+                decision_trace,
+            } => {
+                let mut output = format!(
+                    "    - Uses Action: {}",
+                    action_id.split('-').next_back().unwrap_or(action_id)
+                );
+
+                if !decision_trace.is_empty() {
+                    let mut scores: Vec<_> = decision_trace.iter().collect();
+                    scores.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+                    output.push_str("\n      [AI Trace: ");
+                    let debug_scores: Vec<_> = scores
+                        .iter()
+                        .take(4)
+                        .map(|(name, score)| format!("{}: {:.1}", name, score))
+                        .collect();
+                    output.push_str(&debug_scores.join(", "));
+                    if scores.len() > 4 {
+                        output.push_str(", ...");
+                    }
+                    output.push_str("]");
+                }
+
+                Some(output)
+            }
             Event::AttackHit {
                 attacker_id: _,
                 target_id,
                 damage,
                 attack_roll,
                 damage_roll,
+                target_ac,
             } => {
                 let attack_details = if let Some(roll) = attack_roll {
-                    format!(" (Roll: {} = {:.0} vs AC)", roll.formula, roll.total)
+                    format!(" (Roll: {} = {:.0} vs AC {:.0})", roll.formula, roll.total, target_ac)
                 } else {
                     "".to_string()
                 };
@@ -334,9 +369,10 @@ impl Event {
                 attacker_id: _,
                 target_id,
                 attack_roll,
+                target_ac,
             } => {
                 let attack_details = if let Some(roll) = attack_roll {
-                    format!(" (Roll: {} = {:.0} vs AC)", roll.formula, roll.total)
+                    format!(" (Roll: {} = {:.0} vs AC {:.0})", roll.formula, roll.total, target_ac)
                 } else {
                     "".to_string()
                 };
@@ -715,6 +751,7 @@ mod tests {
             damage: 10.0,
             attack_roll: None,
             damage_roll: None,
+            target_ac: 15.0,
         };
 
         assert_eq!(event.get_source_id(), Some("attacker".to_string()));
@@ -735,6 +772,7 @@ mod tests {
             damage: 10.0,
             attack_roll: None,
             damage_roll: None,
+            target_ac: 15.0,
         };
 
         assert_eq!(event.get_type(), "AttackHit");

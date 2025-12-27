@@ -8,21 +8,17 @@ mod tests {
         use crate::events::{RollResult, DieRoll};
 
         let event = Event::AttackHit {
-            attacker_id: "attacker".to_string(),
-            target_id: "target".to_string(),
+            attacker_id: "a".to_string(),
+            target_id: "b".to_string(),
             damage: 10.0,
             attack_roll: Some(RollResult {
-                total: 20.0,
-                rolls: vec![DieRoll { sides: 20, value: 15 }],
-                modifiers: vec![("Base".to_string(), 5.0)],
+                total: 15.0,
+                rolls: vec![DieRoll { sides: 20, value: 10 }],
+                modifiers: vec![("Str".to_string(), 5.0)],
                 formula: "1d20+5".to_string(),
             }),
-            damage_roll: Some(RollResult {
-                total: 10.0,
-                rolls: vec![DieRoll { sides: 8, value: 5 }],
-                modifiers: vec![("Base".to_string(), 5.0)],
-                formula: "1d8+5".to_string(),
-            }),
+            damage_roll: None,
+            target_ac: 14.0,
         };
 
         let json = to_string(&event).unwrap();

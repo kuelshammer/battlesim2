@@ -278,30 +278,6 @@ impl UserInteractionManager {
             display_manager.get_display_results(&parameters.players, &parameters.timeline, parameters.iterations)
         };
 
-        // Auto-simulate if enabled and no cached results
-        let simulation_id = if self.config.auto_simulate_on_change && display_result.results.is_none() {
-            // Check if we're under the concurrent limit
-            let state = self.state.lock().unwrap();
-            if state.active_simulations.len() < self.config.max_concurrent_simulations {
-                drop(state);
-                
-                match self.start_background_simulation(&parameters, SimulationPriority::Normal) {
-                    Ok(sim_id) => {
-                        messages.push("Background simulation started".to_string());
-                        Some(sim_id)
-                    },
-                    Err(e) => {
-                        messages.push(format!("Failed to start simulation: {}", e));
-                        None
-                    }
-                }
-            } else {
-                messages.push("Maximum concurrent simulations reached".to_string());
-                None
-            }
-        } else {
-            None
-        };
 
         // Auto-simulate if enabled and no cached results
         let simulation_id = if self.config.auto_simulate_on_change && display_result.results.is_none() {

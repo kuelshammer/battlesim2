@@ -145,9 +145,10 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
             
             let val = sign * term_total;
             let mut modifiers = Vec::new();
-            if let Some(n) = name {
-                modifiers.push((n, val));
-            }
+            // ALWAYS add to modifiers, even if no bracket name exists
+            // Use the roll result as the value, and the term string as the name if missing
+            let modifier_name = name.unwrap_or_else(|| cleaned_term.to_string());
+            modifiers.push((modifier_name, val));
             
             return (val, term_rolls, modifiers);
         }
@@ -155,9 +156,9 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
 
     let val = sign * cleaned_term.parse::<f64>().unwrap_or(0.0);
     let mut modifiers = Vec::new();
-    if let Some(n) = name {
-        modifiers.push((n, val));
-    }
+    let modifier_name = name.unwrap_or_else(|| cleaned_term.to_string());
+    modifiers.push((modifier_name, val));
+    
     (val, Vec::new(), modifiers)
 }
 

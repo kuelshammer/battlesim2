@@ -272,7 +272,7 @@ impl BackgroundSimulationEngine {
         }
 
         // Create final result
-        let execution_time = start_time.elapsed().as_millis() as u64;
+        let _execution_time = start_time.elapsed().as_millis() as u64;
         
         if error_message.is_none() {
             success = true;

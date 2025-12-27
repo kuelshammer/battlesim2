@@ -555,9 +555,10 @@ impl Creature {
         // Add spell slots
         if let Some(slots) = &self.spell_slots {
             for (level_str, count) in slots {
-                // Parse level string "1", "2", etc.
-                if let Ok(level) = level_str.parse::<u8>() {
-                    let resource_type = ResourceType::SpellSlot; // Use resources::ResourceType
+                // Try to extract digit from string (e.g. "1st" -> 1)
+                let cleaned_level = level_str.chars().filter(|c| c.is_digit(10)).collect::<String>();
+                if let Ok(level) = cleaned_level.parse::<u8>() {
+                    let resource_type = ResourceType::SpellSlot; 
                     ledger.register_resource(
                         resource_type,
                         Some(&level.to_string()),

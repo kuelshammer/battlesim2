@@ -3,6 +3,7 @@ import { Event, RollResult } from "./model";
 export class LogFormatter {
     static getUnitName(id: string, names: Record<string, string>): string {
         if (names[id]) return names[id];
+
         // Try UUID prefix (36 chars) if ID looks like UUID-Suffix
         if (id.length > 36 && id[36] === '-') {
             const baseId = id.substring(0, 36);
@@ -10,39 +11,47 @@ export class LogFormatter {
                 return names[baseId];
             }
         }
+
+        // Try UUID suffix (36 chars) if ID looks like Prefix-UUID
+        // This handles cases from WASM backend like "step0-m-0-3-UUID" or "p-1-0-UUID"
+        if (id.length > 36) {
+            const suffix = id.substring(id.length - 36);
+            if (names[suffix]) {
+                return names[suffix];
+            }
+        }
+
         return id;
     }
 
-    static formatRollResult(result: RollResult): string {
-        const rolls = result.rolls.map(r => r.value).join(', ');
-        
-        // Find d20 or base die roll
-        const d20Roll = result.modifiers.find(([name]) => name === 'd20');
-        const otherMods = result.modifiers
-            .filter(([name]) => name !== 'd20' && name !== 'Base' && name !== 'Critical')
-            .map(([name, val]) => `${val >= 0 ? '+ ' : '- '}${Math.abs(val)} (${name})`)
-            .join(' ');
-        
-        // Base value (like static damage modifier)
-        const baseMod = result.modifiers.find(([name]) => name === 'Base');
-        let baseModStr = '';
-        if (baseMod && baseMod[1] !== 0) {
-            // If it's the only mod besides d20/dice, we might just call it a modifier or its name
-            // But usually 'Base' comes from DiceFormula::Value
+    static formatRollResult(result: RollResult, targetAc?: number): string {
+        // Build the value breakdown (e.g. "12 + 7 + 2")
+        const valueBreakdown = result.modifiers
+            .map(([name, val], index) => {
+                const prefix = index === 0 ? (val < 0 ? '-' : '') : (val < 0 ? ' - ' : ' + ');
+                return `${prefix}${Math.abs(val)}`;
+            })
+            .join('');
+
+        // Prettify formula: "1d20+3[PB]" -> "1d20 + 3[PB]"
+        const prettyFormula = result.formula
+            .replace(/([+\-])/g, ' $1 ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        let output = `${prettyFormula} = ${valueBreakdown} = ${result.total}`;
+
+        if (targetAc !== undefined && targetAc > 0) {
+            const isHit = result.total >= targetAc;
+            output += ` vs. AC ${targetAc} ==> ${isHit ? 'HIT' : 'miss'}`;
         }
 
-        const dicePart = result.formula.split(/[+\-\[]/)[0];
-        let output = `${dicePart} [${rolls}]`;
-        if (otherMods) {
-            output += ` ${otherMods}`;
-        }
-        output += ` = ${result.total}`;
-        
         return output;
     }
 
-    static toSummary(event: Event, names: Record<string, string>): string {
+    static toSummary(event: Event, names: Record<string, string>, actionNames: Record<string, string> = {}): string {
         const getName = (id: string) => this.getUnitName(id, names);
+        const getActionName = (id: string) => actionNames[id] || id;
 
         switch (event.type) {
             case 'AttackHit':
@@ -52,9 +61,11 @@ export class LogFormatter {
             case 'TurnStarted':
                 return `${getName(event.unit_id)} starts turn (Round ${event.round_number}).`;
             case 'ActionStarted':
-                return `${getName(event.unit_id)} uses action: ${event.action_name}.`;
+                return `${getName(event.actor_id)} uses action: ${getActionName(event.action_id)}.`;
+            case 'ActionSkipped':
+                return `⚠️ ${getName(event.actor_id)} skipped ${getActionName(event.action_id)}: ${event.reason}`;
             case 'DamageTaken':
-                return `${getName(event.target_id)} takes ${event.amount} damage.`;
+                return `${getName(event.target_id)} takes ${event.damage} damage.`;
             case 'HealingApplied':
                 return `${getName(event.target_id)} is healed for ${event.amount} HP.`;
             case 'UnitDied':
@@ -62,33 +73,43 @@ export class LogFormatter {
             case 'RoundStarted':
                 return `--- Round ${event.round_number} ---`;
             case 'SpellCast':
-                return `${getName(event.unit_id)} casts ${event.spell_name} on ${getName(event.target_id)}.`;
+                return `${getName(event.caster_id)} casts ${getActionName(event.spell_id)}.`;
             case 'BuffApplied':
-                return `${getName(event.target_id)} gains ${event.buff_name}.`;
+                return `${getName(event.target_id)} gains ${getActionName(event.buff_id)}.`;
             case 'ConditionAdded':
                 return `${getName(event.target_id)} is ${event.condition}.`;
             case 'ConditionRemoved':
                 return `${getName(event.target_id)} is no longer ${event.condition}.`;
             case 'EncounterEnded':
-                return `Encounter ended after ${event.rounds} rounds. Winner: ${event.winner || 'None'}.`;
+                return `Encounter ended. Winner: ${event.winner || 'None'}.`;
             default:
-                return event.type;
+                return (event as any).type;
         }
     }
 
-    static toDetails(event: Event, names: Record<string, string>): string {
+    static toDetails(event: Event, names: Record<string, string>, actionNames: Record<string, string> = {}): string {
         const getName = (id: string) => this.getUnitName(id, names);
 
         switch (event.type) {
             case 'AttackHit': {
-                let details = `Attack Roll: ${event.attack_roll ? this.formatRollResult(event.attack_roll) : 'N/A'}`;
+                let details = `Attack Roll: ${event.attack_roll ? this.formatRollResult(event.attack_roll, event.target_ac) : 'N/A'}`;
                 if (event.damage_roll) {
                     details += `\nDamage: ${this.formatRollResult(event.damage_roll)}`;
                 }
                 return details;
             }
             case 'AttackMissed':
-                return `Attack Roll: ${event.attack_roll ? this.formatRollResult(event.attack_roll) : 'N/A'}`;
+                return `Attack Roll: ${event.attack_roll ? this.formatRollResult(event.attack_roll, event.target_ac) : 'N/A'}`;
+            case 'ActionStarted': {
+                if (!event.decision_trace || Object.keys(event.decision_trace).length === 0) {
+                    return "No decision trace available.";
+                }
+                const scores = Object.entries(event.decision_trace)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, score]) => `${name}: ${score.toFixed(1)}`)
+                    .join("\n");
+                return `AI Decision Trace (Scores):\n${scores}`;
+            }
             default:
                 return JSON.stringify(event, null, 2);
         }

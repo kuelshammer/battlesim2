@@ -157,3 +157,84 @@ fn test_black_dragon_auto_balance() {
         "Expected Grade A, B or C, got {:?}", final_analysis.safety_grade
     );
 }
+
+#[test]
+fn test_smart_balance_burst_vs_slog() {
+    use simulation_wasm::auto_balancer::AutoBalancer;
+    use simulation_wasm::model::*;
+    use simulation_wasm::enums::*;
+
+    // 1. Setup: Glass Cannon Players (High Power, Low Vitality)
+    // Low HP but high spell slot value.
+    let wizard = Creature {
+        id: "wizard".to_string(), name: "Wizard".to_string(), hp: 20, ac: 12, count: 1.0,
+        arrival: None, mode: "player".to_string(), speed_fly: None, save_bonus: 2.0,
+        str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
+        int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
+        con_save_advantage: None, save_advantage: None,
+        initiative_bonus: DiceFormula::Value(2.0), initiative_advantage: false,
+        actions: vec![
+            Action::Atk(AtkAction {
+                id: "fireball".to_string(), name: "Fireball".to_string(), action_slot: None,
+                cost: vec![], requirements: vec![], tags: vec![],
+                freq: Frequency::Limited { reset: "lr".to_string(), uses: 1 },
+                condition: ActionCondition::Default, targets: 1,
+                dpr: DiceFormula::Value(28.0), to_hit: DiceFormula::Value(7.0),
+                target: EnemyTarget::EnemyWithMostHP, use_saves: Some(true),
+                half_on_save: Some(true), rider_effect: None,
+            })
+        ],
+        triggers: vec![],
+        spell_slots: Some([("3".to_string(), 1)].into()), // High Power
+        class_resources: None, hit_dice: Some("1d6".to_string()), con_modifier: Some(0.0),
+    };
+
+    // 2. Setup: High Damage Monster (Boss)
+    let glass_boss = Creature {
+        id: "boss".to_string(), name: "Glass Boss".to_string(), hp: 100, ac: 15, count: 1.0,
+        arrival: None, mode: "monster".to_string(), speed_fly: None, save_bonus: 4.0,
+        str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
+        int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
+        con_save_advantage: None, save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0), initiative_advantage: false,
+        actions: vec![
+            Action::Atk(AtkAction {
+                id: "smash".to_string(), name: "Smash".to_string(), action_slot: None,
+                cost: vec![], requirements: vec![], tags: vec![],
+                freq: Frequency::Static("at will".to_string()),
+                condition: ActionCondition::Default, targets: 1,
+                dpr: DiceFormula::Value(30.0), // Can easily one-shot the wizard (20 HP)
+                to_hit: DiceFormula::Value(10.0),
+                target: EnemyTarget::EnemyWithLeastHP, use_saves: Some(false),
+                half_on_save: None, rider_effect: None,
+            })
+        ],
+        triggers: vec![], spell_slots: None, class_resources: None,
+        hit_dice: None, con_modifier: None,
+    };
+
+    let mut balancer = AutoBalancer::new();
+    balancer.target_simulations = 101; 
+    balancer.max_iterations = 10;
+    
+    let timeline = vec![TimelineStep::Combat(Encounter {
+        monsters: vec![glass_boss.clone()],
+        players_surprised: None, monsters_surprised: None,
+        players_precast: None, monsters_precast: None,
+        target_role: TargetRole::Boss,
+    })];
+
+    // Initial run will likely be a disaster (Wizard dies round 1)
+    let (optimized, _) = balancer.balance_encounter(vec![wizard], vec![glass_boss.clone()], timeline, 0);
+
+    // Assertions for "Burst Risk" Fix:
+    // In low-vitality situation, the balancer should have preferred nerfing DAMAGE over HP.
+    
+    let opt_boss = &optimized[0];
+    if let Action::Atk(a) = &opt_boss.actions[0] {
+        if let DiceFormula::Value(dpr) = a.dpr {
+            println!("Optimized Boss DPR: {}", dpr);
+            assert!(dpr < 30.0, "Boss damage should have been nerfed due to burst risk");
+        }
+    }
+}

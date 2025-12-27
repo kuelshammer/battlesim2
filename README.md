@@ -1,4 +1,8 @@
 # BattleSim
+
+<!-- AI AGENT INSTRUCTION: BEFORE STARTING WORK, YOU MUST READ AGENTS.md FOR BEHAVIORAL PROTOCOLS AND TASK MANAGEMENT RULES. -->
+<!-- THIS REPO USES THE BEADS ISSUE TRACKER (bd command) FOR TASK MANAGEMENT. -->
+
 This is a simple 5e encounter simulator. It is showcased in the following Youtube video: https://www.youtube.com/watch?v=A8FNVkFuhXI
 
 ## How it works

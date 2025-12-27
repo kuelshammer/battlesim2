@@ -155,8 +155,24 @@ impl ActionExecutionEngine {
             .collect();
         round_snapshots.push(final_snapshot);
 
+        // Record encounter end event
+        let winner = self.determine_winner();
+        self.context.record_event(Event::EncounterEnded {
+            winner: winner.clone(),
+            reason: if self.context.round_number >= MAX_ROUNDS { 
+                "Maximum rounds reached".to_string() 
+            } else if total_turns >= MAX_TURNS {
+                "Maximum turns reached".to_string()
+            } else { 
+                "Combat resolved".to_string() 
+            },
+        });
+        
+        // Process final events to ensure EncounterEnded moves to history
+        let _ = self.context.process_events();
+
         // Generate final results
-        self.generate_encounter_results(total_turns, round_snapshots)
+        self.generate_encounter_results(total_turns, round_snapshots, winner)
     }
 
     /// Execute a single turn for a combatant
@@ -171,13 +187,13 @@ impl ActionExecutionEngine {
 
         // For now, use a simple AI that executes available attacks
         // In a full implementation, this would use the combatant's AI or player input
-        let actions = self.select_actions_for_combatant(combatant_id);
+        let (actions, decision_trace) = self.select_actions_for_combatant(combatant_id);
 
         let mut action_results = Vec::new();
         let mut effects_applied = Vec::new();
 
         for action in actions {
-            let action_result = self.execute_action_with_reactions(combatant_id, action);
+            let action_result = self.execute_action_with_reactions(combatant_id, action, Some(decision_trace.clone()));
 
             // Collect effect IDs from events
             for event in &action_result.events_generated {
@@ -215,6 +231,7 @@ impl ActionExecutionEngine {
         &mut self,
         actor_id: &str,
         action: Action,
+        decision_trace: Option<HashMap<String, f64>>,
     ) -> ActionResult {
         let action_id = action.base().id.clone();
 
@@ -270,6 +287,7 @@ impl ActionExecutionEngine {
         self.context.record_event(Event::ActionStarted {
             actor_id: actor_id.to_string(),
             action_id: action_id.clone(),
+            decision_trace: decision_trace.unwrap_or_default(),
         });
 
         // Process action and generate events (placeholder implementation)
@@ -414,9 +432,14 @@ impl ActionExecutionEngine {
     }
 
     /// Select actions for a combatant (basic AI implementation)
-    fn select_actions_for_combatant(&self, combatant_id: &str) -> Vec<Action> {
-        let Some(combatant_state) = self.context.get_combatant(combatant_id) else {
-            return Vec::new(); // Combatant not found or dead
+    fn select_actions_for_combatant(&mut self, combatant_id: &str) -> (Vec<Action>, HashMap<String, f64>) {
+        let mut decision_trace = HashMap::new();
+        // Clone the actions list to avoid borrowing self.context while iterating
+        let actions = {
+            let Some(combatant_state) = self.context.get_combatant(combatant_id) else {
+                return (Vec::new(), decision_trace);
+            };
+            combatant_state.base_combatant.creature.actions.clone()
         };
 
         // Track which action slots have been used
@@ -424,74 +447,115 @@ impl ActionExecutionEngine {
         let mut used_slots: HashSet<Option<i32>> = HashSet::new();
         let mut selected_actions = Vec::new();
 
-        // Score all valid actions
-        let mut scored_actions: Vec<(Action, f64)> = Vec::new();
+        // Score all valid actions and keep track of their original index for priority
+        let mut valid_actions: Vec<(usize, Action, f64)> = Vec::new();
 
-        for action in combatant_state.base_combatant.creature.actions.iter() {
+        for (index, action) in actions.into_iter().enumerate() {
             // 1. Check requirements
-            if !validation::check_action_requirements(action, &self.context, combatant_id) {
+            if !validation::check_action_requirements(&action, &self.context, combatant_id) {
+                if index < 3 {
+                    self.context.record_event(Event::ActionSkipped {
+                        actor_id: combatant_id.to_string(),
+                        action_id: action.base().id.clone(),
+                        reason: "Requirements not met".to_string(),
+                    });
+                }
                 continue;
             }
 
             // 1.5 Check frequency limit
-            match &action.base().freq {
-                crate::model::Frequency::Static(s) if s == "at will" => {}
+            let is_frequent = match &action.base().freq {
+                crate::model::Frequency::Static(s) if s == "at will" => true,
                 _ => {
+                    let combatant_state = self.context.get_combatant(combatant_id).unwrap();
                     let uses = *combatant_state
                         .resources
                         .current
                         .get(&action.base().id)
                         .unwrap_or(&0.0);
-                    if uses < 1.0 {
-                        continue;
-                    }
+                    uses >= 1.0
                 }
+            };
+
+            if !is_frequent {
+                if index < 3 {
+                    self.context.record_event(Event::ActionSkipped {
+                        actor_id: combatant_id.to_string(),
+                        action_id: action.base().id.clone(),
+                        reason: "Frequency limit reached".to_string(),
+                    });
+                }
+                continue;
             }
 
             // 2. Check affordability (costs)
             if !self.context.can_afford(&action.base().cost, combatant_id) {
+                if index < 3 {
+                    self.context.record_event(Event::ActionSkipped {
+                        actor_id: combatant_id.to_string(),
+                        action_id: action.base().id.clone(),
+                        reason: "Insufficient resources (slots/actions)".to_string(),
+                    });
+                }
                 continue;
             }
 
             // 3. Score the action based on combat situation
-            let score = self.score_action(action, combatant_id);
+            let score = self.score_action(&action, combatant_id);
+            decision_trace.insert(action.base().name.clone(), score);
+            
+            // For the AI to pick it, the score must be > 0 (it must be useful)
             if score > 0.0 {
-                scored_actions.push((action.clone(), score));
+                valid_actions.push((index, action.clone(), score));
+            } else if index < 3 {
+                self.context.record_event(Event::ActionSkipped {
+                    actor_id: combatant_id.to_string(),
+                    action_id: action.base().id.clone(),
+                    reason: "AI determined no benefit (e.g. already concentrating/no targets)".to_string(),
+                });
             }
         }
 
-        // Sort by score (highest first)
-        scored_actions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        // Sort by original index (lowest index = highest priority)
+        // This ensures the "Strategy & Priority" order from the UI is respected.
+        valid_actions.sort_by_key(|a| a.0);
 
         // Select best action per slot type
-        for (action, _score) in scored_actions {
-            let slot = action.base().action_slot;
+        for (_index, action, _score) in valid_actions {
+            let base_slot = action.base().action_slot;
+            
+            // Normalize slot: Action=0, Bonus Action=1, Reaction=4
+            // D&D 5e: Action=0, Bonus Action=1.
+            // MM monsters use 0 for their main actions.
+            let slot = match base_slot {
+                None => Some(0), 
+                other => other,
+            };
 
-            // Skip if we've already selected an action for this slot
+            // Skip if we've already selected an action for this slot (e.g. already picked an Action)
             if used_slots.contains(&slot) {
                 continue;
             }
 
+            // EXTRA CHECK: Since we are sorting by index, the FIRST valid action we encounter
+            // for a slot SHOULD be the one we pick.
+
             used_slots.insert(slot);
             selected_actions.push(action);
 
-            // D&D 5e: Limit to 1 action per turn (plus bonus action)
-            if selected_actions.len() >= 1 {
-                break;
-            }
+            // D&D 5e: Limit to one action per distinct slot type per turn.
+            // We continue the loop to check for other slots (like Bonus Action).
         }
 
-        selected_actions
+        (selected_actions, decision_trace)
     }
 
     /// Score an action based on combat situation
     fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
         // Get combatant's team (mode)
-        let actor_mode = self
-            .context
-            .get_combatant(combatant_id)
-            .map(|c| c.base_combatant.creature.mode.clone())
-            .unwrap_or_default();
+        let combatant = self.context.get_combatant(combatant_id).unwrap();
+        let actor_mode = combatant.base_combatant.creature.mode.clone();
+        let is_concentrating = combatant.concentration.is_some();
 
         match action {
             Action::Atk(atk) => {
@@ -509,7 +573,7 @@ impl ActionExecutionEngine {
                 // Attacks are valuable
                 let base_damage = crate::dice::average(&atk.dpr);
                 let num_targets = atk.targets as f64;
-                base_damage * num_targets * 10.0 // * 10 to scale up
+                (base_damage * num_targets * 10.0).max(1.0) // Ensure at least 1.0 if valid
             }
             Action::Heal(heal) => {
                 // Only valuable if allies are injured
@@ -521,18 +585,37 @@ impl ActionExecutionEngine {
                     .collect();
                 let injured_allies = allies
                     .iter()
-                    .filter(|c| c.current_hp < c.base_combatant.creature.hp / 2)
+                    .filter(|c| c.current_hp < c.base_combatant.creature.hp)
                     .count();
 
                 if injured_allies > 0 {
                     let heal_amount = crate::dice::average(&heal.amount);
-                    heal_amount * injured_allies as f64 * 15.0 // Higher priority
+                    (heal_amount * injured_allies as f64 * 15.0).max(10.0)
                 } else {
                     0.0 // No one needs healing
                 }
             }
-            Action::Buff(_buff) => {
-                // Valuable at start of combat or if targets don't have buff yet
+            Action::Buff(buff) => {
+                // Don't cast concentration buffs if already concentrating
+                if is_concentrating && buff.buff.concentration {
+                    return 0.0;
+                }
+
+                // Check if any allies lack this buff
+                let _buff_name = buff.buff.display_name.as_ref().unwrap_or(&buff.name);
+                let allies = self.context.get_alive_combatants();
+                let _allies_needing_buff = allies.iter()
+                    .filter(|c| c.base_combatant.creature.mode == actor_mode)
+                    .filter(|c| !c.base_combatant.creature.actions.iter().any(|_| {
+                        // Check if combatant already has this buff
+                        // Simplified check: Does combatant have a buff with the same name?
+                        // We would need access to active_effects here or check buffs map
+                        false // Placeholder
+                    }))
+                    .count();
+                
+                // If the buff targets others, we should check if others are available
+                // For now, assume it's always valid if round is early
                 let round = self.context.round_number;
                 if round <= 2 {
                     50.0 // High priority in early rounds
@@ -540,7 +623,12 @@ impl ActionExecutionEngine {
                     20.0 // Lower priority later
                 }
             }
-            Action::Debuff(_debuff) => {
+            Action::Debuff(debuff) => {
+                // Don't cast concentration debuffs if already concentrating
+                if is_concentrating && debuff.buff.concentration {
+                    return 0.0;
+                }
+
                 // Valuable against strong enemies
                 let enemies: Vec<_> = self
                     .context
@@ -556,25 +644,25 @@ impl ActionExecutionEngine {
                     10.0
                 }
             }
-            Action::Template(_) => {
-                // Check if already concentrating
-                let is_concentrating = self
-                    .context
-                    .get_combatant(combatant_id)
-                    .map(|c| c.concentration.is_some())
-                    .unwrap_or(false);
-
+            Action::Template(tmpl) => {
+                // Check if template is concentration
+                // Note: We don't have easy access to template tags here without resolving
+                // But we can check for common concentration spell names or just rely on the concentration flag
+                // if it was set in the UI. 
+                // For now, use the same logic as Template score but check for concentration more carefully
                 if is_concentrating {
-                    // If already concentrating, only use template if it's very important or a bonus action
-                    // For now, drastically reduce score
+                    // Check if this specific template name usually requires concentration
+                    let name = &tmpl.template_options.template_name;
+                    if name == "Bless" || name == "Bane" || name == "Haste" || name == "Hypnotic Pattern" {
+                        return 0.0;
+                    }
                     5.0
                 } else {
-                    // Valuable at start of combat (like Buffs)
                     let round = self.context.round_number;
                     if round <= 2 {
-                        100.0 // Very high priority in early rounds!
+                        100.0
                     } else {
-                        40.0 // Lower priority later, but still decent
+                        40.0
                     }
                 }
             }
@@ -630,8 +718,8 @@ impl ActionExecutionEngine {
         &self,
         total_turns: u32,
         round_snapshots: Vec<Vec<CombattantState>>,
+        winner: Option<String>,
     ) -> EncounterResult {
-        let winner = self.determine_winner();
         let event_history = self.context.event_bus.get_all_events().to_vec();
         let statistics = self.calculate_statistics(&event_history);
 
