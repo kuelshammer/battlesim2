@@ -4,7 +4,7 @@ expression: data
 ---
 {
   "description": "Precision (Monster) beats Damage (Player) in this setup",
-  "median_win_rate": 0.0,
-  "median_survivors": 0,
+  "median_win_rate": 100.0,
+  "median_survivors": 1,
   "party_size": 1
 }

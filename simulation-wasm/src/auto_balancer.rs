@@ -89,10 +89,11 @@ impl AutoBalancer {
         }
         
         let runs = run_event_driven_simulation_rust(
-            players.to_vec(), 
-            modified_timeline, 
-            self.target_simulations, 
-            false
+            players.to_vec(),
+            modified_timeline,
+            self.target_simulations,
+            false,
+            None,
         );
         let raw_results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
         

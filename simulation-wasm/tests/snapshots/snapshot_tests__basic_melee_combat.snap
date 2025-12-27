@@ -4,7 +4,7 @@ expression: data
 ---
 {
   "description": "Fast initiative should dominate in mirror match",
-  "median_win_rate": 90.0,
+  "median_win_rate": 100.0,
   "median_survivors": 1,
   "party_size": 1
 }

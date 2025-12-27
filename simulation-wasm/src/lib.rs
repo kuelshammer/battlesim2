@@ -1,4 +1,5 @@
 pub mod dice;
+pub mod rng;
 pub mod actions;
 pub mod targeting;
 pub mod enums;
@@ -113,7 +114,7 @@ pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usiz
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
     // Extract results from runs for backward compatibility
     let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
@@ -330,16 +331,28 @@ pub fn run_event_driven_simulation_rust(
     timeline: Vec<TimelineStep>,
     iterations: usize,
     _log_enabled: bool,
+    seed: Option<u64>,
 ) -> Vec<crate::model::SimulationRun> {
     let mut all_runs = Vec::new();
 
     for i in 0..iterations {
+        // If a seed is provided, use it with the iteration index for determinism
+        // This ensures each iteration is deterministic but different from others
+        if let Some(s) = seed {
+            crate::rng::seed_rng(s.wrapping_add(i as u64));
+        }
+
         let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
         let run = crate::model::SimulationRun {
             result,
             events,
         };
         all_runs.push(run);
+    }
+
+    // Clear the seeded RNG after simulation completes
+    if seed.is_some() {
+        crate::rng::clear_rng();
     }
 
     // Sort results by score (worst to best) with safe comparison

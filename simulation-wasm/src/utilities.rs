@@ -1,14 +1,17 @@
 use crate::dice;
 use crate::model::Creature;
-use rand::Rng; // Import the dice module
+use crate::rng; // Import rng module
+use rand::Rng; // Import Rng trait for gen_range
 
 pub fn roll_initiative(c: &Creature) -> f64 {
+    let mut rng = rng::get_rng();
+
     let roll = if c.initiative_advantage {
-        let r1 = rand::thread_rng().gen_range(1..=20);
-        let r2 = rand::thread_rng().gen_range(1..=20);
+        let r1 = rng.gen_range(1..=20);
+        let r2 = rng.gen_range(1..=20);
         r1.max(r2) as f64
     } else {
-        rand::thread_rng().gen_range(1..=20) as f64
+        rng.gen_range(1..=20) as f64
     };
 
     let bonus = dice::evaluate(&c.initiative_bonus, 1); // Use dice::evaluate with multiplier 1

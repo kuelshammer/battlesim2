@@ -1,6 +1,7 @@
 use crate::model::DiceFormula;
 use crate::events::{RollResult, DieRoll};
-use rand::Rng;
+use crate::rng;
+use rand::Rng; // Import Rng trait for gen_range
 
 pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
     match formula {
@@ -134,7 +135,7 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
             let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
             let sides = parts[1].parse::<i32>().unwrap_or(6);
 
-            let mut rng = rand::thread_rng();
+            let mut rng = rng::get_rng();
             let mut term_total = 0.0;
             let mut term_rolls = Vec::new();
             for _ in 0..(count * dice_multiplier as i32) {

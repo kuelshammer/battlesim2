@@ -47,8 +47,8 @@ struct SnapshotData {
 fn snapshot_basic_melee_combat() {
     let (players, timeline) = load_scenario("fast_init_PlayerA_wins.json");
 
-    // Run 101 iterations for decile analysis
-    let runs = run_event_driven_simulation_rust(players, timeline, 101, false);
+    // Run 101 iterations for decile analysis with fixed seed for determinism
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
     // Sort results (required for decile analysis)
@@ -76,7 +76,7 @@ fn snapshot_basic_melee_combat() {
 fn snapshot_damage_vs_precision() {
     let (players, timeline) = load_scenario("damage_vs_precision_MonsterB_wins.json");
 
-    let runs = run_event_driven_simulation_rust(players, timeline, 101, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
     results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
@@ -101,7 +101,7 @@ fn snapshot_damage_vs_precision() {
 fn snapshot_heavy_vs_consistent() {
     let (players, timeline) = load_scenario("heavy_vs_consistent_PlayerA_wins.json");
 
-    let runs = run_event_driven_simulation_rust(players, timeline, 101, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
     results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)

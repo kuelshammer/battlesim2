@@ -2,7 +2,8 @@ use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::dice;
 use crate::events::{DieRoll, Event, RollResult};
 use crate::model::{Action, AtkAction, Buff, BuffAction, DebuffAction, HealAction, TemplateAction};
-use rand::Rng;
+use crate::rng;
+use rand::Rng; // Import Rng trait for gen_range
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -237,7 +238,7 @@ impl ActionResolver {
 
         for target_id in targets {
             // 1. Perform saving throw
-            let mut rng = rand::thread_rng();
+            let mut rng = rng::get_rng();
             let roll = rng.gen_range(1..=20) as f64;
             let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
             let total_save = roll + save_bonus;
@@ -339,7 +340,7 @@ impl ActionResolver {
             // Perform saving throw for debuffs (bane)
             let mut should_apply = true;
             if template_name == "bane" {
-                let mut rng = rand::thread_rng();
+                let mut rng = rng::get_rng();
                 let roll = rng.gen_range(1..=20) as f64;
                 let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
                 let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
@@ -644,7 +645,7 @@ impl ActionResolver {
 
     /// Roll attack value
     fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str) -> AttackRollResult {
-        let mut rng = rand::thread_rng();
+        let mut rng = rng::get_rng();
         let natural_roll = rng.gen_range(1..=20);
         
         // Detailed roll for the bonus/modifiers

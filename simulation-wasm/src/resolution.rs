@@ -2,7 +2,8 @@ use crate::actions::get_attack_roll_result;
 use crate::dice;
 use crate::enums::*;
 use crate::model::*;
-use rand::Rng;
+use crate::rng;
+use rand::Rng; // Import Rng trait for gen_range
 use std::collections::HashMap;
 
 // Helper to update encounter stats
@@ -230,7 +231,7 @@ fn process_offensive_triggers(
                     let dc_val = a.save_dc;
                     let dc = dice::evaluate(&DiceFormula::Value(dc_val), 1);
                     let save_bonus = target.creature.save_bonus;
-                    let roll = rand::thread_rng().gen_range(1..=20) as f64;
+                    let roll = rng::get_rng().gen_range(1..=20) as f64;
 
                     if log_enabled {
                         log.push(format!("             -> Debuff {} vs {}: DC {:.0} vs Save {:.0} (Rolled {:.0} + {:.0})", 
@@ -1018,7 +1019,7 @@ fn apply_single_effect(
             }
 
             let save_bonus = base_save_bonus + bless_bonus - bane_penalty;
-            let roll = rand::thread_rng().gen_range(1..=20) as f64;
+            let roll = rng::get_rng().gen_range(1..=20) as f64;
 
             if log_enabled {
                 let display_name = a.buff.display_name.as_deref().unwrap_or(&a.name);

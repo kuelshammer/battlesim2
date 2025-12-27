@@ -161,7 +161,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     // Run 2511 iterations to match frontend and methodology (10 slices of 251 + 1 median)
     let iterations = 2511;
     println!("Running {} iterations for Adventuring Day: {}...", iterations, scenario_name);
-    let mut results = run_event_driven_simulation_rust(players, timeline, iterations, false);
+    let mut results = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
     // Sort results by score from worst to best performance
     results.sort_by(|a, b| calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal));
@@ -229,9 +229,9 @@ fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
     // If run_index is provided, run that many + 1 and pick the specific one
     // Otherwise, run a single simulation with logging enabled
     let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players, timeline, idx + 1, true)
+        run_event_driven_simulation_rust(players, timeline, idx + 1, true, None)
     } else {
-        run_event_driven_simulation_rust(players, timeline, 1, true)
+        run_event_driven_simulation_rust(players, timeline, 1, true, None)
     };
 
     if runs.is_empty() {
@@ -341,7 +341,7 @@ fn run_find_median(scenario_path: &PathBuf) {
     // Run 2511 iterations
     let iterations = 2511;
     println!("Running {} iterations...", iterations);
-    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
     // Results are sorted by score. Middle decile is around indices 1004-1506.
     // We want to find the run closest to the median of the MIDDLE decile.
@@ -446,9 +446,9 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
     // Run simulation
     let _idx = run_index.unwrap_or(0);
     let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players.clone(), timeline.clone(), idx + 1, true)
+        run_event_driven_simulation_rust(players.clone(), timeline.clone(), idx + 1, true, None)
     } else {
-        run_event_driven_simulation_rust(players.clone(), timeline.clone(), 1, true)
+        run_event_driven_simulation_rust(players.clone(), timeline.clone(), 1, true, None)
     };
 
     // Extract results and events from the runs
@@ -779,6 +779,7 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
             modified_timeline,
             iterations,
             false,
+            None,
         );
 
         // Extract results from runs
@@ -855,8 +856,8 @@ fn run_compare(scenario_a_path: &PathBuf, scenario_b_path: &PathBuf) {
     let iterations = 2511;
     println!("Running {} iterations for each scenario...\n", iterations);
 
-    let runs_a = run_event_driven_simulation_rust(players_a, timeline_a, iterations, false);
-    let runs_b = run_event_driven_simulation_rust(players_b, timeline_b, iterations, false);
+    let runs_a = run_event_driven_simulation_rust(players_a, timeline_a, iterations, false, None);
+    let runs_b = run_event_driven_simulation_rust(players_b, timeline_b, iterations, false, None);
 
     // Extract results from runs
     let results_a: Vec<SimulationResult> = runs_a.into_iter().map(|run| run.result).collect();
@@ -1098,7 +1099,7 @@ fn validate_creature(
 
 fn run_batch_log(scenario_path: &PathBuf, count: usize) {
     let (players, timeline, _) = load_scenario(scenario_path);
-    let runs = run_event_driven_simulation_rust(players, timeline, count, true);
+    let runs = run_event_driven_simulation_rust(players, timeline, count, true, None);
     let output = serde_json::json!({
         "runs": runs.iter().enumerate().map(|(i, run)| {
             serde_json::json!({

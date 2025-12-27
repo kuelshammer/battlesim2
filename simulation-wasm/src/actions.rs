@@ -1,7 +1,7 @@
 use crate::enums::*;
 use crate::model::*;
-// use crate::dice;
-use rand::Rng;
+use crate::rng;
+use rand::Rng; // Import Rng trait for gen_range
 use std::collections::{HashMap, HashSet};
 
 pub fn check_action_condition(
@@ -161,7 +161,7 @@ pub fn has_condition(c: &Combattant, condition: CreatureCondition) -> bool {
 
 // Helper to get effective attack roll considering advantage/disadvantage
 pub fn get_attack_roll_result(attacker: &Combattant) -> (f64, bool, bool) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rng::get_rng();
     let roll1 = rng.gen_range(1..=20) as f64;
     let roll2 = rng.gen_range(1..=20) as f64;
 

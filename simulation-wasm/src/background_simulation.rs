@@ -323,6 +323,7 @@ impl BackgroundSimulationEngine {
             parameters.timeline.clone(),
             1, // Single iteration
             false, // log_enabled
+            None,
         );
         
         runs.into_iter()

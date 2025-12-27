@@ -72,7 +72,7 @@ fn test_fast_simulation_iterations() {
     })];
 
     let iterations = 31;
-    let runs = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, false);
+    let runs = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, false, None);
 
     assert_eq!(runs.len(), iterations, "Should have exactly 31 runs");
 
