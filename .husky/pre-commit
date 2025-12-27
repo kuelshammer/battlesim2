@@ -1,0 +1,117 @@
+#!/bin/bash
+set -e
+
+echo "🔍 Pre-commit quality checks..."
+echo ""
+
+# Rust checks
+echo "🦀 Running Rust checks..."
+cd simulation-wasm
+
+# First check if code compiles (actual errors)
+echo "  → Checking compilation..."
+cargo check --quiet 2>&1 | grep -i "^error" && {
+    echo "❌ Code does not compile. Fix errors first."
+    exit 1
+} || echo "  ✓ Compilation check passed"
+
+# Then run clippy for warnings (non-blocking initially)
+echo "  → Running clippy..."
+if CLIPPY_OUTPUT=$(cargo clippy --quiet 2>&1); then
+    echo "  ✓ Clippy passed (no warnings)"
+else
+    echo "  ⚠️  Clippy warnings (non-blocking):"
+    echo "$CLIPPY_OUTPUT" | grep "warning:" | head -3 || echo "     (run 'cargo clippy' to see details)"
+    echo "  ⚠️  To enforce these warnings later, change -W to -D in pre-commit hook"
+fi
+
+# Check if cargo-audit is available
+if command -v cargo-audit &> /dev/null || cargo audit --version &> /dev/null 2>&1; then
+    echo "  → Running cargo audit..."
+    cargo audit --quiet || {
+        echo "  ⚠️  Security vulnerabilities detected. Review with: cd simulation-wasm && cargo audit"
+        # Don't fail on audit warnings, just warn
+    }
+else
+    echo "  ⚠️  cargo-audit not found (install with: cargo install cargo-audit)"
+fi
+
+cd ..
+echo ""
+
+# TypeScript/JavaScript checks
+echo "📝 Running TypeScript/JavaScript checks..."
+
+# ESLint
+if [ -f "node_modules/.bin/eslint" ]; then
+    echo "  → Running ESLint..."
+    npx eslint src/ --ext .ts,.tsx --max-warnings=0 || {
+        echo "❌ ESLint found errors. Fix with: npm run lint:fix"
+        exit 1
+    }
+else
+    echo "  ⚠️  ESLint not found, skipping..."
+fi
+
+# Prettier
+if [ -f "node_modules/.bin/prettier" ]; then
+    echo "  → Checking code formatting..."
+    npx prettier --check "src/**/*.{ts,tsx,scss,css}" || {
+        echo "❌ Code formatting issues. Fix with: npm run format"
+        exit 1
+    }
+else
+    echo "  ⚠️  Prettier not found, skipping..."
+fi
+
+echo ""
+
+# WASM size check
+if [ -f "simulation-wasm/pkg/simulation_wasm_bg.wasm" ]; then
+    echo "📦 Checking WASM size..."
+    # Get WASM file size (cross-platform)
+    if command -v stat &> /dev/null; then
+        WASM_SIZE=$(stat -f%z simulation-wasm/pkg/simulation_wasm_bg.wasm 2>/dev/null || stat -c%s simulation-wasm/pkg/simulation_wasm_bg.wasm 2>/dev/null || echo "0")
+    else
+        WASM_SIZE=$(wc -c < simulation-wasm/pkg/simulation_wasm_bg.wasm)
+    fi
+
+    # Convert to KB for display
+    WASM_SIZE_KB=$((WASM_SIZE / 1024))
+    echo "  → Current WASM size: ${WASM_SIZE_KB}KB"
+
+    # Baseline size (500KB - adjust after first real build)
+    BASELINE_SIZE_KB=500
+    THRESHOLD_PERCENT=10
+
+    # Alert if grew > 10% from baseline (but only if we have a real baseline)
+    if [ $WASM_SIZE_KB -gt 100 ]; then
+        if [ $WASM_SIZE_KB -gt $((BASELINE_SIZE_KB * (100 + THRESHOLD_PERCENT) / 100)) ]; then
+            echo "⚠️  WASM grew > ${THRESHOLD_PERCENT}% from ${BASELINE_SIZE_KB}KB baseline"
+            echo "   Consider: removing unused dependencies, enabling LTO, or wasm-opt"
+            # Don't fail the commit, just warn
+        fi
+    fi
+    echo ""
+fi
+
+# Run tests
+echo "🧪 Running tests..."
+echo "  → Rust tests..."
+cd simulation-wasm
+cargo test --quiet || {
+    echo "❌ Rust tests failed. Fix with: cd simulation-wasm && cargo test"
+    exit 1
+}
+cd ..
+
+echo "  → TypeScript tests..."
+if [ -f "package.json" ]; then
+    npm test 2>&1 || {
+        echo "❌ TypeScript tests failed."
+        exit 1
+    }
+fi
+
+echo ""
+echo "✅ All pre-commit checks passed!"

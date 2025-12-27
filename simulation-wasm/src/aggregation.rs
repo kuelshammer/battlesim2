@@ -161,7 +161,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
             
             // Simplified cleanup for brevity
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                c.final_state.buffs.retain(|_, b| b.source.as_ref().map_or(true, |s| !dead_ids.contains(s)));
+                c.final_state.buffs.retain(|_, b| b.source.as_ref().is_none_or(|s| !dead_ids.contains(s)));
             }
 
             aggregated_rounds.push(Round { team1: t1, team2: t2 });

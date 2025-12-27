@@ -1,14 +1,8 @@
 // Stub storage_manager module - functionality removed
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StorageManager {
     // Stub implementation
-}
-
-impl Default for StorageManager {
-    fn default() -> Self {
-        Self {}
-    }
 }
 
 impl StorageManager {

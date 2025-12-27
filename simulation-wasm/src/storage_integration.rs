@@ -5,15 +5,9 @@ pub struct StorageIntegration {
     // Stub implementation
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StorageIntegrationConfig {
     // Stub implementation
-}
-
-impl Default for StorageIntegrationConfig {
-    fn default() -> Self {
-        Self {}
-    }
 }
 
 impl StorageIntegration {

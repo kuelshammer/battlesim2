@@ -213,7 +213,7 @@ pub fn run_simulation_with_callback(
 
     // FINAL ANALYSIS
     // Combine results and events into a single vector for easier sorting
-    let mut runs: Vec<_> = results.into_iter().zip(all_run_events.into_iter())
+    let mut runs: Vec<_> = results.into_iter().zip(all_run_events)
         .map(|(result, events)| crate::model::SimulationRun { result, events })
         .collect();
 
@@ -480,7 +480,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                 players_with_state = apply_short_rest_standalone(&players_with_state, &mut all_events);
                 
                 // Add an encounter result with one round snapshot to capture the state after rest
-                let after_rest_team1 = players_with_state.iter().cloned().collect();
+                let after_rest_team1 = players_with_state.to_vec();
                 
                 encounter_results.push(crate::model::EncounterResult {
                     stats: HashMap::new(),

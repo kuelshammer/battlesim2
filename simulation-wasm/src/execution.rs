@@ -143,7 +143,7 @@ impl ActionExecutionEngine {
             // Capture snapshot at end of every round
             let snapshot: Vec<CombattantState> = self.context.combatants
                 .values()
-                .map(|state| state.clone())
+                .cloned()
                 .collect();
             round_snapshots.push(snapshot);
         }

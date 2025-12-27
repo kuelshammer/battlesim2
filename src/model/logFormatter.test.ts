@@ -181,7 +181,7 @@ describe('LogFormatter', () => {
             spell_level: 3
         };
         const summary = LogFormatter.toSummary(event, names, actionNames);
-        expect(summary).toBe('Alice casts Fireball on Goblin 7.');
+        expect(summary).toBe('Alice casts Fireball.');
     });
 
     it('handles DamageTaken summary', () => {

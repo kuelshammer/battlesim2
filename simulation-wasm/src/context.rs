@@ -617,7 +617,7 @@ impl TurnContext {
         self.combat_stats_cache.precalculate_for_combatants(&combatants);
         
         // Update cached stats in each combatant state
-        for (_id, state) in &mut self.combatants {
+        for state in self.combatants.values_mut() {
             if let Some(stats) = self.combat_stats_cache.get_stats_by_id(&state.base_combatant.creature.id) {
                 state.cached_stats = Some(stats.clone());
             }

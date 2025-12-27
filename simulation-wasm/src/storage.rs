@@ -16,13 +16,7 @@ pub enum SlotSelection {
     Secondary,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SimulationConfig {
     pub log_enabled: bool,
-}
-
-impl Default for SimulationConfig {
-    fn default() -> Self {
-        Self { log_enabled: false }
-    }
 }

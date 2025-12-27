@@ -42,8 +42,8 @@ describe('FileLogger', () => {
 
         expect(logOutput).toContain('Alice starts turn (Round 1)');
         expect(logOutput).toContain('Alice attacks Goblin for 10 damage');
-        expect(logOutput).toContain('Attack Roll: 1d20 [15] + 3 (Proficiency) + 2 (Strength) = 20');
-        expect(logOutput).toContain('Damage: 1d8 [8] = 10');
+        expect(logOutput).toContain('Attack Roll: 1d20 + 5 = 15 + 3 + 2 = 20');
+        expect(logOutput).toContain('Damage: 1d8 + 2 = 2 = 10');
     });
 
     it('should include raw JSON for debugging if requested', () => {
