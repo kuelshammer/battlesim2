@@ -1,0 +1,69 @@
+{
+  "name": "Healing Word (Bonus Action)",
+  "players": [
+    {
+      "id": "cleric-1",
+      "name": "Cleric 5",
+      "mode": "player",
+      "hp": 33,
+      "ac": 16,
+      "count": 1,
+      "initiativeBonus": 0,
+      "saveBonus": 3,
+      "conSaveAdvantage": true,
+      "actions": [
+        {
+          "id": "healing-word",
+          "name": "Healing Word",
+          "type": "heal",
+          "actionSlot": 1,
+          "amount": "1d4+3",
+          "target": "ally with least HP",
+          "targets": 1,
+          "freq": {
+            "reset": "sr",
+            "uses": 3
+          },
+          "condition": "default"
+        }
+      ],
+      "spellSlots": {
+        "1": 4
+      },
+      "class": {
+        "type": "Cleric",
+        "level": 5,
+        "options": {}
+      }
+    },
+    {
+      "id": "fighter-1",
+      "name": "Fighter 5 (Injured)",
+      "mode": "player",
+      "hp": 44,
+      "ac": 18,
+      "count": 1,
+      "initiativeBonus": 3,
+      "saveBonus": 3,
+      "actions": []
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "id": "encounter-1",
+      "monsters": [
+        {
+          "id": "goblin-1",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        }
+      ]
+    }
+  ]
+}

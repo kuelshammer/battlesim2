@@ -1,0 +1,101 @@
+{
+  "name": "Fireball AOE Damage",
+  "players": [
+    {
+      "id": "wizard-1",
+      "name": "Wizard 5",
+      "mode": "player",
+      "hp": 27,
+      "ac": 13,
+      "count": 1,
+      "initiativeBonus": 0,
+      "saveBonus": 2,
+      "conSaveAdvantage": false,
+      "actions": [
+        {
+          "id": "fireball",
+          "name": "Fireball",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "8d6",
+          "toHit": 0,
+          "useSaves": true,
+          "halfOnSave": true,
+          "target": "enemy with most HP",
+          "targets": 5,
+          "freq": {
+            "reset": "sr",
+            "uses": 3
+          },
+          "condition": "default"
+        }
+      ],
+      "spellSlots": {
+        "3": 3
+      },
+      "class": {
+        "type": "Wizard",
+        "level": 5,
+        "options": {}
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "id": "encounter-1",
+      "monsters": [
+        {
+          "id": "goblin-1",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        },
+        {
+          "id": "goblin-2",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        },
+        {
+          "id": "goblin-3",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        },
+        {
+          "id": "goblin-4",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        },
+        {
+          "id": "goblin-5",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "name": "Multiattack Action Economy",
+  "players": [
+    {
+      "id": "fighter-1",
+      "name": "Fighter 5",
+      "mode": "player",
+      "hp": 44,
+      "ac": 18,
+      "count": 1,
+      "initiativeBonus": 3,
+      "saveBonus": 3,
+      "actions": [
+        {
+          "id": "extra-attack-1",
+          "name": "Longsword Attack 1",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "1d8+3",
+          "toHit": 5,
+          "target": "enemy with most HP",
+          "targets": 1,
+          "freq": "at will",
+          "condition": "default"
+        },
+        {
+          "id": "extra-attack-2",
+          "name": "Longsword Attack 2",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "1d8+3",
+          "toHit": 5,
+          "target": "enemy with most HP",
+          "targets": 1,
+          "freq": "at will",
+          "condition": "default"
+        },
+        {
+          "id": "extra-attack-3",
+          "name": "Longsword Attack 3",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "1d8+3",
+          "toHit": 5,
+          "target": "enemy with most HP",
+          "targets": 1,
+          "freq": "at will",
+          "condition": "default"
+        }
+      ],
+      "class": {
+        "type": "Fighter",
+        "level": 5,
+        "options": {
+          "fightingStyle": "Great Weapon Fighting"
+        }
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "id": "encounter-1",
+      "monsters": [
+        {
+          "id": "goblin-1",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": []
+        }
+      ]
+    }
+  ]
+}

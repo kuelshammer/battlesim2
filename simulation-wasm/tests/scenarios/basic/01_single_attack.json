@@ -1,0 +1,68 @@
+{
+  "name": "Basic Attack Validation",
+  "players": [
+    {
+      "id": "fighter-1",
+      "name": "Fighter 5",
+      "mode": "player",
+      "hp": 44,
+      "ac": 18,
+      "count": 1,
+      "initiativeBonus": 3,
+      "saveBonus": 3,
+      "actions": [
+        {
+          "id": "longsword-attack",
+          "name": "Longsword",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "1d8+3",
+          "toHit": 5,
+          "target": "enemy with most HP",
+          "targets": 1,
+          "freq": "at will",
+          "condition": "default"
+        }
+      ],
+      "class": {
+        "type": "Fighter",
+        "level": 5,
+        "options": {
+          "fightingStyle": "Great Weapon Fighting"
+        }
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "id": "encounter-1",
+      "monsters": [
+        {
+          "id": "goblin-1",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "initiativeBonus": 2,
+          "saveBonus": 2,
+          "actions": [
+            {
+              "id": "scimitar-attack",
+              "name": "Scimitar",
+              "type": "atk",
+              "actionSlot": 0,
+              "dpr": "1d6+2",
+              "toHit": 4,
+              "target": "enemy with most HP",
+              "targets": 1,
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

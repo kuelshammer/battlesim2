@@ -1,0 +1,89 @@
+{
+  "name": "Concentration Mechanics",
+  "players": [
+    {
+      "id": "wizard-1",
+      "name": "Wizard 5",
+      "mode": "player",
+      "hp": 27,
+      "ac": 13,
+      "count": 1,
+      "initiativeBonus": 0,
+      "saveBonus": 2,
+      "conSaveAdvantage": false,
+      "actions": [
+        {
+          "id": "bless",
+          "name": "Bless",
+          "type": "buff",
+          "actionSlot": 0,
+          "target": "ally with least HP",
+          "targets": 1,
+          "freq": {
+            "reset": "sr",
+            "uses": 3
+          },
+          "condition": "default",
+          "buff": {
+            "displayName": "Bless",
+            "toHit": "1d4",
+            "save": "1d4",
+            "duration": "entire encounter",
+            "concentration": true
+          }
+        },
+        {
+          "id": "firebolt",
+          "name": "Firebolt",
+          "type": "atk",
+          "actionSlot": 0,
+          "dpr": "2d10",
+          "toHit": 5,
+          "target": "enemy with most HP",
+          "targets": 1,
+          "freq": "at will",
+          "condition": "default"
+        }
+      ],
+      "spellSlots": {
+        "1": 4
+      },
+      "class": {
+        "type": "Wizard",
+        "level": 5,
+        "options": {}
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "id": "encounter-1",
+      "monsters": [
+        {
+          "id": "goblin-1",
+          "name": "Goblin",
+          "mode": "monster",
+          "hp": 7,
+          "ac": 15,
+          "count": 1,
+          "saveBonus": 2,
+          "actions": [
+            {
+              "id": "scimitar-attack",
+              "name": "Scimitar",
+              "type": "atk",
+              "actionSlot": 0,
+              "dpr": "1d6+2",
+              "toHit": 4,
+              "target": "enemy with most HP",
+              "targets": 1,
+              "freq": "at will",
+              "condition": "default"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
