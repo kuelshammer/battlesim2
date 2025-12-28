@@ -6,7 +6,9 @@ use crate::reactions::ReactionManager;
 use crate::validation;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::time::Instant; // Import the validation module
+
+#[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
+use std::time::Instant;
 
 /// Central coordinator for all action processing in combat encounters
 #[derive(Debug, Clone)]

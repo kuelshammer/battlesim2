@@ -864,6 +864,7 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayConfig};
 use crate::progress_ui::{ProgressUIManager, ProgressUIConfig};
 use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteractionConfig};
+#[cfg(not(target_arch = "wasm32"))]
 use crate::background_simulation::BackgroundSimulationEngine;
 use crate::queue_manager::{QueueManager, QueueManagerConfig};
 use crate::storage_integration::StorageIntegration;
@@ -886,7 +887,7 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
     GUI_INTEGRATION.get_or_init(|| {
         // Get storage manager reference (clone for separate instances as in original code)
         let storage_copy = get_storage_manager().lock().unwrap().clone();
-        
+
         // Create display manager
         let display_config = DisplayConfig::default();
         let display_manager = DisplayManager::new(
@@ -894,22 +895,18 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
             display_config,
         );
         let display_manager_arc = Arc::new(Mutex::new(display_manager));
-        
-        // Create background simulation engine
-        let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new();
-        let simulation_engine_arc = Arc::new(Mutex::new(simulation_engine));
-        
+
         // Create queue manager
         let queue_config = QueueManagerConfig::default();
         let queue_manager = QueueManager::new(queue_config);
         let queue_manager_arc = Arc::new(Mutex::new(queue_manager));
-        
+
         // Create simulation queue for storage integration (separate instance)
         let storage_queue = crate::queue_manager::SimulationQueue::new(100); // max 100 items
-        
+
         // Create progress communication
         let progress_comm = crate::progress_communication::ProgressCommunication::default();
-        
+
         // Create storage integration
         let storage_integration = StorageIntegration::new(
             storage_copy.clone(),
@@ -918,24 +915,40 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
             crate::storage_integration::StorageIntegrationConfig::default(),
         );
         let storage_integration_arc = Arc::new(Mutex::new(storage_integration));
-        
+
         // Create progress UI manager
         let progress_ui_manager = ProgressUIManager::new(ProgressUIConfig::default());
         let progress_ui_manager_arc = Arc::new(Mutex::new(progress_ui_manager));
-        
+
         // Create storage manager arc for user interaction
         let _storage_manager_arc = Arc::new(Mutex::new(storage_copy.clone()));
 
-        // Create user interaction manager
+        // Create user interaction manager (conditional compilation for background simulation)
         let interaction_config = UserInteractionConfig::default();
-        let user_interaction_manager = UserInteractionManager::new(
-            display_manager_arc.clone(),
-            progress_ui_manager_arc.clone(),
-            simulation_engine_arc.clone(),
-            queue_manager_arc.clone(),
-            interaction_config,
-        );
-        
+        #[cfg(not(target_arch = "wasm32"))]
+        let user_interaction_manager = {
+            // Create background simulation engine
+            let (simulation_engine, _progress_receiver) = BackgroundSimulationEngine::new();
+            let simulation_engine_arc = Arc::new(Mutex::new(simulation_engine));
+
+            UserInteractionManager::new_with_simulation(
+                display_manager_arc.clone(),
+                progress_ui_manager_arc.clone(),
+                simulation_engine_arc,
+                queue_manager_arc.clone(),
+                interaction_config,
+            )
+        };
+        #[cfg(target_arch = "wasm32")]
+        let user_interaction_manager = {
+            UserInteractionManager::new(
+                display_manager_arc.clone(),
+                progress_ui_manager_arc.clone(),
+                queue_manager_arc.clone(),
+                interaction_config,
+            )
+        };
+
         Mutex::new(GuiIntegration {
             display_manager: display_manager_arc,
             progress_ui_manager: progress_ui_manager_arc,
@@ -943,7 +956,7 @@ pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
             storage_integration: storage_integration_arc,
         })
     });
-    
+
     Ok(JsValue::from_str("GUI integration initialized"))
 }
 

@@ -1,5 +1,7 @@
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
-use crate::background_simulation::{BackgroundSimulationId, SimulationPriority, BackgroundSimulationEngine};
+use crate::background_simulation::{BackgroundSimulationId, SimulationPriority};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::background_simulation::BackgroundSimulationEngine;
 use crate::progress_ui::{ProgressUIManager, ProgressInfo};
 use crate::queue_manager::QueueManager;
 use crate::model::{Creature, TimelineStep};
@@ -175,22 +177,58 @@ pub struct UserInteractionManager {
     display_manager: Arc<Mutex<DisplayManager>>,
     /// Progress UI manager
     progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-        /// Background simulation engine
-#[allow(dead_code)]
-simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
     /// Queue manager
     queue_manager: Arc<Mutex<QueueManager>>,
-        /// Configuration
+    /// Configuration
     config: UserInteractionConfig,
     /// Current state
     state: Arc<Mutex<UserInteractionState>>,
     /// Event history
     event_history: Arc<Mutex<Vec<UserEvent>>>,
+    #[cfg(not(target_arch = "wasm32"))]
+    /// Background simulation engine
+    #[allow(dead_code)]
+    simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
 }
 
 impl UserInteractionManager {
     /// Create a new user interaction manager
     pub fn new(
+        display_manager: Arc<Mutex<DisplayManager>>,
+        progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+        queue_manager: Arc<Mutex<QueueManager>>,
+        config: UserInteractionConfig,
+    ) -> Self {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // For native builds, we need to provide a dummy simulation_engine
+            // This constructor shouldn't be used in native code - use new_with_simulation instead
+            // But we need to provide something valid to compile
+            panic!("Use new_with_simulation() for native builds");
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self {
+                display_manager,
+                progress_ui_manager,
+                queue_manager,
+                config,
+                state: Arc::new(Mutex::new(UserInteractionState {
+                    current_parameters: None,
+                    last_parameter_change: 0,
+                    pending_confirmations: Vec::new(),
+                    active_simulations: Vec::new(),
+                    user_preferences: UserPreferences::default(),
+                })),
+                event_history: Arc::new(Mutex::new(Vec::new())),
+            }
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    /// Create a new user interaction manager with background simulation support
+    pub fn new_with_simulation(
         display_manager: Arc<Mutex<DisplayManager>>,
         progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
         simulation_engine: Arc<Mutex<BackgroundSimulationEngine>>,
@@ -200,7 +238,6 @@ impl UserInteractionManager {
         Self {
             display_manager,
             progress_ui_manager,
-            simulation_engine,
             queue_manager,
             config,
             state: Arc::new(Mutex::new(UserInteractionState {
@@ -211,6 +248,7 @@ impl UserInteractionManager {
                 user_preferences: UserPreferences::default(),
             })),
             event_history: Arc::new(Mutex::new(Vec::new())),
+            simulation_engine,
         }
     }
 
@@ -285,8 +323,13 @@ impl UserInteractionManager {
             let state = self.state.lock().unwrap();
             if state.active_simulations.len() < self.config.max_concurrent_simulations {
                 drop(state);
-                
-                match self.start_background_simulation(&parameters, SimulationPriority::Normal) {
+
+                #[cfg(not(target_arch = "wasm32"))]
+                let sim_result = self.start_background_simulation(&parameters, SimulationPriority::Normal);
+                #[cfg(target_arch = "wasm32")]
+                let sim_result: Result<BackgroundSimulationId, String> = Err("Background simulation not available in WASM".to_string());
+
+                match sim_result {
                     Ok(sim_id) => {
                         messages.push("Background simulation started".to_string());
                         Some(sim_id)
@@ -338,10 +381,15 @@ impl UserInteractionManager {
         }
 
         // Start simulation
-        match self.start_background_simulation(&parameters, priority) {
+        #[cfg(not(target_arch = "wasm32"))]
+        let sim_result = self.start_background_simulation(&parameters, priority);
+        #[cfg(target_arch = "wasm32")]
+        let sim_result: Result<BackgroundSimulationId, String> = Err("Background simulation not available in WASM".to_string());
+
+        match sim_result {
             Ok(simulation_id) => {
                 messages.push(format!("Simulation {} started with priority {:?}", simulation_id.0, priority));
-                
+
                 // Get progress info
                 let progress_info = {
                     let progress_ui = self.progress_ui_manager.lock().unwrap();
@@ -596,7 +644,8 @@ impl UserInteractionManager {
         }
     }
 
-    /// Start a background simulation
+    /// Start a background simulation (not available in WASM)
+    #[cfg(not(target_arch = "wasm32"))]
     fn start_background_simulation(
         &self,
         parameters: &ScenarioParameters,
