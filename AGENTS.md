@@ -63,19 +63,7 @@
 
 ---
 
-## 7. TASK MANAGEMENT: BEADS (`bd`)
-*   **Source of Truth:** All technical tasks, bugs, and features are tracked in **Beads**.
-*   **Mandatory Command:** Before starting a session, the agent MUST run `bd list` to identify the active task.
-*   **Workflow:**
-    1.  `bd list` - View current backlog.
-    2.  `bd start <id>` - Mark a task as in-progress.
-    3.  `bd add "<description>"` - Create new tasks immediately when discovered.
-    4.  `bd done <id>` - Close tasks upon completion.
-*   **Conductor Integration:** High-level project context remains in `/conductor` (`product.md`, `tech-stack.md`), but `plan.md` is deprecated in favor of the Beads JSONL database.
-
----
-
-## 8. RESPONSE FORMAT
+## 7. RESPONSE FORMAT
 
 ### IF NORMAL:
 > **Rationale:** (1 sentence explaining placement/logic).  
@@ -86,28 +74,65 @@
 2.  **Edge Case Analysis:** What could go wrong and how it was prevented.
 3.  **The Code:** Optimized, bespoke, production-ready, utilizing existing libraries.
 
-## Landing the Plane (Session Completion)
+---
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS (BEADS)
 
-**MANDATORY WORKFLOW:**
+> **Context Recovery**: Run `bd prime` after compaction, clear, or new session.
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+### 🚨 SESSION CLOSE PROTOCOL 🚨
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+**CRITICAL**: Before saying "done" or "complete", you MUST run this checklist:
+
+1.  **Check status:** `git status` (check what changed)
+2.  **Stage changes:** `git add <files>`
+3.  **Sync beads:** `bd sync` (commit beads changes)
+4.  **Commit code:** `git commit -m "..."`
+5.  **Sync again:** `bd sync` (commit any new beads changes)
+6.  **Push:** `git push`
+
+**NEVER skip this.** Work is not done until pushed.
+
+### Core Rules
+- **Source of Truth:** Track strategic work in beads (multi-session, dependencies, discovered work).
+- **Persistence:** Use `bd create` for issues. When in doubt, prefer bd—persistence you don't need beats lost context.
+- **Git workflow:** Hooks auto-sync, but explicitly run `bd sync` at session end.
+- **Session management:** Check `bd ready` for available work.
+
+### Essential Commands
+
+**Finding Work:**
+- `bd ready` - Show issues ready to work (no blockers)
+- `bd list --status=open` - All open issues
+- `bd list --status=in_progress` - Your active work
+- `bd show <id>` - Detailed issue view with dependencies
+
+**Creating & Updating:**
+- `bd create --title="..." --type=task|bug|feature --priority=2` - New issue (Priority 0=critical, 2=medium, 4=backlog)
+- `bd update <id> --status=in_progress` - Claim work
+- `bd close <id>` - Mark complete
+- `bd close <id1> <id2> ...` - Close multiple issues at once
+- **Tip**: When creating multiple issues/tasks/epics, use parallel subagents for efficiency.
+
+**Dependencies:**
+- `bd dep add <issue> <depends-on>` - Add dependency (issue depends on depends-on)
+- `bd blocked` - Show all blocked issues
+
+**Sync & Collaboration:**
+- `bd sync` - Sync with git remote (run at session end)
+- `bd stats` - Project statistics
+
+### Common Workflows
+
+**Starting work:**
+```bash
+bd ready           # Find available work
+bd show <id>       # Review issue details
+bd update <id> --status=in_progress  # Claim it
+```
+
+**Completing work:**
+```bash
+bd close <id1> <id2> ...    # Close all completed issues at once
+bd sync                     # Push to remote
+```

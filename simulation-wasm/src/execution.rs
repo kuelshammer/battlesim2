@@ -125,7 +125,7 @@ impl ActionExecutionEngine {
 
             let initiative_order = self.get_initiative_order();
 
-            for combatant_id in initiative_order {
+            for combatant_id in &initiative_order {
                 if !self.context.is_combatant_alive(&combatant_id) {
                     continue;
                 }
