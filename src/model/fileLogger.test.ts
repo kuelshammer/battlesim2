@@ -8,7 +8,6 @@ describe('FileLogger', () => {
             type: 'TurnStarted',
             unit_id: 'player1',
             round_number: 1,
-            timestamp: 0
         },
         {
             type: 'AttackHit',
@@ -17,17 +16,16 @@ describe('FileLogger', () => {
             damage: 10,
             attack_roll: {
                 formula: '1d20+5',
-                rolls: [{ die: 20, value: 15 }],
+                rolls: [{ sides: 20, value: 15 }],
                 modifiers: [['d20', 15], ['Proficiency', 3], ['Strength', 2]],
                 total: 20
             },
             damage_roll: {
                 formula: '1d8+2',
-                rolls: [{ die: 8, value: 8 }],
+                rolls: [{ sides: 8, value: 8 }],
                 modifiers: [['Base', 2]],
                 total: 10
-            },
-            timestamp: 1
+            }
         }
     ];
 

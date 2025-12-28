@@ -177,7 +177,6 @@ describe('LogFormatter', () => {
             type: 'SpellCast',
             caster_id: 'p1',
             spell_id: 's1-uuid',
-            target_id: 'target-1',
             spell_level: 3
         };
         const summary = LogFormatter.toSummary(event, names, actionNames);
