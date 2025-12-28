@@ -333,6 +333,9 @@ pub fn run_event_driven_simulation_rust(
     _log_enabled: bool,
     seed: Option<u64>,
 ) -> Vec<crate::model::SimulationRun> {
+    #[cfg(debug_assertions)]
+    console_log::init_with_level(log::Level::Info).expect("Failed to initialize logging");
+
     let mut all_runs = Vec::new();
 
     for i in 0..iterations {

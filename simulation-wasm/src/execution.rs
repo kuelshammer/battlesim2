@@ -5,7 +5,8 @@ use crate::model::{Action, Combattant};
 use crate::reactions::ReactionManager;
 use crate::validation;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap; // Import the validation module
+use std::collections::HashMap;
+use std::time::Instant; // Import the validation module
 
 /// Central coordinator for all action processing in combat encounters
 #[derive(Debug, Clone)]
@@ -101,6 +102,9 @@ impl ActionExecutionEngine {
 
     /// Execute a full combat encounter until completion
     pub fn execute_encounter(&mut self) -> EncounterResult {
+        #[cfg(debug_assertions)]
+        let encounter_start = Instant::now();
+
         let mut total_turns = 0u32;
 
         // Initialize encounter
@@ -114,6 +118,9 @@ impl ActionExecutionEngine {
         const MAX_ROUNDS: u32 = 50; // Increased limit with better draw detection
         const MAX_TURNS: u32 = 200; // Prevent infinite loops from extremely long battles
         while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
+            #[cfg(debug_assertions)]
+            let round_start = Instant::now();
+
             self.context.advance_round();
 
             let initiative_order = self.get_initiative_order();
@@ -146,6 +153,17 @@ impl ActionExecutionEngine {
                 .cloned()
                 .collect();
             round_snapshots.push(snapshot);
+
+            #[cfg(debug_assertions)]
+            {
+                let round_duration = round_start.elapsed();
+                log::info!(
+                    "Round {} completed in {:?} ({} turns this round)",
+                    self.context.round_number,
+                    round_duration,
+                    initiative_order.len()
+                );
+            }
         }
 
         // Capture a final snapshot of the absolute end state
@@ -170,6 +188,18 @@ impl ActionExecutionEngine {
         
         // Process final events to ensure EncounterEnded moves to history
         let _ = self.context.process_events();
+
+        #[cfg(debug_assertions)]
+        {
+            let encounter_duration = encounter_start.elapsed();
+            log::info!(
+                "Encounter completed in {:?} - {} rounds, {} turns, winner: {:?}",
+                encounter_duration,
+                self.context.round_number,
+                total_turns,
+                winner
+            );
+        }
 
         // Generate final results
         self.generate_encounter_results(total_turns, round_snapshots, winner)

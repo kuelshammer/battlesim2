@@ -8,8 +8,9 @@ import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
 import OnboardingTour from "./OnboardingTour"
+import PerformanceDashboard from "../debug/PerformanceDashboard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye, faQuestionCircle } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye, faQuestionCircle, faTachometerAlt } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
@@ -56,6 +57,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     const [selectedDecileIndex, setSelectedDecileIndex] = useState<number>(5) // Default to 50% Median
     const [runTour, setRunTour] = useState(false)
+    const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
 
     // Web Worker Simulation
     const worker = useSimulationWorker();
@@ -258,14 +260,24 @@ const Simulation: FC<PropType> = memo(({ }) => {
                 <semiPersistentContext.Provider value={{ state, setState }}>
                     <div className={styles.header}>
                         <h1>BattleSim</h1>
-                        <button
-                            className={styles.helpButton}
-                            onClick={() => setRunTour(true)}
-                            title="Start guided tour"
-                        >
-                            <FontAwesomeIcon icon={faQuestionCircle} />
-                            Help
-                        </button>
+                        <div className={styles.headerButtons}>
+                            <button
+                                className={styles.helpButton}
+                                onClick={() => setRunTour(true)}
+                                title="Start guided tour"
+                            >
+                                <FontAwesomeIcon icon={faQuestionCircle} />
+                                Help
+                            </button>
+                            <button
+                                className={styles.helpButton}
+                                onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)}
+                                title="Toggle performance dashboard"
+                            >
+                                <FontAwesomeIcon icon={faTachometerAlt} />
+                                {showPerformanceDashboard ? 'Hide' : 'Perf'}
+                            </button>
+                        </div>
                     </div>
 
                     
@@ -597,6 +609,12 @@ const Simulation: FC<PropType> = memo(({ }) => {
                 <OnboardingTour
                     forceRun={runTour}
                     onTourEnd={() => setRunTour(false)}
+                />
+
+                {/* Performance Dashboard */}
+                <PerformanceDashboard
+                    isVisible={showPerformanceDashboard}
+                    onClose={() => setShowPerformanceDashboard(false)}
                 />
             </div>
         </UIToggleProvider>
