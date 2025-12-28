@@ -1,0 +1,86 @@
+{
+  "creatures": [
+    {
+      "id": "attacker-1",
+      "mode": "player",
+      "name": "Test Fighter",
+      "level": 5,
+      "stats": {
+        "ac": 18,
+        "hp": 44,
+        "init": 5,
+        "proficiencyBonus": 3,
+        "strength": 16,
+        "dexterity": 14,
+        "constitution": 14,
+        "intelligence": 10,
+        "wisdom": 12,
+        "charisma": 10
+      },
+      "actions": [
+        {
+          "id": "action-1",
+          "name": "Longsword Attack",
+          "attackStat": "strength",
+          "damageStat": "strength",
+          "attackRoll": {
+            "numDice": 1,
+            "dieSize": 20,
+            "modifier": 7
+          },
+          "damageRoll": {
+            "numDice": 1,
+            "dieSize": 8,
+            "modifier": 3
+          },
+          "target": "enemy"
+        }
+      ],
+      "gamePlan": [
+        {
+          "trigger": "StartCombat",
+          "actionIds": ["action-1"]
+        }
+      ],
+      "count": 1
+    },
+    {
+      "id": "goblin-1",
+      "mode": "monster",
+      "name": "Test Goblin",
+      "stats": {
+        "ac": 15,
+        "hp": 7,
+        "init": 2
+      },
+      "actions": [
+        {
+          "id": "action-2",
+          "name": "Scimitar",
+          "attackRoll": {
+            "numDice": 1,
+            "dieSize": 20,
+            "modifier": 4
+          },
+          "damageRoll": {
+            "numDice": 1,
+            "dieSize": 6,
+            "modifier": 2
+          },
+          "target": "enemy"
+        }
+      ],
+      "gamePlan": [
+        {
+          "trigger": "StartCombat",
+          "actionIds": ["action-2"]
+        }
+      ],
+      "count": 3
+    }
+  ],
+  "settings": {
+    "repetitions": 100,
+    "maxRounds": 20
+  }
+}

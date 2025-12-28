@@ -18,6 +18,9 @@
     "sim:log": "node scripts/simulate_and_log.js",
     "sim:audit": "node scripts/audit_rules.js",
     "test": "vitest run",
+    "test:e2e": "vitest run --config e2e/config/vitest.e2e.config.ts",
+    "test:e2e:ui": "vitest --config e2e/config/vitest.e2e.config.ts --ui",
+    "test:e2e:debug": "E2E_HEADLESS=false vitest --config e2e/config/vitest.e2e.config.ts --inspect-brk",
     "prepare": "husky"
   },
   "dependencies": {
