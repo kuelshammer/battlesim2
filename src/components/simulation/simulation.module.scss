@@ -12,13 +12,34 @@
         color: #fff;
         text-align: center;
         margin-bottom: 1em;
-        
-        &::before {
-            display: block;
-            width: 100%;
-            height: 0;
-            box-shadow: 0px 0px 2em 1.5em #977;
-            content: '';
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1em;
+
+        h1 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .helpButton {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5em 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: translateY(-2px);
+            }
         }
     }
 
@@ -478,4 +499,35 @@
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+// Tour target classes for onboarding
+// These are marker classes for the joyride tour to target
+
+.encounter-builder-section {
+    // The main encounter builder area
+}
+
+.player-form-section {
+    // Player/creature form section
+}
+
+.monster-form-section {
+    // Monster form section
+}
+
+.simulation-controls {
+    // Simulation run buttons
+}
+
+.decile-chart-section {
+    // Decile analysis chart
+}
+
+.event-log-section {
+    // Event log display
+}
+
+.auto-balancer-section {
+    // Auto-balancer controls
 }

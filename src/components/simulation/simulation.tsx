@@ -7,8 +7,9 @@ import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
 import EncounterResult from "./encounterResult"
 import EventLog from "../combat/EventLog"
+import OnboardingTour from "./OnboardingTour"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye, faQuestionCircle } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
@@ -54,7 +55,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [showDecileModal, setShowDecileModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     const [selectedDecileIndex, setSelectedDecileIndex] = useState<number>(5) // Default to 50% Median
-    
+    const [runTour, setRunTour] = useState(false)
+
     // Web Worker Simulation
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
@@ -254,12 +256,21 @@ const Simulation: FC<PropType> = memo(({ }) => {
         <UIToggleProvider>
             <div className={styles.simulation}>
                 <semiPersistentContext.Provider value={{ state, setState }}>
-                    <h1 className={styles.header}>BattleSim</h1>
+                    <div className={styles.header}>
+                        <h1>BattleSim</h1>
+                        <button
+                            className={styles.helpButton}
+                            onClick={() => setRunTour(true)}
+                            title="Start guided tour"
+                        >
+                            <FontAwesomeIcon icon={faQuestionCircle} />
+                            Help
+                        </button>
+                    </div>
 
                     
-
                     {/* Backend Features Status Panel */}
-                    <div className={styles.backendStatus}>
+                    <div className={`${styles.backendStatus} simulation-controls`}>
                         <h4>🔧 Event-Driven Backend {worker.isRunning ? '(Processing...)' : 'Active'}</h4>
                         <div className={styles.statusItems}>
                             <span>✅ ActionResolution Engine</span>
@@ -318,32 +329,34 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         {worker.error && <div className={styles.errorNotice}>❌ Simulation Error: {worker.error}</div>}
                     </div>
 
-                    <EncounterForm
-                        mode='player'
-                        encounter={{ id: 'players', monsters: players, type: 'combat', targetRole: 'Standard' }}
-                        onUpdate={(newValue) => setPlayers(newValue.monsters)}
-                        onEditingChange={setIsEditing}>
-                        <>
-                            {!isEmptyResult ? (
-                                <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }}>
-                                    <FontAwesomeIcon icon={faTrash} />
-                                    Clear Adventuring Day
+                    <div className="encounter-builder-section player-form-section">
+                        <EncounterForm
+                            mode='player'
+                            encounter={{ id: 'players', monsters: players, type: 'combat', targetRole: 'Standard' }}
+                            onUpdate={(newValue) => setPlayers(newValue.monsters)}
+                            onEditingChange={setIsEditing}>
+                            <>
+                                {!isEmptyResult ? (
+                                    <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }}>
+                                        <FontAwesomeIcon icon={faTrash} />
+                                        Clear Adventuring Day
+                                    </button>
+                                ) : null}
+                                {canSave ? (
+                                    <button onClick={() => setSaving(true)}>
+                                        <FontAwesomeIcon icon={faSave} />
+                                        Save Adventuring Day
+                                    </button>
+                                ) : null}
+                                <button onClick={() => setLoading(true)}>
+                                    <FontAwesomeIcon icon={faFolder} />
+                                    Load Adventuring Day
                                 </button>
-                            ) : null}
-                            {canSave ? (
-                                <button onClick={() => setSaving(true)}>
-                                    <FontAwesomeIcon icon={faSave} />
-                                    Save Adventuring Day
-                                </button>
-                            ) : null}
-                            <button onClick={() => setLoading(true)}>
-                                <FontAwesomeIcon icon={faFolder} />
-                                Load Adventuring Day
-                            </button>
 
 
-                        </>
-                    </EncounterForm>
+                            </>
+                        </EncounterForm>
+                    </div>
 
                     {worker.analysis && pacingData && (
                         <>
@@ -371,20 +384,22 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                             return (
                                                 <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
                                                     {item.type === 'combat' ? (
-                                                        <EncounterForm
-                                                        mode='monster'
-                                                        encounter={item}
-                                                        onUpdate={(newValue) => updateTimelineItem(index, newValue)}
-                                                        onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
-                                                        onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
-                                                        onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
-                                                        onEditingChange={setIsEditing}
-                                                        onAutoAdjust={() => {
-                                                            setSelectedEncounterIndex(index);
-                                                            worker.autoAdjustEncounter(players, item.monsters, timeline, index);
-                                                        }}
-                                                        autoAdjustDisabled={worker.isRunning}
-                                                    />
+                                                        <div className="monster-form-section">
+                                                            <EncounterForm
+                                                            mode='monster'
+                                                            encounter={item}
+                                                            onUpdate={(newValue) => updateTimelineItem(index, newValue)}
+                                                            onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
+                                                            onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
+                                                            onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
+                                                            onEditingChange={setIsEditing}
+                                                            onAutoAdjust={() => {
+                                                                setSelectedEncounterIndex(index);
+                                                                worker.autoAdjustEncounter(players, item.monsters, timeline, index);
+                                                            }}
+                                                            autoAdjustDisabled={worker.isRunning}
+                                                        />
+                                                        </div>
                                                 ) : (
                                                     <div className={styles.restCard}>
                                                         <div className={styles.restHeader}>
@@ -477,12 +492,14 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                         </div>
 {/* Decile Analysis Display */}
                     {worker.analysis && (
-                        <DecileAnalysis analysis={worker.analysis.overall} />
+                        <div className="decile-chart-section">
+                            <DecileAnalysis analysis={worker.analysis.overall} />
+                        </div>
                     )}
 
                     {/* Event Log Modal */}
                     {showLogModal && selectedEncounterIndex !== null && (
-                        <div className={styles.logModalOverlay}>
+                        <div className={`${styles.logModalOverlay} event-log-section`}>
                             <div className={styles.logModal}>
                                 <div className={styles.modalHeader}>
                                     <div className={styles.modalHeaderTitle}>
@@ -562,17 +579,25 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
                     {/* Adjustment Preview Modal */}
                     {worker.optimizedResult && selectedEncounterIndex !== null && timeline[selectedEncounterIndex].type === 'combat' && (
-                        <AdjustmentPreview
-                            originalMonsters={(timeline[selectedEncounterIndex] as Encounter).monsters}
-                            adjustmentResult={worker.optimizedResult}
-                            onApply={applyOptimizedResult}
-                            onCancel={() => {
-                                worker.clearOptimizedResult();
-                                setSelectedEncounterIndex(null);
-                            }}
-                        />
+                        <div className="auto-balancer-section">
+                            <AdjustmentPreview
+                                originalMonsters={(timeline[selectedEncounterIndex] as Encounter).monsters}
+                                adjustmentResult={worker.optimizedResult}
+                                onApply={applyOptimizedResult}
+                                onCancel={() => {
+                                    worker.clearOptimizedResult();
+                                    setSelectedEncounterIndex(null);
+                                }}
+                            />
+                        </div>
                     )}
                 </semiPersistentContext.Provider>
+
+                {/* Onboarding Tour */}
+                <OnboardingTour
+                    forceRun={runTour}
+                    onTourEnd={() => setRunTour(false)}
+                />
             </div>
         </UIToggleProvider>
     )
