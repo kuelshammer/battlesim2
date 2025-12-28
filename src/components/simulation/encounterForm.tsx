@@ -38,7 +38,9 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAu
 
     function createCreature(creature: Creature) {
         const encounterClone = clone(encounter)
-        encounterClone.monsters.push(creature)
+        // Generate a new UUID to prevent React key duplication
+        const newCreature = { ...creature, id: crypto.randomUUID() }
+        encounterClone.monsters.push(newCreature)
         onUpdate(encounterClone)
         handleSetCreating(false)
     }

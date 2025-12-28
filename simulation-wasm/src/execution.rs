@@ -102,7 +102,7 @@ impl ActionExecutionEngine {
 
     /// Execute a full combat encounter until completion
     pub fn execute_encounter(&mut self) -> EncounterResult {
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
         let encounter_start = Instant::now();
 
         let mut total_turns = 0u32;
@@ -118,7 +118,7 @@ impl ActionExecutionEngine {
         const MAX_ROUNDS: u32 = 50; // Increased limit with better draw detection
         const MAX_TURNS: u32 = 200; // Prevent infinite loops from extremely long battles
         while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
-            #[cfg(debug_assertions)]
+            #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
             let round_start = Instant::now();
 
             self.context.advance_round();
@@ -154,7 +154,7 @@ impl ActionExecutionEngine {
                 .collect();
             round_snapshots.push(snapshot);
 
-            #[cfg(debug_assertions)]
+            #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
             {
                 let round_duration = round_start.elapsed();
                 log::info!(
@@ -177,19 +177,19 @@ impl ActionExecutionEngine {
         let winner = self.determine_winner();
         self.context.record_event(Event::EncounterEnded {
             winner: winner.clone(),
-            reason: if self.context.round_number >= MAX_ROUNDS { 
-                "Maximum rounds reached".to_string() 
+            reason: if self.context.round_number >= MAX_ROUNDS {
+                "Maximum rounds reached".to_string()
             } else if total_turns >= MAX_TURNS {
                 "Maximum turns reached".to_string()
-            } else { 
-                "Combat resolved".to_string() 
+            } else {
+                "Combat resolved".to_string()
             },
         });
-        
+
         // Process final events to ensure EncounterEnded moves to history
         let _ = self.context.process_events();
 
-        #[cfg(debug_assertions)]
+        #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
         {
             let encounter_duration = encounter_start.elapsed();
             log::info!(

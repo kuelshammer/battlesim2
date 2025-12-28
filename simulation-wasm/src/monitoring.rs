@@ -152,19 +152,35 @@ impl AlertThresholds {
 pub struct SimulationMonitor {
     metrics: SimulationMetrics,
     thresholds: AlertThresholds,
+    #[cfg(not(target_arch = "wasm32"))]
     start_time: Instant,
+    #[cfg(target_arch = "wasm32")]
+    _start_time: (),  // Phantom field for WASM compatibility
     alerts: Vec<Alert>,
     error_logger: ErrorLogger,
 }
 
 impl SimulationMonitor {
     pub fn new(thresholds: AlertThresholds) -> Self {
-        Self {
-            metrics: SimulationMetrics::new(),
-            thresholds,
-            start_time: Instant::now(),
-            alerts: Vec::new(),
-            error_logger: ErrorLogger::new(1000),
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            Self {
+                metrics: SimulationMetrics::new(),
+                thresholds,
+                start_time: Instant::now(),
+                alerts: Vec::new(),
+                error_logger: ErrorLogger::new(1000),
+            }
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            Self {
+                metrics: SimulationMetrics::new(),
+                thresholds,
+                _start_time: (),
+                alerts: Vec::new(),
+                error_logger: ErrorLogger::new(1000),
+            }
         }
     }
     
@@ -199,9 +215,19 @@ impl SimulationMonitor {
     }
     
     pub fn update_execution_time(&mut self) {
-        let elapsed = self.start_time.elapsed().as_secs_f64();
-        if self.metrics.total_iterations > 0 {
-            self.metrics.average_execution_time = elapsed / self.metrics.total_iterations as f64;
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let elapsed = self.start_time.elapsed().as_secs_f64();
+            if self.metrics.total_iterations > 0 {
+                self.metrics.average_execution_time = elapsed / self.metrics.total_iterations as f64;
+            }
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            // Time tracking not available in WASM
+            if self.metrics.total_iterations > 0 {
+                // Keep default value (0.0) or use alternative timing
+            }
         }
     }
     

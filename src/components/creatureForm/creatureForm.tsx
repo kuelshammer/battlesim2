@@ -86,17 +86,17 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                 { (value.mode === "player") ? (
                     <PlayerForm
                         value={value}
-                        onChange={setValue}
+                        onChange={(v) => setValue({ ...v, id: value.id })}
                     />
                 ) : (value.mode === "monster") ? (
                     <MonsterForm
                         value={value}
-                        onChange={setValue}
+                        onChange={(v) => setValue({ ...v, id: value.id })}
                     />
                 ) : (
                     <CustomForm
                         value={value}
-                        onChange={setValue}
+                        onChange={(v) => setValue({ ...v, id: value.id })}
                     />
                 )}
             </div>

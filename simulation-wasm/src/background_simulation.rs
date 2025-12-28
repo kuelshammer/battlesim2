@@ -88,6 +88,7 @@ impl SimulationProgress {
 }
 
 /// A background simulation that runs in a separate thread
+#[cfg(not(target_arch = "wasm32"))]
 pub struct BackgroundSimulation {
     /// Unique identifier
     pub id: BackgroundSimulationId,
@@ -103,11 +104,12 @@ pub struct BackgroundSimulation {
     pub cancellation_requested: Arc<Mutex<bool>>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl BackgroundSimulation {
     pub fn new(parameters: ScenarioParameters, priority: SimulationPriority) -> Self {
         let id = BackgroundSimulationId::new();
         let progress = Arc::new(Mutex::new(SimulationProgress::new(id.clone(), parameters.iterations)));
-        
+
         Self {
             id: id.clone(),
             parameters,
@@ -135,6 +137,7 @@ impl BackgroundSimulation {
 }
 
 /// Engine for managing and running background simulations
+#[cfg(not(target_arch = "wasm32"))]
 pub struct BackgroundSimulationEngine {
     /// Channel for sending progress updates
     progress_sender: mpsc::Sender<SimulationProgress>,
@@ -146,6 +149,7 @@ pub struct BackgroundSimulationEngine {
 
 /// Result of a completed background simulation
 #[derive(Debug)]
+#[cfg(not(target_arch = "wasm32"))]
 pub struct BackgroundSimulationResult {
     /// Simulation identifier
     pub simulation_id: BackgroundSimulationId,
@@ -159,6 +163,7 @@ pub struct BackgroundSimulationResult {
     pub execution_time_ms: u64,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl BackgroundSimulationEngine {
     /// Create a new background simulation engine
     pub fn new() -> (Self, mpsc::Receiver<SimulationProgress>) {
@@ -208,6 +213,7 @@ impl BackgroundSimulationEngine {
     }
 
     /// Worker function that runs the actual simulation
+    #[cfg(not(target_arch = "wasm32"))]
     fn run_simulation_worker(
         _simulation_id: BackgroundSimulationId,
         parameters: ScenarioParameters,
