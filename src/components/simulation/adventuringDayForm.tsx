@@ -13,6 +13,37 @@ import { v4 as uuidv4 } from 'uuid';
 import MonsterForm from "../creatureForm/monsterForm"
 import { clone } from "@/model/utils"
 
+// Sanitization utility: regenerate all creature IDs to prevent duplicates
+function sanitizeSaveData(players: Creature[], timeline: TimelineEvent[]): { players: Creature[], timeline: TimelineEvent[] } {
+    // Sanitize players - regenerate IDs for duplicates
+    const playerIds = new Set<string>();
+    const sanitizedPlayers = players.map(p => {
+        if (playerIds.has(p.id)) {
+            return { ...p, id: uuidv4() };
+        }
+        playerIds.add(p.id);
+        return p;
+    });
+
+    // Sanitize timeline monsters - regenerate IDs for duplicates
+    const sanitizedTimeline = timeline.map(item => {
+        if (item.type !== 'combat') return item;
+
+        const monsterIds = new Set<string>();
+        const sanitizedMonsters = item.monsters.map(m => {
+            if (monsterIds.has(m.id)) {
+                return { ...m, id: uuidv4() };
+            }
+            monsterIds.add(m.id);
+            return m;
+        });
+
+        return { ...item, monsters: sanitizedMonsters };
+    });
+
+    return { players: sanitizedPlayers, timeline: sanitizedTimeline };
+}
+
 type PropType = {
     currentPlayers: Creature[],
     currentTimeline: TimelineEvent[],
@@ -193,10 +224,11 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
     }
 
     function loadSavedDay(save: SaveFile) {
-        setEditedPlayers(save.players);
-        setEditedTimeline(save.timeline);
+        const sanitized = sanitizeSaveData(save.players, save.timeline);
+        setEditedPlayers(sanitized.players);
+        setEditedTimeline(sanitized.timeline);
         setSaveName(save.name);
-        onApplyChanges(save.players, save.timeline);
+        onApplyChanges(sanitized.players, sanitized.timeline);
     }
 
     async function deleteSave(filename: string) {
@@ -251,20 +283,23 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
 
         const newSave: SaveFile = parsed.data
 
+        // Sanitize data to prevent duplicate IDs
+        const sanitized = sanitizeSaveData(newSave.players, newSave.timeline);
+
         try {
             await fetch('/api/adventuring-days', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: newSave.name,
-                    players: newSave.players,
-                    timeline: newSave.timeline,
+                    players: sanitized.players,
+                    timeline: sanitized.timeline,
                 })
             })
             fetchSaves()
-            onApplyChanges(newSave.players, newSave.timeline)
-            setEditedPlayers(newSave.players);
-            setEditedTimeline(newSave.timeline);
+            onApplyChanges(sanitized.players, sanitized.timeline)
+            setEditedPlayers(sanitized.players);
+            setEditedTimeline(sanitized.timeline);
             setSaveName(newSave.name);
         } catch (e) {
             setError('Failed to upload')
