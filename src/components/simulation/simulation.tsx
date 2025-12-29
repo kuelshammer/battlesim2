@@ -181,6 +181,50 @@ const Simulation: FC<PropType> = memo(({ }) => {
         setIsStale(false);
     }, [worker.results, worker.events]);
 
+    // Sanitization Effect: Fix duplicate IDs in loaded data
+    useEffect(() => {
+        let playersChanged = false;
+        const playerIds = new Set<string>();
+        const sanitizedPlayers = players.map(p => {
+            if (playerIds.has(p.id)) {
+                playersChanged = true;
+                return { ...p, id: uuid() }; // Generate new ID for duplicate
+            }
+            playerIds.add(p.id);
+            return p;
+        });
+
+        if (playersChanged) {
+            setPlayers(sanitizedPlayers);
+        }
+
+        let timelineChanged = false;
+        const sanitizedTimeline = timeline.map(item => {
+            if (item.type !== 'combat') return item;
+
+            const monsterIds = new Set<string>();
+            let monstersChanged = false;
+            const sanitizedMonsters = item.monsters.map(m => {
+                if (monsterIds.has(m.id)) {
+                    monstersChanged = true;
+                    return { ...m, id: uuid() }; // Generate new ID for duplicate
+                }
+                monsterIds.add(m.id);
+                return m;
+            });
+
+            if (monstersChanged) {
+                timelineChanged = true;
+                return { ...item, monsters: sanitizedMonsters };
+            }
+            return item;
+        });
+
+        if (timelineChanged) {
+            setTimeline(sanitizedTimeline);
+        }
+    }, []); // Run once on mount to sanitize existing data
+
 
     function createCombat() {
         setTimeline([...timeline, {
