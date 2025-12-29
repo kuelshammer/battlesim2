@@ -42,6 +42,7 @@ pub mod phase3_working; // Phase 3 GUI Integration working implementation
 pub mod storage; // Stub storage module
 pub mod storage_manager; // Stub storage manager module
 pub mod storage_integration; // Stub storage integration module
+pub mod cache;
 pub mod log_reproduction_test;
 
 
@@ -126,6 +127,19 @@ pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usiz
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
 }
 
+/// Reduces memory usage of a SimulationResult by keeping only the first and last rounds 
+/// of each encounter, which are sufficient for decile analysis and visualization.
+fn summarize_result(mut result: SimulationResult) -> SimulationResult {
+    for encounter in &mut result.encounters {
+        if encounter.rounds.len() > 2 {
+            let first = encounter.rounds.first().cloned().unwrap();
+            let last = encounter.rounds.last().cloned().unwrap();
+            encounter.rounds = vec![first, last];
+        }
+    }
+    result
+}
+
 #[wasm_bindgen]
 pub fn run_simulation_with_callback(
     players: JsValue,
@@ -138,113 +152,126 @@ pub fn run_simulation_with_callback(
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-    let mut results = Vec::new();
-    let mut all_run_events = Vec::new();
+    // Phase 1: Survey Pass (All iterations, results only, no events)
+    let mut summarized_results = Vec::with_capacity(iterations);
+    let mut lightweight_runs = Vec::with_capacity(iterations);
 
     let batch_size = (iterations / 20).max(1); // Report progress every 5%
 
     for i in 0..iterations {
-        let (result, events) = run_single_event_driven_simulation(&players, &timeline, true);
-        results.push(result);
-        all_run_events.push(events);
+        let seed = i as u64; // Simple deterministic seed for now
+        crate::rng::seed_rng(seed);
+        
+        let (result, _) = run_single_event_driven_simulation(&players, &timeline, false);
+        
+        // Store for full analysis later (summarized to save memory)
+        let score = crate::aggregation::calculate_score(&result);
+        
+        // Create lightweight representation for seed selection
+        let mut encounter_scores = Vec::new();
+        for (idx, _) in result.encounters.iter().enumerate() {
+            encounter_scores.push(crate::aggregation::calculate_cumulative_score(&result, idx));
+        }
+        
+        let has_death = result.encounters.iter().any(|e| {
+            e.rounds.last().map(|r| r.team1.iter().any(|c| c.final_state.current_hp == 0)).unwrap_or(false)
+        });
+
+        lightweight_runs.push(crate::model::LightweightRun {
+            seed,
+            encounter_scores,
+            final_score: score,
+            total_hp_lost: 0.0, // Calculated during analysis
+            total_survivors: 0, // Calculated during analysis
+            has_death,
+            first_death_encounter: None, // Simplified for now
+        });
+
+        summarized_results.push(summarize_result(result));
 
         let is_last_iteration = i == iterations - 1;
-        let should_report_progress = (i + 1) % batch_size == 0 || is_last_iteration;
-        let should_report_analysis = (i + 1) % 251 == 0 || is_last_iteration;
-
-        if should_report_progress || should_report_analysis {
-            let progress = (i + 1) as f64 / iterations as f64;
+        if (i + 1) % batch_size == 0 || is_last_iteration {
+            let progress = ((i + 1) as f64 / iterations as f64) * 0.8; // First pass is 80% of total progress
             let this = JsValue::NULL;
             let js_progress = JsValue::from_f64(progress);
             let js_completed = JsValue::from_f64((i + 1) as f64);
             let js_total = JsValue::from_f64(iterations as f64);
-            
-            // Perform intermediate analysis if scheduled
-            let mut js_partial_data = JsValue::NULL;
-            if should_report_analysis {
-                // For partial analysis, we currently don't need the complex slicing logic
-                // but we need to pass the events if we want logs.
-                // However, the existing PartialOutput doesn't have events.
-                // Let's keep it simple for partial and only do full log extraction at the end.
-                
-                let mut temp_results = results.clone();
-                temp_results.sort_by(|a, b| {
-                    let score_a = crate::aggregation::calculate_score(a);
-                    let score_b = crate::aggregation::calculate_score(b);
-                    score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
-                });
-
-                let overall = decile_analysis::run_decile_analysis(&temp_results, "Current Scenario", players.len());
-                let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
-                let mut encounters_analysis = Vec::new();
-                for i_enc in 0..num_encounters {
-                    let analysis = decile_analysis::run_encounter_analysis(&results, i_enc, &format!("Encounter {}", i_enc + 1), players.len());
-                    encounters_analysis.push(analysis);
-                }
-
-                let tr_len = temp_results.len();
-                let median_idx = tr_len / 2;
-                
-                // Representative indices for 2511 system (or fallback)
-                let rep_indices = if tr_len == 2511 {
-                    vec![125, 627, 1255, 1883, 2385] // Approx medians of 1st, 3rd, Global, 8th, 10th
-                } else {
-                    let decile = tr_len as f64 / 10.0;
-                    vec![(decile * 0.5) as usize, (decile * 2.5) as usize, median_idx, (decile * 7.5) as usize, (decile * 9.5) as usize]
-                };
-                let mut reduced_results = Vec::new();
-                for &idx in &rep_indices {
-                    if idx < tr_len { reduced_results.push(temp_results[idx].clone()); }
-                }
-
-                let partial = PartialOutput {
-                    results: reduced_results,
-                    analysis: FullAnalysisOutput { overall, encounters: encounters_analysis },
-                };
-
-                let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(false);
-                if let Ok(val) = serde::Serialize::serialize(&partial, &serializer) {
-                    js_partial_data = val;
-                }
-            }
-            
+            let js_partial_data = JsValue::NULL;
             let _ = callback.call4(&this, &js_progress, &js_completed, &js_total, &js_partial_data);
         }
     }
 
-    // FINAL ANALYSIS
-    // Combine results and events into a single vector for easier sorting
-    let mut runs: Vec<_> = results.into_iter().zip(all_run_events)
-        .map(|(result, events)| crate::model::SimulationRun { result, events })
-        .collect();
-
-    let overall = decile_analysis::run_decile_analysis_with_logs(&mut runs, "Current Scenario", players.len());
+    // Phase 2: Selection
+    let interesting_seeds = select_interesting_seeds(&lightweight_runs);
     
-    let num_encounters = runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
+    // Phase 3: Deep Dive (Re-run interesting seeds for events)
+    let mut seed_to_events = HashMap::new();
+    let mut median_run_events = Vec::new();
+    
+    // Sort global scores to find true median events for the fallback
+    let mut global_scores: Vec<(usize, f64)> = lightweight_runs.iter().enumerate()
+        .map(|(i, r)| (i, r.final_score)).collect();
+    global_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+    let median_seed = lightweight_runs[global_scores[global_scores.len() / 2].0].seed;
+
+    for (idx, &seed) in interesting_seeds.iter().enumerate() {
+        crate::rng::seed_rng(seed);
+        let (_, events) = run_single_event_driven_simulation(&players, &timeline, true);
+        
+        if seed == median_seed {
+            median_run_events = events.clone();
+        }
+        seed_to_events.insert(seed, events);
+
+        // Progress for Phase 3 (the remaining 20%)
+        let progress = 0.8 + ((idx + 1) as f64 / interesting_seeds.len() as f64) * 0.2;
+        let this = JsValue::NULL;
+        let js_progress = JsValue::from_f64(progress);
+        let js_completed = JsValue::from_f64(iterations as f64); // "Completed" is still iterations
+        let js_total = JsValue::from_f64(iterations as f64);
+        let js_partial_data = JsValue::NULL;
+        let _ = callback.call4(&this, &js_progress, &js_completed, &js_total, &js_partial_data);
+    }
+
+    // Combine results and events into SimulationRun objects
+    // decile_analysis needs a slice of runs to pick logs from
+    let mut final_runs: Vec<SimulationRun> = summarized_results.into_iter().zip(lightweight_runs)
+        .map(|(result, light)| {
+            let events = seed_to_events.get(&light.seed).cloned().unwrap_or_default();
+            SimulationRun { result, events }
+        }).collect();
+
+    // FINAL ANALYSIS
+    let overall = decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", players.len());
+    
+    let num_encounters = final_runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
-        let analysis = decile_analysis::run_encounter_analysis_with_logs(&mut runs, i, &format!("Encounter {}", i + 1), players.len());
+        let analysis = decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), players.len());
         encounters_analysis.push(analysis);
     }
 
-    // Sort the final runs by global score for the results extraction
-    runs.sort_by(|a, b| {
+    // Sort for representative results extraction
+    final_runs.sort_by(|a, b| {
         let score_a = crate::aggregation::calculate_score(&a.result);
         let score_b = crate::aggregation::calculate_score(&b.result);
         score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
     });
 
-    let total_runs = runs.len();
+    let total_runs = final_runs.len();
     let median_idx = total_runs / 2;
-    let representative_indices = if total_runs == 2511 {
-        vec![125, 627, 1255, 1883, 2385]
-    } else {
-        let decile = total_runs as f64 / 10.0;
-        vec![(decile * 0.5) as usize, (decile * 2.5) as usize, median_idx, (decile * 7.5) as usize, (decile * 9.5) as usize]
-    };
+    let decile = total_runs as f64 / 10.0;
+    let representative_indices = vec![
+        (decile * 0.5) as usize, 
+        (decile * 2.5) as usize, 
+        median_idx, 
+        (decile * 7.5) as usize, 
+        (decile * 9.5) as usize
+    ];
+    
     let mut reduced_results = Vec::new();
     for &idx in &representative_indices {
-        if idx < total_runs { reduced_results.push(runs[idx].result.clone()); }
+        if idx < total_runs { reduced_results.push(final_runs[idx].result.clone()); }
     }
 
     let output = FullSimulationOutput {
@@ -253,12 +280,15 @@ pub fn run_simulation_with_callback(
             overall,
             encounters: encounters_analysis,
         },
-        first_run_events: runs[median_idx].events.clone(), // Use global median events as default fallback
+        first_run_events: if median_run_events.is_empty() {
+             // Fallback if median wasn't in interesting seeds (unlikely)
+             final_runs[median_idx].events.clone()
+        } else {
+             median_run_events
+        },
     };
 
-    let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
-
+    let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(false);
     serde::Serialize::serialize(&output, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
 }
@@ -347,6 +377,104 @@ pub fn run_simulation_wasm_rolling_stats(
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize summary: {}", e)))
 }
 
+/// Run a batch of simulations synchronously
+#[wasm_bindgen]
+pub fn run_batch_simulation_wasm(
+    batch_request: JsValue,
+) -> Result<JsValue, JsValue> {
+    let request: crate::model::BatchSimulationRequest = serde_wasm_bindgen::from_value(batch_request)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse batch request: {}", e)))?;
+
+    let mut results = Vec::with_capacity(request.jobs.len());
+
+    for job in request.jobs {
+        let summary = run_simulation_with_rolling_stats(
+            job.players,
+            job.timeline,
+            job.iterations,
+            false,
+            job.seed,
+        );
+        results.push(crate::model::BatchSimulationResult {
+            id: job.id,
+            summary,
+        });
+    }
+
+    let response = crate::model::BatchSimulationResponse { results };
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+
+    serde::Serialize::serialize(&response, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize batch response: {}", e)))
+}
+
+/// Run a batch of simulations with progress callback
+#[wasm_bindgen]
+pub fn run_batch_simulation_with_callback(
+    batch_request: JsValue,
+    callback: &js_sys::Function,
+) -> Result<JsValue, JsValue> {
+    let request: crate::model::BatchSimulationRequest = serde_wasm_bindgen::from_value(batch_request)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse batch request: {}", e)))?;
+
+    let total_jobs = request.jobs.len();
+    let mut results = Vec::with_capacity(total_jobs);
+
+    for (i, job) in request.jobs.into_iter().enumerate() {
+        // Run simulation
+        let summary = run_simulation_with_rolling_stats(
+            job.players,
+            job.timeline,
+            job.iterations,
+            false,
+            job.seed,
+        );
+        
+        results.push(crate::model::BatchSimulationResult {
+            id: job.id,
+            summary,
+        });
+
+        // Report progress
+        let progress = (i + 1) as f64 / total_jobs as f64;
+        let this = JsValue::NULL;
+        let js_progress = JsValue::from_f64(progress);
+        let js_completed = JsValue::from_f64((i + 1) as f64);
+        let js_total = JsValue::from_f64(total_jobs as f64);
+        let js_partial_data = JsValue::NULL; 
+        
+        let _ = callback.call4(&this, &js_progress, &js_completed, &js_total, &js_partial_data);
+    }
+
+    let response = crate::model::BatchSimulationResponse { results };
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+
+    serde::Serialize::serialize(&response, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize batch response: {}", e)))
+}
+
+
+#[wasm_bindgen]
+pub fn clear_simulation_cache() {
+    crate::cache::clear_cache();
+}
+
+/// Get cache statistics for memory monitoring
+/// Returns an object with entry_count and estimated_bytes
+#[wasm_bindgen]
+pub fn get_cache_stats() -> JsValue {
+    let (entry_count, estimated_bytes) = crate::cache::get_cache_stats();
+    let stats = serde_json::json!({
+        "entryCount": entry_count,
+        "estimatedBytes": estimated_bytes
+    });
+    JsValue::from_str(&stats.to_string())
+}
+
 /// Public Rust function for event-driven simulation (for CLI/testing)
 /// Returns all simulation runs with their results and events
 pub fn run_event_driven_simulation_rust(
@@ -368,7 +496,7 @@ pub fn run_event_driven_simulation_rust(
             crate::rng::seed_rng(s.wrapping_add(i as u64));
         }
 
-        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, true);
         let run = crate::model::SimulationRun {
             result,
             events,
@@ -425,33 +553,26 @@ pub fn run_simulation_with_rolling_stats(
     crate::rng::clear_rng();
 
     // Calculate statistics from lightweight runs
+    let mut sorted_scores: Vec<f64> = lightweight_runs.iter().map(|r| r.final_score).collect();
+    sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
     let mut score_sum = 0.0;
     let mut score_sum_squared = 0.0;
-    let mut score_min = f64::MAX;
-    let mut score_max = f64::MIN;
+    let score_min = *sorted_scores.first().unwrap_or(&0.0);
+    let score_max = *sorted_scores.last().unwrap_or(&0.0);
 
-    for run in &lightweight_runs {
-        let score = run.final_score;
+    for &score in &sorted_scores {
         score_sum += score;
         score_sum_squared += score * score;
-        score_min = score_min.min(score);
-        score_max = score_max.max(score);
     }
 
-    let mean = score_sum / iterations as f64;
-    let variance = (score_sum_squared / iterations as f64) - (mean * mean);
+    let mean = if iterations > 0 { score_sum / iterations as f64 } else { 0.0 };
+    let variance = if iterations > 0 { (score_sum_squared / iterations as f64) - (mean * mean) } else { 0.0 };
     let std_dev = variance.sqrt().max(0.0);
 
-    // Approximate median using the same bucket approach as before
-    let mut score_buckets = [0usize; 100];
-    for run in &lightweight_runs {
-        let bucket_idx = (run.final_score.clamp(0.0, 99.99) as usize).min(99);
-        score_buckets[bucket_idx] += 1;
-    }
-
-    let median = approximate_percentile_from_buckets(&score_buckets, iterations, 50.0);
-    let p25 = approximate_percentile_from_buckets(&score_buckets, iterations, 25.0);
-    let p75 = approximate_percentile_from_buckets(&score_buckets, iterations, 75.0);
+    let median = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() / 2] } else { 0.0 };
+    let p25 = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() / 4] } else { 0.0 };
+    let p75 = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() * 3 / 4] } else { 0.0 };
 
     crate::model::SimulationSummary {
         total_iterations: iterations,
@@ -470,27 +591,9 @@ pub fn run_simulation_with_rolling_stats(
     }
 }
 
-/// Helper to approximate percentile from histogram buckets
-fn approximate_percentile_from_buckets(buckets: &[usize; 100], total: usize, percentile: f64) -> f64 {
-    if total == 0 {
-        return 0.0;
-    }
-
-    let target_count = (total as f64 * percentile / 100.0).ceil() as usize;
-    let mut cumulative = 0;
-
-    for (bucket_idx, &count) in buckets.iter().enumerate() {
-        cumulative += count;
-        if cumulative >= target_count {
-            return bucket_idx as f64;
-        }
-    }
-
-    99.0
-}
 
 
-fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::model::TimelineStep], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
+pub fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::model::TimelineStep], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
     let mut players_with_state = Vec::new();
 
@@ -598,7 +701,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                 all_combatants.extend(enemies);
 
                 // Create ActionExecutionEngine
-                let mut engine = ActionExecutionEngine::new(all_combatants.clone());
+                let mut engine = ActionExecutionEngine::new(all_combatants.clone(), true);
 
                 // Run encounter using the ActionExecutionEngine
                 let encounter_result = engine.execute_encounter();
@@ -648,7 +751,7 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
 
 /// Lightweight simulation that tracks only scores and deaths, no event collection
 /// Used in Phase 1 of Two-Pass system to identify interesting runs for re-simulation
-fn run_single_lightweight_simulation(
+pub fn run_single_lightweight_simulation(
     players: &[Creature],
     timeline: &[crate::model::TimelineStep],
     seed: u64,
@@ -660,7 +763,6 @@ fn run_single_lightweight_simulation(
     let mut encounter_scores = Vec::new();
     let mut has_death = false;
     let mut first_death_encounter: Option<usize> = None;
-    let mut combat_encounter_idx = 0usize;
 
     // Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
     // and carried over correctly across encounters.
@@ -709,8 +811,6 @@ fn run_single_lightweight_simulation(
             players_with_state.push(combattant);
         }
     }
-
-    let mut encounter_results = Vec::new();
 
     for (step_idx, step) in timeline.iter().enumerate() {
         match step {
@@ -765,24 +865,14 @@ fn run_single_lightweight_simulation(
                 all_combatants.extend(enemies);
 
                 // Create ActionExecutionEngine
-                let mut engine = ActionExecutionEngine::new(all_combatants.clone());
+                let mut engine = ActionExecutionEngine::new(all_combatants.clone(), false);
 
-                // Run encounter using the ActionExecutionEngine (NO event collection)
+                // Run encounter using the ActionExecutionEngine (NO event collection, NO snapshots)
                 let encounter_result = engine.execute_encounter();
 
-                // Convert to old format for compatibility
-                let legacy_result = convert_to_legacy_simulation_result(&encounter_result, step_idx, encounter.target_role.clone());
-                encounter_results.push(legacy_result);
-
                 // Track cumulative score after this combat encounter
-                let partial_result = crate::model::SimulationResult {
-                    encounters: encounter_results.clone(),
-                    score: None,
-                    num_combat_encounters: 0,
-                };
-                let score = crate::aggregation::calculate_cumulative_score(&partial_result, combat_encounter_idx);
+                let score = crate::safe_aggregation::calculate_lightweight_score(&encounter_result.final_combatant_states);
                 encounter_scores.push(score);
-                combat_encounter_idx += 1;
 
                 // Check for deaths in this encounter
                 if !has_death {
@@ -801,29 +891,29 @@ fn run_single_lightweight_simulation(
             crate::model::TimelineStep::ShortRest(_) => {
                 // Apply standalone short rest recovery (NO event collection)
                 players_with_state = apply_short_rest_standalone_no_events(&players_with_state);
-
-                // Add an encounter result with one round snapshot to capture the state after rest
-                let after_rest_team1 = players_with_state.to_vec();
-
-                encounter_results.push(crate::model::EncounterResult {
-                    stats: HashMap::new(),
-                    rounds: vec![crate::model::Round {
-                        team1: after_rest_team1,
-                        team2: Vec::new(),
-                    }],
-                    target_role: crate::model::TargetRole::Standard,
-                });
             }
         }
     }
 
-    // Calculate final score
-    let final_result = crate::model::SimulationResult {
-        encounters: encounter_results,
-        score: None,
-        num_combat_encounters: combat_encounter_idx,
-    };
-    let final_score = crate::aggregation::calculate_score(&final_result);
+    // Calculate final stats from the last state of players
+    let total_survivors = players_with_state.iter().filter(|p| p.final_state.current_hp > 0).count();
+    
+    // final_score is the score of the last completed encounter
+    let final_score = encounter_scores.last().cloned().unwrap_or(0.0);
+    
+    // total_hp_lost is (Total Daily Net Worth EHP) - (Final EHP)
+    let tdnw = crate::decile_analysis::calculate_tdnw_lightweight(players);
+    let mut final_ehp = 0.0;
+    for p in &players_with_state {
+        let ledger = p.creature.initialize_ledger();
+        final_ehp += crate::intensity_calculation::calculate_serializable_ehp(
+            p.final_state.current_hp,
+            p.final_state.temp_hp.unwrap_or(0),
+            &p.final_state.resources,
+            &ledger.reset_rules
+        );
+    }
+    let total_hp_lost = (tdnw - final_ehp).max(0.0);
 
     // Clear the seeded RNG after simulation completes
     crate::rng::clear_rng();
@@ -832,6 +922,8 @@ fn run_single_lightweight_simulation(
         seed,
         encounter_scores,
         final_score,
+        total_hp_lost,
+        total_survivors,
         has_death,
         first_death_encounter,
     }
@@ -886,12 +978,23 @@ pub fn run_survey_pass(
     base_seed: Option<u64>,
 ) -> Vec<crate::model::LightweightRun> {
     let mut all_runs = Vec::with_capacity(iterations);
+    let scenario_hash = crate::cache::get_scenario_hash(&players, &timeline);
 
     for i in 0..iterations {
         // Use base_seed + i as the seed for this iteration
         let seed = base_seed.unwrap_or(i as u64).wrapping_add(i as u64);
 
+        // Check cache first
+        if let Some(cached_run) = crate::cache::get_cached_run(scenario_hash, seed) {
+            all_runs.push(cached_run);
+            continue;
+        }
+
         let lightweight_run = run_single_lightweight_simulation(&players, &timeline, seed);
+        
+        // Store in cache
+        crate::cache::insert_cached_run(scenario_hash, seed, lightweight_run.clone());
+        
         all_runs.push(lightweight_run);
     }
 
@@ -903,13 +1006,15 @@ pub fn run_survey_pass(
 pub fn select_interesting_seeds(
     lightweight_runs: &[crate::model::LightweightRun],
 ) -> Vec<u64> {
-    use std::collections::{HashSet, HashMap};
+    use std::collections::HashSet;
 
     let mut interesting_seeds = HashSet::new();
     let num_encounters = lightweight_runs
         .first()
         .map(|r| r.encounter_scores.len())
         .unwrap_or(0);
+
+    let total_runs = lightweight_runs.len();
 
     // Helper to get index at percentile
     let get_percentile_index = |len: usize, percentile: f64| -> usize {
@@ -918,7 +1023,76 @@ pub fn select_interesting_seeds(
         idx.min(len - 1)
     };
 
-    // For each encounter, select seeds at key percentiles
+    // 1. GLOBAL PERCENTILES (needed for decile logs and medians)
+    let mut global_scored_runs: Vec<(usize, f64)> = lightweight_runs
+        .iter()
+        .enumerate()
+        .map(|(i, run)| (i, run.final_score))
+        .collect();
+    
+    // Sort by global score
+    global_scored_runs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    // A. The 11 standard decile log seeds (P5, P15, ..., P50, ..., P95)
+    let log_indices = if total_runs >= 11 && (total_runs - 1).is_multiple_of(10) {
+        // Perfect 10n + 1 system
+        let n = (total_runs - 1) / 10;
+        vec![
+            n / 2,           // 5%
+            n + n / 2,       // 15%
+            2 * n + n / 2,   // 25%
+            3 * n + n / 2,   // 35%
+            4 * n + n / 2,   // 45%
+            5 * n,           // 50% (True Median)
+            5 * n + n / 2 + 1, // 55%
+            6 * n + n / 2 + 1, // 65%
+            7 * n + n / 2 + 1, // 75%
+            8 * n + n / 2 + 1, // 85%
+            9 * n + n / 2 + 1, // 95%
+        ]
+    } else {
+        // Fallback for non-perfect counts
+        vec![
+            (total_runs as f64 * 0.05) as usize,
+            (total_runs as f64 * 0.15) as usize,
+            (total_runs as f64 * 0.25) as usize,
+            (total_runs as f64 * 0.35) as usize,
+            (total_runs as f64 * 0.45) as usize,
+            (total_runs as f64 * 0.50) as usize,
+            (total_runs as f64 * 0.55) as usize,
+            (total_runs as f64 * 0.65) as usize,
+            (total_runs as f64 * 0.75) as usize,
+            (total_runs as f64 * 0.85) as usize,
+            (total_runs as f64 * 0.95) as usize,
+        ]
+    };
+
+    for idx in log_indices {
+        if let Some((run_idx, _)) = global_scored_runs.get(idx) {
+            interesting_seeds.insert(lightweight_runs[*run_idx].seed);
+        }
+    }
+
+    // B. The 10 decile medians (used for BattleCards)
+    if total_runs >= 11 && (total_runs - 1).is_multiple_of(10) {
+        let n = (total_runs - 1) / 10;
+        for i in 0..10 {
+            let slice_median_idx = if i < 5 { i * n + n / 2 } else { i * n + n / 2 + 1 };
+            if let Some((run_idx, _)) = global_scored_runs.get(slice_median_idx) {
+                interesting_seeds.insert(lightweight_runs[*run_idx].seed);
+            }
+        }
+    } else {
+        let decile_size = total_runs as f64 / 10.0;
+        for i in 0..10 {
+            let slice_median_idx = ((i as f64 + 0.5) * decile_size).floor() as usize;
+            if let Some((run_idx, _)) = global_scored_runs.get(slice_median_idx) {
+                interesting_seeds.insert(lightweight_runs[*run_idx].seed);
+            }
+        }
+    }
+
+    // 2. PER-ENCOUNTER PERCENTILES
     for encounter_idx in 0..num_encounters {
         let mut scored_runs: Vec<(usize, f64)> = lightweight_runs
             .iter()
@@ -945,19 +1119,12 @@ pub fn select_interesting_seeds(
         }
     }
 
-    // Include overall best and worst by final_score
-    let mut by_final_score: Vec<(usize, f64)> = lightweight_runs
-        .iter()
-        .enumerate()
-        .map(|(i, run)| (i, run.final_score))
-        .collect();
-
-    by_final_score.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    if let Some((best_idx, _)) = by_final_score.last() {
+    // 3. EXTREMES & DEATHS
+    // Include overall best and worst by final_score (already handled by percentiles but just to be sure)
+    if let Some((best_idx, _)) = global_scored_runs.last() {
         interesting_seeds.insert(lightweight_runs[*best_idx].seed);
     }
-    if let Some((worst_idx, _)) = by_final_score.first() {
+    if let Some((worst_idx, _)) = global_scored_runs.first() {
         interesting_seeds.insert(lightweight_runs[*worst_idx].seed);
     }
 
