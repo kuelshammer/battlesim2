@@ -56,6 +56,8 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
         const monsterTemplate = CreatureSchema.safeParse(templates[monster.id])
 
         const creature = monsterTemplate.success ? monsterTemplate.data : clone(monster)
+        // Generate new UUID to prevent React key duplication
+        creature.id = crypto.randomUUID()
         creature.count = value?.count || 1
         onChange(creature)
     }
