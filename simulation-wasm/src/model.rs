@@ -912,3 +912,41 @@ pub struct SimulationRun {
     pub result: SimulationResult,
     pub events: Vec<crate::events::Event>,
 }
+
+/// Aggregated statistics from multiple simulation runs
+/// This is O(1) in memory regardless of iteration count
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SimulationSummary {
+    pub total_iterations: usize,
+    pub successful_iterations: usize,
+    pub aggregated_encounters: Vec<EncounterResult>,
+    pub score_percentiles: ScorePercentiles,
+    #[serde(default)]
+    pub sample_runs: Vec<SimulationRun>, // Small sample for debugging (e.g., first/last/best/worst)
+}
+
+/// Percentile scores across all iterations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScorePercentiles {
+    pub min: f64,
+    pub max: f64,
+    pub median: f64,
+    pub p25: f64,
+    pub p75: f64,
+    pub mean: f64,
+    pub std_dev: f64,
+}
+
+impl Default for ScorePercentiles {
+    fn default() -> Self {
+        Self {
+            min: 0.0,
+            max: 0.0,
+            median: 0.0,
+            p25: 0.0,
+            p75: 0.0,
+            mean: 0.0,
+            std_dev: 0.0,
+        }
+    }
+}

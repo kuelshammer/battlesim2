@@ -47,7 +47,7 @@ pub mod log_reproduction_test;
 
 use wasm_bindgen::prelude::*;
 use web_sys::console;
-use crate::model::{Creature, SimulationResult, Combattant, CreatureState, TimelineStep};
+use crate::model::{Creature, SimulationResult, Combattant, CreatureState, TimelineStep, SimulationRun};
 use crate::execution::ActionExecutionEngine;
 use crate::storage_manager::StorageManager;
 use crate::resources::ResetType;
@@ -324,6 +324,29 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
     }
 }
 
+/// O(1) memory WASM simulation using rolling aggregation
+/// Returns SimulationSummary with aggregated statistics instead of all individual results
+#[wasm_bindgen]
+pub fn run_simulation_wasm_rolling_stats(
+    players: JsValue,
+    timeline: JsValue,
+    iterations: usize,
+    seed: Option<u64>,
+) -> Result<JsValue, JsValue> {
+    let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+    let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
+
+    let summary = run_simulation_with_rolling_stats(players, timeline, iterations, false, seed);
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(false);
+
+    serde::Serialize::serialize(&summary, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize summary: {}", e)))
+}
+
 /// Public Rust function for event-driven simulation (for CLI/testing)
 /// Returns all simulation runs with their results and events
 pub fn run_event_driven_simulation_rust(
@@ -367,6 +390,181 @@ pub fn run_event_driven_simulation_rust(
 
     all_runs
 }
+
+/// Rolling statistics state - maintains O(1) memory regardless of iteration count
+struct RollingStats {
+    iteration_count: usize,
+    successful_count: usize,
+    score_sum: f64,
+    score_sum_squared: f64,
+    score_min: f64,
+    score_max: f64,
+    best_run: Option<SimulationRun>,
+    worst_run: Option<SimulationRun>,
+    first_run: Option<SimulationRun>,
+    last_run: Option<SimulationRun>,
+    // For percentile approximation, we track score buckets
+    score_buckets: [usize; 100], // 100 buckets for 0-100 score range
+}
+
+impl RollingStats {
+    fn new() -> Self {
+        Self {
+            iteration_count: 0,
+            successful_count: 0,
+            score_sum: 0.0,
+            score_sum_squared: 0.0,
+            score_min: f64::MAX,
+            score_max: f64::MIN,
+            best_run: None,
+            worst_run: None,
+            first_run: None,
+            last_run: None,
+            score_buckets: [0; 100],
+        }
+    }
+
+    fn update(&mut self, run: &SimulationRun) {
+        self.iteration_count += 1;
+        self.successful_count += 1;
+
+        let score_value = crate::aggregation::calculate_score(&run.result);
+
+        // Update running stats
+        self.score_sum += score_value;
+        self.score_sum_squared += score_value * score_value;
+        self.score_min = self.score_min.min(score_value);
+        self.score_max = self.score_max.max(score_value);
+
+        // Track best/worst runs
+        if self.best_run.is_none() || score_value > crate::aggregation::calculate_score(&self.best_run.as_ref().unwrap().result) {
+            self.best_run = Some(run.clone());
+        }
+        if self.worst_run.is_none() || score_value < crate::aggregation::calculate_score(&self.worst_run.as_ref().unwrap().result) {
+            self.worst_run = Some(run.clone());
+        }
+
+        // Track first/last
+        if self.first_run.is_none() {
+            self.first_run = Some(run.clone());
+        }
+        self.last_run = Some(run.clone());
+
+        // Update score bucket (0-100 range, 1-unit buckets)
+        let bucket_idx = (score_value.clamp(0.0, 99.99) as usize).min(99);
+        self.score_buckets[bucket_idx] += 1;
+    }
+
+    fn finalize(&self) -> crate::model::ScorePercentiles {
+        if self.iteration_count == 0 {
+            return crate::model::ScorePercentiles::default();
+        }
+
+        let mean = self.score_sum / self.iteration_count as f64;
+        let variance = (self.score_sum_squared / self.iteration_count as f64) - (mean * mean);
+        let std_dev = variance.sqrt().max(0.0);
+
+        // Approximate median using bucket counts
+        let median = self.approximate_median();
+
+        // Approximate percentiles
+        let p25 = self.approximate_percentile(0.25);
+        let p75 = self.approximate_percentile(0.75);
+
+        crate::model::ScorePercentiles {
+            min: self.score_min,
+            max: self.score_max,
+            median,
+            p25,
+            p75,
+            mean,
+            std_dev,
+        }
+    }
+
+    fn approximate_median(&self) -> f64 {
+        self.approximate_percentile(0.50)
+    }
+
+    fn approximate_percentile(&self, p: f64) -> f64 {
+        let target_count = (self.iteration_count as f64 * p).round() as usize;
+        let mut count = 0;
+        for (bucket_idx, bucket_count) in self.score_buckets.iter().enumerate() {
+            count += bucket_count;
+            if count >= target_count {
+                return bucket_idx as f64;
+            }
+        }
+        99.0
+    }
+}
+
+/// O(1) memory version of simulation runner using rolling aggregation
+/// Returns aggregated statistics instead of storing all individual results
+pub fn run_simulation_with_rolling_stats(
+    players: Vec<Creature>,
+    timeline: Vec<TimelineStep>,
+    iterations: usize,
+    _log_enabled: bool,
+    seed: Option<u64>,
+) -> crate::model::SimulationSummary {
+    #[cfg(all(debug_assertions, target_arch = "wasm32"))]
+    let _ = console_log::init_with_level(log::Level::Info);
+
+    let mut stats = RollingStats::new();
+    let mut sample_runs = Vec::with_capacity(4); // Store first, last, best, worst
+
+    for i in 0..iterations {
+        // If a seed is provided, use it with the iteration index for determinism
+        if let Some(s) = seed {
+            crate::rng::seed_rng(s.wrapping_add(i as u64));
+        }
+
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
+        let run = crate::model::SimulationRun { result, events };
+
+        stats.update(&run);
+    }
+
+    // Clear the seeded RNG after simulation completes
+    if seed.is_some() {
+        crate::rng::clear_rng();
+    }
+
+    // Build sample runs (max 4 runs to keep memory low)
+    // Use take() to move values out of Options
+    if let Some(first) = stats.first_run.take() {
+        sample_runs.push(first);
+    }
+    if let Some(best) = stats.best_run.take() {
+        if !sample_runs.iter().any(|r| std::ptr::eq(r, &best)) {
+            sample_runs.push(best);
+        }
+    }
+    if let Some(worst) = stats.worst_run.take() {
+        if !sample_runs.iter().any(|r| std::ptr::eq(r, &worst)) {
+            sample_runs.push(worst);
+        }
+    }
+    if let Some(last) = stats.last_run.take() {
+        if !sample_runs.iter().any(|r| std::ptr::eq(r, &last)) && sample_runs.len() < 4 {
+            sample_runs.push(last);
+        }
+    }
+
+    // Note: We're not including aggregated_encounters in the summary
+    // to truly achieve O(1) memory. The frontend can compute these
+    // from the sample runs if needed, or we can add them later with
+    // a different aggregation strategy.
+    crate::model::SimulationSummary {
+        total_iterations: stats.iteration_count,
+        successful_iterations: stats.successful_count,
+        aggregated_encounters: Vec::new(), // O(1) - no encounter aggregation stored
+        score_percentiles: stats.finalize(),
+        sample_runs,
+    }
+}
+
 
 fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::model::TimelineStep], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
