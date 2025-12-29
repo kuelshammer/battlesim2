@@ -42,9 +42,47 @@ const emptyCombat: TimelineEvent = {
 const FAST_ITERATIONS = 31;
 const PRECISE_ITERATIONS = 2511;
 
+// Sanitization helper: Fix duplicate IDs in players array
+const sanitizePlayersParser = (parser: (data: any) => Creature[]) => (data: any) => {
+    const parsed = parser(data);
+    if (!parsed) return null;
+
+    const playerIds = new Set<string>();
+    const sanitized = parsed.map(p => {
+        if (playerIds.has(p.id)) {
+            return { ...p, id: uuid() }; // Generate new ID for duplicate
+        }
+        playerIds.add(p.id);
+        return p;
+    });
+
+    return sanitized;
+};
+
+// Sanitization helper: Fix duplicate IDs in timeline monsters
+const sanitizeTimelineParser = (parser: (data: any) => TimelineEvent[]) => (data: any) => {
+    const parsed = parser(data);
+    if (!parsed) return null;
+
+    return parsed.map(item => {
+        if (item.type !== 'combat') return item;
+
+        const monsterIds = new Set<string>();
+        const sanitizedMonsters = item.monsters.map(m => {
+            if (monsterIds.has(m.id)) {
+                return { ...m, id: uuid() }; // Generate new ID for duplicate
+            }
+            monsterIds.add(m.id);
+            return m;
+        });
+
+        return { ...item, monsters: sanitizedMonsters };
+    });
+};
+
 const Simulation: FC<PropType> = memo(({ }) => {
-    const [players, setPlayers] = useStoredState<Creature[]>('players', [], z.array(CreatureSchema).parse)
-    const [timeline, setTimeline] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], z.array(TimelineEventSchema).parse)
+    const [players, setPlayers] = useStoredState<Creature[]>('players', [], sanitizePlayersParser(z.array(CreatureSchema).parse))
+    const [timeline, setTimeline] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], sanitizeTimelineParser(z.array(TimelineEventSchema).parse))
     const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
@@ -180,51 +218,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
         // Clear stale state when new results are available
         setIsStale(false);
     }, [worker.results, worker.events]);
-
-    // Sanitization Effect: Fix duplicate IDs in loaded data
-    useEffect(() => {
-        let playersChanged = false;
-        const playerIds = new Set<string>();
-        const sanitizedPlayers = players.map(p => {
-            if (playerIds.has(p.id)) {
-                playersChanged = true;
-                return { ...p, id: uuid() }; // Generate new ID for duplicate
-            }
-            playerIds.add(p.id);
-            return p;
-        });
-
-        if (playersChanged) {
-            setPlayers(sanitizedPlayers);
-        }
-
-        let timelineChanged = false;
-        const sanitizedTimeline = timeline.map(item => {
-            if (item.type !== 'combat') return item;
-
-            const monsterIds = new Set<string>();
-            let monstersChanged = false;
-            const sanitizedMonsters = item.monsters.map(m => {
-                if (monsterIds.has(m.id)) {
-                    monstersChanged = true;
-                    return { ...m, id: uuid() }; // Generate new ID for duplicate
-                }
-                monsterIds.add(m.id);
-                return m;
-            });
-
-            if (monstersChanged) {
-                timelineChanged = true;
-                return { ...item, monsters: sanitizedMonsters };
-            }
-            return item;
-        });
-
-        if (timelineChanged) {
-            setTimeline(sanitizedTimeline);
-        }
-    }, []); // Run once on mount to sanitize existing data
-
 
     function createCombat() {
         setTimeline([...timeline, {
