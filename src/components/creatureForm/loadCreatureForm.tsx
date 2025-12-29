@@ -7,6 +7,7 @@ import { clone, useCalculatedState } from "@/model/utils";
 import SortTable from "@/utils/sortTable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolder, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { v4 as uuid } from 'uuid';
 
 type PropType = {
     onCancel: () => void,
@@ -80,9 +81,9 @@ const LoadCreatureForm:FC<PropType> = ({ onCancel, onLoad }) => {
                     )}
             </SortTable>
 
-            <button 
+            <button
                 disabled={selected === undefined}
-                onClick={() => selected && onLoad(selected)}>
+                onClick={() => selected && onLoad({ ...clone(selected), id: uuid() })}>
                     <FontAwesomeIcon icon={faFolder} />
                     Load {selected !== undefined ? selected.name : null}
             </button>
