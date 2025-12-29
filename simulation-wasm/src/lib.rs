@@ -161,18 +161,18 @@ pub fn run_simulation_with_callback(
     for i in 0..iterations {
         let seed = i as u64; // Simple deterministic seed for now
         crate::rng::seed_rng(seed);
-        
+
         let (result, _) = run_single_event_driven_simulation(&players, &timeline, false);
-        
+
         // Store for full analysis later (summarized to save memory)
         let score = crate::aggregation::calculate_score(&result);
-        
+
         // Create lightweight representation for seed selection
         let mut encounter_scores = Vec::new();
         for (idx, _) in result.encounters.iter().enumerate() {
             encounter_scores.push(crate::aggregation::calculate_cumulative_score(&result, idx));
         }
-        
+
         let has_death = result.encounters.iter().any(|e| {
             e.rounds.last().map(|r| r.team1.iter().any(|c| c.final_state.current_hp == 0)).unwrap_or(false)
         });
@@ -201,8 +201,9 @@ pub fn run_simulation_with_callback(
         }
     }
 
-    // Phase 2: Selection
-    let interesting_seeds = select_interesting_seeds(&lightweight_runs);
+    // Phase 2: Selection (using new 1% granularity selection)
+    let selected_seeds = select_interesting_seeds_with_tiers(&lightweight_runs);
+    let interesting_seeds: Vec<u64> = selected_seeds.iter().map(|s| s.seed).collect();
     
     // Phase 3: Deep Dive (Re-run interesting seeds for events)
     let mut seed_to_events = HashMap::new();
@@ -368,7 +369,8 @@ pub fn run_simulation_wasm_rolling_stats(
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-    let summary = run_simulation_with_rolling_stats(players, timeline, iterations, false, seed);
+    // Use the new three-tier system with 1% granularity
+    let summary = run_simulation_with_three_tier(players, timeline, iterations, false, seed);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
         .serialize_maps_as_objects(false);
@@ -388,7 +390,8 @@ pub fn run_batch_simulation_wasm(
     let mut results = Vec::with_capacity(request.jobs.len());
 
     for job in request.jobs {
-        let summary = run_simulation_with_rolling_stats(
+        // Use the new three-tier system with 1% granularity
+        let summary = run_simulation_with_three_tier(
             job.players,
             job.timeline,
             job.iterations,
@@ -423,15 +426,15 @@ pub fn run_batch_simulation_with_callback(
     let mut results = Vec::with_capacity(total_jobs);
 
     for (i, job) in request.jobs.into_iter().enumerate() {
-        // Run simulation
-        let summary = run_simulation_with_rolling_stats(
+        // Use the new three-tier system with 1% granularity
+        let summary = run_simulation_with_three_tier(
             job.players,
             job.timeline,
             job.iterations,
             false,
             job.seed,
         );
-        
+
         results.push(crate::model::BatchSimulationResult {
             id: job.id,
             summary,
@@ -443,8 +446,8 @@ pub fn run_batch_simulation_with_callback(
         let js_progress = JsValue::from_f64(progress);
         let js_completed = JsValue::from_f64((i + 1) as f64);
         let js_total = JsValue::from_f64(total_jobs as f64);
-        let js_partial_data = JsValue::NULL; 
-        
+        let js_partial_data = JsValue::NULL;
+
         let _ = callback.call4(&this, &js_progress, &js_completed, &js_total, &js_partial_data);
     }
 
