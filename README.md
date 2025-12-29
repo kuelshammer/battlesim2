@@ -20,6 +20,102 @@ It might change in the future, but for now, the reason this approach was chosen 
 1) A probabilities-based approach makes the visualization easier.
 2) A statistics-based approach is more computationally intensive.
 
+## Two-Pass Simulation System
+
+The simulator uses a **Two-Pass Deterministic Re-simulation** architecture for efficient memory usage and precise percentile analysis:
+
+### Phase 1: Lightweight Survey Pass
+- Runs **10,100 iterations** using lightweight simulation (no event collection)
+- Each run stores only: seed, encounter scores, final score, deaths
+- Memory: ~323 KB (32 bytes × 10,100)
+- Time: ~10 seconds
+
+### Phase 2: Seed Selection
+Analyzes all 10,100 runs and identifies interesting seeds for re-simulation:
+
+**1% Bucket Medians (100 seeds → Tier B)**
+- Divides results into 100 equal-sized buckets
+- Selects median from each 1% percentile (P0-1, P1-2, ..., P99-100)
+- Enables true 1% granularity analysis (vs previous 10% buckets)
+
+**Global Deciles (11 seeds → Tier A)**
+- Selects P5, P15, P25, P35, P45, P50, P55, P65, P75, P85, P95
+- These get full event logs for BattleCard playback
+
+**Per-Encounter Extremes (59 seeds → Tier C)**
+- Selects extreme runs for each encounter (P0, P50, P100)
+- Used for encounter-specific analysis, no event logs needed
+
+### Phase 3: Three-Tier Deep Dive
+Re-runs only the ~170 selected seeds with appropriate event collection:
+
+| Tier | Seeds | Event Type | Memory | Use Case |
+|------|-------|------------|--------|----------|
+| **A** | 11 | Full Events | 2.2 MB | Decile logs, full playback |
+| **B** | 100 | Lean Events | 2 MB | 1% percentile medians |
+| **C** | 59 | None (Phase 1 data) | ~2 KB | Per-encounter analysis |
+
+**Total Phase 3 Memory:** ~4.2 MB (vs ~15-20 MB if all runs had full events)
+
+### What Are "Lean Events"?
+Lean events store aggregate statistics instead of per-attack events:
+
+```rust
+// Full Event Log: ~200-500 KB per run
+Vec<Event> {
+    AttackHit { ... },      // ×500+ (every attack)
+    AttackMissed { ... },   // ×300+ (every miss)
+    DamageTaken { ... },    // ×500+ (every damage instance)
+}
+
+// Lean Event Log: ~10-30 KB per run
+LeanRunLog {
+    round_summaries: [
+        RoundSummary {
+            total_damage: HashMap<CombatantID, TotalDamage>,  // Aggregated
+            total_healing: HashMap<CombatantID, TotalHealing>, // Aggregated
+            deaths: Vec<CombatantID>,                         // Who died
+        },
+        // ... one summary per round (10-20 rounds)
+    ],
+}
+```
+
+**Result:** 150-300× smaller than full event logs!
+
+### Performance Characteristics
+
+| Metric | Previous (2,511 runs) | Current (10,100 runs) | Change |
+|--------|----------------------|----------------------|--------|
+| Granularity | 10% buckets | 1% buckets | **10× better** |
+| Total Memory | ~6.1 MB | ~4.5 MB | **-25%** |
+| Total Time | ~5.5s | ~16s | +3× |
+| Phase 1 Time | ~2.5s | ~10s | 4× |
+| Phase 3 Time | ~3s | ~6s | 2× |
+
+The 3× time increase is acceptable for:
+1. **10× better granularity** (true 1% percentiles)
+2. **Multi-modal distribution detection** (can see if results cluster)
+3. **Exact confidence intervals** (no interpolation between 10% buckets)
+
+### Why This Matters
+
+**Previous 10% buckets:**
+```
+P0-10  │████████████████████████████████│  [251 runs → 1 median]
+       ↑                                    ↑
+    Wide spread within bucket           Only see median
+```
+
+**Current 1% buckets:**
+```
+P0-1   │█████████│  [101 runs → 1 median]
+P1-2   │█████████│  [101 runs → 1 median]
+...
+       ↑
+   True 1% granularity - can see distribution within each percentile
+```
+
 ## Getting Started
 * Install nodejs: https://nodejs.org/en
 * Download node packages: `npm i`

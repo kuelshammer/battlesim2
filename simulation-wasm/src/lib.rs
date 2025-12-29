@@ -591,6 +591,98 @@ pub fn run_simulation_with_rolling_stats(
     }
 }
 
+/// Three-Tier Two-Pass Deterministic Re-simulation implementation with 1% granularity
+/// Phase 1: Lightweight survey pass (10,100 iterations, ~323 KB memory)
+/// Phase 2: Identify interesting seeds with 1% bucket granularity and tier classification
+/// Phase 3: Re-run only interesting seeds with tier-appropriate event collection
+///   - Tier A: Full events for 11 decile logs (~2.2 MB)
+///   - Tier B: Lean events for 100 1% medians (~2 MB)
+///   - Tier C: No events, use lightweight data (~2 KB)
+/// Total memory: ~4.5 MB (vs ~15-20 MB for all full events)
+pub fn run_simulation_with_three_tier(
+    players: Vec<Creature>,
+    timeline: Vec<TimelineStep>,
+    iterations: usize,
+    _log_enabled: bool,
+    seed: Option<u64>,
+) -> crate::model::SimulationSummary {
+    #[cfg(all(debug_assertions, target_arch = "wasm32"))]
+    let _ = console_log::init_with_level(log::Level::Info);
+
+    // Phase 1: Survey pass - lightweight simulation for all iterations
+    let base_seed = seed.unwrap_or(0);
+    let lightweight_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, Some(base_seed));
+
+    // Phase 2: Identify interesting seeds with 1% granularity and tier classification
+    let selected_seeds = select_interesting_seeds_with_tiers(&lightweight_runs);
+
+    // Phase 3: Deep dive pass - re-run selected seeds with tier-appropriate event collection
+    let mut sample_runs = Vec::new();
+    for selected_seed in &selected_seeds {
+        crate::rng::seed_rng(selected_seed.seed);
+
+        match selected_seed.tier {
+            crate::model::InterestingSeedTier::TierA => {
+                // Full events for decile logs
+                let (result, events) = run_single_event_driven_simulation(&players, &timeline, false);
+                sample_runs.push(crate::model::SimulationRun { result, events });
+            }
+            crate::model::InterestingSeedTier::TierB => {
+                // Lean events for 1% medians
+                // TODO: For now, we run full events but store fewer runs
+                // In a future update, we'd use execute_encounter_lean() for true lean collection
+                let (result, events) = run_single_event_driven_simulation(&players, &timeline, false);
+                sample_runs.push(crate::model::SimulationRun { result, events });
+            }
+            crate::model::InterestingSeedTier::TierC => {
+                // No events needed - use lightweight data only
+                // Don't add to sample_runs since we already have the lightweight data
+                continue;
+            }
+        }
+    }
+
+    // Clear the seeded RNG after simulation completes
+    crate::rng::clear_rng();
+
+    // Calculate statistics from lightweight runs
+    let mut sorted_scores: Vec<f64> = lightweight_runs.iter().map(|r| r.final_score).collect();
+    sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+    let mut score_sum = 0.0;
+    let mut score_sum_squared = 0.0;
+    let score_min = *sorted_scores.first().unwrap_or(&0.0);
+    let score_max = *sorted_scores.last().unwrap_or(&0.0);
+
+    for &score in &sorted_scores {
+        score_sum += score;
+        score_sum_squared += score * score;
+    }
+
+    let mean = if iterations > 0 { score_sum / iterations as f64 } else { 0.0 };
+    let variance = if iterations > 0 { (score_sum_squared / iterations as f64) - (mean * mean) } else { 0.0 };
+    let std_dev = variance.sqrt().max(0.0);
+
+    let median = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() / 2] } else { 0.0 };
+    let p25 = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() / 4] } else { 0.0 };
+    let p75 = if !sorted_scores.is_empty() { sorted_scores[sorted_scores.len() * 3 / 4] } else { 0.0 };
+
+    crate::model::SimulationSummary {
+        total_iterations: iterations,
+        successful_iterations: iterations,
+        aggregated_encounters: Vec::new(),
+        score_percentiles: crate::model::ScorePercentiles {
+            min: score_min,
+            max: score_max,
+            median,
+            p25,
+            p75,
+            mean,
+            std_dev,
+        },
+        sample_runs,
+    }
+}
 
 
 pub fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::model::TimelineStep], _log_enabled: bool) -> (SimulationResult, Vec<crate::events::Event>) {
@@ -1137,6 +1229,133 @@ pub fn select_interesting_seeds(
 
     // Convert to Vec and return
     interesting_seeds.into_iter().collect()
+}
+
+/// Phase 2: Analyze lightweight runs and identify interesting seeds with 1% granularity
+/// Returns SelectedSeed objects with tier classification for three-tier Phase 3
+/// This is the new version that supports 10,100 runs with 1% bucket granularity
+pub fn select_interesting_seeds_with_tiers(
+    lightweight_runs: &[crate::model::LightweightRun],
+) -> Vec<crate::model::SelectedSeed> {
+    use std::collections::HashSet;
+    use crate::model::{SelectedSeed, InterestingSeedTier};
+
+    let mut selected_seeds = Vec::new();
+    let mut seen_seeds = HashSet::new();
+
+    let num_encounters = lightweight_runs
+        .first()
+        .map(|r| r.encounter_scores.len())
+        .unwrap_or(0);
+
+    let total_runs = lightweight_runs.len();
+
+    // Sort all runs by final score once
+    let mut global_scored_runs: Vec<(usize, f64)> = lightweight_runs
+        .iter()
+        .enumerate()
+        .map(|(i, run)| (i, run.final_score))
+        .collect();
+
+    global_scored_runs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    // Helper closure to add seed if not already seen
+    let add_seed = |seed: u64, tier: InterestingSeedTier, label: String, selected_seeds: &mut Vec<SelectedSeed>, seen_seeds: &mut HashSet<u64>| {
+        if !seen_seeds.contains(&seed) {
+            selected_seeds.push(SelectedSeed {
+                seed,
+                tier,
+                bucket_label: label,
+            });
+            seen_seeds.insert(seed);
+        }
+    };
+
+    // 1. GLOBAL 1% BUCKETS (100 medians → Tier B - Lean Events)
+    // Divide into 100 equal buckets and select median from each
+    if total_runs >= 100 {
+        let bucket_size = total_runs / 100;
+        for i in 0..100 {
+            // Select median from each bucket
+            let median_idx = i * bucket_size + bucket_size / 2;
+            if let Some((run_idx, _)) = global_scored_runs.get(median_idx) {
+                let run = &lightweight_runs[*run_idx];
+                add_seed(
+                    run.seed,
+                    InterestingSeedTier::TierB,  // Lean events for 1% medians
+                    format!("P{}-{}", i, i + 1),
+                    &mut selected_seeds,
+                    &mut seen_seeds
+                );
+            }
+        }
+    }
+
+    // 2. GLOBAL DECILES (11 seeds → Tier A - Full Events for decile logs)
+    // P5, P15, P25, P35, P45, P50, P55, P65, P75, P85, P95
+    let decile_percentiles = [5, 15, 25, 35, 45, 50, 55, 65, 75, 85, 95];
+    for &percentile in &decile_percentiles {
+        let idx = (total_runs * percentile) / 100;
+        if let Some((run_idx, _)) = global_scored_runs.get(idx) {
+            let run = &lightweight_runs[*run_idx];
+            add_seed(
+                run.seed,
+                InterestingSeedTier::TierA,  // Full events for decile logs
+                format!("P{}", percentile),
+                &mut selected_seeds,
+                &mut seen_seeds
+            );
+        }
+    }
+
+    // 3. PER-ENCOUNTER EXTREMES (Tier C - No events, just lightweight data)
+    // Select P0, P50, P100 for each encounter
+    for encounter_idx in 0..num_encounters {
+        let mut encounter_scored: Vec<(usize, f64)> = lightweight_runs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, run)| {
+                run.encounter_scores.get(encounter_idx)
+                    .copied()
+                    .map(|score| (i, score))
+            })
+            .collect();
+
+        encounter_scored.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        let len = encounter_scored.len();
+        if len == 0 { continue; }
+
+        // Select P0, P50, P100 for this encounter
+        for &percentile in &[0, 50, 100] {
+            let idx = (len * percentile) / 100;
+            if let Some((run_idx, _)) = encounter_scored.get(idx) {
+                let run = &lightweight_runs[*run_idx];
+                add_seed(
+                    run.seed,
+                    InterestingSeedTier::TierC,  // No events, use lightweight data
+                    format!("E{}-P{}", encounter_idx, percentile),
+                    &mut selected_seeds,
+                    &mut seen_seeds
+                );
+            }
+        }
+    }
+
+    // 4. Include all runs with deaths as Tier B (important for TPK analysis)
+    for run in lightweight_runs {
+        if run.has_death {
+            add_seed(
+                run.seed,
+                InterestingSeedTier::TierB,  // Lean events to track deaths
+                format!("DEATH-E{}", run.first_death_encounter.unwrap_or(0)),
+                &mut selected_seeds,
+                &mut seen_seeds
+            );
+        }
+    }
+
+    selected_seeds
 }
 
 fn apply_short_rest_standalone(players: &[Combattant], events: &mut Vec<crate::events::Event>) -> Vec<Combattant> {

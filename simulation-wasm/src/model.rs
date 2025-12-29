@@ -924,10 +924,93 @@ pub struct LightweightRun {
     pub encounter_scores: Vec<f64>,
     /// Final cumulative score across all encounters
     pub final_score: f64,
+    /// Total HP lost by the party across all encounters
+    pub total_hp_lost: f64,
+    /// Number of party members still alive at the end
+    pub total_survivors: usize,
     /// Whether any combatant died during this run (for TPK detection)
     pub has_death: bool,
     /// Which encounter the first death occurred in (if has_death is true)
     pub first_death_encounter: Option<usize>,
+}
+
+/// Tier classification for selected seeds in Three-Tier Phase 3
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum InterestingSeedTier {
+    /// Tier A: Full event logs (11 decile seeds) - ~200 KB per run
+    /// Used for: BattleCard logs, full playback visualization
+    TierA,
+    /// Tier B: Lean event logs (100 1% median seeds) - ~10-30 KB per run
+    /// Used for: 1% percentile analysis, median per bucket
+    TierB,
+    /// Tier C: No events (59 per-encounter extremes) - already in LightweightRun
+    /// Used for: Per-encounter analysis only
+    TierC,
+}
+
+/// A selected seed with its tier classification and bucket label
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SelectedSeed {
+    /// The RNG seed to re-simulate
+    pub seed: u64,
+    /// Which tier this seed belongs to (determines event collection level)
+    pub tier: InterestingSeedTier,
+    /// Human-readable label for display (e.g., "P45-46", "P5", "E3-P25")
+    pub bucket_label: String,
+}
+
+/// Lean run summary for Tier B event collection (1% medians)
+/// Stores aggregate statistics instead of per-attack events
+/// Memory: ~10-30 KB per run vs ~200-500 KB for full event logs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LeanRunLog {
+    /// The RNG seed used for this run
+    pub seed: u64,
+    /// Final cumulative score across all encounters
+    pub final_score: f64,
+    /// Cumulative score after each encounter
+    pub encounter_scores: Vec<f64>,
+    /// Per-round aggregate summaries (NOT per-attack events)
+    pub round_summaries: Vec<LeanRoundSummary>,
+    /// Key death events only (typically 0-5 per run)
+    pub deaths: Vec<LeanDeathEvent>,
+    /// Which encounter had a Total Party Kill (if any)
+    pub tpk_encounter: Option<usize>,
+    /// Final HP for each combatant for quick display
+    pub final_hp: HashMap<String, u32>,
+    /// Combatant IDs that survived to the end
+    pub survivors: Vec<String>,
+}
+
+/// Per-round aggregate summary for lean event collection
+/// Contains aggregated statistics instead of individual attack events
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LeanRoundSummary {
+    /// Round number within the encounter (1-indexed)
+    pub round_number: u32,
+    /// Which encounter this round belongs to
+    pub encounter_index: usize,
+    /// Total damage dealt by each combatant (aggregated across all attacks)
+    pub total_damage: HashMap<String, f64>,
+    /// Total healing applied by each combatant (aggregated)
+    pub total_healing: HashMap<String, f64>,
+    /// Combatant IDs that died during this round
+    pub deaths_this_round: Vec<String>,
+    /// Combatant IDs that survived this round
+    pub survivors_this_round: Vec<String>,
+}
+
+/// Lean death event tracking - records only death, not the attack that caused it
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LeanDeathEvent {
+    /// ID of the combatant who died
+    pub combatant_id: String,
+    /// Round number when death occurred
+    pub round: u32,
+    /// Which encounter the death occurred in
+    pub encounter_index: usize,
+    /// Whether this was a player (true) or monster (false)
+    pub was_player: bool,
 }
 
 /// Aggregated statistics from multiple simulation runs
@@ -966,4 +1049,37 @@ impl Default for ScorePercentiles {
             std_dev: 0.0,
         }
     }
+}
+
+/// A single simulation job in a batch
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSimulationJob {
+    pub id: String,
+    pub players: Vec<Creature>,
+    pub timeline: Vec<TimelineStep>,
+    pub iterations: usize,
+    pub seed: Option<u64>,
+}
+
+/// A request to run a batch of simulations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSimulationRequest {
+    pub jobs: Vec<BatchSimulationJob>,
+}
+
+/// The result of a single simulation job in a batch
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSimulationResult {
+    pub id: String,
+    pub summary: SimulationSummary,
+}
+
+/// The response for a batch simulation request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchSimulationResponse {
+    pub results: Vec<BatchSimulationResult>,
 }
