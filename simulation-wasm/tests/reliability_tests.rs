@@ -56,11 +56,11 @@ mod reliability_tests {
             known_ac: std::collections::HashMap::new(),
             arcane_ward_hp: None,
         };
-        
+
         Combattant {
             id: name.to_string(),
             team,
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: state.clone(),
             final_state: state,

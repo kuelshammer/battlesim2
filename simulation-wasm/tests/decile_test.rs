@@ -85,32 +85,32 @@ fn test_intensity_regression_high_penalty() {
         rounds: vec![Round {
             team1: vec![
                 Combattant {
-                    id: "f1".to_string(), team: 0, creature: fighter.clone(), initiative: 10.0,
-                    initial_state: CreatureState { 
-                        current_hp: 75, 
-                        resources: SerializableResourceLedger { 
-                            current: [("HP".to_string(), 75.0)].into(), 
-                            max: [("HP".to_string(), 75.0)].into() 
+                    id: "f1".to_string(), team: 0, creature: std::sync::Arc::new(fighter.clone()), initiative: 10.0,
+                    initial_state: CreatureState {
+                        current_hp: 75,
+                        resources: SerializableResourceLedger {
+                            current: [("HP".to_string(), 75.0)].into(),
+                            max: [("HP".to_string(), 75.0)].into()
                         },
-                        ..CreatureState::default() 
+                        ..CreatureState::default()
                     },
-                    final_state: CreatureState { 
-                        current_hp: 50, 
-                        resources: SerializableResourceLedger { 
-                            current: [("HP".to_string(), 50.0)].into(), 
-                            max: [("HP".to_string(), 75.0)].into() 
+                    final_state: CreatureState {
+                        current_hp: 50,
+                        resources: SerializableResourceLedger {
+                            current: [("HP".to_string(), 50.0)].into(),
+                            max: [("HP".to_string(), 75.0)].into()
                         },
-                        ..CreatureState::default() 
+                        ..CreatureState::default()
                     },
                     actions: vec![],
                 },
                 Combattant {
-                    id: "f2".to_string(), team: 0, creature: fighter.clone(), initiative: 10.0,
-                    initial_state: CreatureState { 
-                        current_hp: 75, 
-                        resources: SerializableResourceLedger { 
-                            current: [("HP".to_string(), 75.0)].into(), 
-                            max: [("HP".to_string(), 75.0)].into() 
+                    id: "f2".to_string(), team: 0, creature: std::sync::Arc::new(fighter.clone()), initiative: 10.0,
+                    initial_state: CreatureState {
+                        current_hp: 75,
+                        resources: SerializableResourceLedger {
+                            current: [("HP".to_string(), 75.0)].into(),
+                            max: [("HP".to_string(), 75.0)].into()
                         },
                         ..CreatureState::default() 
                     },
@@ -177,12 +177,12 @@ fn test_resource_timeline_points() {
             rounds: vec![Round {
                 team1: vec![
                     Combattant {
-                        id: "f1".to_string(), team: 0, creature: fighter.clone(), initiative: 10.0,
-                        initial_state: CreatureState { 
-                            current_hp: 100, 
-                            resources: SerializableResourceLedger { 
-                                current: [("HP".to_string(), 100.0)].into(), 
-                                max: [("HP".to_string(), 100.0)].into() 
+                        id: "f1".to_string(), team: 0, creature: std::sync::Arc::new(fighter.clone()), initiative: 10.0,
+                        initial_state: CreatureState {
+                            current_hp: 100,
+                            resources: SerializableResourceLedger {
+                                current: [("HP".to_string(), 100.0)].into(),
+                                max: [("HP".to_string(), 100.0)].into()
                             },
                             ..CreatureState::default() 
                         },

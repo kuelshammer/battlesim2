@@ -38,7 +38,7 @@ mod tests {
             team: 0,
             id: id.to_string(),
             initiative: 10.0,
-            creature,
+            creature: std::sync::Arc::new(creature),
             initial_state: CreatureState::default(),
             final_state: CreatureState {
                 current_hp,

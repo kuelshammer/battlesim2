@@ -407,9 +407,9 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
 
             // Create Combattant for ActionExecutionEngine
             let combattant = Combattant {
-                team: 0, 
+                team: 0,
                 id: id.clone(),
-                creature: p.clone(),
+                creature: std::sync::Arc::new(p.clone()),
                 initiative: crate::utilities::roll_initiative(&p),
                 initial_state: state.clone(),
                 final_state: state,
@@ -458,9 +458,9 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
                         };
 
                         let enemy_combattant = Combattant {
-                            team: 1, 
+                            team: 1,
                             id: id.clone(),
-                            creature: m.clone(),
+                            creature: std::sync::Arc::new(m.clone()),
                             initiative: crate::utilities::roll_initiative(&m),
                             initial_state: enemy_state.clone(),
                             final_state: enemy_state,

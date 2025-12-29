@@ -757,7 +757,7 @@ mod tests {
         let combatant = Combattant {
             team: 0,
             id: "player1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: crate::model::CreatureState::default(),
             final_state: crate::model::CreatureState::default(),

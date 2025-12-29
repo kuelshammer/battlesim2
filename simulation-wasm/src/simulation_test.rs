@@ -67,7 +67,7 @@ mod tests {
         Combattant {
             id: id.to_string(),
             initiative: 10.0,
-            creature: Creature {
+            creature: std::sync::Arc::new(Creature {
                 id: id.to_string(),
                 name: name.to_string(),
                 count: 1.0,
@@ -93,7 +93,7 @@ mod tests {
                 con_modifier: None,
                 arrival: None,
                 mode: "monster".to_string(),
-            },
+            }),
             initial_state: {
                 let mut state = CreatureState::default();
                 state.current_hp = 10;

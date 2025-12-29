@@ -84,7 +84,7 @@ fn dummy_combatant(id: &str, hp: u32) -> Combattant {
     Combattant {
         id: id.to_string(),
         team: 0,
-        creature: Creature {
+        creature: std::sync::Arc::new(Creature {
             id: id.to_string(),
             arrival: None,
             mode: "player".to_string(),
@@ -105,7 +105,7 @@ fn dummy_combatant(id: &str, hp: u32) -> Combattant {
             class_resources: None,
             hit_dice: None,
             con_modifier: None,
-        },
+        }),
         initiative: 10.0,
         initial_state: CreatureState::default(),
         final_state: CreatureState {

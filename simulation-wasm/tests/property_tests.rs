@@ -67,7 +67,7 @@ fn create_minimal_combatant(creature: Creature, team: u32, initiative: f64) -> C
     Combattant {
         id: creature.id.clone(),
         team,
-        creature,
+        creature: std::sync::Arc::new(creature),
         initiative,
         initial_state: CreatureState { current_hp: hp, ..CreatureState::default() },
         final_state: CreatureState { current_hp: hp, ..CreatureState::default() },

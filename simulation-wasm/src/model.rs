@@ -1,8 +1,9 @@
 use crate::enums::*;
 pub use crate::enums::ActionCondition; // Explicitly re-export ActionCondition
 use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer, Serializer};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum MonsterRole {
@@ -727,23 +728,87 @@ impl Default for CreatureState {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+// Combattant now uses Arc<Creature> for shared ownership.
+// When cloning a Combattant, the Creature is not deep-copied - only the Arc pointer is copied.
+// This significantly reduces memory usage when creating many clones (e.g., in simulation iterations).
+// Arc is used instead of Rc for thread safety (Send + Sync).
+#[derive(Debug, PartialEq)]
 pub struct Combattant {
     pub id: String,
-    #[serde(default)]
-    pub team: u32, // 0 for Team 1 (Players), 1 for Team 2 (Monsters)
-    pub creature: Creature,
-    #[serde(default)]
-    pub initiative: f64,
-    #[serde(rename = "initialState")]
+    pub team: u32, // 0 for Team 1 (Players), 1 for Team 2 (Monsters) - defaults to 0
+    pub creature: Arc<Creature>,
+    pub initiative: f64, // defaults to 0.0
     pub initial_state: CreatureState,
-    #[serde(rename = "finalState")]
     pub final_state: CreatureState,
-    // actions taken is complex in TS, simplified here for now or omitted if not needed for input
-    // In TS: actions: { action: FinalAction, targets: Map<string, number> }[]
-    // We probably don't need to deserialize this from input, but we might need it for internal state.
-    // #[serde(skip)] - We need this for the results!
     pub actions: Vec<CombattantAction>,
+}
+
+// Manual Clone implementation - cheap! Only clones the Arc pointer, not the Creature
+impl Clone for Combattant {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id.clone(),
+            team: self.team,
+            creature: Arc::clone(&self.creature), // Just copies the Arc pointer
+            initiative: self.initiative,
+            initial_state: self.initial_state.clone(),
+            final_state: self.final_state.clone(),
+            actions: self.actions.clone(),
+        }
+    }
+}
+
+// Manual Serialize implementation - delegates to inner Creature
+impl Serialize for Combattant {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("Combattant", 6)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("team", &self.team)?;
+        state.serialize_field("creature", self.creature.as_ref())?;
+        state.serialize_field("initiative", &self.initiative)?;
+        state.serialize_field("initialState", &self.initial_state)?;
+        state.serialize_field("finalState", &self.final_state)?;
+        state.serialize_field("actions", &self.actions)?;
+        state.end()
+    }
+}
+
+// Manual Deserialize implementation - reconstructs Arc<Creature>
+impl<'de> Deserialize<'de> for Combattant {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct CombattantHelper {
+            id: String,
+            #[serde(default)]
+            team: u32,
+            creature: Creature,
+            #[serde(default)]
+            initiative: f64,
+            #[serde(rename = "initialState")]
+            initial_state: CreatureState,
+            #[serde(rename = "finalState")]
+            final_state: CreatureState,
+            actions: Vec<CombattantAction>,
+        }
+
+        let helper = CombattantHelper::deserialize(deserializer)?;
+        Ok(Combattant {
+            id: helper.id,
+            team: helper.team,
+            creature: Arc::new(helper.creature),
+            initiative: helper.initiative,
+            initial_state: helper.initial_state,
+            final_state: helper.final_state,
+            actions: helper.actions,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

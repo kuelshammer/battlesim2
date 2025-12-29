@@ -64,10 +64,10 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        Combattant { 
-            team: 0, 
+        Combattant {
+            team: 0,
             id: name.to_string(),
-            creature: creature.clone(),
+            creature: std::sync::Arc::new(creature.clone()),
             initiative: 10.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),

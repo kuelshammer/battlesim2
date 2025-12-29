@@ -700,9 +700,9 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0, 
+        let combatants = vec![Combattant { team: 0,
             id: "player1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -747,9 +747,9 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0, 
+        let combatants = vec![Combattant { team: 0,
             id: "player1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -798,9 +798,9 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0, 
+        let combatants = vec![Combattant { team: 0,
             id: "player1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -852,9 +852,9 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0, 
+        let combatants = vec![Combattant { team: 0,
             id: "player1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },

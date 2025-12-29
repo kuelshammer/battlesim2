@@ -317,14 +317,14 @@ mod tests {
         assert!(higher_ac_dpr < baseline_dpr);
         assert_eq!(lower_ac_dpr, stats.total_dpr); // No penalty for easier targets
     }
-    
+
     #[test]
     fn test_cache_operations() {
         let mut cache = CombatStatsCache::new();
         let creature = create_test_creature("goblin", 15.0, 10.0, 5.0);
-        let combatant = Combattant { team: 0, 
+        let combatant = Combattant { team: 0,
             id: "goblin1".to_string(),
-            creature: creature.clone(),
+            creature: std::sync::Arc::new(creature.clone()),
             initiative: 10.0,
             initial_state: crate::model::CreatureState::default(),
             final_state: crate::model::CreatureState::default(),
@@ -355,22 +355,22 @@ mod tests {
     #[test]
     fn test_precalculate_for_combatants() {
         let mut cache = CombatStatsCache::new();
-        
+
         let creature1 = create_test_creature("goblin", 15.0, 10.0, 5.0);
         let creature2 = create_test_creature("orc", 12.0, 15.0, 3.0);
-        
+
         let combatants = vec![
-            Combattant { team: 0, 
+            Combattant { team: 0,
                 id: "goblin1".to_string(),
-                creature: creature1,
+                creature: std::sync::Arc::new(creature1),
                 initiative: 10.0,
                 initial_state: crate::model::CreatureState::default(),
                 final_state: crate::model::CreatureState::default(),
                 actions: vec![],
             },
-            Combattant { team: 0, 
+            Combattant { team: 0,
                 id: "orc1".to_string(),
-                creature: creature2,
+                creature: std::sync::Arc::new(creature2),
                 initiative: 5.0,
                 initial_state: crate::model::CreatureState::default(),
                 final_state: crate::model::CreatureState::default(),

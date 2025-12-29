@@ -908,9 +908,9 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatant = Combattant { team: 0, 
+        let combatant = Combattant { team: 0,
             id: "warrior1".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState {
                 current_hp: 30,
@@ -990,18 +990,18 @@ mod tests {
             mode: "monster".to_string(), // MONSTER team
         };
 
-        let combatant1 = Combattant { team: 0, 
+        let combatant1 = Combattant { team: 0,
             id: "player1".to_string(),
-            creature: player_creature,
+            creature: std::sync::Arc::new(player_creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             actions: Vec::new(),
         };
 
-        let combatant2 = Combattant { team: 1, 
+        let combatant2 = Combattant { team: 1,
             id: "monster1".to_string(),
-            creature: monster_creature,
+            creature: std::sync::Arc::new(monster_creature),
             initiative: 5.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -1044,18 +1044,18 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatant1 = Combattant { team: 0, 
+        let combatant1 = Combattant { team: 0,
             id: "fast".to_string(),
-            creature: creature.clone(),
+            creature: std::sync::Arc::new(creature.clone()),
             initiative: 15.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),
             actions: Vec::new(),
         };
 
-        let combatant2 = Combattant { team: 0, 
+        let combatant2 = Combattant { team: 0,
             id: "slow".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 5.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),
@@ -1131,7 +1131,7 @@ mod tests {
         let player = Combattant {
             team: 0,
             id: "player1".to_string(),
-            creature: player_creature,
+            creature: std::sync::Arc::new(player_creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -1141,7 +1141,7 @@ mod tests {
         let monster = Combattant {
             team: 1,
             id: "monster1".to_string(),
-            creature: monster_creature,
+            creature: std::sync::Arc::new(monster_creature),
             initiative: 5.0,
             initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
@@ -1207,7 +1207,7 @@ mod tests {
         let combatant = Combattant {
             team: 0,
             id: "solo".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -1257,7 +1257,7 @@ mod tests {
         let combatant = Combattant {
             team: 0,
             id: "test".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 10.0,
             initial_state: CreatureState::default(),
             final_state: CreatureState::default(),
@@ -1305,7 +1305,7 @@ mod tests {
         let combatant1 = Combattant {
             team: 0,
             id: "ally1".to_string(),
-            creature: creature.clone(),
+            creature: std::sync::Arc::new(creature.clone()),
             initiative: 10.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
@@ -1315,7 +1315,7 @@ mod tests {
         let combatant2 = Combattant {
             team: 0,
             id: "ally2".to_string(),
-            creature,
+            creature: std::sync::Arc::new(creature),
             initiative: 5.0,
             initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
             final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
