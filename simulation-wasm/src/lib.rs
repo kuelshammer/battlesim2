@@ -391,116 +391,11 @@ pub fn run_event_driven_simulation_rust(
     all_runs
 }
 
-/// Rolling statistics state - maintains O(1) memory regardless of iteration count
-struct RollingStats {
-    iteration_count: usize,
-    successful_count: usize,
-    score_sum: f64,
-    score_sum_squared: f64,
-    score_min: f64,
-    score_max: f64,
-    best_run: Option<SimulationRun>,
-    worst_run: Option<SimulationRun>,
-    first_run: Option<SimulationRun>,
-    last_run: Option<SimulationRun>,
-    // For percentile approximation, we track score buckets
-    score_buckets: [usize; 100], // 100 buckets for 0-100 score range
-}
-
-impl RollingStats {
-    fn new() -> Self {
-        Self {
-            iteration_count: 0,
-            successful_count: 0,
-            score_sum: 0.0,
-            score_sum_squared: 0.0,
-            score_min: f64::MAX,
-            score_max: f64::MIN,
-            best_run: None,
-            worst_run: None,
-            first_run: None,
-            last_run: None,
-            score_buckets: [0; 100],
-        }
-    }
-
-    fn update(&mut self, run: &SimulationRun) {
-        self.iteration_count += 1;
-        self.successful_count += 1;
-
-        let score_value = crate::aggregation::calculate_score(&run.result);
-
-        // Update running stats
-        self.score_sum += score_value;
-        self.score_sum_squared += score_value * score_value;
-        self.score_min = self.score_min.min(score_value);
-        self.score_max = self.score_max.max(score_value);
-
-        // Track best/worst runs
-        if self.best_run.is_none() || score_value > crate::aggregation::calculate_score(&self.best_run.as_ref().unwrap().result) {
-            self.best_run = Some(run.clone());
-        }
-        if self.worst_run.is_none() || score_value < crate::aggregation::calculate_score(&self.worst_run.as_ref().unwrap().result) {
-            self.worst_run = Some(run.clone());
-        }
-
-        // Track first/last
-        if self.first_run.is_none() {
-            self.first_run = Some(run.clone());
-        }
-        self.last_run = Some(run.clone());
-
-        // Update score bucket (0-100 range, 1-unit buckets)
-        let bucket_idx = (score_value.clamp(0.0, 99.99) as usize).min(99);
-        self.score_buckets[bucket_idx] += 1;
-    }
-
-    fn finalize(&self) -> crate::model::ScorePercentiles {
-        if self.iteration_count == 0 {
-            return crate::model::ScorePercentiles::default();
-        }
-
-        let mean = self.score_sum / self.iteration_count as f64;
-        let variance = (self.score_sum_squared / self.iteration_count as f64) - (mean * mean);
-        let std_dev = variance.sqrt().max(0.0);
-
-        // Approximate median using bucket counts
-        let median = self.approximate_median();
-
-        // Approximate percentiles
-        let p25 = self.approximate_percentile(0.25);
-        let p75 = self.approximate_percentile(0.75);
-
-        crate::model::ScorePercentiles {
-            min: self.score_min,
-            max: self.score_max,
-            median,
-            p25,
-            p75,
-            mean,
-            std_dev,
-        }
-    }
-
-    fn approximate_median(&self) -> f64 {
-        self.approximate_percentile(0.50)
-    }
-
-    fn approximate_percentile(&self, p: f64) -> f64 {
-        let target_count = (self.iteration_count as f64 * p).round() as usize;
-        let mut count = 0;
-        for (bucket_idx, bucket_count) in self.score_buckets.iter().enumerate() {
-            count += bucket_count;
-            if count >= target_count {
-                return bucket_idx as f64;
-            }
-        }
-        99.0
-    }
-}
-
-/// O(1) memory version of simulation runner using rolling aggregation
-/// Returns aggregated statistics instead of storing all individual results
+/// Two-Pass Deterministic Re-simulation implementation
+/// Phase 1: Lightweight survey pass (no events, ~70 KB memory)
+/// Phase 2: Identify interesting seeds (deciles, deaths, extremes)
+/// Phase 3: Re-run only interesting seeds with full events (~5 MB memory)
+/// Total memory: ~5 MB (vs ~15-20 MB for storing all runs)
 pub fn run_simulation_with_rolling_stats(
     players: Vec<Creature>,
     timeline: Vec<TimelineStep>,
@@ -511,58 +406,87 @@ pub fn run_simulation_with_rolling_stats(
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     let _ = console_log::init_with_level(log::Level::Info);
 
-    let mut stats = RollingStats::new();
-    let mut sample_runs = Vec::with_capacity(4); // Store first, last, best, worst
+    // Phase 1: Survey pass - lightweight simulation for all iterations
+    let base_seed = seed.unwrap_or(0);
+    let lightweight_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, Some(base_seed));
 
-    for i in 0..iterations {
-        // If a seed is provided, use it with the iteration index for determinism
-        if let Some(s) = seed {
-            crate::rng::seed_rng(s.wrapping_add(i as u64));
-        }
+    // Phase 2: Identify interesting seeds for re-simulation
+    let interesting_seeds = select_interesting_seeds(&lightweight_runs);
 
-        let (result, events) = run_single_event_driven_simulation(&players, &timeline, i == 0);
-        let run = crate::model::SimulationRun { result, events };
-
-        stats.update(&run);
+    // Phase 3: Deep dive pass - re-run interesting seeds with full events
+    let mut sample_runs = Vec::new();
+    for seed in &interesting_seeds {
+        crate::rng::seed_rng(*seed);
+        let (result, events) = run_single_event_driven_simulation(&players, &timeline, false);
+        sample_runs.push(crate::model::SimulationRun { result, events });
     }
 
     // Clear the seeded RNG after simulation completes
-    if seed.is_some() {
-        crate::rng::clear_rng();
+    crate::rng::clear_rng();
+
+    // Calculate statistics from lightweight runs
+    let mut score_sum = 0.0;
+    let mut score_sum_squared = 0.0;
+    let mut score_min = f64::MAX;
+    let mut score_max = f64::MIN;
+
+    for run in &lightweight_runs {
+        let score = run.final_score;
+        score_sum += score;
+        score_sum_squared += score * score;
+        score_min = score_min.min(score);
+        score_max = score_max.max(score);
     }
 
-    // Build sample runs (max 4 runs to keep memory low)
-    // Use take() to move values out of Options
-    if let Some(first) = stats.first_run.take() {
-        sample_runs.push(first);
-    }
-    if let Some(best) = stats.best_run.take() {
-        if !sample_runs.iter().any(|r| std::ptr::eq(r, &best)) {
-            sample_runs.push(best);
-        }
-    }
-    if let Some(worst) = stats.worst_run.take() {
-        if !sample_runs.iter().any(|r| std::ptr::eq(r, &worst)) {
-            sample_runs.push(worst);
-        }
-    }
-    if let Some(last) = stats.last_run.take() {
-        if !sample_runs.iter().any(|r| std::ptr::eq(r, &last)) && sample_runs.len() < 4 {
-            sample_runs.push(last);
-        }
+    let mean = score_sum / iterations as f64;
+    let variance = (score_sum_squared / iterations as f64) - (mean * mean);
+    let std_dev = variance.sqrt().max(0.0);
+
+    // Approximate median using the same bucket approach as before
+    let mut score_buckets = [0usize; 100];
+    for run in &lightweight_runs {
+        let bucket_idx = (run.final_score.clamp(0.0, 99.99) as usize).min(99);
+        score_buckets[bucket_idx] += 1;
     }
 
-    // Note: We're not including aggregated_encounters in the summary
-    // to truly achieve O(1) memory. The frontend can compute these
-    // from the sample runs if needed, or we can add them later with
-    // a different aggregation strategy.
+    let median = approximate_percentile_from_buckets(&score_buckets, iterations, 50.0);
+    let p25 = approximate_percentile_from_buckets(&score_buckets, iterations, 25.0);
+    let p75 = approximate_percentile_from_buckets(&score_buckets, iterations, 75.0);
+
     crate::model::SimulationSummary {
-        total_iterations: stats.iteration_count,
-        successful_iterations: stats.successful_count,
-        aggregated_encounters: Vec::new(), // O(1) - no encounter aggregation stored
-        score_percentiles: stats.finalize(),
+        total_iterations: iterations,
+        successful_iterations: iterations, // All runs "succeed" in the sense they complete
+        aggregated_encounters: Vec::new(),
+        score_percentiles: crate::model::ScorePercentiles {
+            min: score_min,
+            max: score_max,
+            median,
+            p25,
+            p75,
+            mean,
+            std_dev,
+        },
         sample_runs,
     }
+}
+
+/// Helper to approximate percentile from histogram buckets
+fn approximate_percentile_from_buckets(buckets: &[usize; 100], total: usize, percentile: f64) -> f64 {
+    if total == 0 {
+        return 0.0;
+    }
+
+    let target_count = (total as f64 * percentile / 100.0).ceil() as usize;
+    let mut cumulative = 0;
+
+    for (bucket_idx, &count) in buckets.iter().enumerate() {
+        cumulative += count;
+        if cumulative >= target_count {
+            return bucket_idx as f64;
+        }
+    }
+
+    99.0
 }
 
 
@@ -720,6 +644,332 @@ fn run_single_event_driven_simulation(players: &[Creature], timeline: &[crate::m
     result.score = Some(score);
 
     (result, all_events)
+}
+
+/// Lightweight simulation that tracks only scores and deaths, no event collection
+/// Used in Phase 1 of Two-Pass system to identify interesting runs for re-simulation
+fn run_single_lightweight_simulation(
+    players: &[Creature],
+    timeline: &[crate::model::TimelineStep],
+    seed: u64,
+) -> crate::model::LightweightRun {
+    // Seed RNG for deterministic results
+    crate::rng::seed_rng(seed);
+
+    let mut players_with_state = Vec::new();
+    let mut encounter_scores = Vec::new();
+    let mut has_death = false;
+    let mut first_death_encounter: Option<usize> = None;
+    let mut combat_encounter_idx = 0usize;
+
+    // Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
+    // and carried over correctly across encounters.
+    for (group_idx, player) in players.iter().enumerate() {
+        for i in 0..player.count as i32 {
+            let name = if player.count > 1.0 { format!("{} {}", player.name, i + 1) } else { player.name.clone() };
+            let mut p = player.clone();
+            p.name = name;
+            p.mode = "player".to_string();
+            let id = format!("p-{}-{}-{}", group_idx, i, player.id);
+
+            // Create CreatureState
+            let state = CreatureState {
+                current_hp: p.hp,
+                temp_hp: None,
+                buffs: HashMap::new(),
+                resources: {
+                    let mut r = crate::model::SerializableResourceLedger::from(p.initialize_ledger());
+                    // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+                    let action_uses = crate::actions::get_remaining_uses(&p, "long rest", None);
+                    for (action_id, uses) in action_uses {
+                        r.current.insert(action_id, uses);
+                    }
+                    r
+                },
+                upcoming_buffs: HashMap::new(),
+                used_actions: HashSet::new(),
+                concentrating_on: None,
+                actions_used_this_encounter: HashSet::new(),
+                bonus_action_used: false,
+                known_ac: HashMap::new(),
+                arcane_ward_hp: None,
+            };
+
+            // Create Combattant for ActionExecutionEngine
+            let combattant = Combattant {
+                team: 0,
+                id: id.clone(),
+                creature: std::sync::Arc::new(p.clone()),
+                initiative: crate::utilities::roll_initiative(&p),
+                initial_state: state.clone(),
+                final_state: state,
+                actions: Vec::new(),
+            };
+
+            players_with_state.push(combattant);
+        }
+    }
+
+    let mut encounter_results = Vec::new();
+
+    for (step_idx, step) in timeline.iter().enumerate() {
+        match step {
+            crate::model::TimelineStep::Combat(encounter) => {
+                // Create enemy combatants - IDs include encounter index to be globally unique
+                let mut enemies = Vec::new();
+                for (group_idx, monster) in encounter.monsters.iter().enumerate() {
+                    for i in 0..monster.count as i32 {
+                        let name = if monster.count > 1.0 { format!("{} {}", monster.name, i + 1) } else { monster.name.clone() };
+                        let mut m = monster.clone();
+                        m.name = name;
+                        let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
+
+                        let enemy_state = CreatureState {
+                            current_hp: m.hp,
+                            temp_hp: None,
+                            buffs: HashMap::new(),
+                            resources: {
+                                let mut r = crate::model::SerializableResourceLedger::from(m.initialize_ledger());
+                                // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+                                let action_uses = crate::actions::get_remaining_uses(&m, "long rest", None);
+                                for (action_id, uses) in action_uses {
+                                    r.current.insert(action_id, uses);
+                                }
+                                r
+                            },
+                            upcoming_buffs: HashMap::new(),
+                            used_actions: HashSet::new(),
+                            concentrating_on: None,
+                            actions_used_this_encounter: HashSet::new(),
+                            bonus_action_used: false,
+                            known_ac: HashMap::new(),
+                            arcane_ward_hp: None,
+                        };
+
+                        let enemy_combattant = Combattant {
+                            team: 1,
+                            id: id.clone(),
+                            creature: std::sync::Arc::new(m.clone()),
+                            initiative: crate::utilities::roll_initiative(&m),
+                            initial_state: enemy_state.clone(),
+                            final_state: enemy_state,
+                            actions: Vec::new(),
+                        };
+
+                        enemies.push(enemy_combattant);
+                    }
+                }
+
+                // Combine all combatants for this encounter
+                let mut all_combatants = players_with_state.clone();
+                all_combatants.extend(enemies);
+
+                // Create ActionExecutionEngine
+                let mut engine = ActionExecutionEngine::new(all_combatants.clone());
+
+                // Run encounter using the ActionExecutionEngine (NO event collection)
+                let encounter_result = engine.execute_encounter();
+
+                // Convert to old format for compatibility
+                let legacy_result = convert_to_legacy_simulation_result(&encounter_result, step_idx, encounter.target_role.clone());
+                encounter_results.push(legacy_result);
+
+                // Track cumulative score after this combat encounter
+                let partial_result = crate::model::SimulationResult {
+                    encounters: encounter_results.clone(),
+                    score: None,
+                    num_combat_encounters: 0,
+                };
+                let score = crate::aggregation::calculate_cumulative_score(&partial_result, combat_encounter_idx);
+                encounter_scores.push(score);
+                combat_encounter_idx += 1;
+
+                // Check for deaths in this encounter
+                if !has_death {
+                    for combatant in &encounter_result.final_combatant_states {
+                        if combatant.current_hp == 0 && combatant.base_combatant.team == 0 {
+                            has_death = true;
+                            first_death_encounter = Some(encounter_scores.len() - 1);
+                            break;
+                        }
+                    }
+                }
+
+                // Update player states for next encounter (no rest here, rest is its own step)
+                players_with_state = update_player_states_for_next_encounter(&players_with_state, &encounter_result, false);
+            },
+            crate::model::TimelineStep::ShortRest(_) => {
+                // Apply standalone short rest recovery (NO event collection)
+                players_with_state = apply_short_rest_standalone_no_events(&players_with_state);
+
+                // Add an encounter result with one round snapshot to capture the state after rest
+                let after_rest_team1 = players_with_state.to_vec();
+
+                encounter_results.push(crate::model::EncounterResult {
+                    stats: HashMap::new(),
+                    rounds: vec![crate::model::Round {
+                        team1: after_rest_team1,
+                        team2: Vec::new(),
+                    }],
+                    target_role: crate::model::TargetRole::Standard,
+                });
+            }
+        }
+    }
+
+    // Calculate final score
+    let final_result = crate::model::SimulationResult {
+        encounters: encounter_results,
+        score: None,
+        num_combat_encounters: combat_encounter_idx,
+    };
+    let final_score = crate::aggregation::calculate_score(&final_result);
+
+    // Clear the seeded RNG after simulation completes
+    crate::rng::clear_rng();
+
+    crate::model::LightweightRun {
+        seed,
+        encounter_scores,
+        final_score,
+        has_death,
+        first_death_encounter,
+    }
+}
+
+/// Short rest without event collection - used by lightweight simulation
+fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combattant> {
+    let mut updated_players = Vec::new();
+
+    for player in players {
+        let mut updated_player = player.clone();
+
+        let mut current_hp = player.final_state.current_hp;
+        let mut resources = crate::resources::ResourceLedger::from(player.final_state.resources.clone());
+
+        // 1. Reset Short Rest resources
+        resources.reset_by_type(&ResetType::ShortRest);
+
+        // 2. Basic Short Rest healing
+        if current_hp < player.creature.hp {
+            if current_hp == 0 {
+                current_hp = 1; // Wake up
+            }
+            let max_hp = player.creature.hp;
+            let heal_amount = (max_hp / 4).max(1);
+            current_hp = (current_hp + heal_amount).min(max_hp);
+        }
+
+        // Update state
+        let next_state = crate::model::CreatureState {
+            current_hp,
+            temp_hp: None, // Temp HP lost on rest
+            resources: resources.into(),
+            ..player.final_state.clone()
+        };
+
+        updated_player.initial_state = next_state.clone();
+        updated_player.final_state = next_state;
+
+        updated_players.push(updated_player);
+    }
+
+    updated_players
+}
+
+/// Phase 1: Survey pass - runs all iterations with lightweight simulation (no event collection)
+/// Returns all LightweightRun results (~70 KB for 2511 iterations)
+pub fn run_survey_pass(
+    players: Vec<Creature>,
+    timeline: Vec<TimelineStep>,
+    iterations: usize,
+    base_seed: Option<u64>,
+) -> Vec<crate::model::LightweightRun> {
+    let mut all_runs = Vec::with_capacity(iterations);
+
+    for i in 0..iterations {
+        // Use base_seed + i as the seed for this iteration
+        let seed = base_seed.unwrap_or(i as u64).wrapping_add(i as u64);
+
+        let lightweight_run = run_single_lightweight_simulation(&players, &timeline, seed);
+        all_runs.push(lightweight_run);
+    }
+
+    all_runs
+}
+
+/// Phase 2: Analyze lightweight runs and identify interesting seeds for re-simulation
+/// Returns a deduplicated set of seeds that should be re-run with full event logging
+pub fn select_interesting_seeds(
+    lightweight_runs: &[crate::model::LightweightRun],
+) -> Vec<u64> {
+    use std::collections::{HashSet, HashMap};
+
+    let mut interesting_seeds = HashSet::new();
+    let num_encounters = lightweight_runs
+        .first()
+        .map(|r| r.encounter_scores.len())
+        .unwrap_or(0);
+
+    // Helper to get index at percentile
+    let get_percentile_index = |len: usize, percentile: f64| -> usize {
+        if len == 0 { return 0; }
+        let idx = (len as f64 * percentile / 100.0).floor() as usize;
+        idx.min(len - 1)
+    };
+
+    // For each encounter, select seeds at key percentiles
+    for encounter_idx in 0..num_encounters {
+        let mut scored_runs: Vec<(usize, f64)> = lightweight_runs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, run)| {
+                run.encounter_scores.get(encounter_idx)
+                    .copied()
+                    .map(|score| (i, score))
+            })
+            .collect();
+
+        // Sort by score at this encounter
+        scored_runs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        let len = scored_runs.len();
+
+        // Select seeds at key percentiles: 0, 10, 25, 50, 75, 90, 100
+        let percentiles = vec![0.0, 10.0, 25.0, 50.0, 75.0, 90.0, 100.0];
+        for percentile in percentiles {
+            let idx = get_percentile_index(len, percentile);
+            if let Some((run_idx, _)) = scored_runs.get(idx) {
+                interesting_seeds.insert(lightweight_runs[*run_idx].seed);
+            }
+        }
+    }
+
+    // Include overall best and worst by final_score
+    let mut by_final_score: Vec<(usize, f64)> = lightweight_runs
+        .iter()
+        .enumerate()
+        .map(|(i, run)| (i, run.final_score))
+        .collect();
+
+    by_final_score.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    if let Some((best_idx, _)) = by_final_score.last() {
+        interesting_seeds.insert(lightweight_runs[*best_idx].seed);
+    }
+    if let Some((worst_idx, _)) = by_final_score.first() {
+        interesting_seeds.insert(lightweight_runs[*worst_idx].seed);
+    }
+
+    // Include all runs with deaths (for TPK analysis)
+    for run in lightweight_runs {
+        if run.has_death {
+            interesting_seeds.insert(run.seed);
+        }
+    }
+
+    // Convert to Vec and return
+    interesting_seeds.into_iter().collect()
 }
 
 fn apply_short_rest_standalone(players: &[Combattant], events: &mut Vec<crate::events::Event>) -> Vec<Combattant> {

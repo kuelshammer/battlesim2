@@ -913,6 +913,23 @@ pub struct SimulationRun {
     pub events: Vec<crate::events::Event>,
 }
 
+/// A lightweight representation of a simulation run for Two-Pass analysis
+/// Contains only the data needed to identify interesting runs for re-simulation
+/// Memory: ~32 bytes per run vs ~6-50 KB for full SimulationRun
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LightweightRun {
+    /// The RNG seed used for this run - allows exact re-simulation
+    pub seed: u64,
+    /// Cumulative score after each encounter (e.g., [50.0, 85.0] means scored 50 after E1, 85 after E2)
+    pub encounter_scores: Vec<f64>,
+    /// Final cumulative score across all encounters
+    pub final_score: f64,
+    /// Whether any combatant died during this run (for TPK detection)
+    pub has_death: bool,
+    /// Which encounter the first death occurred in (if has_death is true)
+    pub first_death_encounter: Option<usize>,
+}
+
 /// Aggregated statistics from multiple simulation runs
 /// This is O(1) in memory regardless of iteration count
 #[derive(Debug, Clone, Serialize, Deserialize)]
