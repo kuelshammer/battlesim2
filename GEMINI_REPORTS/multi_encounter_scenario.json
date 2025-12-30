@@ -1,0 +1,84 @@
+{
+  "players": [
+    {
+      "id": "fighter1",
+      "name": "Fighter 1",
+      "count": 1,
+      "hp": 30,
+      "ac": 18,
+      "saveBonus": 3,
+      "initiativeBonus": 2,
+      "actions": [
+        {
+          "id": "longsword1",
+          "name": "Longsword",
+          "type": "atk",
+          "dpr": "1d8+3",
+          "toHit": "1d20+5",
+          "target": "enemy with least HP",
+          "freq": "at will",
+          "condition": "default",
+          "targets": 1
+        }
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "type": "combat",
+      "monsters": [
+        {
+          "id": "goblin1",
+          "name": "Goblin",
+          "count": 2,
+          "hp": 7,
+          "ac": 15,
+          "saveBonus": 0,
+          "actions": [
+            {
+              "id": "scimitar1",
+              "name": "Scimitar",
+              "type": "atk",
+              "dpr": "1d6+2",
+              "toHit": "1d20+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "shortRest",
+      "id": "sr1"
+    },
+    {
+      "type": "combat",
+      "monsters": [
+        {
+          "id": "bugbear1",
+          "name": "Bugbear",
+          "count": 1,
+          "hp": 27,
+          "ac": 16,
+          "saveBonus": 1,
+          "actions": [
+            {
+              "id": "morningstar1",
+              "name": "Morningstar",
+              "type": "atk",
+              "dpr": "2d8+2",
+              "toHit": "1d20+4",
+              "target": "enemy with least HP",
+              "freq": "at will",
+              "condition": "default",
+              "targets": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
