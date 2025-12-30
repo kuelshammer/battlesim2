@@ -3,11 +3,10 @@
 //! These tests load JSON encounter files, run simulations, and validate
 //! that the results maintain expected invariants (no impossible states).
 
-mod invariants;
-
+use crate::engine::invariants;
 use std::path::Path;
 use std::fs;
-use simulation_wasm::model::{Creature, Encounter, TimelineStep};
+use simulation_wasm::model::{Creature, TimelineStep};
 
 /// Test configuration for scenarios
 struct ScenarioTest {
@@ -28,16 +27,26 @@ impl Default for ScenarioTest {
 
 /// Load all scenario JSON files from a directory and run them as tests
 fn run_scenarios_in_dir(dir: &str) {
-    let scenarios_path = Path::new(dir);
+    let mut scenarios_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    scenarios_path.push(dir);
+    
     if !scenarios_path.exists() {
-        println!("Skipping scenario tests: {} directory not found", dir);
+        println!("Skipping scenario tests: {:?} directory not found", scenarios_path);
         return;
     }
 
     let entries = fs::read_dir(scenarios_path)
         .expect("Failed to read scenarios directory");
 
-    let scenario_count = entries.count();
+    let mut scenario_count = 0;
+    for entry in entries {
+        if let Ok(entry) = entry {
+            if entry.path().extension().is_some_and(|ext| ext == "json") {
+                scenario_count += 1;
+            }
+        }
+    }
+
     if scenario_count == 0 {
         println!("No scenarios found in {}", dir);
         return;
@@ -49,13 +58,14 @@ fn run_scenarios_in_dir(dir: &str) {
 /// Simple scenario structure for JSON loading
 #[derive(Debug, serde::Deserialize)]
 struct TestScenario {
+    #[allow(dead_code)]
     name: String,
     players: Vec<Creature>,
     timeline: Vec<TimelineStep>,
 }
 
 /// Parse a scenario JSON file
-fn load_scenario(path: &Path) -> Result<TestScenario, String> {
+fn load_local_scenario(path: &Path) -> Result<TestScenario, String> {
     let json_content = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
@@ -64,7 +74,7 @@ fn load_scenario(path: &Path) -> Result<TestScenario, String> {
 }
 
 /// Run a single scenario and validate invariants
-fn run_scenario(scenario: &TestScenario, config: &ScenarioTest) -> Result<(), String> {
+fn run_scenario(scenario: &TestScenario, _config: &ScenarioTest) -> Result<(), String> {
     // For Phase 1: Just validate that the scenario can be loaded and creatures are valid
     // Future phases will actually run the simulation
 
@@ -95,10 +105,6 @@ fn validate_creature(creature: &Creature) -> Result<(), String> {
         return Err(format!("{} has invalid HP: {}", creature.name, creature.hp));
     }
 
-    if creature.ac < 0 {
-        return Err(format!("{} has negative AC: {}", creature.name, creature.ac));
-    }
-
     // Check that actions have IDs
     for (idx, action) in creature.actions.iter().enumerate() {
         let action_id = action.base().id.clone();
@@ -125,13 +131,15 @@ fn validate_creature(creature: &Creature) -> Result<(), String> {
 
 #[test]
 fn test_basic_attack_scenario() {
-    let path = Path::new("tests/scenarios/basic/01_single_attack.json");
+    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/scenarios/basic/01_single_attack.json");
+    
     if !path.exists() {
-        println!("Skipping: scenario file not found");
+        println!("Skipping: scenario file not found: {:?}", path);
         return;
     }
 
-    let scenario = load_scenario(path).expect("Failed to load scenario");
+    let scenario = load_local_scenario(&path).expect("Failed to load scenario");
     let config = ScenarioTest {
         name: "Basic Attack".to_string(),
         ..Default::default()
@@ -144,13 +152,13 @@ fn test_basic_attack_scenario() {
 
 #[test]
 fn test_fireball_aoe_scenario() {
-    let path = Path::new("tests/scenarios/basic/02_fireball_aoe.json");
+    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/scenarios/basic/02_fireball_aoe.json");
     if !path.exists() {
-        println!("Skipping: scenario file not found");
         return;
     }
 
-    let scenario = load_scenario(path).expect("Failed to load scenario");
+    let scenario = load_local_scenario(&path).expect("Failed to load scenario");
     let config = ScenarioTest {
         name: "Fireball AOE".to_string(),
         ..Default::default()
@@ -163,13 +171,13 @@ fn test_fireball_aoe_scenario() {
 
 #[test]
 fn test_healing_word_scenario() {
-    let path = Path::new("tests/scenarios/basic/03_healing_word.json");
+    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/scenarios/basic/03_healing_word.json");
     if !path.exists() {
-        println!("Skipping: scenario file not found");
         return;
     }
 
-    let scenario = load_scenario(path).expect("Failed to load scenario");
+    let scenario = load_local_scenario(&path).expect("Failed to load scenario");
     let config = ScenarioTest {
         name: "Healing Word".to_string(),
         ..Default::default()
@@ -182,13 +190,13 @@ fn test_healing_word_scenario() {
 
 #[test]
 fn test_concentration_scenario() {
-    let path = Path::new("tests/scenarios/basic/04_concentration_check.json");
+    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/scenarios/basic/04_concentration_check.json");
     if !path.exists() {
-        println!("Skipping: scenario file not found");
         return;
     }
 
-    let scenario = load_scenario(path).expect("Failed to load scenario");
+    let scenario = load_local_scenario(&path).expect("Failed to load scenario");
     let config = ScenarioTest {
         name: "Concentration Check".to_string(),
         ..Default::default()
@@ -201,13 +209,13 @@ fn test_concentration_scenario() {
 
 #[test]
 fn test_multiattack_scenario() {
-    let path = Path::new("tests/scenarios/basic/05_multiattack.json");
+    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("tests/scenarios/basic/05_multiattack.json");
     if !path.exists() {
-        println!("Skipping: scenario file not found");
         return;
     }
 
-    let scenario = load_scenario(path).expect("Failed to load scenario");
+    let scenario = load_local_scenario(&path).expect("Failed to load scenario");
     let config = ScenarioTest {
         name: "Multiattack".to_string(),
         ..Default::default()

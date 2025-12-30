@@ -3,35 +3,10 @@
 // These tests use insta to snapshot simulation results and detect regressions.
 // When simulation logic changes, snapshots will fail and need review.
 
-use simulation_wasm::model::{Creature, TimelineStep};
 use simulation_wasm::run_event_driven_simulation_rust;
 use simulation_wasm::decile_analysis::run_decile_analysis;
-use std::fs;
-use std::path::PathBuf;
 use serde::Serialize;
-
-/// Load a scenario from the tests/scenarios directory
-fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<TimelineStep>) {
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("tests/scenarios");
-    path.push(filename);
-
-    let content = fs::read_to_string(&path).expect(&format!("Failed to read scenario file: {:?}", path));
-    let data: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
-
-    let players: Vec<Creature> =
-        serde_json::from_value(data["players"].clone()).expect("Failed to parse players");
-
-    let timeline: Vec<TimelineStep> = if let Some(t) = data.get("timeline") {
-        serde_json::from_value(t.clone()).expect("Failed to parse timeline")
-    } else {
-        let encounters: Vec<simulation_wasm::model::Encounter> =
-            serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
-        encounters.into_iter().map(TimelineStep::Combat).collect()
-    };
-
-    (players, timeline)
-}
+use crate::common::load_scenario;
 
 /// Snapshot data for a scenario
 #[derive(Serialize)]
@@ -45,7 +20,8 @@ struct SnapshotData {
 /// Snapshot test for basic melee combat (fast initiative dominance)
 #[test]
 fn snapshot_basic_melee_combat() {
-    let (players, timeline) = load_scenario("fast_init_PlayerA_wins.json");
+    let scenario_file = "fast_init_PlayerA_wins.json";
+    let (players, timeline) = load_scenario(scenario_file);
 
     // Run 101 iterations for decile analysis with fixed seed for determinism
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
@@ -58,7 +34,7 @@ fn snapshot_basic_melee_combat() {
 
     // Analyze
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, "fast_init_PlayerA_wins.json", party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
 
     // Snapshot the key metrics from the median decile
     let median = &analysis.deciles[4];
@@ -74,7 +50,8 @@ fn snapshot_basic_melee_combat() {
 /// Snapshot test for damage vs precision
 #[test]
 fn snapshot_damage_vs_precision() {
-    let (players, timeline) = load_scenario("damage_vs_precision_MonsterB_wins.json");
+    let scenario_file = "damage_vs_precision_MonsterB_wins.json";
+    let (players, timeline) = load_scenario(scenario_file);
 
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
@@ -84,7 +61,7 @@ fn snapshot_damage_vs_precision() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, "damage_vs_precision_MonsterB_wins.json", party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {
@@ -99,7 +76,8 @@ fn snapshot_damage_vs_precision() {
 /// Snapshot test for heavy vs consistent damage
 #[test]
 fn snapshot_heavy_vs_consistent() {
-    let (players, timeline) = load_scenario("heavy_vs_consistent_PlayerA_wins.json");
+    let scenario_file = "heavy_vs_consistent_PlayerA_wins.json";
+    let (players, timeline) = load_scenario(scenario_file);
 
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
@@ -109,7 +87,7 @@ fn snapshot_heavy_vs_consistent() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, "heavy_vs_consistent_PlayerA_wins.json", party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {

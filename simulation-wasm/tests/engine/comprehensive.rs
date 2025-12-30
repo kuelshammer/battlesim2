@@ -223,7 +223,7 @@ fn test_bless_buff_accuracy() {
 
 #[test]
 fn test_tpk_detection() {
-    let mut player = create_simple_creature("p1", "Player", 5, 10, 0);
+    let player = create_simple_creature("p1", "Player", 5, 10, 0);
     let mut monster = create_simple_creature("m1", "Monster", 50, 20, 1);
     
     // Monster kills player in one hit
