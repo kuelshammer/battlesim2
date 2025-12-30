@@ -426,6 +426,29 @@ impl TurnContext {
         self.combatants.get_mut(combatant_id)
     }
 
+    /// Check if a combatant has a specific condition from active effects or permanent conditions
+    pub fn has_condition(&self, target_id: &str, condition: CreatureCondition) -> bool {
+        // 1. Check permanent conditions on the combatant
+        if let Some(combatant) = self.combatants.get(target_id) {
+            if combatant.conditions.contains(&condition) {
+                return true;
+            }
+        }
+
+        // 2. Check active effects (temporary buffs/debuffs)
+        self.active_effects.values()
+            .filter(|e| e.target_id == target_id)
+            .any(|e| {
+                if let EffectType::Condition(c) = &e.effect_type {
+                    *c == condition
+                } else if let EffectType::Buff(b) = &e.effect_type {
+                    b.condition == Some(condition)
+                } else {
+                    false
+                }
+            })
+    }
+
     /// Check if a combatant is alive (using standardized HP threshold >= 0.5)
     pub fn is_combatant_alive(&self, combatant_id: &str) -> bool {
         self.combatants

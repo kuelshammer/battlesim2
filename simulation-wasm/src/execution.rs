@@ -21,6 +21,9 @@ pub struct ActionExecutionEngine {
 
     /// Resolves actions into events
     action_resolver: ActionResolver,
+
+    /// Pre-calculated initiative order for the encounter
+    initiative_order: Vec<String>,
 }
 
 /// Result of executing a single action
@@ -91,14 +94,25 @@ impl ActionExecutionEngine {
             log_enabled,
         );
 
+        // Pre-calculate initiative order
+        let mut sorted_combatants = combatants;
+        sorted_combatants.sort_by(|a, b| {
+            b.initiative
+                .partial_cmp(&a.initiative)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.id.cmp(&b.id))
+        });
+        let initiative_order = sorted_combatants.into_iter().map(|c| c.id).collect();
+
         let mut engine = Self {
             context,
             reaction_manager: ReactionManager::new(),
             action_resolver: ActionResolver::new(),
+            initiative_order,
         };
 
         // Register reactions from combatants (placeholder for now)
-        engine.register_default_reactions(&combatants);
+        engine.register_default_reactions(&[]); // combatants consumed by map above
 
         engine
     }
@@ -135,7 +149,7 @@ impl ActionExecutionEngine {
 
             self.context.advance_round();
 
-            let initiative_order = self.get_initiative_order();
+            let initiative_order = self.initiative_order.clone();
 
             for combatant_id in &initiative_order {
                 if !self.context.is_combatant_alive(&combatant_id) {
@@ -245,7 +259,7 @@ impl ActionExecutionEngine {
         while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
             self.context.advance_round();
 
-            let initiative_order = self.get_initiative_order();
+            let initiative_order = self.initiative_order.clone();
             let round_number = self.context.round_number;
 
             // Track state at start of round for death detection
@@ -891,19 +905,6 @@ impl ActionExecutionEngine {
         // }
     }
 
-    /// Get combatants sorted by initiative
-    fn get_initiative_order(&self) -> Vec<String> {
-        let mut combatants: Vec<_> = self.context.combatants.values().collect();
-        combatants.sort_by(|a, b| {
-            b.base_combatant
-                .initiative
-                .partial_cmp(&a.base_combatant.initiative)
-                .unwrap_or(std::cmp::Ordering::Equal)
-                .then_with(|| a.id.cmp(&b.id)) // Tie-breaker: Consistent ID ordering
-        });
-        combatants.into_iter().map(|c| c.id.clone()).collect()
-    }
-
     /// Check if encounter is complete (all alive combatants are on the same team)
     fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
@@ -1247,7 +1248,7 @@ mod tests {
         };
 
         let engine = ActionExecutionEngine::new(vec![combatant1, combatant2], true);
-        let order = engine.get_initiative_order();
+        let order = engine.initiative_order;
 
         assert_eq!(order.len(), 2);
         assert_eq!(order[0], "fast"); // Higher initiative first

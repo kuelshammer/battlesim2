@@ -1,7 +1,8 @@
 use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::dice;
-use crate::events::{DieRoll, Event, RollResult};
+use crate::events::{Event, RollResult};
 use crate::model::{Action, AtkAction, Buff, BuffAction, DebuffAction, HealAction, TemplateAction};
+use crate::enums::{TargetType};
 use crate::rng;
 use rand::Rng; // Import Rng trait for gen_range
 use serde::{Deserialize, Serialize};
@@ -21,7 +22,7 @@ struct AttackRollResult {
     total: f64,
     is_critical: bool,
     is_miss: bool,
-    roll_detail: RollResult,
+    roll_detail: Option<RollResult>,
 }
 
 /// Result of action resolution containing all generated events
@@ -89,7 +90,7 @@ impl ActionResolver {
             };
 
             // Perform attack roll
-            let attack_result = self.roll_attack(attack, context, actor_id);
+            let attack_result = self.roll_attack(attack, context, actor_id, &target_id);
             let target_ac = self.get_target_ac(&target_id, context);
 
             // Check for hit:
@@ -112,14 +113,14 @@ impl ActionResolver {
 
             if is_hit {
                 // Hit!
-                let (damage, damage_roll) = self.calculate_damage(attack, attack_result.is_critical);
+                let (damage, damage_roll) = self.calculate_damage(attack, attack_result.is_critical, context, actor_id);
 
                 let hit_event = Event::AttackHit {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
                     damage,
-                    attack_roll: Some(attack_result.roll_detail),
-                    damage_roll: Some(damage_roll),
+                    attack_roll: attack_result.roll_detail,
+                    damage_roll,
                     target_ac,
                 };
                 context.record_event(hit_event.clone());
@@ -143,7 +144,7 @@ impl ActionResolver {
                 let miss_event = Event::AttackMissed {
                     attacker_id: actor_id.to_string(),
                     target_id: target_id.clone(),
-                    attack_roll: Some(attack_result.roll_detail),
+                    attack_roll: attack_result.roll_detail,
                     target_ac,
                 };
                 context.record_event(miss_event.clone());
@@ -251,7 +252,7 @@ impl ActionResolver {
             // 1. Perform saving throw
             let mut rng = rng::get_rng();
             let roll = rng.gen_range(1..=20) as f64;
-            let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
+            let save_bonus = self.get_save_bonus(&target_id, context);
             let total_save = roll + save_bonus;
 
             if total_save < debuff_action.save_dc {
@@ -358,7 +359,7 @@ impl ActionResolver {
             if template_name == "bane" {
                 let mut rng = rng::get_rng();
                 let roll = rng.gen_range(1..=20) as f64;
-                let save_bonus = context.get_combatant(&target_id).map(|c| c.base_combatant.creature.save_bonus).unwrap_or(0.0);
+                let save_bonus = self.get_save_bonus(&target_id, context);
                 let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
                 
                 if roll + save_bonus >= save_dc {
@@ -593,12 +594,11 @@ impl ActionResolver {
 
         match target_type {
             TargetType::Enemy(_strategy) => {
-                // Find enemies
+                // Find enemies using deterministic alive combatants
                 context
-                    .combatants
-                    .values()
+                    .get_alive_combatants()
+                    .into_iter()
                     .filter(|c| c.id != actor_id)
-                    .filter(|c| context.is_combatant_alive(&c.id))
                     .filter(|c| c.base_combatant.creature.mode != actor_mode)
                     .take(count.max(1) as usize)
                     .map(|c| c.id.clone())
@@ -607,9 +607,8 @@ impl ActionResolver {
             TargetType::Ally(_strategy) => {
                 // Find allies
                 context
-                    .combatants
-                    .values()
-                    .filter(|c| context.is_combatant_alive(&c.id))
+                    .get_alive_combatants()
+                    .into_iter()
                     .filter(|c| c.base_combatant.creature.mode == actor_mode)
                     .take(count.max(1) as usize)
                     .map(|c| c.id.clone())
@@ -641,12 +640,11 @@ impl ActionResolver {
             .map(|c| c.base_combatant.creature.mode.clone())
             .unwrap_or_default();
 
-        // Find all alive enemies
+        // Find all alive enemies using deterministic alive combatants
         let mut enemies: Vec<_> = context
-            .combatants
-            .values()
+            .get_alive_combatants()
+            .into_iter()
             .filter(|c| c.id != actor_id) // Not self
-            .filter(|c| context.is_combatant_alive(&c.id)) // Must be alive
             .filter(|c| c.base_combatant.creature.mode != actor_mode) // Different team = enemy
             .collect();
 
@@ -770,56 +768,74 @@ impl ActionResolver {
     }
 
     /// Roll attack value
-    fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str) -> AttackRollResult {
+    fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
         let mut rng = rng::get_rng();
-        let natural_roll = rng.gen_range(1..=20);
         
-        // Detailed roll for the bonus/modifiers
-        let mut roll_detail = dice::evaluate_detailed(&attack.to_hit, 1);
+        // 1. Determine Advantage/Disadvantage
+        let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
+            || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+        let target_grants_adv = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithAdvantage);
         
-        // Prepend 1d20 to formula
-        if roll_detail.formula == "0" {
-            roll_detail.formula = "1d20".to_string();
+        let attacker_has_dis = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithDisadvantage)
+            || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndSavesWithDisadvantage);
+        let target_grants_dis = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithDisadvantage);
+
+        let final_adv = (attacker_has_adv || target_grants_adv) && !(attacker_has_dis || target_grants_dis);
+        let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv);
+
+        // 2. Perform Roll
+        let roll1 = rng.gen_range(1..=20);
+        let natural_roll: u32;
+        
+        if final_adv {
+            let roll2 = rng.gen_range(1..=20);
+            natural_roll = roll1.max(roll2);
+        } else if final_dis {
+            let roll2 = rng.gen_range(1..=20);
+            natural_roll = roll1.min(roll2);
         } else {
-            let base_formula = roll_detail.formula.clone();
-            let sign = if base_formula.starts_with('-') || base_formula.starts_with('+') { "" } else { "+" };
-            roll_detail.formula = format!("1d20{}{}", sign, base_formula);
+            natural_roll = roll1;
         }
 
-        // Add the d20 roll to the breakdown
-        roll_detail.total += natural_roll as f64;
-        roll_detail.rolls.insert(0, DieRoll { sides: 20, value: natural_roll });
-        roll_detail.modifiers.insert(0, ("d20".to_string(), natural_roll as f64));
+        let (modifier_total, roll_detail) = if context.log_enabled {
+            let detail = dice::evaluate_detailed(&attack.to_hit, 1);
+            (detail.total, Some(detail))
+        } else {
+            (dice::evaluate(&attack.to_hit, 1), None)
+        };
 
-        // Apply buffs
-        let effects = context.get_effects_on_target(actor_id);
-        for effect in effects {
-            if let EffectType::Buff(buff) = &effect.effect_type {
-                if let Some(to_hit_formula) = &buff.to_hit {
+        let mut total = natural_roll as f64 + modifier_total;
+        
+        // Check for accuracy-altering buffs in active effects
+        let mut final_roll_detail = roll_detail;
+        
+        // Filter and sort active buffs affecting the attacker for determinism
+        let mut attacker_buffs: Vec<_> = context.active_effects.values()
+            .filter(|e| e.target_id == actor_id)
+            .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+            .collect();
+        attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (_, buff) in attacker_buffs {
+            if let Some(to_hit_formula) = &buff.to_hit {
+                if context.log_enabled {
                     let buff_roll = dice::evaluate_detailed(to_hit_formula, 1);
-                    roll_detail.total += buff_roll.total;
-                    roll_detail.rolls.extend(buff_roll.rolls);
-                    
-                    let name = buff.display_name.clone().unwrap_or_else(|| "Buff".to_string());
-                    roll_detail.modifiers.push((name.clone(), buff_roll.total));
-                    
-                    // Update formula string with bracketed name
-                    let mut buff_expr = buff_roll.formula.clone();
-                    if !buff_expr.contains('[') {
-                        buff_expr = format!("{}[{}]", buff_expr, name);
+                    total += buff_roll.total;
+                    if let Some(detail) = &mut final_roll_detail {
+                        detail.modifiers.push((buff.display_name.clone().unwrap_or_else(|| "Buff".to_string()), buff_roll.total));
+                        detail.total += buff_roll.total;
                     }
-                    
-                    let sign = if buff_expr.starts_with('-') || buff_expr.starts_with('+') { "" } else { "+" };
-                    roll_detail.formula = format!("{}{}{}", roll_detail.formula, sign, buff_expr);
+                } else {
+                    total += dice::evaluate(to_hit_formula, 1);
                 }
             }
         }
 
         AttackRollResult {
-            total: roll_detail.total,
+            total,
             is_critical: natural_roll == 20,
             is_miss: natural_roll == 1,
-            roll_detail,
+            roll_detail: final_roll_detail,
         }
     }
 
@@ -846,17 +862,71 @@ impl ActionResolver {
         base_ac + buff_ac
     }
 
-    /// Calculate damage from attack
-    fn calculate_damage(&self, attack: &AtkAction, is_critical: bool) -> (f64, RollResult) {
-        let mut damage_roll = dice::evaluate_detailed(&attack.dpr, if is_critical { 2 } else { 1 });
+    /// Get save bonus for a combatant including active buffs
+    fn get_save_bonus(&self, target_id: &str, context: &TurnContext) -> f64 {
+        let Some(target) = context.get_combatant(target_id) else {
+            return 0.0;
+        };
 
-        if is_critical {
-            // If it's a critical hit, we've already doubled the dice in evaluate_detailed (via multiplier)
-            // But we might want to label it.
-            damage_roll.modifiers.push(("Critical".to_string(), 0.0));
+        let mut bonus = target.base_combatant.creature.save_bonus;
+
+        // Add bonuses from active effects (Bless, Bane, etc.)
+        // Filter and sort for determinism
+        let mut target_buffs: Vec<_> = context.active_effects.values()
+            .filter(|e| e.target_id == target_id)
+            .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+            .collect();
+        target_buffs.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (_, buff) in target_buffs {
+            if let Some(save_formula) = &buff.save {
+                bonus += dice::average(save_formula);
+            }
         }
 
-        (damage_roll.total, damage_roll)
+        bonus
+    }
+
+    /// Calculate damage from attack
+    fn calculate_damage(&self, attack: &AtkAction, is_critical: bool, context: &TurnContext, actor_id: &str) -> (f64, Option<RollResult>) {
+        let (mut damage, mut damage_roll) = if context.log_enabled {
+            let detail = dice::evaluate_detailed(&attack.dpr, if is_critical { 2 } else { 1 });
+            (detail.total, Some(detail))
+        } else {
+            (dice::evaluate(&attack.dpr, if is_critical { 2 } else { 1 }), None)
+        };
+
+        // Add damage bonuses from active buffs
+        let mut attacker_buffs: Vec<_> = context.active_effects.values()
+            .filter(|e| e.target_id == actor_id)
+            .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+            .collect();
+        attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (_, buff) in attacker_buffs {
+            if let Some(damage_formula) = &buff.damage {
+                if context.log_enabled {
+                    let buff_dmg_roll = dice::evaluate_detailed(damage_formula, 1);
+                    damage += buff_dmg_roll.total;
+                    if let Some(detail) = &mut damage_roll {
+                        detail.modifiers.push((buff.display_name.clone().unwrap_or_else(|| "Damage Buff".to_string()), buff_dmg_roll.total));
+                        detail.total += buff_dmg_roll.total;
+                    }
+                } else {
+                    damage += dice::evaluate(damage_formula, 1);
+                }
+            }
+        }
+
+        if is_critical {
+            if let Some(detail) = &mut damage_roll {
+                // If it's a critical hit, we've already doubled the dice in evaluate_detailed (via multiplier)
+                // But we might want to label it.
+                detail.modifiers.push(("Critical".to_string(), 0.0));
+            }
+        }
+
+        (damage, damage_roll)
     }
 
     /// Apply effect directly to combatant through the context system
