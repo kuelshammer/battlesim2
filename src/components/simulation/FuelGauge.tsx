@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styles from './fuelGauge.module.scss';
 import { PacingData, PacingSegment } from './pacingUtils';
 
@@ -6,7 +6,7 @@ interface FuelGaugeProps {
     pacingData: PacingData;
 }
 
-const FuelGauge: React.FC<FuelGaugeProps> = ({ pacingData }) => {
+const FuelGauge: React.FC<FuelGaugeProps> = memo(({ pacingData }) => {
     const { vitalitySegments, powerSegments, plannedSegments } = pacingData;
 
     const renderBar = (segments: PacingSegment[], baseColors: [string, string], restColor: string) => {
@@ -70,6 +70,6 @@ const FuelGauge: React.FC<FuelGaugeProps> = ({ pacingData }) => {
             </div>
         </div>
     );
-};
+});
 
 export default FuelGauge;

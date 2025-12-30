@@ -1,4 +1,4 @@
-import { FC, ReactNode, useState } from "react"
+import { FC, ReactNode, useState, memo } from "react"
 import { Creature, Encounter, TargetRoleList } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -22,7 +22,7 @@ type PropType = {
     onEditingChange?: (isEditing: boolean) => void,
 }
 
-const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAutoAdjust, autoAdjustDisabled, children, onMoveUp, onMoveDown, onEditingChange }) => {
+const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete, onAutoAdjust, autoAdjustDisabled, children, onMoveUp, onMoveDown, onEditingChange }) => {
     const [updating, setUpdating] = useState<number | null>(null)
     const [creating, setCreating] = useState(false)
 
@@ -180,6 +180,6 @@ const EncounterForm: FC<PropType> = ({ mode, encounter, onUpdate, onDelete, onAu
             )}
         </>
     )
-}
+})
 
 export default EncounterForm

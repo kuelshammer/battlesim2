@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styles from './descentGraph.module.scss';
 import { PacingData } from './pacingUtils';
 import { DecileStats } from '@/model/model';
@@ -8,7 +8,7 @@ interface DescentGraphProps {
     deciles: DecileStats[];
 }
 
-const DescentGraph: React.FC<DescentGraphProps> = ({ pacingData, deciles }) => {
+const DescentGraph: React.FC<DescentGraphProps> = memo(({ pacingData, deciles }) => {
     const { plannedTimeline, labels, vitalityTimeline, powerTimeline, vitalityRange, powerRange } = pacingData;
     const width = 400;
     const height = 200;
@@ -98,6 +98,6 @@ const DescentGraph: React.FC<DescentGraphProps> = ({ pacingData, deciles }) => {
             </div>
         </div>
     );
-};
+});
 
 export default DescentGraph;

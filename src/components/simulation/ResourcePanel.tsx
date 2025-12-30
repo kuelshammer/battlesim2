@@ -1,5 +1,5 @@
 // src/components/simulation/ResourcePanel.tsx
-import { FC } from 'react';
+import { FC, memo } from 'react';
 import { Combattant } from '@/model/model';
 import styles from './simulation.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,7 +9,7 @@ type ResourcePanelProps = {
     combatant: Combattant;
 };
 
-const ResourcePanel: FC<ResourcePanelProps> = ({ combatant }) => {
+const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
     const { creature, finalState } = combatant;
     const { resources } = finalState;
 
@@ -132,6 +132,6 @@ const ResourcePanel: FC<ResourcePanelProps> = ({ combatant }) => {
             )}
         </div>
     );
-};
+});
 
 export default ResourcePanel;
