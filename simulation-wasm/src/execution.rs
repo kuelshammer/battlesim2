@@ -112,7 +112,11 @@ impl ActionExecutionEngine {
 
         // Initialize encounter
         self.context.record_event(Event::EncounterStarted {
-            combatant_ids: self.context.combatants.keys().cloned().collect(),
+            combatant_ids: {
+                let mut ids: Vec<String> = self.context.combatants.keys().cloned().collect();
+                ids.sort();
+                ids
+            },
         });
 
         let mut round_snapshots = Vec::new();
@@ -161,10 +165,11 @@ impl ActionExecutionEngine {
 
             // Capture snapshot at end of every round ONLY if logging is enabled
             if self.context.log_enabled {
-                let snapshot: Vec<CombattantState> = self.context.combatants
+                let mut snapshot: Vec<CombattantState> = self.context.combatants
                     .values()
                     .cloned()
                     .collect();
+                snapshot.sort_by(|a, b| a.id.cmp(&b.id));
                 round_snapshots.push(snapshot);
             }
 
@@ -182,10 +187,11 @@ impl ActionExecutionEngine {
 
         // Capture a final snapshot of the absolute end state
         if self.context.log_enabled {
-            let final_snapshot: Vec<CombattantState> = self.context.combatants
+            let mut final_snapshot: Vec<CombattantState> = self.context.combatants
                 .values()
                 .map(|state| state.clone())
                 .collect();
+            final_snapshot.sort_by(|a, b| a.id.cmp(&b.id));
             round_snapshots.push(final_snapshot);
         }
 
@@ -349,6 +355,7 @@ impl ActionExecutionEngine {
                 survivors.push(combatant.id.clone());
             }
         }
+        survivors.sort();
 
         #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
         {
@@ -892,6 +899,7 @@ impl ActionExecutionEngine {
                 .initiative
                 .partial_cmp(&a.base_combatant.initiative)
                 .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.id.cmp(&b.id)) // Tie-breaker: Consistent ID ordering
         });
         combatants.into_iter().map(|c| c.id.clone()).collect()
     }
@@ -931,7 +939,11 @@ impl ActionExecutionEngine {
             winner,
             total_rounds: self.context.round_number,
             total_turns,
-            final_combatant_states: self.context.combatants.values().cloned().collect(),
+            final_combatant_states: {
+                let mut states: Vec<CombattantState> = self.context.combatants.values().cloned().collect();
+                states.sort_by(|a, b| a.id.cmp(&b.id));
+                states
+            },
             round_snapshots,
             event_history,
             statistics,

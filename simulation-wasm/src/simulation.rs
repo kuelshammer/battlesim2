@@ -490,7 +490,7 @@ fn update_player_states_for_next_encounter(
             }
 
             // Update state
-            updated_player.initial_state = crate::model::CreatureState {
+            let next_state = crate::model::CreatureState {
                 current_hp,
                 temp_hp: if temp_hp > 0 {
                     Some(temp_hp)
@@ -507,6 +507,9 @@ fn update_player_states_for_next_encounter(
                 known_ac: final_state.known_ac.clone(),
                 arcane_ward_hp: final_state.arcane_ward_hp,
             };
+
+            updated_player.initial_state = next_state.clone();
+            updated_player.final_state = next_state;
 
             updated_players.push(updated_player);
         } else {

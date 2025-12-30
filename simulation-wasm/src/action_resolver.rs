@@ -608,11 +608,8 @@ impl ActionResolver {
                 return init_cmp.unwrap_or(Ordering::Equal);
             }
 
-            // 6. FINAL TIE-BREAKER: Alphabetical name (deterministic)
-            a.base_combatant
-                .creature
-                .name
-                .cmp(&b.base_combatant.creature.name)
+            // 6. FINAL TIE-BREAKER: Unique ID (perfect determinism)
+            a.id.cmp(&b.id)
         });
 
         enemies.first().map(|c| c.id.clone())
@@ -632,12 +629,23 @@ impl ActionResolver {
             .unwrap_or_default();
 
         // Find injured allies (same team, including self if injured)
-        context
+        let mut allies: Vec<_> = context
             .combatants
             .values()
             .filter(|c| c.current_hp < c.base_combatant.creature.hp) // Must be injured
             .filter(|c| context.is_combatant_alive(&c.id)) // Must be alive
             .filter(|c| c.base_combatant.creature.mode == actor_mode) // Same team = ally
+            .collect();
+
+        // Sort by injury (most injured first) and then ID for determinism
+        allies.sort_by(|a, b| {
+            let injury_a = a.base_combatant.creature.hp - a.current_hp;
+            let injury_b = b.base_combatant.creature.hp - b.current_hp;
+            injury_b.cmp(&injury_a) // More injury first
+                .then_with(|| a.id.cmp(&b.id))
+        });
+
+        allies.into_iter()
             .take(heal.targets.max(1) as usize)
             .map(|c| c.id.clone())
             .collect()

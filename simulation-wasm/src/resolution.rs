@@ -328,7 +328,11 @@ fn apply_single_effect(
             let mut buff_bonus = 0.0;
             let mut buff_details = Vec::new();
 
-            for b in attacker.final_state.buffs.values() {
+            // Sort buffs by ID for deterministic dice evaluation order
+            let mut sorted_attacker_buffs: Vec<_> = attacker.final_state.buffs.iter().collect();
+            sorted_attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
+
+            for (_, b) in sorted_attacker_buffs {
                 if let Some(f) = &b.to_hit {
                     let val = dice::evaluate(f, 1);
                     buff_bonus += val;
@@ -347,7 +351,11 @@ fn apply_single_effect(
                 let mut debuffs = Vec::new();
                 let mut has_bane_disadvantage = false;
 
-                for b in t.final_state.buffs.values() {
+                // Sort buffs by ID for deterministic dice evaluation order
+                let mut sorted_target_buffs: Vec<_> = t.final_state.buffs.iter().collect();
+                sorted_target_buffs.sort_by(|a, b| a.0.cmp(b.0));
+
+                for (_, b) in sorted_target_buffs {
                     if let Some(to_hit_penalty) = &b.to_hit {
                         let val = dice::evaluate(to_hit_penalty, 1);
                         if val != 0.0 {
@@ -389,22 +397,21 @@ fn apply_single_effect(
             // Resolve Target Stats (Read)
             // Re-borrow target_opt immutably
             let (target_ac, target_buff_ac) = if let Some(t) = &target_opt {
+                let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
+                sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
                 (
                     t.creature.ac,
-                    t.final_state
-                        .buffs
-                        .values()
-                        .filter_map(|b| b.ac.as_ref().map(|f| dice::evaluate(f, 1)))
+                    sorted_buffs.iter()
+                        .filter_map(|(_, b)| b.ac.as_ref().map(|f| dice::evaluate(f, 1)))
                         .sum::<f64>(),
                 )
             } else {
+                let mut sorted_buffs: Vec<_> = attacker.final_state.buffs.iter().collect();
+                sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
                 (
                     attacker.creature.ac,
-                    attacker
-                        .final_state
-                        .buffs
-                        .values()
-                        .filter_map(|b| b.ac.as_ref().map(|f| dice::evaluate(f, 1)))
+                    sorted_buffs.iter()
+                        .filter_map(|(_, b)| b.ac.as_ref().map(|f| dice::evaluate(f, 1)))
                         .sum::<f64>(),
                 )
             };
@@ -535,11 +542,10 @@ fn apply_single_effect(
             if hits {
                 // Calculate base damage and buff damage first
                 let mut damage = dice::evaluate(&a.dpr, if is_crit { 2 } else { 1 });
-                let buff_dmg: f64 = attacker
-                    .final_state
-                    .buffs
-                    .values()
-                    .filter_map(|b| b.damage.as_ref().map(|f| dice::evaluate(f, 1)))
+                let mut sorted_attacker_buffs: Vec<_> = attacker.final_state.buffs.iter().collect();
+                sorted_attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                let buff_dmg: f64 = sorted_attacker_buffs.iter()
+                    .filter_map(|(_, b)| b.damage.as_ref().map(|f| dice::evaluate(f, 1)))
                     .sum();
                 damage += buff_dmg;
 
@@ -568,7 +574,9 @@ fn apply_single_effect(
                 let mut reduction_sources = Vec::new();
 
                 if let Some(t) = target_opt.as_ref() {
-                    for b in t.final_state.buffs.values() {
+                    let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
+                    sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                    for (_, b) in sorted_buffs {
                         if let Some(reduction_formula) = &b.damage_reduction {
                             let val = dice::evaluate(reduction_formula, 1);
                             flat_reduction += val;
@@ -587,7 +595,9 @@ fn apply_single_effect(
                 let mut multiplier_sources = Vec::new();
 
                 if let Some(t) = target_opt.as_ref() {
-                    for b in t.final_state.buffs.values() {
+                    let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
+                    sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                    for (_, b) in sorted_buffs {
                         if let Some(mult) = b.damage_taken_multiplier {
                             total_multiplier *= mult;
                             let source_name = b.display_name.as_deref().unwrap_or("Resistance");
@@ -986,7 +996,9 @@ fn apply_single_effect(
             let mut buff_details = Vec::new();
 
             if let Some(t) = &target_opt {
-                for b in t.final_state.buffs.values() {
+                let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
+                sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                for (_, b) in sorted_buffs {
                     if let Some(f) = &b.save {
                         let val = dice::evaluate(f, 1);
                         if let Some(name) = &b.display_name {
@@ -1001,7 +1013,9 @@ fn apply_single_effect(
                     }
                 }
             } else {
-                for b in attacker.final_state.buffs.values() {
+                let mut sorted_buffs: Vec<_> = attacker.final_state.buffs.iter().collect();
+                sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                for (_, b) in sorted_buffs {
                     if let Some(f) = &b.save {
                         let val = dice::evaluate(f, 1);
                         if let Some(name) = &b.display_name {

@@ -340,11 +340,13 @@ impl TurnContext {
         let mut effects_to_remove = Vec::new();
 
         // Collect effects to apply to avoid borrow checker issues
-        let effects_to_apply: Vec<(String, ActiveEffect)> = self
+        // Sort by ID for deterministic processing order
+        let mut effects_to_apply: Vec<(String, ActiveEffect)> = self
             .active_effects
             .iter()
             .map(|(id, effect)| (id.clone(), effect.clone()))
             .collect();
+        effects_to_apply.sort_by(|a, b| a.0.cmp(&b.0));
 
         for (effect_id, effect) in effects_to_apply {
             // Apply effect logic based on type
@@ -432,10 +434,14 @@ impl TurnContext {
 
     /// Get all alive combatants (using standardized HP threshold >= 0.5)
     pub fn get_alive_combatants(&self) -> Vec<&CombattantState> {
-        self.combatants
+        let mut combatants: Vec<&CombattantState> = self.combatants
             .values()
             .filter(|c| c.current_hp > 0)
-            .collect()
+            .collect();
+        
+        // Sort by ID for deterministic order (HashMap iteration is random in Rust)
+        combatants.sort_by(|a, b| a.id.cmp(&b.id));
+        combatants
     }
 
     /// Apply damage to a combatant with proper event emission
