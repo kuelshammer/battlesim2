@@ -666,13 +666,16 @@ impl ActionExecutionEngine {
             let is_frequent = match &action.base().freq {
                 crate::model::Frequency::Static(s) if s == "at will" => true,
                 _ => {
-                    let combatant_state = self.context.get_combatant(combatant_id).unwrap();
-                    let uses = *combatant_state
-                        .resources
-                        .current
-                        .get(&action.base().id)
-                        .unwrap_or(&0.0);
-                    uses >= 1.0
+                    if let Some(combatant_state) = self.context.get_combatant(combatant_id) {
+                        let uses = *combatant_state
+                            .resources
+                            .current
+                            .get(&action.base().id)
+                            .unwrap_or(&0.0);
+                        uses >= 1.0
+                    } else {
+                        false
+                    }
                 }
             };
 
@@ -752,7 +755,9 @@ impl ActionExecutionEngine {
     /// Score an action based on combat situation
     fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
         // Get combatant's team (mode)
-        let combatant = self.context.get_combatant(combatant_id).unwrap();
+        let Some(combatant) = self.context.get_combatant(combatant_id) else {
+            return 0.0;
+        };
         let actor_mode = combatant.base_combatant.creature.mode.clone();
         let is_concentrating = combatant.concentration.is_some();
 

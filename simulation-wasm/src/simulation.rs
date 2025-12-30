@@ -11,6 +11,147 @@ use crate::model::{Creature, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
 use crate::resources::ResetType;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+
+/// Create a CreatureState from a Creature, initializing all resources and state
+///
+/// This helper function creates a CreatureState with:
+/// - Current HP set to max HP
+/// - Empty temp HP
+/// - Empty buffs and upcoming buffs
+/// - Initialized resources (including per-action uses)
+/// - Empty action tracking sets
+/// - No concentration
+/// - No known AC values
+/// - No arcane ward
+fn create_creature_state(creature: &Creature) -> CreatureState {
+    CreatureState {
+        current_hp: creature.hp,
+        temp_hp: None,
+        buffs: HashMap::new(),
+        resources: {
+            let mut r = crate::model::SerializableResourceLedger::from(creature.initialize_ledger());
+            // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
+            let action_uses = crate::actions::get_remaining_uses(creature, "long rest", None);
+            for (action_id, uses) in action_uses {
+                r.current.insert(action_id, uses);
+            }
+            r
+        },
+        upcoming_buffs: HashMap::new(),
+        used_actions: HashSet::new(),
+        concentrating_on: None,
+        actions_used_this_encounter: HashSet::new(),
+        bonus_action_used: false,
+        known_ac: HashMap::new(),
+        arcane_ward_hp: None,
+    }
+}
+
+/// Create a player Combattant from a Creature template
+///
+/// This helper function creates a player Combattant with:
+/// - Properly formatted name (with count suffix if count > 1)
+/// - Unique ID prefixed with 'p-' to ensure uniqueness across encounters
+/// - Team 0 (players)
+/// - Initialized CreatureState
+/// - Rolled initiative
+///
+/// # Arguments
+/// * `group_idx` - Index of the player group in the players array
+/// * `i` - Instance index (0 to count-1)
+/// * `player` - The Creature template to create from
+///
+/// # Returns
+/// A fully initialized Combattant ready for simulation
+fn create_player_combatant(group_idx: usize, i: i32, player: &Creature) -> Combattant {
+    let name = if player.count > 1.0 {
+        format!("{} {}", player.name, i + 1)
+    } else {
+        player.name.clone()
+    };
+    let mut p = player.clone();
+    p.name = name;
+    p.mode = "player".to_string();
+    let id = format!("p-{}-{}-{}", group_idx, i, player.id);
+
+    let state = create_creature_state(&p);
+
+    Combattant {
+        team: 0,
+        id: id.clone(),
+        creature: Arc::new(p.clone()),
+        initiative: crate::utilities::roll_initiative(&p),
+        initial_state: state.clone(),
+        final_state: state,
+        actions: Vec::new(),
+    }
+}
+
+/// Create an enemy Combattant from a Creature template
+///
+/// This helper function creates an enemy Combattant with:
+/// - Properly formatted name (with count suffix if count > 1)
+/// - Unique ID including step index to be globally unique
+/// - Team 1 (enemies)
+/// - Initialized CreatureState
+/// - Rolled initiative
+///
+/// # Arguments
+/// * `step_idx` - Index of the timeline step (encounter)
+/// * `group_idx` - Index of the monster group in the encounter
+/// * `i` - Instance index (0 to count-1)
+/// * `monster` - The Creature template to create from
+///
+/// # Returns
+/// A fully initialized Combattant ready for simulation
+fn create_enemy_combatant(step_idx: usize, group_idx: usize, i: i32, monster: &Creature) -> Combattant {
+    let name = if monster.count > 1.0 {
+        format!("{} {}", monster.name, i + 1)
+    } else {
+        monster.name.clone()
+    };
+    let mut m = monster.clone();
+    m.name = name;
+    let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
+
+    let state = create_creature_state(&m);
+
+    Combattant {
+        team: 1,
+        id: id.clone(),
+        creature: Arc::new(m.clone()),
+        initiative: crate::utilities::roll_initiative(&m),
+        initial_state: state.clone(),
+        final_state: state,
+        actions: Vec::new(),
+    }
+}
+
+/// Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
+/// and carried over correctly across encounters.
+fn initialize_players(players: &[Creature]) -> Vec<Combattant> {
+    let mut players_with_state = Vec::new();
+    for (group_idx, player) in players.iter().enumerate() {
+        for i in 0..player.count as i32 {
+            let combattant = create_player_combatant(group_idx, i, player);
+            players_with_state.push(combattant);
+        }
+    }
+    players_with_state
+}
+
+/// Initialize enemies for a specific encounter - IDs include encounter index to be globally unique
+fn initialize_enemies(step_idx: usize, monsters: &[Creature]) -> Vec<Combattant> {
+    let mut enemies = Vec::new();
+    for (group_idx, monster) in monsters.iter().enumerate() {
+        for i in 0..monster.count as i32 {
+            let enemy_combattant = create_enemy_combatant(step_idx, group_idx, i, monster);
+            enemies.push(enemy_combattant);
+        }
+    }
+    enemies
+}
 
 /// Run a single event-driven simulation with full event collection
 ///
@@ -30,59 +171,7 @@ pub fn run_single_event_driven_simulation(
     _log_enabled: bool,
 ) -> (SimulationResult, Vec<crate::events::Event>) {
     let mut all_events = Vec::new();
-    let mut players_with_state = Vec::new();
-
-    // Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
-    // and carried over correctly across encounters.
-    for (group_idx, player) in players.iter().enumerate() {
-        for i in 0..player.count as i32 {
-            let name = if player.count > 1.0 {
-                format!("{} {}", player.name, i + 1)
-            } else {
-                player.name.clone()
-            };
-            let mut p = player.clone();
-            p.name = name;
-            p.mode = "player".to_string();
-            let id = format!("p-{}-{}-{}", group_idx, i, player.id);
-
-            // Create CreatureState
-            let state = CreatureState {
-                current_hp: p.hp,
-                temp_hp: None,
-                buffs: HashMap::new(),
-                resources: {
-                    let mut r = crate::model::SerializableResourceLedger::from(p.initialize_ledger());
-                    // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-                    let action_uses = crate::actions::get_remaining_uses(&p, "long rest", None);
-                    for (action_id, uses) in action_uses {
-                        r.current.insert(action_id, uses);
-                    }
-                    r
-                },
-                upcoming_buffs: HashMap::new(),
-                used_actions: HashSet::new(),
-                concentrating_on: None,
-                actions_used_this_encounter: HashSet::new(),
-                bonus_action_used: false,
-                known_ac: HashMap::new(),
-                arcane_ward_hp: None,
-            };
-
-            // Create Combattant for ActionExecutionEngine
-            let combattant = Combattant {
-                team: 0,
-                id: id.clone(),
-                creature: std::sync::Arc::new(p.clone()),
-                initiative: crate::utilities::roll_initiative(&p),
-                initial_state: state.clone(),
-                final_state: state,
-                actions: Vec::new(),
-            };
-
-            players_with_state.push(combattant);
-        }
-    }
+    let mut players_with_state = initialize_players(players);
 
     let mut encounter_results = Vec::new();
     let num_combat_encounters = timeline
@@ -94,55 +183,7 @@ pub fn run_single_event_driven_simulation(
         match step {
             crate::model::TimelineStep::Combat(encounter) => {
                 // Create enemy combatants - IDs include encounter index to be globally unique
-                let mut enemies = Vec::new();
-                for (group_idx, monster) in encounter.monsters.iter().enumerate() {
-                    for i in 0..monster.count as i32 {
-                        let name = if monster.count > 1.0 {
-                            format!("{} {}", monster.name, i + 1)
-                        } else {
-                            monster.name.clone()
-                        };
-                        let mut m = monster.clone();
-                        m.name = name;
-                        let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
-
-                        let enemy_state = CreatureState {
-                            current_hp: m.hp,
-                            temp_hp: None,
-                            buffs: HashMap::new(),
-                            resources: {
-                                let mut r =
-                                    crate::model::SerializableResourceLedger::from(m.initialize_ledger());
-                                // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-                                let action_uses =
-                                    crate::actions::get_remaining_uses(&m, "long rest", None);
-                                for (action_id, uses) in action_uses {
-                                    r.current.insert(action_id, uses);
-                                }
-                                r
-                            },
-                            upcoming_buffs: HashMap::new(),
-                            used_actions: HashSet::new(),
-                            concentrating_on: None,
-                            actions_used_this_encounter: HashSet::new(),
-                            bonus_action_used: false,
-                            known_ac: HashMap::new(),
-                            arcane_ward_hp: None,
-                        };
-
-                        let enemy_combattant = Combattant {
-                            team: 1,
-                            id: id.clone(),
-                            creature: std::sync::Arc::new(m.clone()),
-                            initiative: crate::utilities::roll_initiative(&m),
-                            initial_state: enemy_state.clone(),
-                            final_state: enemy_state,
-                            actions: Vec::new(),
-                        };
-
-                        enemies.push(enemy_combattant);
-                    }
-                }
+                let enemies = initialize_enemies(step_idx, &encounter.monsters);
 
                 // Combine all combatants for this encounter
                 let mut all_combatants = players_with_state.clone();
@@ -223,117 +264,17 @@ pub fn run_single_lightweight_simulation(
     // Seed RNG for deterministic results
     crate::rng::seed_rng(seed);
 
-    let mut players_with_state = Vec::new();
     let mut encounter_scores = Vec::new();
     let mut has_death = false;
     let mut first_death_encounter: Option<usize> = None;
 
-    // Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
-    // and carried over correctly across encounters.
-    for (group_idx, player) in players.iter().enumerate() {
-        for i in 0..player.count as i32 {
-            let name = if player.count > 1.0 {
-                format!("{} {}", player.name, i + 1)
-            } else {
-                player.name.clone()
-            };
-            let mut p = player.clone();
-            p.name = name;
-            p.mode = "player".to_string();
-            let id = format!("p-{}-{}-{}", group_idx, i, player.id);
-
-            // Create CreatureState
-            let state = CreatureState {
-                current_hp: p.hp,
-                temp_hp: None,
-                buffs: HashMap::new(),
-                resources: {
-                    let mut r = crate::model::SerializableResourceLedger::from(p.initialize_ledger());
-                    // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-                    let action_uses = crate::actions::get_remaining_uses(&p, "long rest", None);
-                    for (action_id, uses) in action_uses {
-                        r.current.insert(action_id, uses);
-                    }
-                    r
-                },
-                upcoming_buffs: HashMap::new(),
-                used_actions: HashSet::new(),
-                concentrating_on: None,
-                actions_used_this_encounter: HashSet::new(),
-                bonus_action_used: false,
-                known_ac: HashMap::new(),
-                arcane_ward_hp: None,
-            };
-
-            // Create Combattant for ActionExecutionEngine
-            let combattant = Combattant {
-                team: 0,
-                id: id.clone(),
-                creature: std::sync::Arc::new(p.clone()),
-                initiative: crate::utilities::roll_initiative(&p),
-                initial_state: state.clone(),
-                final_state: state,
-                actions: Vec::new(),
-            };
-
-            players_with_state.push(combattant);
-        }
-    }
+    let mut players_with_state = initialize_players(players);
 
     for (step_idx, step) in timeline.iter().enumerate() {
         match step {
             crate::model::TimelineStep::Combat(encounter) => {
                 // Create enemy combatants - IDs include encounter index to be globally unique
-                let mut enemies = Vec::new();
-                for (group_idx, monster) in encounter.monsters.iter().enumerate() {
-                    for i in 0..monster.count as i32 {
-                        let name = if monster.count > 1.0 {
-                            format!("{} {}", monster.name, i + 1)
-                        } else {
-                            monster.name.clone()
-                        };
-                        let mut m = monster.clone();
-                        m.name = name;
-                        let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
-
-                        let enemy_state = CreatureState {
-                            current_hp: m.hp,
-                            temp_hp: None,
-                            buffs: HashMap::new(),
-                            resources: {
-                                let mut r = crate::model::SerializableResourceLedger::from(
-                                    m.initialize_ledger(),
-                                );
-                                // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-                                let action_uses =
-                                    crate::actions::get_remaining_uses(&m, "long rest", None);
-                                for (action_id, uses) in action_uses {
-                                    r.current.insert(action_id, uses);
-                                }
-                                r
-                            },
-                            upcoming_buffs: HashMap::new(),
-                            used_actions: HashSet::new(),
-                            concentrating_on: None,
-                            actions_used_this_encounter: HashSet::new(),
-                            bonus_action_used: false,
-                            known_ac: HashMap::new(),
-                            arcane_ward_hp: None,
-                        };
-
-                        let enemy_combattant = Combattant {
-                            team: 1,
-                            id: id.clone(),
-                            creature: std::sync::Arc::new(m.clone()),
-                            initiative: crate::utilities::roll_initiative(&m),
-                            initial_state: enemy_state.clone(),
-                            final_state: enemy_state,
-                            actions: Vec::new(),
-                        };
-
-                        enemies.push(enemy_combattant);
-                    }
-                }
+                let enemies = initialize_enemies(step_idx, &encounter.monsters);
 
                 // Combine all combatants for this encounter
                 let mut all_combatants = players_with_state.clone();

@@ -120,8 +120,7 @@ fn process_defensive_triggers(
 
     for trigger in target_triggers.iter() {
         if trigger.condition == TriggerCondition::OnBeingAttacked
-            && trigger.cost.is_some()
-            && trigger.cost.unwrap() == (ActionSlot::Reaction as i32)
+            && trigger.cost == Some(ActionSlot::Reaction as i32)
             && total_hit_roll >= final_ac // Currently a hit
             && matches!(&trigger.action, Action::Buff(_))
         {

@@ -185,26 +185,26 @@ impl ReactionManager {
         }
 
         // Check if already used this round
-        if reaction.uses_per_round.is_some() {
+        if let Some(limit) = reaction.uses_per_round {
             if let Some(used_this_round) = self.used_reactions.get(combatant_id) {
                 let use_count = used_this_round
                     .iter()
                     .filter(|id| **id == reaction.id)
                     .count();
-                if use_count >= reaction.uses_per_round.unwrap() as usize {
+                if use_count >= limit as usize {
                     return false;
                 }
             }
         }
 
         // Check if already used this encounter
-        if reaction.uses_per_encounter.is_some() {
+        if let Some(limit) = reaction.uses_per_encounter {
             if let Some(used_encounter) = self.encounter_used.get(combatant_id) {
                 let use_count = used_encounter
                     .iter()
                     .filter(|id| **id == reaction.id)
                     .count();
-                if use_count >= reaction.uses_per_encounter.unwrap() as usize {
+                if use_count >= limit as usize {
                     return false;
                 }
             }

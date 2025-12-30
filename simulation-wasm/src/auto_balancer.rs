@@ -46,7 +46,9 @@ impl AutoBalancer {
                 break;
             }
 
-            let typical = analysis.global_median.as_ref().unwrap();
+            let Some(typical) = analysis.global_median.as_ref() else {
+                break;
+            };
             let vitality = typical.vitality_timeline.last().cloned().unwrap_or(100.0);
             let power = typical.power_timeline.last().cloned().unwrap_or(100.0);
 

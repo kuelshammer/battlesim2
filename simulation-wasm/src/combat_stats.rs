@@ -33,6 +33,22 @@ pub struct CombatantStats {
     pub has_bonus_attacks: bool,
 }
 
+impl Default for CombatantStats {
+    fn default() -> Self {
+        Self {
+            creature_id: "unknown".to_string(),
+            ac: 10.0,
+            dpr: 0.0,
+            hit_probability: 0.5,
+            best_action_dpr: 0.0,
+            best_bonus_action_dpr: 0.0,
+            total_dpr: 0.0,
+            attack_count: 0,
+            has_bonus_attacks: false,
+        }
+    }
+}
+
 impl CombatantStats {
     /// Calculate combat statistics for a creature
     pub fn calculate(creature: &Creature) -> Self {
@@ -165,19 +181,18 @@ impl CombatStatsCache {
         }
     }
     
-    /// Get cached stats for a combatant, calculating if necessary
+    /// Get or calculate combat statistics for a combatant
     pub fn get_stats(&mut self, combatant: &Combattant) -> &CombatantStats {
         let creature_id = &combatant.creature.id;
         
-        // Calculate if not cached or dirty
-        if !self.stats_cache.contains_key(creature_id) || self.dirty {
-            let stats = CombatantStats::calculate(&combatant.creature);
-            self.stats_cache.insert(creature_id.clone(), stats);
-            self.dirty = false; // Reset dirty flag after recalculation
+        if self.dirty {
+            self.stats_cache.clear();
+            self.dirty = false;
         }
-        
-        // Safe to unwrap - we just inserted if missing
-        self.stats_cache.get(creature_id).unwrap()
+
+        self.stats_cache.entry(creature_id.clone()).or_insert_with(|| {
+            CombatantStats::calculate(&combatant.creature)
+        })
     }
     
     /// Get cached stats for a creature ID, returns None if not cached

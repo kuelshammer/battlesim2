@@ -10,15 +10,12 @@ use crate::model::SimulationResult;
 pub fn summarize_result(mut result: SimulationResult) -> SimulationResult {
     for encounter in &mut result.encounters {
         if encounter.rounds.len() > 2 {
-            // Safe to unwrap here since len > 2 guarantees both first and last exist
-            // Use get()/expect() for better error messages if something unexpected happens
-            let first = encounter.rounds.first()
-                .cloned()
-                .expect("encounter.rounds.first() should exist when len > 2");
-            let last = encounter.rounds.last()
-                .cloned()
-                .expect("encounter.rounds.last() should exist when len > 2");
-            encounter.rounds = vec![first, last];
+            let first = encounter.rounds.first().cloned();
+            let last = encounter.rounds.last().cloned();
+            
+            if let (Some(f), Some(l)) = (first, last) {
+                encounter.rounds = vec![f, l];
+            }
         }
     }
     result

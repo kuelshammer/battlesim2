@@ -297,7 +297,7 @@ impl DisplayManager {
         {
             let communicator = communicator_arc.lock().unwrap_or_else(PoisonError::into_inner);
             // Create a unique subscription ID for this display manager
-            let subscription_id = format!("display_manager_sub_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos());
+            let subscription_id = format!("display_manager_sub_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos());
             let subscription = crate::progress_communication::ProgressSubscription::new(subscription_id);
 
             if let Ok(receiver) = communicator.subscribe(subscription) {
