@@ -138,11 +138,12 @@ impl TurnContext {
             round_number: self.round_number,
         });
 
-        self.current_turn_owner = Some(unit_id);
+        self.current_turn_owner = Some(unit_id.clone());
 
-        // Reset turn-based resources
-        for combatant in self.combatants.values_mut() {
+        // Reset turn-based resources and used actions for the current unit
+        if let Some(combatant) = self.combatants.get_mut(&unit_id) {
             combatant.resources.reset_by_type(&ResetType::Turn);
+            combatant.base_combatant.final_state.used_actions.clear();
         }
     }
 

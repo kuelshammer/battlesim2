@@ -96,8 +96,19 @@ impl ActionResolver {
             // 1. Critical Hit (Nat 20) always hits
             // 2. Critical Miss (Nat 1) always misses
             // 3. Otherwise check total vs AC
-            let is_hit = !attack_result.is_miss
+            let mut is_hit = !attack_result.is_miss
                 && (attack_result.is_critical || attack_result.total >= target_ac);
+
+            // Defensive Reactions (Shield) - only if it's a regular hit (not a critical hit)
+            if is_hit && !attack_result.is_critical {
+                let (new_ac, reaction_events) = self.resolve_defensive_reactions(&target_id, context, attack_result.total, target_ac);
+                if !reaction_events.is_empty() {
+                    events.extend(reaction_events);
+                    if attack_result.total < new_ac {
+                        is_hit = false;
+                    }
+                }
+            }
 
             if is_hit {
                 // Hit!
@@ -334,6 +345,11 @@ impl ActionResolver {
                 "haste" => {
                     buff.ac = Some(crate::model::DiceFormula::Value(2.0));
                 }
+                "shield" => {
+                    buff.ac = Some(crate::model::DiceFormula::Value(5.0));
+                    buff.duration = crate::enums::BuffDuration::OneRound;
+                    buff.concentration = false;
+                }
                 _ => {}
             }
 
@@ -456,6 +472,108 @@ impl ActionResolver {
         }
 
         events
+    }
+
+    /// Resolve defensive reactions (like Shield) that can change a hit to a miss
+    fn resolve_defensive_reactions(
+        &self,
+        reactor_id: &str,
+        context: &mut TurnContext,
+        hit_roll: f64,
+        current_ac: f64,
+    ) -> (f64, Vec<Event>) {
+        let mut events = Vec::new();
+        let mut final_ac = current_ac;
+
+        // Get reactor's triggers
+        let triggers = match context.get_combatant(reactor_id) {
+            Some(c) => c.base_combatant.creature.triggers.clone(),
+            None => return (final_ac, events),
+        };
+
+        // Check if reactor has a reaction available
+        let reaction_slot_id = crate::enums::ActionSlot::Reaction;
+        if let Some(reactor) = context.get_combatant(reactor_id) {
+            if reactor.base_combatant.final_state.used_actions.contains(&(reaction_slot_id as i32).to_string()) {
+                return (final_ac, events);
+            }
+        }
+
+                for trigger in triggers {
+
+                    if trigger.condition == crate::enums::TriggerCondition::OnBeingAttacked
+
+                        && trigger.cost == Some(crate::enums::ActionSlot::Reaction as i32)
+
+                        && hit_roll >= final_ac
+
+                    {
+
+                        // Check if it's a Shield-like template
+
+                        if let Action::Template(template_action) = &trigger.action {
+
+                            let template_name = template_action.template_options.template_name.to_lowercase();
+
+                            
+
+                            if template_name == "shield" {
+
+                                // Shield adds +5 AC
+
+                                let shield_ac_bonus = 5.0;
+
+                                if hit_roll < final_ac + shield_ac_bonus {
+
+                                    // Trigger it!
+
+                                    // 1. Consume reaction
+
+                                    if let Some(reactor_mut) = context.get_combatant_mut(reactor_id) {
+
+                                        reactor_mut.base_combatant.final_state.used_actions.insert((reaction_slot_id as i32).to_string());
+
+                                    }
+
+        
+
+                                    // 2. Resolve the action (will apply the buff)
+
+                                    // Record action start for the reaction
+
+                                    context.record_event(Event::ActionStarted {
+
+                                        actor_id: reactor_id.to_string(),
+
+                                        action_id: template_action.id.clone(),
+
+                                        decision_trace: std::collections::HashMap::new(),
+
+                                    });
+
+        
+
+                                    let reaction_events = self.resolve_action(&trigger.action, context, reactor_id);
+
+                                    events.extend(reaction_events);
+
+        
+
+                                    final_ac += shield_ac_bonus;
+
+                                    break; // Only one defensive reaction per attack
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+        (final_ac, events)
     }
 
     /// Helper to get targets based on TargetType
@@ -707,10 +825,25 @@ impl ActionResolver {
 
     /// Get target's armor class
     fn get_target_ac(&self, target_id: &str, context: &TurnContext) -> f64 {
-        context
-            .get_combatant(target_id)
-            .map(|c| c.base_combatant.creature.ac as f64)
-            .unwrap_or(10.0) // Default AC if not found
+        let Some(target) = context.get_combatant(target_id) else {
+            return 10.0;
+        };
+
+        let base_ac = target.base_combatant.creature.ac as f64;
+        
+        // Sum up AC bonuses from active effects in the context
+        let mut buff_ac = 0.0;
+        for effect in context.active_effects.values() {
+            if effect.target_id == target_id {
+                if let EffectType::Buff(buff) = &effect.effect_type {
+                    if let Some(ac_formula) = &buff.ac {
+                        buff_ac += dice::average(ac_formula);
+                    }
+                }
+            }
+        }
+
+        base_ac + buff_ac
     }
 
     /// Calculate damage from attack

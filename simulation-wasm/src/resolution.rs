@@ -122,41 +122,67 @@ fn process_defensive_triggers(
         if trigger.condition == TriggerCondition::OnBeingAttacked
             && trigger.cost == Some(ActionSlot::Reaction as i32)
             && total_hit_roll >= final_ac // Currently a hit
-            && matches!(&trigger.action, Action::Buff(_))
         {
-            if let Action::Buff(buff_action) = &trigger.action {
-                if let Some(ac_buff_dice) = &buff_action.buff.ac {
-                    let potential_ac_buff = dice::evaluate(ac_buff_dice, 1);
-                    if total_hit_roll < final_ac + potential_ac_buff {
-                        // Trigger activates
-                        reaction_used = true;
-                        target
-                            .final_state
-                            .used_actions
-                            .insert((reaction_slot_id as i32).to_string());
-
-                        let mut buff = buff_action.buff.clone();
-                        buff.source = Some(target.id.clone());
-
-                        target
-                            .final_state
-                            .buffs
-                            .insert(buff_action.base().id.clone(), buff);
-                        update_stats_buff(stats, &target.id, &target.id, true);
-
-                        final_ac += potential_ac_buff;
-                        if log_enabled {
-                            log.push(format!(
-                                "          {} uses {} to increase AC by {:.0} (New AC: {:.0})",
-                                target.creature.name,
-                                buff_action.base().name,
-                                potential_ac_buff,
-                                final_ac
-                            ));
-                        }
-                        break;
+            let (potential_ac_buff, buff_to_add, action_name, action_id) = match &trigger.action {
+                Action::Buff(buff_action) => {
+                    let bonus = buff_action.buff.ac.as_ref().map(|f| dice::evaluate(f, 1)).unwrap_or(0.0);
+                    (bonus, Some(buff_action.buff.clone()), buff_action.base().name, buff_action.base().id)
+                }
+                Action::Template(template_action) => {
+                    let template_name = template_action.template_options.template_name.to_lowercase();
+                    if template_name == "shield" {
+                        (5.0, Some(Buff {
+                            display_name: Some("Shield".to_string()),
+                            duration: crate::enums::BuffDuration::OneRound,
+                            ac: Some(DiceFormula::Value(5.0)),
+                            to_hit: None,
+                            damage: None,
+                            damage_reduction: None,
+                            damage_multiplier: None,
+                            damage_taken_multiplier: None,
+                            dc: None,
+                            save: None,
+                            condition: None,
+                            magnitude: None,
+                            source: Some(target.id.clone()),
+                            concentration: false,
+                            triggers: Vec::new(),
+                        }), "Shield".to_string(), template_action.id.clone())
+                    } else {
+                        (0.0, None, "".to_string(), "".to_string())
                     }
                 }
+                _ => (0.0, None, "".to_string(), "".to_string()),
+            };
+
+            if potential_ac_buff > 0.0 && total_hit_roll < final_ac + potential_ac_buff {
+                // Trigger activates
+                reaction_used = true;
+                target
+                    .final_state
+                    .used_actions
+                    .insert((reaction_slot_id as i32).to_string());
+
+                if let Some(mut buff) = buff_to_add {
+                    buff.source = Some(target.id.clone());
+                    target
+                        .final_state
+                        .buffs
+                        .insert(action_id, buff);
+                    update_stats_buff(stats, &target.id, &target.id, true);
+                }
+
+                final_ac += potential_ac_buff;
+                if log_enabled {
+                    log.push(format!(
+                        "          {} uses {} to increase AC by {:.0} (New AC: {:.0})",
+                        target.creature.name,
+                        action_name,
+                        potential_ac_buff,
+                        final_ac
+                    ));
+                }
+                break;
             }
         }
     }
