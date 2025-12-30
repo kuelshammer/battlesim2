@@ -48,6 +48,7 @@ pub mod utils; // Utility functions for simulation results
 pub mod seed_selection; // Seed selection algorithms for Two-Pass
 pub mod simulation; // Core simulation execution functions
 pub mod two_pass; // Two-Pass deterministic re-simulation system
+pub mod memory_guardrails; // Memory safety protections for large simulations
 
 // Re-export commonly used functions for external access
 pub use simulation::{run_single_event_driven_simulation, run_single_lightweight_simulation, run_survey_pass};
@@ -108,12 +109,37 @@ pub fn auto_adjust_encounter_wasm(players: JsValue, monsters: JsValue, timeline:
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
 }
 
+/// Initialize memory guardrails for safe simulation
+///
+/// Call this once at application startup to set up:
+/// - Panic hooks for user-friendly OOM error messages
+/// - Memory safety checks for large simulations
+#[wasm_bindgen]
+pub fn init_memory_guardrails() {
+    crate::memory_guardrails::init_memory_guardrails();
+}
+
+/// Check if a simulation size requires lightweight mode
+///
+/// Returns true if iterations > 1000, which means full event logging
+/// should be disabled to prevent out-of-memory errors.
+#[wasm_bindgen]
+pub fn should_force_lightweight_mode(iterations: usize) -> bool {
+    crate::memory_guardrails::should_force_lightweight_mode(iterations)
+}
+
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
+
+    // Memory guardrail: Warn for large simulations using old API
+    if crate::memory_guardrails::should_force_lightweight_mode(iterations) {
+        let msg = crate::memory_guardrails::get_lightweight_mode_message(iterations);
+        web_sys::console::warn_1(&msg.into());
+    }
 
     let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
@@ -138,6 +164,12 @@ pub fn run_simulation_with_callback(
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
+
+    // Memory guardrail: Warn for large simulations
+    if crate::memory_guardrails::should_force_lightweight_mode(iterations) {
+        let msg = crate::memory_guardrails::get_lightweight_mode_message(iterations);
+        web_sys::console::warn_1(&msg.into());
+    }
 
     // Phase 1: Survey Pass (All iterations, results only, no events)
     let mut summarized_results = Vec::with_capacity(iterations);
