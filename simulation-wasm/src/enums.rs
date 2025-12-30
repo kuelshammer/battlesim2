@@ -14,7 +14,7 @@ pub enum ActionSlot {
     BeforeTheEncounterStarts = -3,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum EnemyTarget {
     #[serde(rename = "enemy with least HP", alias = "enemy with the least HP")]
@@ -29,7 +29,7 @@ pub enum EnemyTarget {
     EnemyWithHighestAC,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AllyTarget {
     #[serde(rename = "ally with least HP", alias = "ally with the least HP")]
@@ -47,14 +47,14 @@ pub enum AllyTarget {
 }
 
 // Unified target type for templates that can target either allies or enemies
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TargetType {
     Enemy(EnemyTarget), // Try enemy first (more common for templates)
     Ally(AllyTarget),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ActionCondition {
     Default,
@@ -123,7 +123,7 @@ pub enum CreatureCondition {
     SaveWithDisadvantage,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ActionType {
     Atk,
@@ -133,7 +133,7 @@ pub enum ActionType {
     Template,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum BuffDuration {
     #[serde(rename = "instant")]
@@ -151,7 +151,7 @@ pub enum BuffDuration {
 }
 
 // Re-insert TriggerCondition here
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TriggerCondition {
     #[serde(rename = "on hit")]
@@ -172,7 +172,7 @@ pub enum TriggerCondition {
     OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", content = "value")]
 pub enum TriggerRequirement {
     #[serde(rename = "damageType")]
@@ -185,7 +185,7 @@ pub enum TriggerRequirement {
     ActionTag(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum TriggerEffect {
     #[serde(rename = "Damage")]
@@ -224,7 +224,7 @@ pub enum ResetType {
     Encounter,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ChallengeRating {
     Zero,
     Quarter,
@@ -257,7 +257,7 @@ pub enum ChallengeRating {
     Thirty,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Classes {
     Barbarian,
     Bard,
@@ -273,7 +273,7 @@ pub enum Classes {
     Wizard,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CreatureType {
     Aberration,
     Beast,

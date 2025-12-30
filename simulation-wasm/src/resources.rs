@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {
@@ -40,7 +41,7 @@ impl ResourceType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResetType {
     ShortRest,
     LongRest,
@@ -54,6 +55,29 @@ pub struct ResourceLedger {
     pub current: HashMap<String, f64>,
     pub max: HashMap<String, f64>,
     pub reset_rules: HashMap<String, ResetType>,
+}
+
+impl Hash for ResourceLedger {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Sort keys for deterministic hashing
+        let mut sorted_current: Vec<_> = self.current.iter().collect();
+        sorted_current.sort_by_key(|a| a.0);
+        for (k, v) in sorted_current {
+            k.hash(state);
+            crate::utilities::hash_f64(*v, state);
+        }
+
+        let mut sorted_max: Vec<_> = self.max.iter().collect();
+        sorted_max.sort_by_key(|a| a.0);
+        for (k, v) in sorted_max {
+            k.hash(state);
+            crate::utilities::hash_f64(*v, state);
+        }
+
+        let mut sorted_rules: Vec<_> = self.reset_rules.iter().collect();
+        sorted_rules.sort_by_key(|a| a.0);
+        sorted_rules.hash(state);
+    }
 }
 
 impl Default for ResourceLedger {
@@ -180,12 +204,45 @@ pub enum ActionCost {
     },
 }
 
+impl Hash for ActionCost {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            ActionCost::Discrete { resource_type, resource_val, amount } => {
+                0.hash(state);
+                resource_type.hash(state);
+                resource_val.hash(state);
+                crate::utilities::hash_f64(*amount, state);
+            }
+            ActionCost::Variable { resource_type, resource_val, min, max } => {
+                1.hash(state);
+                resource_type.hash(state);
+                resource_val.hash(state);
+                crate::utilities::hash_f64(*min, state);
+                crate::utilities::hash_f64(*max, state);
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum CombatCondition {
     EnemyInRange(f64),
     IsSurprised,
     HasTempHP,
     // Add more as needed
+}
+
+impl Hash for CombatCondition {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            CombatCondition::EnemyInRange(v) => {
+                0.hash(state);
+                crate::utilities::hash_f64(*v, state);
+            }
+            CombatCondition::IsSurprised => 1.hash(state),
+            CombatCondition::HasTempHP => 2.hash(state),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -205,6 +262,31 @@ pub enum ActionRequirement {
     StatusEffect { effect: String },
     #[serde(rename = "Custom")]
     Custom { description: String },
+}
+
+impl Hash for ActionRequirement {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            ActionRequirement::ResourceAvailable { resource_type, resource_val, amount } => {
+                0.hash(state);
+                resource_type.hash(state);
+                resource_val.hash(state);
+                crate::utilities::hash_f64(*amount, state);
+            }
+            ActionRequirement::CombatState { condition } => {
+                1.hash(state);
+                condition.hash(state);
+            }
+            ActionRequirement::StatusEffect { effect } => {
+                2.hash(state);
+                effect.hash(state);
+            }
+            ActionRequirement::Custom { description } => {
+                3.hash(state);
+                description.hash(state);
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

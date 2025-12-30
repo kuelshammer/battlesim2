@@ -28,14 +28,9 @@ thread_local! {
 pub fn get_scenario_hash(players: &[Creature], timeline: &[TimelineStep]) -> u64 {
     let mut hasher = DefaultHasher::new();
     
-    // Using JSON as a stable representation for hashing.
-    // While slightly slower than a direct Hash implementation, it avoids 
-    // the complexity of implementing Hash for all sub-types (especially those with f64).
-    let players_json = serde_json::to_vec(players).unwrap_or_default();
-    let timeline_json = serde_json::to_vec(timeline).unwrap_or_default();
-    
-    players_json.hash(&mut hasher);
-    timeline_json.hash(&mut hasher);
+    // Efficient hashing using implemented Hash traits
+    players.hash(&mut hasher);
+    timeline.hash(&mut hasher);
     
     hasher.finish()
 }

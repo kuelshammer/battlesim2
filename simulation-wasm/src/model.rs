@@ -3,9 +3,10 @@ pub use crate::enums::ActionCondition; // Explicitly re-export ActionCondition
 use crate::resources::{ActionCost, ActionRequirement, ActionTag, ResourceType};
 use serde::{Deserialize, Serialize, Deserializer, Serializer};
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub enum MonsterRole {
     Boss,
     Brute,
@@ -15,7 +16,7 @@ pub enum MonsterRole {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, Hash)]
 pub enum TargetRole {
     Skirmish,
     #[default]
@@ -42,7 +43,22 @@ pub enum DiceFormula {
     Expr(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+impl Hash for DiceFormula {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            DiceFormula::Value(v) => {
+                0.hash(state);
+                crate::utilities::hash_f64(*v, state);
+            }
+            DiceFormula::Expr(s) => {
+                1.hash(state);
+                s.hash(state);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 #[serde(untagged)]
 pub enum Frequency {
     Static(String), // "at will", "1/fight", "1/day"
@@ -57,7 +73,7 @@ pub enum Frequency {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct EffectTrigger {
     pub condition: TriggerCondition,
     #[serde(default)]
@@ -94,13 +110,40 @@ pub struct Buff {
     pub triggers: Vec<EffectTrigger>,
 }
 
+impl Hash for Buff {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.display_name.hash(state);
+        self.duration.hash(state);
+        self.ac.hash(state);
+        self.to_hit.hash(state);
+        self.damage.hash(state);
+        self.damage_reduction.hash(state);
+        crate::utilities::hash_opt_f64(self.damage_multiplier, state);
+        crate::utilities::hash_opt_f64(self.damage_taken_multiplier, state);
+        self.dc.hash(state);
+        self.save.hash(state);
+        self.condition.hash(state);
+        crate::utilities::hash_opt_f64(self.magnitude, state);
+        self.source.hash(state);
+        self.concentration.hash(state);
+        self.triggers.hash(state);
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RiderEffect {
     pub dc: f64,
     pub buff: Buff,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+impl Hash for RiderEffect {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        crate::utilities::hash_f64(self.dc, state);
+        self.buff.hash(state);
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct AcKnowledge {
     pub min: i32,
     pub max: i32,
@@ -112,7 +155,7 @@ impl Default for AcKnowledge {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 #[serde(tag = "type")]
 pub enum Action {
     #[serde(rename = "atk")]
@@ -139,7 +182,7 @@ impl Action {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct ActionBase {
     pub id: String,
     pub name: String,
@@ -161,7 +204,7 @@ pub struct ActionBase {
     pub targets: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct AtkAction {
     pub id: String,
     pub name: String,
@@ -210,7 +253,7 @@ impl AtkAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct HealAction {
     pub id: String,
     pub name: String,
@@ -253,7 +296,7 @@ impl HealAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct BuffAction {
     pub id: String,
     pub name: String,
@@ -321,6 +364,23 @@ pub struct DebuffAction {
     pub buff: Buff,
 }
 
+impl Hash for DebuffAction {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.name.hash(state);
+        self.action_slot.hash(state);
+        self.cost.hash(state);
+        self.requirements.hash(state);
+        self.tags.hash(state);
+        self.freq.hash(state);
+        self.condition.hash(state);
+        self.targets.hash(state);
+        self.target.hash(state);
+        crate::utilities::hash_f64(self.save_dc, state);
+        self.buff.hash(state);
+    }
+}
+
 impl DebuffAction {
     pub fn base(&self) -> ActionBase {
         ActionBase {
@@ -337,7 +397,7 @@ impl DebuffAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct TemplateAction {
     pub id: String,
     #[serde(default, deserialize_with = "default_template_name")]
@@ -389,6 +449,15 @@ pub struct TemplateOptions {
     pub amount: Option<DiceFormula>,
 }
 
+impl Hash for TemplateOptions {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.template_name.hash(state);
+        self.target.hash(state);
+        crate::utilities::hash_opt_f64(self.save_dc, state);
+        self.amount.hash(state);
+    }
+}
+
 impl TemplateAction {
     pub fn base(&self) -> ActionBase {
         // Use template_name if name is empty
@@ -412,7 +481,7 @@ impl TemplateAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct ActionTrigger {
     pub id: String,
     pub condition: TriggerCondition,
@@ -420,7 +489,7 @@ pub struct ActionTrigger {
     pub cost: Option<i32>, // e.g. Reaction (4)
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub enum CleanupInstruction {
     RemoveAllBuffsFromSource(String), // Combatant ID of the source that died
     BreakConcentration(String, String), // (Combatant ID of concentrator, Buff ID)
@@ -512,6 +581,52 @@ pub struct Creature {
     pub hit_dice: Option<String>, // Changed from DiceFormula
     #[serde(rename = "conModifier")]
     pub con_modifier: Option<f64>, // New field for constitution modifier to apply to hit dice rolls
+}
+
+impl Hash for Creature {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.arrival.hash(state);
+        self.mode.hash(state);
+        self.name.hash(state);
+        crate::utilities::hash_f64(self.count, state);
+        self.hp.hash(state);
+        self.ac.hash(state);
+        crate::utilities::hash_opt_f64(self.speed_fly, state);
+        crate::utilities::hash_f64(self.save_bonus, state);
+        crate::utilities::hash_opt_f64(self.str_save_bonus, state);
+        crate::utilities::hash_opt_f64(self.dex_save_bonus, state);
+        crate::utilities::hash_opt_f64(self.con_save_bonus, state);
+        crate::utilities::hash_opt_f64(self.int_save_bonus, state);
+        crate::utilities::hash_opt_f64(self.wis_save_bonus, state);
+        crate::utilities::hash_opt_f64(self.cha_save_bonus, state);
+        self.con_save_advantage.hash(state);
+        self.save_advantage.hash(state);
+        self.initiative_bonus.hash(state);
+        self.initiative_advantage.hash(state);
+        self.actions.hash(state);
+        self.triggers.hash(state);
+        
+        // HashMap hashing needs sorting for determinism
+        if let Some(slots) = &self.spell_slots {
+            let mut sorted_slots: Vec<_> = slots.iter().collect();
+            sorted_slots.sort_by_key(|a| a.0);
+            sorted_slots.hash(state);
+        } else {
+            None::<()>.hash(state);
+        }
+
+        if let Some(res) = &self.class_resources {
+            let mut sorted_res: Vec<_> = res.iter().collect();
+            sorted_res.sort_by_key(|a| a.0);
+            sorted_res.hash(state);
+        } else {
+            None::<()>.hash(state);
+        }
+
+        self.hit_dice.hash(state);
+        crate::utilities::hash_opt_f64(self.con_modifier, state);
+    }
 }
 
 fn default_initiative_bonus() -> DiceFormula {
@@ -817,7 +932,7 @@ pub struct CombattantAction {
     pub targets: HashMap<String, i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct Encounter {
     pub monsters: Vec<Creature>,
     #[serde(rename = "playersSurprised")]
@@ -832,12 +947,12 @@ pub struct Encounter {
     pub target_role: TargetRole,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub struct ShortRest {
     pub id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 #[serde(tag = "type")]
 pub enum TimelineStep {
     #[serde(rename = "combat")]
