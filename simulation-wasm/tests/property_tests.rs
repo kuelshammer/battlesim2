@@ -94,7 +94,7 @@ proptest! {
             create_minimal_combatant(monster, 1, 5.0),
         ];
 
-        let mut engine = ActionExecutionEngine::new(combatants);
+        let mut engine = ActionExecutionEngine::new(combatants, true);
         let result = engine.execute_encounter();
 
         // Assert: total_rounds should be one less than snapshots (snapshots include initial state)
@@ -131,7 +131,7 @@ proptest! {
             create_minimal_combatant(monster, 1, 5.0),
         ];
 
-        let mut engine = ActionExecutionEngine::new(combatants);
+        let mut engine = ActionExecutionEngine::new(combatants, true);
         let result = engine.execute_encounter();
 
         // Check all combatants in all rounds
@@ -188,7 +188,7 @@ proptest! {
             .map(|c| c.id.clone())
             .collect();
 
-        let mut engine = ActionExecutionEngine::new(combatants);
+        let mut engine = ActionExecutionEngine::new(combatants, true);
         let result = engine.execute_encounter();
 
         // Check all event references
@@ -245,7 +245,7 @@ proptest! {
             create_minimal_combatant(monster, 1, 5.0),
         ];
 
-        let mut engine = ActionExecutionEngine::new(combatants);
+        let mut engine = ActionExecutionEngine::new(combatants, true);
         let result = engine.execute_encounter();
 
         // Check each round has same number of combatants
@@ -283,7 +283,7 @@ proptest! {
 
         let combatant_count = combatants.len();
 
-        let mut engine = ActionExecutionEngine::new(combatants);
+        let mut engine = ActionExecutionEngine::new(combatants, true);
         let result = engine.execute_encounter();
 
         // Count ActionStarted events

@@ -401,6 +401,25 @@ pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, Simulation
     Err(SimulationError::EmptyResult("No rounds found in last encounter".to_string()))
 }
 
+pub fn calculate_lightweight_score(final_states: &[crate::context::CombattantState]) -> f64 {
+    let mut player_hp: f64 = 0.0;
+    let mut monster_hp: f64 = 0.0;
+    let mut survivors: f64 = 0.0;
+
+    for state in final_states {
+        if state.side == 0 {
+            player_hp += state.current_hp as f64;
+            if state.current_hp > 0 {
+                survivors += 1.0;
+            }
+        } else {
+            monster_hp += state.current_hp as f64;
+        }
+    }
+
+    (survivors * 1_000_000.0) + player_hp - monster_hp
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, SimulationError> {
     use std::fmt::Write;

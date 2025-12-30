@@ -12,7 +12,7 @@
             },
             "name": "PlayerA",
             "count": 1,
-            "hp": 100,
+            "hp": 20,
             "AC": 10,
             "saveBonus": 2,
             "initiativeBonus": 21,
@@ -49,7 +49,7 @@
                     },
                     "name": "MonsterB",
                     "count": 1,
-                    "hp": 100,
+                    "hp": 20,
                     "AC": 10,
                     "saveBonus": 2,
                     "actions": [

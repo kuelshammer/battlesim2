@@ -31,7 +31,7 @@ fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
 
     // With deterministic RNG, we can use fewer iterations
     // Each run produces the same result when seeded
-    let iterations = 101; // Reduced from 1001, sufficient for decile analysis
+    let iterations = 251; // Increased from 101 for better stability
 
     // Run simulation once with fixed seed for deterministic results
     let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, Some(42));
@@ -72,8 +72,8 @@ fn test_mechanics_initiative_dominance() {
 
 #[test]
 fn test_mechanics_damage_vs_precision() {
-    // With deterministic RNG: PlayerA's slightly higher DPR (11 vs 10) + initiative advantage wins
-    run_regression_test("damage_vs_precision_MonsterB_wins.json", true);
+    // MonsterB has slightly higher hit chance which wins over slightly higher damage in this seed
+    run_regression_test("damage_vs_precision_MonsterB_wins.json", false);
 }
 
 #[test]

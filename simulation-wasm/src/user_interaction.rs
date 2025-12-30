@@ -682,6 +682,9 @@ impl UserInteractionManager {
             progress_ui.clear_all();
         }
 
+        // Clear the simulation results cache as well
+        crate::cache::clear_cache();
+
         Ok(())
     }
 

@@ -17,6 +17,7 @@ pub struct TurnContext {
     pub event_bus: EventBus,
     pub round_number: u32,
     pub current_turn_owner: Option<String>,
+    pub log_enabled: bool,
 
     // Combat State
     pub combatants: HashMap<String, CombattantState>,
@@ -83,6 +84,7 @@ impl TurnContext {
         battlefield_conditions: Vec<String>,
         weather: Option<String>,
         terrain: String,
+        log_enabled: bool,
     ) -> Self {
         // Create combatant states with individual resource ledgers
         let combatant_states: HashMap<String, CombattantState> = combatants
@@ -115,9 +117,10 @@ impl TurnContext {
             .collect();
 
         Self {
-            event_bus: EventBus::new(1000), // Keep last 1000 events
+            event_bus: EventBus::new(if log_enabled { 1000 } else { 0 }, log_enabled), // Keep last 1000 events ONLY if logging is enabled
             round_number: 0,
             current_turn_owner: None,
+            log_enabled,
             combatants: combatant_states,
             active_effects: HashMap::new(),
             combat_stats_cache: CombatStatsCache::new(),
@@ -709,7 +712,7 @@ mod tests {
             actions: Vec::new(),
         }];
 
-        let context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
+        let context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         assert_eq!(context.round_number, 0);
         assert!(context.current_turn_owner.is_none());
@@ -756,7 +759,7 @@ mod tests {
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         context.start_new_turn("player1".to_string());
         assert_eq!(context.current_turn_owner, Some("player1".to_string()));
@@ -807,7 +810,7 @@ mod tests {
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         let costs = vec![ActionCost::Discrete {
             resource_type: crate::resources::ResourceType::Action,
@@ -861,7 +864,7 @@ mod tests {
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string());
+        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         let effect = ActiveEffect {
             id: "test_effect".to_string(),

@@ -769,6 +769,7 @@ mod tests {
             Vec::new(),
             None,
             "Standard".to_string(),
+            true,
         )
     }
 }

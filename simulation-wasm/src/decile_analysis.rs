@@ -413,19 +413,28 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
     (burned_resources, run_party_max_hp, survivors, duration, timeline, vitality_timeline, power_timeline)
 }
 
-fn calculate_tdnw(run: &SimulationResult) -> f64 {
+pub fn calculate_tdnw(run: &SimulationResult) -> f64 {
     let mut total = 0.0;
     // Find the first encounter that has at least one round
     for encounter in &run.encounters {
         if let Some(first_round) = encounter.rounds.first() {
             for c in &first_round.team1 {
                 let ledger = c.creature.initialize_ledger();
-                total += calculate_ledger_max_ehp(&c.creature, &ledger);
+                total += crate::intensity_calculation::calculate_ledger_max_ehp(&c.creature, &ledger);
             }
             if total > 0.0 {
                 return total;
             }
         }
+    }
+    total
+}
+
+pub fn calculate_tdnw_lightweight(players: &[Creature]) -> f64 {
+    let mut total = 0.0;
+    for p in players {
+        let ledger = p.initialize_ledger();
+        total += crate::intensity_calculation::calculate_ledger_max_ehp(p, &ledger) * (p.count as f64);
     }
     total
 }

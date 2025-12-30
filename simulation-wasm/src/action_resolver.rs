@@ -948,6 +948,7 @@ mod tests {
             vec![],
             None,
             "Plains".to_string(),
+            true,
         );
 
         // 2. Apply Reactive Buff manually to Defender
@@ -985,6 +986,9 @@ mod tests {
             remaining_duration: 100,
             conditions: vec![],
         });
+
+        // 2.5 Precalculate stats for targeting
+        context.precalculate_combat_stats();
 
         // 3. Resolve Attack
         let resolver = ActionResolver::new();
@@ -1135,6 +1139,7 @@ mod tests {
             vec![],
             None,
             "Arena".to_string(),
+            true,
         );
 
         let resolver = ActionResolver::with_seed(12345); // Deterministic

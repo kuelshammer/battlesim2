@@ -560,15 +560,17 @@ pub struct EventBus {
     event_history: Vec<Event>,
     listeners: HashMap<String, Vec<EventListener>>,
     max_history_size: usize,
+    pub log_enabled: bool,
 }
 
 impl EventBus {
-    pub fn new(max_history_size: usize) -> Self {
+    pub fn new(max_history_size: usize, log_enabled: bool) -> Self {
         Self {
             pending_events: Vec::new(),
             event_history: Vec::new(),
             listeners: HashMap::new(),
             max_history_size,
+            log_enabled,
         }
     }
 
@@ -590,9 +592,11 @@ impl EventBus {
         // Collect all pending events first
         let pending_events: Vec<Event> = self.pending_events.drain(..).collect();
 
-        // Add events to history
-        for event in &pending_events {
-            self.event_history.push(event.clone());
+        // Add events to history if logging is enabled
+        if self.log_enabled {
+            for event in &pending_events {
+                self.event_history.push(event.clone());
+            }
         }
 
         // Trim history if it exceeds max size
@@ -780,7 +784,7 @@ mod tests {
 
     #[test]
     fn test_event_bus() {
-        let mut bus = EventBus::new(100);
+        let mut bus = EventBus::new(100, true);
 
         // Test emitting events
         bus.emit_event(Event::RoundStarted { round_number: 1 });

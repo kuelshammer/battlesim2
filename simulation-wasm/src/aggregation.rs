@@ -193,6 +193,10 @@ pub fn calculate_cumulative_score(result: &SimulationResult, encounter_idx: usiz
         None => return -1_000_000.0,
     };
     
+    calculate_encounter_score(encounter)
+}
+
+pub fn calculate_encounter_score(encounter: &EncounterResult) -> f64 {
     let last_round = match encounter.rounds.last() {
         Some(r) => r,
         None => return -1_000_000.0,

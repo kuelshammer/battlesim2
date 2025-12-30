@@ -6,10 +6,10 @@
             "mode": "custom",
             "name": "PlayerHeavy",
             "count": 1,
-            "hp": 100,
+            "hp": 20,
             "AC": 20,
             "saveBonus": 0,
-            "initiativeBonus": 0,
+            "initiativeBonus": 5,
             "initiativeAdvantage": false,
             "actions": [
                 {
@@ -35,7 +35,7 @@
                     "mode": "custom",
                     "name": "MonsterConsistent",
                     "count": 1,
-                    "hp": 100,
+                    "hp": 20,
                     "AC": 20,
                     "saveBonus": 0,
                     "actions": [

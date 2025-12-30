@@ -54,26 +54,62 @@ pub fn clear_rng() {
     });
 }
 
+/// A wrapper around the thread-local RNG that ensures state advancement
+///
+/// This struct implements `RngCore` and delegates all calls to the 
+/// thread-local `RNG` storage. This ensures that if a seed is set, 
+/// the same RNG state is shared and advanced across all calls within the thread.
+pub struct ThreadLocalRng;
+
+impl RngCore for ThreadLocalRng {
+    fn next_u32(&mut self) -> u32 {
+        RNG.with(|rng_opt| {
+            let mut opt = rng_opt.borrow_mut();
+            match opt.as_mut() {
+                Some(rng) => rng.next_u32(),
+                None => thread_rng().next_u32(),
+            }
+        })
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        RNG.with(|rng_opt| {
+            let mut opt = rng_opt.borrow_mut();
+            match opt.as_mut() {
+                Some(rng) => rng.next_u64(),
+                None => thread_rng().next_u64(),
+            }
+        })
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        RNG.with(|rng_opt| {
+            let mut opt = rng_opt.borrow_mut();
+            match opt.as_mut() {
+                Some(rng) => rng.fill_bytes(dest),
+                None => thread_rng().fill_bytes(dest),
+            }
+        })
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+        RNG.with(|rng_opt| {
+            let mut opt = rng_opt.borrow_mut();
+            match opt.as_mut() {
+                Some(rng) => rng.try_fill_bytes(dest),
+                None => thread_rng().try_fill_bytes(dest),
+            }
+        })
+    }
+}
+
 /// Get a thread-local Rng instance
 ///
-/// If a seed has been set via `seed_rng()`, returns a clone of the seeded RNG.
-/// Otherwise, returns a new entropy-based RNG (like `thread_rng()`).
+/// Returns a `ThreadLocalRng` wrapper that provides deterministic sequences
+/// if `seed_rng()` was called, or falls back to `thread_rng()`.
 ///
 /// # Returns
 /// A type implementing `Rng` that can be used for random number generation
-pub fn get_rng() -> impl Rng {
-    // We need to clone the seeded RNG out of the RefCell
-    // This is safe because we're creating a new instance each time
-    RNG.with(|rng_opt| {
-        match &*rng_opt.borrow() {
-            Some(seeded) => {
-                // Clone the seeded RNG for this use
-                seeded.clone()
-            }
-            None => {
-                // Fall back to entropy-based RNG if no seed set
-                StdRng::from_entropy()
-            }
-        }
-    })
+pub fn get_rng() -> ThreadLocalRng {
+    ThreadLocalRng
 }
