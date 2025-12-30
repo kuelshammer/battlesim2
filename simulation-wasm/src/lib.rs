@@ -61,7 +61,7 @@ use web_sys::console;
 use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun};
 use crate::storage_manager::StorageManager;
 use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Mutex, OnceLock, PoisonError};
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -640,7 +640,7 @@ struct GuiIntegration {
 pub fn initialize_gui_integration() -> Result<JsValue, JsValue> {
     GUI_INTEGRATION.get_or_init(|| {
         // Get storage manager reference (clone for separate instances as in original code)
-        let storage_copy = get_storage_manager().lock().unwrap().clone();
+        let storage_copy = get_storage_manager().lock().unwrap_or_else(PoisonError::into_inner).clone();
 
         // Create display manager
         let display_config = DisplayConfig::default();
@@ -722,7 +722,7 @@ fn get_gui_integration() -> &'static Mutex<GuiIntegration> {
 /// Get display results for current parameters
 #[wasm_bindgen]
 pub fn get_display_results(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -730,7 +730,7 @@ pub fn get_display_results(players: JsValue, timeline: JsValue, iterations: usiz
         .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
     
     let display_result = {
-        let mut display_manager = gui.display_manager.lock().unwrap();
+        let mut display_manager = gui.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
         display_manager.get_display_results(&players, &timeline, iterations)
     };
     
@@ -744,7 +744,7 @@ pub fn get_display_results(players: JsValue, timeline: JsValue, iterations: usiz
 /// Set display mode
 #[wasm_bindgen]
 pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let mode = match mode_str {
         "ShowNewest" => DisplayMode::ShowNewest,
@@ -755,7 +755,7 @@ pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
         _ => return Err(JsValue::from_str(&format!("Invalid display mode: {}", mode_str))),
     };
     
-    let mut display_manager = gui.display_manager.lock().unwrap();
+    let mut display_manager = gui.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
     display_manager.set_display_mode(mode);
     
     Ok(JsValue::from_str(&format!("Display mode set to {:?}", mode)))
@@ -764,9 +764,9 @@ pub fn set_display_mode(mode_str: &str) -> Result<JsValue, JsValue> {
 /// Get current display mode
 #[wasm_bindgen]
 pub fn get_display_mode() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let display_manager = gui.display_manager.lock().unwrap();
+    let display_manager = gui.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let mode = display_manager.get_display_mode();
     
     let mode_str = match mode {
@@ -783,7 +783,7 @@ pub fn get_display_mode() -> Result<JsValue, JsValue> {
 /// User selected a specific slot
 #[wasm_bindgen]
 pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let slot_selection = match slot_str {
         "Primary" => crate::storage::SlotSelection::Primary,
@@ -791,7 +791,7 @@ pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
         _ => return Err(JsValue::from_str(&format!("Invalid slot: {}", slot_str))),
     };
     
-    let mut display_manager = gui.display_manager.lock().unwrap();
+    let mut display_manager = gui.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let display_result = display_manager.user_selected_slot(slot_selection);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -809,7 +809,7 @@ pub fn start_background_simulation(
     iterations: usize,
     priority_str: &str
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -833,7 +833,7 @@ pub fn start_background_simulation(
         priority,
     };
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -846,9 +846,9 @@ pub fn start_background_simulation(
 /// Get progress information for all active simulations
 #[wasm_bindgen]
 pub fn get_all_progress() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let progress_list = progress_ui.get_all_progress();
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -861,11 +861,11 @@ pub fn get_all_progress() -> Result<JsValue, JsValue> {
 /// Get progress information for a specific simulation
 #[wasm_bindgen]
 pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
-    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let progress_info = progress_ui.get_progress(&sim_id);
     
     match progress_info {
@@ -883,11 +883,11 @@ pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Create HTML progress bar for a simulation
 #[wasm_bindgen]
 pub fn create_progress_bar(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
-    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let progress_info = progress_ui.get_progress(&sim_id);
     
     match progress_info {
@@ -902,11 +902,11 @@ pub fn create_progress_bar(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Create compact progress indicator for a simulation
 #[wasm_bindgen]
 pub fn create_compact_indicator(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
-    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let progress_info = progress_ui.get_progress(&sim_id);
     
     match progress_info {
@@ -921,7 +921,7 @@ pub fn create_compact_indicator(simulation_id: &str) -> Result<JsValue, JsValue>
 /// Cancel a running simulation
 #[wasm_bindgen]
 pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let sim_id = crate::background_simulation::BackgroundSimulationId(simulation_id.to_string());
     
@@ -929,7 +929,7 @@ pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
         simulation_id: sim_id,
     };
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -942,11 +942,11 @@ pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
 /// Clear simulation cache
 #[wasm_bindgen]
 pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let event = UserEvent::ClearCache;
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -959,9 +959,9 @@ pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
 /// Get pending user confirmations
 #[wasm_bindgen]
 pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let confirmations = user_interaction.get_pending_confirmations();
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -974,9 +974,9 @@ pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
 /// Answer a confirmation request
 #[wasm_bindgen]
 pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let result = user_interaction.answer_confirmation(confirmation_id, confirmed);
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -989,9 +989,9 @@ pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsV
 /// Get current user interaction state
 #[wasm_bindgen]
 pub fn get_user_interaction_state() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let state = user_interaction.get_state();
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -1008,14 +1008,14 @@ pub fn update_gui_configuration(
     progress_config_json: Option<JsValue>,
     interaction_config_json: Option<JsValue>,
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     // Update display configuration
     if let Some(config_js) = display_config_json {
         let config: DisplayConfig = serde_wasm_bindgen::from_value(config_js)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse display config: {}", e)))?;
         
-        let mut display_manager = gui.display_manager.lock().unwrap();
+        let mut display_manager = gui.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
         display_manager.update_config(config);
     }
     
@@ -1024,7 +1024,7 @@ pub fn update_gui_configuration(
         let config: ProgressUIConfig = serde_wasm_bindgen::from_value(config_js)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse progress config: {}", e)))?;
         
-        let mut progress_ui = gui.progress_ui_manager.lock().unwrap();
+        let mut progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
         progress_ui.update_config(config);
     }
     
@@ -1033,7 +1033,7 @@ pub fn update_gui_configuration(
         let config: UserInteractionConfig = serde_wasm_bindgen::from_value(config_js)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse interaction config: {}", e)))?;
         
-        let mut user_interaction = gui.user_interaction_manager.lock().unwrap();
+        let mut user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
         user_interaction.update_config(config);
     }
     
@@ -1043,9 +1043,9 @@ pub fn update_gui_configuration(
 /// Get progress summary for dashboard
 #[wasm_bindgen]
 pub fn get_progress_summary() -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
-    let progress_ui = gui.progress_ui_manager.lock().unwrap();
+    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let summary = progress_ui.get_progress_summary();
     
     let serializer = serde_wasm_bindgen::Serializer::new()
@@ -1062,7 +1062,7 @@ pub fn handle_parameters_changed(
     timeline: JsValue,
     iterations: usize,
 ) -> Result<JsValue, JsValue> {
-    let gui = get_gui_integration().lock().unwrap();
+    let gui = get_gui_integration().lock().unwrap_or_else(PoisonError::into_inner);
     
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
@@ -1077,7 +1077,7 @@ pub fn handle_parameters_changed(
         },
     };
     
-    let user_interaction = gui.user_interaction_manager.lock().unwrap();
+    let user_interaction = gui.user_interaction_manager.lock().unwrap_or_else(PoisonError::into_inner);
     let result = user_interaction.handle_event(event);
     
     let serializer = serde_wasm_bindgen::Serializer::new()

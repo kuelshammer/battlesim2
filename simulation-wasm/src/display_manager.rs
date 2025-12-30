@@ -3,6 +3,7 @@ use crate::storage_manager::StorageManager;
 use crate::model::{Creature, Encounter, SimulationResult, TimelineStep};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc;
+use std::sync::PoisonError;
 use std::time::{SystemTime, UNIX_EPOCH};
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -294,7 +295,7 @@ impl DisplayManager {
     /// Set progress communicator for background simulation updates
     pub fn set_progress_communicator(&mut self, communicator_arc: std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>) {
         {
-            let communicator = communicator_arc.lock().unwrap();
+            let communicator = communicator_arc.lock().unwrap_or_else(PoisonError::into_inner);
             // Create a unique subscription ID for this display manager
             let subscription_id = format!("display_manager_sub_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos());
             let subscription = crate::progress_communication::ProgressSubscription::new(subscription_id);
@@ -684,7 +685,7 @@ impl DisplayManagerWrapper {
             _ => return Err(JsValue::from_str("Invalid display mode")),
         };
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .set_display_mode(display_mode);
         Ok(())
     }
@@ -701,7 +702,7 @@ impl DisplayManagerWrapper {
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline.clone())
             .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-        let result = self.inner.lock().unwrap()
+        let result = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_display_results(&players, &timeline, iterations);
         
         serde_wasm_bindgen::to_value(&result)
@@ -716,7 +717,7 @@ impl DisplayManagerWrapper {
             _ => return Err(JsValue::from_str("Invalid slot selection")),
         };
 
-        let result = self.inner.lock().unwrap()
+        let result = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .user_selected_slot(slot_selection);
         
         serde_wasm_bindgen::to_value(&result)
@@ -725,12 +726,12 @@ impl DisplayManagerWrapper {
 
     #[wasm_bindgen(js_name = getDisplayMode)]
     pub fn get_display_mode(&self) -> String {
-        self.inner.lock().unwrap().get_display_mode().to_string()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner).get_display_mode().to_string()
     }
 
     #[wasm_bindgen(js_name = getStatusText)]
     pub fn get_status_text(&self) -> String {
-        self.inner.lock().unwrap().generate_status_text()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner).generate_status_text()
     }
 
     #[wasm_bindgen(js_name = handleSimulationCompleted)]
@@ -741,14 +742,14 @@ impl DisplayManagerWrapper {
             _ => return Err(JsValue::from_str("Invalid slot selection")),
         };
 
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .handle_simulation_completed(slot_selection)
             .map_err(|e| JsValue::from_str(&e))
     }
 
     #[wasm_bindgen(js_name = handleSimulationFailed)]
     pub fn handle_simulation_failed(&self, error: String) -> Result<(), JsValue> {
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .handle_simulation_failed(&error)
             .map_err(|e| JsValue::from_str(&e))
     }

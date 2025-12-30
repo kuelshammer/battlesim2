@@ -1,7 +1,7 @@
 use crate::background_simulation::{SimulationPriority};
 use crate::user_interaction::ScenarioParameters;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// A request to run a simulation with specific parameters
@@ -156,7 +156,7 @@ impl SimulationQueue {
     pub fn enqueue(&self, request: SimulationRequest) -> Result<(), QueueError> {
         // Check queue size limit
         {
-            let pending = self.pending_requests.lock().unwrap();
+            let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
             if pending.len() >= self.max_queue_size {
                 return Err(QueueError::QueueFull);
             }
@@ -165,12 +165,12 @@ impl SimulationQueue {
         // Check for deduplication
         if request.allow_deduplication {
             let dedup_hash = request.deduplication_hash();
-            let mut dedup_map = self.deduplication_map.lock().unwrap();
+            let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
             
             if let Some(existing_request_id) = dedup_map.get(&dedup_hash) {
                 // Check if the existing request is still pending or processing
-                let pending = self.pending_requests.lock().unwrap();
-                let processing = self.processing_requests.lock().unwrap();
+                let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+                let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
                 
                 if pending.iter().any(|pr| pr.request.request_id == *existing_request_id) ||
                    processing.contains(existing_request_id) {
@@ -184,7 +184,7 @@ impl SimulationQueue {
 
         // Add to priority queue
         let insertion_order = {
-            let mut counter = self.insertion_counter.lock().unwrap();
+            let mut counter = self.insertion_counter.lock().unwrap_or_else(PoisonError::into_inner);
             *counter += 1;
             *counter
         };
@@ -194,7 +194,7 @@ impl SimulationQueue {
             insertion_order,
         };
 
-        let mut pending = self.pending_requests.lock().unwrap();
+        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         pending.push(priority_request);
 
         Ok(())
@@ -202,13 +202,13 @@ impl SimulationQueue {
 
     /// Get the next request from the queue (highest priority first)
     pub fn dequeue(&self) -> Option<SimulationRequest> {
-        let mut pending = self.pending_requests.lock().unwrap();
+        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         
         if let Some(priority_request) = pending.pop() {
             let request = priority_request.request;
             
             // Mark as processing
-            let mut processing = self.processing_requests.lock().unwrap();
+            let mut processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
             processing.insert(request.request_id.clone());
             
             Some(request)
@@ -219,18 +219,18 @@ impl SimulationQueue {
 
     /// Mark a request as completed (remove from processing set)
     pub fn mark_completed(&self, request_id: &str) {
-        let mut processing = self.processing_requests.lock().unwrap();
+        let mut processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
         processing.remove(request_id);
 
         // Remove from deduplication map
-        let mut dedup_map = self.deduplication_map.lock().unwrap();
+        let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
         dedup_map.retain(|_, existing_id| existing_id != request_id);
     }
 
     /// Cancel a pending request
     pub fn cancel_request(&self, request_id: &str) -> Result<(), QueueError> {
         // Remove from pending queue (need to rebuild since BinaryHeap doesn't support removal)
-        let mut pending = self.pending_requests.lock().unwrap();
+        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         let mut new_pending = BinaryHeap::new();
         let mut found = false;
 
@@ -247,12 +247,12 @@ impl SimulationQueue {
 
         if found {
             // Remove from deduplication map
-            let mut dedup_map = self.deduplication_map.lock().unwrap();
+            let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
             dedup_map.retain(|_, existing_id| existing_id != request_id);
             Ok(())
         } else {
             // Check if it's being processed
-            let processing = self.processing_requests.lock().unwrap();
+            let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
             if processing.contains(request_id) {
                 Err(QueueError::RequestAlreadyProcessing)
             } else {
@@ -263,9 +263,9 @@ impl SimulationQueue {
 
     /// Get queue statistics
     pub fn get_stats(&self) -> QueueStats {
-        let pending = self.pending_requests.lock().unwrap();
-        let processing = self.processing_requests.lock().unwrap();
-        let dedup_map = self.deduplication_map.lock().unwrap();
+        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
 
         let mut priority_counts = HashMap::new();
         for priority_request in pending.iter() {
@@ -283,42 +283,42 @@ impl SimulationQueue {
 
     /// Clear all pending requests
     pub fn clear_pending(&self) {
-        let mut pending = self.pending_requests.lock().unwrap();
+        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         pending.clear();
 
         // Clear deduplication map for pending requests only
-        let processing = self.processing_requests.lock().unwrap();
-        let mut dedup_map = self.deduplication_map.lock().unwrap();
+        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
         dedup_map.retain(|_, existing_id| !processing.contains(existing_id));
     }
 
     /// Check if a specific request is pending
     pub fn is_pending(&self, request_id: &str) -> bool {
-        let pending = self.pending_requests.lock().unwrap();
+        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         pending.iter().any(|pr| pr.request.request_id == request_id)
     }
 
     /// Check if a specific request is being processed
     pub fn is_processing(&self, request_id: &str) -> bool {
-        let processing = self.processing_requests.lock().unwrap();
+        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
         processing.contains(request_id)
     }
 
     /// Get the next request without removing it from the queue
     pub fn peek_next(&self) -> Option<SimulationRequest> {
-        let pending = self.pending_requests.lock().unwrap();
+        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         pending.peek().map(|pr| pr.request.clone())
     }
 
     /// Get all pending requests (for debugging/monitoring)
     pub fn get_pending_requests(&self) -> Vec<SimulationRequest> {
-        let pending = self.pending_requests.lock().unwrap();
+        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
         pending.iter().map(|pr| pr.request.clone()).collect()
     }
 
     /// Get all processing request IDs
     pub fn get_processing_request_ids(&self) -> Vec<String> {
-        let processing = self.processing_requests.lock().unwrap();
+        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
         processing.iter().cloned().collect()
     }
 }

@@ -103,9 +103,11 @@ export function useSimulationWorker() {
     }, [setupWorkerListener]);
 
     const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511) => {
-        // Terminate existing worker if running
-        terminateAndRestart();
-        
+        // Ensure worker is initialized before running
+        if (!workerRef.current) {
+            terminateAndRestart();
+        }
+
         setState(prev => ({
             ...prev,
             isRunning: true,
@@ -150,9 +152,11 @@ export function useSimulationWorker() {
     }, [terminateAndRestart]);
 
     const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => {
-        // Terminate existing worker if running
-        terminateAndRestart();
-        
+        // Ensure worker is initialized before running
+        if (!workerRef.current) {
+            terminateAndRestart();
+        }
+
         setState(prev => ({
             ...prev,
             isRunning: true,
@@ -189,7 +193,7 @@ export function useSimulationWorker() {
                     }))
                 };
             }
-            return event; 
+            return event;
         });
 
         workerRef.current?.postMessage({

@@ -2,7 +2,7 @@ use crate::background_simulation::BackgroundSimulationId;
 use crate::progress_communication::{ProgressUpdate, ProgressUpdateType, ProgressCommunication};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 use wasm_bindgen::prelude::*;
 
@@ -312,25 +312,25 @@ impl ProgressUIManager {
 
     /// Start tracking a new simulation
     pub fn start_tracking(&self, simulation_id: BackgroundSimulationId) {
-        let mut active = self.active_progress.lock().unwrap();
+        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         active.insert(simulation_id.clone(), ProgressInfo::new(simulation_id));
     }
 
     /// Stop tracking a simulation
     pub fn stop_tracking(&self, simulation_id: &BackgroundSimulationId) {
-        let mut active = self.active_progress.lock().unwrap();
+        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         active.remove(simulation_id);
     }
 
     /// Update progress from a progress update
     pub fn update_progress(&self, update: ProgressUpdate) -> Result<(), ProgressUIError> {
-        let mut active = self.active_progress.lock().unwrap();
+        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         
         if let Some(progress_info) = active.get_mut(&update.simulation_id) {
             progress_info.update_from_progress_update(&update, &self.config);
             
             // Update last update timestamp
-            let mut last_update = self.last_update.lock().unwrap();
+            let mut last_update = self.last_update.lock().unwrap_or_else(PoisonError::into_inner);
             *last_update = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
@@ -344,19 +344,19 @@ impl ProgressUIManager {
 
     /// Get progress info for a specific simulation
     pub fn get_progress(&self, simulation_id: &BackgroundSimulationId) -> Option<ProgressInfo> {
-        let active = self.active_progress.lock().unwrap();
+        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         active.get(simulation_id).cloned()
     }
 
     /// Get all active progress
     pub fn get_all_progress(&self) -> Vec<ProgressInfo> {
-        let active = self.active_progress.lock().unwrap();
+        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         active.values().cloned().collect()
     }
 
     /// Get progress summary for dashboard
     pub fn get_progress_summary(&self) -> ProgressSummary {
-        let active = self.active_progress.lock().unwrap();
+        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         let mut summary = ProgressSummary::default();
 
         for progress_info in active.values() {
@@ -464,7 +464,7 @@ impl ProgressUIManager {
 
     /// Clear all progress tracking
     pub fn clear_all(&self) {
-        let mut active = self.active_progress.lock().unwrap();
+        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
         active.clear();
     }
 
@@ -626,7 +626,7 @@ impl ProgressUIManagerWrapper {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .start_tracking(sim_id);
         Ok(())
     }
@@ -636,7 +636,7 @@ impl ProgressUIManagerWrapper {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .stop_tracking(&sim_id);
         Ok(())
     }
@@ -646,7 +646,7 @@ impl ProgressUIManagerWrapper {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_progress(&sim_id)
             .ok_or_else(|| JsValue::from_str("Progress not found"))
             .and_then(|progress| {
@@ -657,7 +657,7 @@ impl ProgressUIManagerWrapper {
 
     #[wasm_bindgen(js_name = getAllProgress)]
     pub fn get_all_progress(&self) -> Result<JsValue, JsValue> {
-        let progress_list = self.inner.lock().unwrap()
+        let progress_list = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_all_progress();
         
         serde_wasm_bindgen::to_value(&progress_list)
@@ -666,7 +666,7 @@ impl ProgressUIManagerWrapper {
 
     #[wasm_bindgen(js_name = getProgressSummary)]
     pub fn get_progress_summary(&self) -> Result<JsValue, JsValue> {
-        let summary = self.inner.lock().unwrap()
+        let summary = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_progress_summary();
         
         serde_wasm_bindgen::to_value(&summary)
@@ -678,10 +678,10 @@ impl ProgressUIManagerWrapper {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_progress(&sim_id)
             .ok_or_else(|| JsValue::from_str("Progress not found"))
-            .map(|progress| self.inner.lock().unwrap().create_progress_bar_html(&progress))
+            .map(|progress| self.inner.lock().unwrap_or_else(PoisonError::into_inner).create_progress_bar_html(&progress))
     }
 
     #[wasm_bindgen(js_name = createCompactIndicator)]
@@ -689,15 +689,15 @@ impl ProgressUIManagerWrapper {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
         
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .get_progress(&sim_id)
             .ok_or_else(|| JsValue::from_str("Progress not found"))
-            .map(|progress| self.inner.lock().unwrap().create_compact_indicator(&progress))
+            .map(|progress| self.inner.lock().unwrap_or_else(PoisonError::into_inner).create_compact_indicator(&progress))
     }
 
     #[wasm_bindgen(js_name = clearAll)]
     pub fn clear_all(&self) -> Result<(), JsValue> {
-        self.inner.lock().unwrap()
+        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
             .clear_all();
         Ok(())
     }

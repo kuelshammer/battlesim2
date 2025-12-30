@@ -41,11 +41,8 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
 
     let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
 
-    let template_encounter = results.first().and_then(|r| r.first());
-    if template_encounter.is_none() {
-        return Err(SimulationError::EmptyResult("No template encounter found in results".to_string()));
-    }
-    let template_encounter = template_encounter.unwrap();
+    let template_encounter = results.first().and_then(|r| r.first())
+        .ok_or_else(|| SimulationError::EmptyResult("No template encounter found in results".to_string()))?;
 
     for round_idx in 0..max_rounds {
         let mut team1_map: HashMap<String, AggregationData> = HashMap::new();

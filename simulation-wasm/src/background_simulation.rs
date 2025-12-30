@@ -1,6 +1,6 @@
 use crate::model::SimulationResult;
 use crate::user_interaction::ScenarioParameters;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{Arc, Mutex, mpsc, PoisonError};
 use std::thread;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
@@ -122,17 +122,17 @@ impl BackgroundSimulation {
 
     /// Check if cancellation has been requested
     pub fn is_cancelled(&self) -> bool {
-        *self.cancellation_requested.lock().unwrap()
+        *self.cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Request cancellation of this simulation
     pub fn request_cancellation(&self) {
-        *self.cancellation_requested.lock().unwrap() = true;
+        *self.cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner) = true;
     }
 
     /// Get current progress as a clone
     pub fn get_progress(&self) -> SimulationProgress {
-        self.progress.lock().unwrap().clone()
+        self.progress.lock().unwrap_or_else(PoisonError::into_inner).clone()
     }
 }
 
@@ -228,7 +228,7 @@ impl BackgroundSimulationEngine {
 
         // Update initial progress
         {
-            let mut prog = progress.lock().unwrap();
+            let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
             prog.update_progress(0, "Starting simulation");
             prog.add_message("Simulation initialized".to_string());
         }
@@ -241,7 +241,7 @@ impl BackgroundSimulationEngine {
         // Run simulation with progress tracking
         for i in 0..parameters.iterations {
             // Check for cancellation
-            if *cancellation_requested.lock().unwrap() {
+            if *cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner) {
                 error_message = Some("Simulation cancelled by user".to_string());
                 break;
             }
@@ -249,7 +249,7 @@ impl BackgroundSimulationEngine {
             // Update progress periodically
             if i % 10 == 0 || i == parameters.iterations - 1 {
                 {
-                    let mut prog = progress.lock().unwrap();
+                    let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
                     prog.update_progress(i, format!("Running iteration {}/{}", i + 1, parameters.iterations).as_str());
                     
                     // Estimate time remaining
@@ -285,7 +285,7 @@ impl BackgroundSimulationEngine {
             
             // Update final progress
             {
-                let mut prog = progress.lock().unwrap();
+                let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
                 prog.update_progress(parameters.iterations, "Storing results");
                 prog.add_message("Simulation completed successfully".to_string());
             }
@@ -303,7 +303,7 @@ impl BackgroundSimulationEngine {
         
         // Update final progress with completion status
         {
-            let mut prog = progress.lock().unwrap();
+            let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
             if success {
                 prog.current_phase = "Completed".to_string();
                 prog.progress_percentage = 1.0;
@@ -352,7 +352,7 @@ impl BackgroundSimulationEngine {
 
     /// Wait for a completed simulation (blocking)
     pub fn wait_for_completed(&self) -> BackgroundSimulationResult {
-        let receiver = self.completion_receiver.lock().unwrap();
+        let receiver = self.completion_receiver.lock().unwrap_or_else(PoisonError::into_inner);
         receiver.recv().unwrap()
     }
 }

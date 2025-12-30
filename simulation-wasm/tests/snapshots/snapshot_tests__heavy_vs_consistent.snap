@@ -4,7 +4,7 @@ expression: data
 ---
 {
   "description": "Burst Damage (Player) beats Low Dmg/High Hit (Monster)",
-  "median_win_rate": 90.0,
+  "median_win_rate": 80.0,
   "median_survivors": 1,
   "party_size": 1
 }

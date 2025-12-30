@@ -886,7 +886,8 @@ mod tests {
 
         // Update effects (should apply damage)
         context.update_effects();
-        let combatant = context.get_combatant("player1").unwrap();
+        let combatant = context.get_combatant("player1")
+            .expect("player1 combatant should exist in test context");
         assert_eq!(combatant.current_hp, 25); // 30 - 5 = 25
     }
 }

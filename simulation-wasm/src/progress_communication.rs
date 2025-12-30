@@ -1,7 +1,7 @@
 use crate::background_simulation::{BackgroundSimulationId, SimulationProgress};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{Arc, Mutex, mpsc, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Types of progress updates that can be sent
@@ -308,8 +308,8 @@ impl ProgressCommunication {
             .map_err(|_| ProgressError::SendError)?;
 
         // Send to matching subscriptions
-        let subscriptions = self.subscriptions.lock().unwrap();
-        let channels = self.subscription_channels.lock().unwrap();
+        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+        let channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
 
         for (subscription_id, subscription) in subscriptions.iter() {
             if subscription.matches(&update) {
@@ -330,13 +330,13 @@ impl ProgressCommunication {
 
         // Add subscription
         {
-            let mut subscriptions = self.subscriptions.lock().unwrap();
+            let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
             subscriptions.insert(subscription_id.clone(), subscription);
         }
 
         // Add channel
         {
-            let mut channels = self.subscription_channels.lock().unwrap();
+            let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
             channels.insert(subscription_id, sender);
         }
 
@@ -347,13 +347,13 @@ impl ProgressCommunication {
     pub fn unsubscribe(&self, subscription_id: &str) -> Result<(), ProgressError> {
         // Remove subscription
         {
-            let mut subscriptions = self.subscriptions.lock().unwrap();
+            let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
             subscriptions.remove(subscription_id);
         }
 
         // Remove channel
         {
-            let mut channels = self.subscription_channels.lock().unwrap();
+            let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
             channels.remove(subscription_id);
         }
 
@@ -362,20 +362,20 @@ impl ProgressCommunication {
 
     /// Get all active subscriptions
     pub fn get_subscriptions(&self) -> Vec<ProgressSubscription> {
-        let subscriptions = self.subscriptions.lock().unwrap();
+        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
         subscriptions.values().cloned().collect()
     }
 
     /// Get subscription count
     pub fn subscription_count(&self) -> usize {
-        let subscriptions = self.subscriptions.lock().unwrap();
+        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
         subscriptions.len()
     }
 
     /// Clear all subscriptions
     pub fn clear_subscriptions(&self) {
-        let mut subscriptions = self.subscriptions.lock().unwrap();
-        let mut channels = self.subscription_channels.lock().unwrap();
+        let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
         
         subscriptions.clear();
         channels.clear();
