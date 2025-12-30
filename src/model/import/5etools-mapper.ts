@@ -1,4 +1,4 @@
-import { Creature, Action } from "../model";
+import { Creature, Action, CreatureType } from "../model";
 import { Monster5eImport } from "./5etools-schema";
 import { v4 as uuid } from 'uuid';
 import { parse5eAttack, parse5eMultiattack } from "./5etools-action-parser";
@@ -66,18 +66,18 @@ export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
     const avgModifier = (strMod + dexMod + conMod + intMod + wisMod + chaMod) / 6;
 
     // Map type: could be string or object { type: "humanoid" }
-    let creatureType: any = undefined;
+    let creatureType: CreatureType | undefined = undefined;
     if (typeof monster.type === 'string') {
-        creatureType = monster.type;
+        creatureType = monster.type as CreatureType;
     } else if (typeof monster.type === 'object' && monster.type && monster.type.type) {
-        creatureType = monster.type.type;
+        creatureType = monster.type.type as CreatureType;
     }
 
     return {
         id: uuid(),
         mode: "monster",
         name: monster.name || "Unknown",
-        src: monster.source || monster.src,
+        src: monster.source,
         type: creatureType,
         count: 1,
         hp: hp,
@@ -90,5 +90,5 @@ export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
         intSaveBonus: intMod,
         wisSaveBonus: wisMod,
         chaSaveBonus: chaMod,
-    } as any; // Cast to any until all optional fields are handled correctly
+    };
 }

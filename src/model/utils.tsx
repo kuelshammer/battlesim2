@@ -5,7 +5,7 @@ export function clone<T>(obj: T): T {
     return structuredClone(obj)
 }
 
-export function useStoredState<T>(key: string, defaultValue: T, parser: (str: any) => T | null) {
+export function useStoredState<T>(key: string, defaultValue: T, parser: (str: unknown) => T | null) {
     const [state, setState] = useState<T>(defaultValue);
 
     // Load state from localStorage only after the initial render (client-side only)

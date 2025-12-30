@@ -28,7 +28,11 @@ type ClassForm = { type: 'artificer', options: z.infer<typeof ClassOptions.artif
     | { type: 'warlock', options: z.infer<typeof ClassOptions.warlock> }
     | { type: 'wizard', options: z.infer<typeof ClassOptions.wizard> }
 
-const DefaultOptions: {[key in Class]: any} = {
+type ClassOptionsMap = {
+    [K in Class]: z.infer<typeof ClassOptions[K]>
+}
+
+const DefaultOptions: ClassOptionsMap = {
     artificer: {},
     barbarian: { gwm: false, weaponBonus: 0 },
     bard: {},
@@ -44,18 +48,18 @@ const DefaultOptions: {[key in Class]: any} = {
     wizard: {},
 }
 
-const DefaultClass = { type: 'barbarian', options: DefaultOptions.barbarian }
+const DefaultClass: ClassForm = { type: 'barbarian', options: DefaultOptions.barbarian }
 const DefaultLevel = 1
 
 const PlayerForm:FC<PropType> = ({ value, onChange }) => {
-    const [chosenClass, setChosenClass] = useState<ClassForm|null>((value && value.class) ? { type: value.class.type, options: value.class.options } as any : DefaultClass)
+    const [chosenClass, setChosenClass] = useState<ClassForm|null>((value && value.class) ? { type: value.class.type, options: value.class.options } as ClassForm : DefaultClass)
     const [level, setLevel] = useState<number | null>((value && value.class) ? value.class.level : DefaultLevel)
 
     useEffect(() => {
         if (!level || !chosenClass) return
 
         const template = PlayerTemplates[chosenClass.type]
-        const creature = template(level, chosenClass.options as any)
+        const creature = (template as (level: number, options: any) => Creature)(level, chosenClass.options)
         creature.class = {
             type: chosenClass.type,
             level: level,
@@ -67,8 +71,8 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
     }, [chosenClass, level])
 
     function setClass(type: Class) {
-        const chosenClass = { type, options: DefaultOptions[type] }
-        setChosenClass(chosenClass as any)
+        const newChosenClass: ClassForm = { type, options: DefaultOptions[type] } as ClassForm
+        setChosenClass(newChosenClass)
     }
 
     function setClassOptions(callback: (classOptions: any) => void) {

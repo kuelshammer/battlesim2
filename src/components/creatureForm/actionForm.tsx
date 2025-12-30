@@ -205,8 +205,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                     ) : (
                         <DiceFormulaInput
                             value={value[modifier] as any}
-                            // @ts-ignore - Persistent environment-specific type mismatch
-                            onChange={v => updateDiceFormula(modifier, v)}
+                            onChange={v => updateDiceFormula(modifier as any, v)}
                         />
                     )}
                     <button onClick={() => setModifier(index, null)}>

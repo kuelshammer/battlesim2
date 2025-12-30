@@ -43,7 +43,7 @@ const FAST_ITERATIONS = 31;
 const PRECISE_ITERATIONS = 2511;
 
 // Sanitization helper: Fix duplicate IDs in players array
-const sanitizePlayersParser = (parser: (data: any) => Creature[]) => (data: any) => {
+const sanitizePlayersParser = (parser: (data: unknown) => Creature[]) => (data: unknown) => {
     const parsed = parser(data);
     if (!parsed) return null;
 
@@ -60,7 +60,7 @@ const sanitizePlayersParser = (parser: (data: any) => Creature[]) => (data: any)
 };
 
 // Sanitization helper: Fix duplicate IDs in timeline monsters
-const sanitizeTimelineParser = (parser: (data: any) => TimelineEvent[]) => (data: any) => {
+const sanitizeTimelineParser = (parser: (data: unknown) => TimelineEvent[]) => (data: unknown) => {
     const parsed = parser(data);
     if (!parsed) return null;
 

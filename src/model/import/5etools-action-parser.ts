@@ -1,7 +1,8 @@
 import { evaluateDiceFormula } from "../dice";
 import { v4 as uuid } from 'uuid';
+import { AtkAction } from "../model";
 
-export function parse5eAttack(name: string, entry: string): any {
+export function parse5eAttack(name: string, entry: string): AtkAction {
     // Extract toHit bonus: {@hit 4}
     const hitMatch = entry.match(/{@hit\s+(\d+)}/);
     const toHit = hitMatch ? parseInt(hitMatch[1]) : 0;

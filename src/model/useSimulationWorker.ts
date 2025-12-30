@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { SimulationResult, FullAnalysisOutput, Creature, TimelineEvent, AutoAdjustmentResult } from '@/model/model';
 import { getFinalAction } from "@/data/actions";
+import { SimulationEvent } from '@/model/events';
 
 export interface SimulationWorkerState {
     isRunning: boolean;
@@ -10,7 +11,7 @@ export interface SimulationWorkerState {
     currentIterations: number;
     results: SimulationResult[] | null;
     analysis: FullAnalysisOutput | null;
-    events: any[] | null;
+    events: SimulationEvent[] | null;
     error: string | null;
     optimizedResult: AutoAdjustmentResult | null;
 }
