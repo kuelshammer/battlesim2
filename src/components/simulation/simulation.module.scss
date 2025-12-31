@@ -624,11 +624,13 @@
 }
 
 .grimoireContent {
+    list-style: none; // We'll use custom ::marker styling
     padding: 1em 1.5em 1.5em 2em;
     max-height: 60vh;
     overflow-y: auto;
     position: relative;
     z-index: 1;
+    counter-reset: grimoire-counter;
 
     // Scrollbar styling
     &::-webkit-scrollbar {
@@ -652,7 +654,7 @@
 
 .grimoireEntry {
     display: grid;
-    grid-template-columns: auto 1.5em 1fr;
+    grid-template-columns: 2em 1fr;
     gap: 0.75em;
     padding: 0.85em 1em;
     margin-bottom: 0.5em;
@@ -666,6 +668,19 @@
     transition: all 0.3s ease;
     animation: fadeInEntry 0.4s ease-out forwards;
     opacity: 0;
+
+    // Use CSS counter for runic numbering - WCAG AA compliant contrast
+    &::before {
+        counter-increment: grimoire-counter;
+        content: counter(grimoire-counter);
+        font-family: 'Courier New', monospace;
+        font-size: 0.75em;
+        font-weight: bold;
+        color: #d4af37; // WCAG AA: 4.5:1 contrast on dark bg
+        padding-top: 0.1em;
+        user-select: none;
+        opacity: 0.85;
+    }
 
     &:hover {
         background: linear-gradient(90deg,
@@ -692,15 +707,6 @@
         opacity: 1;
         transform: translateX(0);
     }
-}
-
-.runedNumber {
-    font-family: 'Courier New', monospace;
-    font-size: 0.7em;
-    color: rgba(212, 175, 55, 0.5);
-    font-weight: bold;
-    padding-top: 0.15em;
-    user-select: none;
 }
 
 .ember {
@@ -736,6 +742,7 @@
     padding: 3em 2em;
     color: rgba(197, 192, 181, 0.4);
     position: relative;
+    list-style: none; // Remove numbering for empty state
 
     &::before,
     &::after {
@@ -780,4 +787,35 @@
     font-size: 1.5em;
     color: rgba(212, 175, 55, 0.3);
     letter-spacing: 0.5em;
+}
+
+// ============================================================
+// ACCESSIBILITY: Reduced Motion Support
+// ============================================================
+
+@media (prefers-reduced-motion: reduce) {
+    .grimoireEntry {
+        animation: none;
+        opacity: 1;
+        transform: none;
+
+        &:hover {
+            transform: translateX(4px); // Keep hover effect for usability
+        }
+    }
+
+    .ember {
+        animation: none;
+        opacity: 0.9;
+    }
+
+    @keyframes fadeInEntry {
+        from { opacity: 1; }
+        to { opacity: 1; }
+    }
+
+    @keyframes emberGlow {
+        0%, 100% { opacity: 0.9; }
+        50% { opacity: 0.9; }
+    }
 }
