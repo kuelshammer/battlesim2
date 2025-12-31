@@ -13,7 +13,8 @@ import {
 } from '@/model/skylineTypes';
 
 export interface DeathBarProps {
-    data: SkylineAnalysis;
+    /** Full analysis data or single character bucket data */
+    data: SkylineAnalysis | CharacterBucketData[];
     width: number;
     characterFilter?: string[];
     onHover?: (bucketIndex: number, characterId: string, deathRound: number | null) => void;
@@ -23,14 +24,7 @@ export interface DeathBarProps {
 /**
  * Single character death bar
  */
-interface CharacterDeathBarProps {
-    characterData: CharacterBucketData[];
-    characterName: string;
-    width: number;
-    onHover?: (bucketIndex: number, characterId: string, deathRound: number | null) => void;
-}
-
-const CharacterDeathBar: React.FC<CharacterDeathBarProps> = memo(({
+export const CharacterDeathBar: React.FC<CharacterDeathBarProps> = memo(({
     characterData,
     characterName,
     width,
@@ -157,8 +151,27 @@ const DeathBar: React.FC<DeathBarProps> = memo(({
     onHover,
     className,
 }) => {
+    // If we are in single character mode (passed from SkylineSpectrogram)
+    if (Array.isArray(data)) {
+        // Find the character name from the first bucket if available
+        const firstBucket = data[0];
+        const characterName = firstBucket?.name || 'Unknown';
+
+        return (
+            <CharacterDeathBar
+                characterData={data}
+                characterName={characterName}
+                width={width}
+                onHover={onHover}
+            />
+        );
+    }
+
+    // Otherwise, we are in multi-character mode
+    const analysisData = data as SkylineAnalysis;
+
     const characterArrays = useMemo(() => {
-        if (data.buckets.length === 0) return [];
+        if (!analysisData.buckets || analysisData.buckets.length === 0) return [];
 
         const charIds = characterFilter || data.buckets[0].characters.map(c => c.id);
 

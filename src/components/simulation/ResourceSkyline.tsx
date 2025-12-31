@@ -20,27 +20,24 @@ import {
 } from '@/model/skylineTypes';
 
 export interface ResourceSkylineProps {
-    data: SkylineAnalysis;
+    /** Full analysis data or single character bucket data */
+    data: SkylineAnalysis | CharacterBucketData[];
     onHover?: (state: SkylineInteractionState) => void;
     onBucketClick?: (bucket: any) => void;
     className?: string;
     characterFilter?: string[];
+    // Single character mode props
+    characterName?: string;
+    characterId?: string;
+    width?: number;
+    height?: number;
+    colors?: typeof DEFAULT_SKYLINE_COLORS;
 }
 
 /**
  * Render resource skyline for a single character
  */
-interface SingleCharacterResourceSkylineProps {
-    characterData: CharacterBucketData[];
-    characterName: string;
-    width: number;
-    height: number;
-    colors: typeof DEFAULT_SKYLINE_COLORS;
-    onHover?: (bucketIndex: number) => void;
-    hoveredBucket: number | null;
-}
-
-const SingleCharacterResourceSkyline: React.FC<SingleCharacterResourceSkylineProps> = memo(({
+export const SingleCharacterResourceSkyline: React.FC<SingleCharacterResourceSkylineProps> = memo(({
     characterData,
     characterName,
     width,
@@ -215,12 +212,38 @@ const ResourceSkyline: React.FC<ResourceSkylineProps> = memo(({
     onBucketClick,
     className,
     characterFilter,
+    characterName,
+    characterId,
+    width,
+    height,
+    colors = DEFAULT_SKYLINE_COLORS,
 }) => {
     const [hoveredBucket, setHoveredBucket] = React.useState<number | null>(null);
     const [hoveredCharId, setHoveredCharId] = React.useState<string | null>(null);
 
+    // If we are in single character mode (passed from SkylineSpectrogram)
+    if (Array.isArray(data) && characterId) {
+        return (
+            <SingleCharacterResourceSkyline
+                characterData={data}
+                characterName={characterName || 'Unknown'}
+                width={width || 200}
+                height={height || 150}
+                colors={{ resources: colors }}
+                onHover={(bucket) => {
+                    setHoveredBucket(bucket);
+                    onHover?.({ hoveredBucket: bucket, hoveredCharacter: characterId });
+                }}
+                hoveredBucket={hoveredBucket}
+            />
+        );
+    }
+
+    // Otherwise, we are in multi-character mode
+    const analysisData = data as SkylineAnalysis;
+
     const characterArrays = useMemo(() => {
-        if (data.buckets.length === 0) return [];
+        if (!analysisData.buckets || analysisData.buckets.length === 0) return [];
 
         const charIds = characterFilter || data.buckets[0].characters.map(c => c.id);
 

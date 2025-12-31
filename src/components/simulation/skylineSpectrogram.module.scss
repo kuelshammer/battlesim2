@@ -1,0 +1,179 @@
+// Skyline Spectrogram Container Styles
+.skylineSpectrogram {
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(42, 42, 42, 0.9));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 16px 0;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    0 0 24px rgba(212, 175, 55, 0.1);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #d4af37;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.subtitle {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.accessibilitySection {
+  margin-bottom: 16px;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.characterColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.characterName {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e8e0d0;
+  text-align: center;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border-left: 2px solid rgba(212, 175, 55, 0.4);
+}
+
+.chartRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chartLabel {
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+  color: rgba(212, 175, 55, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chartWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  overflow: hidden;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(232, 224, 208, 0.8);
+}
+
+.legendColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legendLow {
+  background: #d73027;
+}
+
+.legendMid {
+  background: #f0f0f0;
+}
+
+.legendHigh {
+  background: #4575b4;
+}
+
+.legendPattern {
+  font-size: 1rem;
+  color: #d4af37;
+}
+
+// High contrast mode
+.highContrast {
+  background: #000;
+  border: 2px solid #d4af37;
+
+  .title {
+    color: #fff;
+  }
+
+  .characterName {
+    background: #1a1a1a;
+    border-left: 3px solid #d4af37;
+    color: #fff;
+  }
+
+  .chartWrapper {
+    border: 2px solid rgba(212, 175, 55, 0.3);
+  }
+}
+
+// Responsive
+@media (max-width: 1200px) {
+  .chartsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .skylineSpectrogram {
+    padding: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .chartsGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .legend {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
