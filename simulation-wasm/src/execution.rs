@@ -630,27 +630,6 @@ impl ActionExecutionEngine {
             .resolve_action(action, &mut self.context, actor_id)
     }
 
-    /// Get a random enemy target (different team than actor)
-    #[allow(dead_code)]
-    fn get_random_target(&self, actor_id: &str) -> Option<String> {
-        // Get actor's team (mode)
-        let actor_mode = self
-            .context
-            .get_combatant(actor_id)
-            .map(|c| c.base_combatant.creature.mode.clone())
-            .unwrap_or_default();
-
-        // Find enemies (different team)
-        let alive_combatants = self.context.get_alive_combatants();
-        for combatant in alive_combatants {
-            if combatant.id != actor_id && combatant.base_combatant.creature.mode != actor_mode {
-                return Some(combatant.id.clone());
-            }
-        }
-
-        None // No valid enemy targets found
-    }
-
     /// Select actions for a combatant (basic AI implementation)
     fn select_actions_for_combatant(&mut self, combatant_id: &str) -> (Vec<Action>, HashMap<String, f64>) {
         let mut decision_trace = HashMap::new();
