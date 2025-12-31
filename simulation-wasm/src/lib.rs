@@ -47,6 +47,8 @@ pub mod simulation; // Core simulation execution functions
 pub mod two_pass; // Two-Pass deterministic re-simulation system
 pub mod memory_guardrails; // Memory safety protections for large simulations
 pub mod wasm_api; // WASM bindings and JavaScript interface
+#[cfg(test)]
+pub mod anomaly_reproduction_test;
 
 // Re-export commonly used functions for external access
 pub use simulation::{run_single_event_driven_simulation, run_single_lightweight_simulation, run_survey_pass};

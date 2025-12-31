@@ -1,41 +1,178 @@
-.resourcePanel {
-    background-color: #f8f8f8;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 1em;
-    margin-top: 1em;
-    font-size: 0.9em;
+@import '../../../styles/shared';
 
-    h4 {
-        margin-top: 0;
-        margin-bottom: 0.8em;
-        color: #333;
-        font-size: 1.1em;
+.arcaneVellum {
+    background: rgba(20, 20, 25, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.2em;
+    min-width: 240px;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.02);
+    font-family: var(--font-crimson-pro), serif;
+    color: #e0e0e0;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+        pointer-events: none;
     }
 
-    .resourceGroup {
+    .vellumHeader {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.8em;
-        margin-bottom: 0.5em;
         align-items: center;
-        color: #555;
+        gap: 0.8em;
+        margin-bottom: 1em;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding-bottom: 0.5em;
 
-        &:last-child {
-            margin-bottom: 0;
+        h4 {
+            margin: 0;
+            font-family: var(--font-cinzel-decorative), cursive;
+            font-size: 1.1em;
+            letter-spacing: 0.05em;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
-        .resourceItem {
+        .sigil {
+            color: #ffd700;
+            font-size: 0.8em;
+            filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.4));
+        }
+    }
+
+    .statsGrid {
+        display: flex;
+        gap: 0.8em;
+        margin-bottom: 1.2em;
+    }
+
+    .statPill {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.4em 0.8em;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        font-size: 0.9em;
+        font-weight: 600;
+
+        .hpIcon { color: #ff4d4d; }
+        .statValue { color: #fff; }
+        .tempHP { color: #00f2fe; font-size: 0.85em; }
+
+        &.wardPill {
+            border-color: rgba(79, 172, 254, 0.3);
+            color: #4facfe;
+        }
+    }
+
+    .resourceGroups {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .mainGroup {
+        display: flex;
+        gap: 1em;
+        justify-content: flex-start;
+        padding: 0.5em 0;
+
+        .mainIcon {
+            font-size: 1.2em;
+            color: var(--glow-color);
+            filter: drop-shadow(0 0 8px var(--glow-color));
+            transition: all 0.3s ease;
+            cursor: help;
+
+            &.depleted {
+                color: #444;
+                filter: grayscale(1);
+                opacity: 0.5;
+            }
+
+            &:hover {
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 12px var(--glow-color));
+            }
+        }
+    }
+
+    .divider {
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        margin: 0.5em 0;
+        font-size: 0.7em;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: #666;
+
+        &::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+        }
+    }
+
+    .slotsGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 0.6em;
+
+        .slotNode {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.3em;
-            padding: 0.2em 0.5em;
-            background-color: #eee;
-            border-radius: 4px;
-            
-            svg {
+
+            .levelLabel {
+                font-size: 0.75em;
+                font-weight: bold;
                 color: #888;
             }
+
+            .nodeTrack {
+                height: 4px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 2px;
+                overflow: hidden;
+
+                .nodeFill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+                    box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+                }
+            }
+
+            &.empty {
+                opacity: 0.4;
+                .nodeFill { background: #444; box-shadow: none; }
+            }
+        }
+    }
+
+    .classGroup {
+        .essenceItem {
+            display: flex;
+            align-items: center;
+            gap: 0.8em;
+            padding: 0.4em 0;
+            font-size: 0.85em;
+
+            .essenceName { flex: 1; color: #aaa; }
+            .essenceCount { font-family: monospace; color: #fff; }
         }
     }
 }

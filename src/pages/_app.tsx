@@ -1,5 +1,18 @@
 import '@/styles/globals.scss'
 import type { AppProps } from 'next/app'
+import { Crimson_Pro, Cinzel_Decorative } from 'next/font/google'
+
+const crimsonPro = Crimson_Pro({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-crimson-pro',
+})
+
+const cinzelDecorative = Cinzel_Decorative({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-cinzel-decorative',
+})
 
 // Critical: Ensure crypto is available globally for WASM before ANY components mount
 if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
@@ -34,5 +47,9 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   }
 
 export default function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return (
+    <main className={`${crimsonPro.variable} ${cinzelDecorative.variable} font-serif`}>
+      <Component {...pageProps} />
+    </main>
+  )
 }
