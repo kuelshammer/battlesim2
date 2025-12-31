@@ -121,7 +121,7 @@ function setupCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
 }
 
 /**
- * Crosshair tooltip showing bucket details
+ * Crosshair tooltip showing bucket details with full resource breakdown
  */
 export interface CrosshairTooltipProps {
     /** Bucket data to display */
@@ -130,6 +130,23 @@ export interface CrosshairTooltipProps {
     x: number;
     y: number;
     className?: string;
+}
+
+/**
+ * Render spell slot breakdown as compact string
+ * e.g., "L1: 2/4, L3: 1/2"
+ */
+function formatSpellSlots(slots: { level: number; remaining: number; max: number }[] | undefined): string | null {
+    if (!slots || slots.length === 0) return null;
+    return slots.map(s => `L${s.level}: ${s.remaining}/${s.max}`).join(', ');
+}
+
+/**
+ * Render feature list as compact string
+ */
+function formatFeatures(features: string[] | undefined): string | null {
+    if (!features || features.length === 0) return null;
+    return features.join(', ');
 }
 
 export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
@@ -156,24 +173,91 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
             </div>
 
             <div className={styles.characterList}>
-                {Object.values(characters).map(char => (
-                    <div key={char.name} className={styles.characterRow}>
-                        <div className={styles.charName}>{char.name}</div>
-                        <div className={styles.metrics}>
-                            <span className={`${styles.metric} ${styles.hp}`}>
-                                HP: {char.hp?.hpPercent.toFixed(0) || 'N/A'}%
-                            </span>
-                            <span className={`${styles.metric} ${styles.resources}`}>
-                                Res: {char.resources?.resourcePercent.toFixed(0) || 'N/A'}%
-                            </span>
-                        </div>
-                        {(char.hp?.deathRound || char.resources?.deathRound) && (
-                            <div className={styles.deathRow}>
-                                💀 Round {char.hp?.deathRound || char.resources?.deathRound}
+                {Object.values(characters).map(char => {
+                    const hpData = char.hp;
+                    const resData = char.resources;
+
+                    // Extract resource breakdown
+                    const breakdown = resData?.resourceBreakdown;
+
+                    return (
+                        <div key={char.name} className={styles.characterRow}>
+                            <div className={styles.charName}>{char.name}</div>
+
+                            {/* HP and overall resource percentage */}
+                            <div className={styles.metrics}>
+                                <span className={`${styles.metric} ${styles.hp}`}>
+                                    HP: {hpData?.hpPercent.toFixed(0) || 'N/A'}%
+                                </span>
+                                <span className={`${styles.metric} ${styles.resources}`}>
+                                    Res: {resData?.resourcePercent.toFixed(0) || 'N/A'}%
+                                </span>
                             </div>
-                        )}
-                    </div>
-                ))}
+
+                            {/* Detailed resource breakdown */}
+                            {breakdown && (
+                                <div className={styles.resourceBreakdown}>
+                                    {/* Spell slots */}
+                                    {breakdown.spellSlots && breakdown.spellSlots.length > 0 && (
+                                        <div className={styles.breakdownRow}>
+                                            <span className={styles.breakdownLabel}>Slots:</span>
+                                            <span className={styles.breakdownValue}>
+                                                {formatSpellSlots(breakdown.spellSlots)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Short rest features */}
+                                    {breakdown.shortRestFeatures && breakdown.shortRestFeatures.length > 0 && (
+                                        <div className={styles.breakdownRow}>
+                                            <span className={styles.breakdownLabel}>Short Rest:</span>
+                                            <span className={styles.breakdownValue}>
+                                                {formatFeatures(breakdown.shortRestFeatures)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Long rest features */}
+                                    {breakdown.longRestFeatures && breakdown.longRestFeatures.length > 0 && (
+                                        <div className={styles.breakdownRow}>
+                                            <span className={styles.breakdownLabel}>Long Rest:</span>
+                                            <span className={styles.breakdownValue}>
+                                                {formatFeatures(breakdown.longRestFeatures)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Hit dice */}
+                                    {breakdown.hitDiceMax > 0 && (
+                                        <div className={styles.breakdownRow}>
+                                            <span className={styles.breakdownLabel}>Hit Dice:</span>
+                                            <span className={styles.breakdownValue}>
+                                                {breakdown.hitDice}/{breakdown.hitDiceMax}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* EHP */}
+                                    {breakdown.maxEhp > 0 && (
+                                        <div className={styles.breakdownRow}>
+                                            <span className={styles.breakdownLabel}>EHP:</span>
+                                            <span className={styles.breakdownValue}>
+                                                {breakdown.totalEhp.toFixed(0)}/{breakdown.maxEhp}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Death info */}
+                            {(hpData?.deathRound || resData?.deathRound) && (
+                                <div className={styles.deathRow}>
+                                    💀 Round {hpData?.deathRound || resData?.deathRound}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

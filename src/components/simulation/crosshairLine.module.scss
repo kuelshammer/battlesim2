@@ -106,8 +106,41 @@
   font-family: 'Courier New', monospace;
   font-size: 0.7rem;
   color: #ff6b6b;
-  margin-top: 2px;
+  margin-top: 4px;
   font-weight: 600;
+}
+
+// Resource Breakdown Section
+.resourceBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
+  font-family: 'Courier New', monospace;
+  font-size: 0.65rem;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.breakdownLabel {
+  color: rgba(212, 175, 55, 0.8);
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
+.breakdownValue {
+  color: rgba(232, 224, 208, 0.9);
+  text-align: right;
+  word-break: break-word;
 }
 
 // High contrast mode
@@ -136,6 +169,18 @@
 
   .metric.resources {
     color: #00ff00;
+  }
+
+  .breakdownLabel {
+    color: #d4af37;
+  }
+
+  .breakdownValue {
+    color: #fff;
+  }
+
+  .resourceBreakdown {
+    border-top-color: rgba(212, 175, 55, 0.3);
   }
 }
 
