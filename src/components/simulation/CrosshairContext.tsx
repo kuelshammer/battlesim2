@@ -9,7 +9,7 @@
  * Total: 8 charts synchronized by bucket position
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo, memo } from 'react';
 import { PercentileBucket, CharacterBucketData } from '@/model/skylineTypes';
 
 export interface CrosshairState {

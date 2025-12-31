@@ -7,7 +7,7 @@
  * - Screen reader announcements
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, memo } from 'react';
 
 export interface AccessibilityContextValue {
     /** High-contrast mode enabled */
