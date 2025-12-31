@@ -153,19 +153,6 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
                 />
             )}
 
-            <div className={styles.splitMetrics}>
-                <div className={styles.metricPill}>
-                    <span className={styles.icon}>❤️</span>
-                    <span className={styles.label}>Vitality:</span>
-                    <span className={styles.value}>{Math.round(analysis?.globalMedian?.vitalityTimeline?.[1] ?? 100)}%</span>
-                </div>
-                <div className={styles.metricPill}>
-                    <span className={styles.icon}>⚡</span>
-                    <span className={styles.label}>Power:</span>
-                    <span className={styles.value}>{Math.round(analysis?.globalMedian?.powerTimeline?.[1] ?? 100)}%</span>
-                </div>
-            </div>
-
             <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} />
             <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
