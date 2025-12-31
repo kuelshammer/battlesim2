@@ -6,19 +6,15 @@
 This is a simple 5e encounter simulator. It is showcased in the following Youtube video: https://www.youtube.com/watch?v=A8FNVkFuhXI
 
 ## How it works
-The simulator calculates the "average" game using probabilities, which means it runs slightly differently than an actual game of 5e:
-* A creature gets to act if it started the round with more than 0 hp
-* Heals, buffs & debuffs are applied before attacks
-* Debuffs are multiplied by the chance to actually receive that debuff
-* Damage from attacks is multiplied by the chance that this attack hit
+The simulator uses a high-fidelity **Deterministic Statistics** engine. Unlike many simulators that use static probabilities, BattleSim executes thousands of discrete combat runs using a seeded Random Number Generator (RNG) to build a precise statistical model of combat outcomes.
 
-This does result in slightly different outcomes than if the simulator used statistics (running the simulation a large number of times, using random dice rolls, and measuring the result).</br>
-For example, if a creature has 10 hit points and becomes the target of an attack dealing 10 damage that has 50% chance to hit, it will be shown to have taken 5 damage, when in the actual game, it would have taken either 0, or 10, never 5.
+Key features of the engine:
+* **High-Fidelity Rules:** Uses actual d20 rolls, damage dice, and critical hit logic (doubling only dice, per 5e rules).
+* **Advantage/Disadvantage:** Implements full 5e cancellation rules and special features like Triple Advantage (Elven Accuracy).
+* **Deterministic Re-simulation:** Every single run can be perfectly recreated using its unique seed, enabling deep-dive analysis of specific "lucky" or "disastrous" scenarios.
+* **Resource-Aware:** Tracks spell slots, class features, and Hit Die consumption across multiple encounters.
 
-It might change in the future, but for now, the reason this approach was chosen is that:
-
-1) A probabilities-based approach makes the visualization easier.
-2) A statistics-based approach is more computationally intensive.
+This approach ensures that the "average" result is backed by thousands of real combat sequences, capturing the true "swinginess" of D&D 5e combat that a purely probability-based model would miss.
 
 ## Two-Pass Simulation System
 

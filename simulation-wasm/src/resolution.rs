@@ -1,3 +1,5 @@
+// This module is DEPRECATED and superseded by action_resolver.rs
+// It is kept for reference but should not be used for new simulation logic.
 use crate::actions::get_attack_roll_result;
 use crate::dice;
 use crate::enums::*;

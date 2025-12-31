@@ -1,20 +1,26 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the dependencies
-vi.mock('simulation-wasm', () => ({
-  default: vi.fn().mockResolvedValue({}),
-  run_simulation_with_callback: vi.fn().mockReturnValue({
+vi.mock('simulation-wasm', () => {
+  const mockFinalize = vi.fn().mockReturnValue({
     results: [],
     analysis: {},
     firstRunEvents: []
-  }),
-  auto_adjust_encounter_wasm: vi.fn()
-}));
+  });
 
-// Mock the require for wasm file - this is tricky with 'require' in source
-// We might need to handle the module resolution or let it fail and fix
-// But let's try to mock the module that 'require' would resolve to.
-// Since it is a relative path in node_modules or alias.
+  const mockRunChunk = vi.fn().mockReturnValue(0.8);
+
+  const MockChunkedSimulationRunner = vi.fn().mockImplementation(() => ({
+    run_chunk: mockRunChunk,
+    finalize: mockFinalize
+  }));
+
+  return {
+    default: vi.fn().mockResolvedValue({}),
+    ChunkedSimulationRunner: MockChunkedSimulationRunner,
+    auto_adjust_encounter_wasm: vi.fn()
+  };
+});
 
 const postMessageMock = vi.fn();
 global.self = {
@@ -22,15 +28,18 @@ global.self = {
   onmessage: null
 } as any;
 
+// Mock setTimeout to execute immediately
+vi.stubGlobal('setTimeout', (fn: Function) => fn());
+
 import { handleMessage } from './simulation.worker';
-import * as wasm from 'simulation-wasm';
+import { ChunkedSimulationRunner } from 'simulation-wasm';
 
 describe('SimulationWorker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should call run_simulation_with_callback with correct iterations', async () => {
+  it('should use ChunkedSimulationRunner with correct iterations', async () => {
     const iterations = 31;
     const event = {
       data: {
@@ -43,11 +52,14 @@ describe('SimulationWorker', () => {
 
     await handleMessage(event);
 
-    expect(wasm.run_simulation_with_callback).toHaveBeenCalledWith(
+    expect(ChunkedSimulationRunner).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       iterations,
-      expect.anything()
+      undefined
     );
+    
+    // We can't easily access the internal mock instances from outside if they are defined inside vi.mock
+    // but the test above already verifies the constructor call which is the most important part.
   });
 });

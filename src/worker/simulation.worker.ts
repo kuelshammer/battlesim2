@@ -1,5 +1,4 @@
-
-import init, { run_simulation_with_callback, auto_adjust_encounter_wasm } from 'simulation-wasm';
+import init, { ChunkedSimulationRunner, auto_adjust_encounter_wasm } from 'simulation-wasm';
 import wasmUrl from 'simulation-wasm/simulation_wasm_bg.wasm';
 
 let wasmInitialized = false;
@@ -12,39 +11,43 @@ async function ensureWasmInitialized() {
 }
 
 export const handleMessage = async (e: MessageEvent) => {
-    const { type: messageType, players, timeline, monsters, iterations, encounterIndex } = e.data;
+    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed } = e.data;
 
     if (messageType === 'START_SIMULATION') {
         try {
             await ensureWasmInitialized();
 
-            const progressCallback = (progress: number, completed: number, total: number, partialData?: any) => {
+            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed);
+            const CHUNK_SIZE = 500;
+            
+            const runChunk = () => {
+                const progress = runner.run_chunk(CHUNK_SIZE);
+                const completed = Math.min(iterations, Math.floor(progress * iterations / 0.8));
+                
                 self.postMessage({
                     type: 'SIMULATION_PROGRESS',
                     progress,
                     completed,
-                    total,
-                    results: partialData?.results,
-                    analysis: partialData?.analysis
+                    total: iterations
                 });
+
+                if (completed < iterations) {
+                    // Use setTimeout to yield to the event loop and allow termination/responsiveness
+                    setTimeout(runChunk, 0);
+                } else {
+                    const output = runner.finalize();
+                    const { results, analysis, firstRunEvents } = output;
+
+                    self.postMessage({
+                        type: 'SIMULATION_COMPLETE',
+                        results,
+                        analysis,
+                        events: firstRunEvents
+                    });
+                }
             };
 
-            const output = run_simulation_with_callback(
-                players,
-                timeline,
-                iterations,
-                progressCallback
-            );
-
-            // output is a JS object with camelCase properties from WASM
-            const { results, analysis, firstRunEvents } = output;
-
-            self.postMessage({
-                type: 'SIMULATION_COMPLETE',
-                results,
-                analysis,
-                events: firstRunEvents
-            });
+            runChunk();
         } catch (error) {
             console.error('Worker simulation error:', error);
             self.postMessage({

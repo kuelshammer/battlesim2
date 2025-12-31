@@ -36,10 +36,10 @@ The UI is designed around "Intentional Minimalism" and "Arcane Aesthetics."
 - [x] **Phase 2: GUI Editors**: Full-featured editors for players, monsters, and adventuring days.
 - [x] **Phase 3: EventLog & Two-Pass**: Detailed logging with memory-efficient re-simulation.
 - [x] **Phase 4: Arcane UI Refactor**: Implementation of the "Arcane Vitals Vellum" and custom font integration.
+- [x] **Phase 5: D&D Rule Fidelity**: Implementation of actual dice rolling (replacing averages) and critical hit logic.
 
 ### In Progress / Next
-- [ ] **Phase 5: D&D Rule Fidelity**: Implementation of actual dice rolling (replacing averages) and critical hit logic.
-- [ ] **Phase 6: Advanced AI**: Integration of smart targeting (lowest HP, concentration breaking) and resource-aware decision making.
+- [~] **Phase 6: Advanced AI**: Integration of smart targeting (lowest HP, concentration breaking) and resource-aware decision making.
 - [ ] **Phase 7: Strategy Builder**: UI for user-defined "Gambits" and priority-based action selection.
 
 ## Technology Stack

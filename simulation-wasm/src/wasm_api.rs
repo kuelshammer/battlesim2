@@ -26,6 +26,154 @@ struct FullSimulationOutput {
     first_run_events: Vec<crate::events::Event>,
 }
 
+#[wasm_bindgen]
+pub struct ChunkedSimulationRunner {
+    players: Vec<Creature>,
+    timeline: Vec<TimelineStep>,
+    total_iterations: usize,
+    current_iteration: usize,
+    summarized_results: Vec<crate::model::SimulationResult>,
+    lightweight_runs: Vec<crate::model::LightweightRun>,
+    base_seed: u64,
+}
+
+#[wasm_bindgen]
+impl ChunkedSimulationRunner {
+    #[wasm_bindgen(constructor)]
+    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>) -> Result<ChunkedSimulationRunner, JsValue> {
+        let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
+        let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
+
+        Ok(ChunkedSimulationRunner {
+            players,
+            timeline,
+            total_iterations: iterations,
+            current_iteration: 0,
+            summarized_results: Vec::with_capacity(iterations),
+            lightweight_runs: Vec::with_capacity(iterations),
+            base_seed: seed.unwrap_or(0),
+        })
+    }
+
+    pub fn run_chunk(&mut self, chunk_size: usize) -> f64 {
+        let end = (self.current_iteration + chunk_size).min(self.total_iterations);
+        
+        for i in self.current_iteration..end {
+            let seed = self.base_seed.wrapping_add(i as u64);
+            crate::rng::seed_rng(seed);
+
+            let (result, _) = crate::simulation::run_single_event_driven_simulation(&self.players, &self.timeline, false);
+
+            let score = crate::aggregation::calculate_score(&result);
+            let mut encounter_scores = Vec::new();
+            for (idx, _) in result.encounters.iter().enumerate() {
+                encounter_scores.push(crate::aggregation::calculate_cumulative_score(&result, idx));
+            }
+
+            let has_death = result.encounters.iter().any(|e| {
+                e.rounds.last().map(|r| r.team1.iter().any(|c| c.final_state.current_hp == 0)).unwrap_or(false)
+            });
+
+            self.lightweight_runs.push(crate::model::LightweightRun {
+                seed,
+                encounter_scores,
+                final_score: score,
+                total_hp_lost: 0.0,
+                total_survivors: 0,
+                has_death,
+                first_death_encounter: None,
+            });
+
+            self.summarized_results.push(crate::utils::summarize_result(result));
+        }
+
+        self.current_iteration = end;
+        (self.current_iteration as f64 / self.total_iterations as f64) * 0.8
+    }
+
+    pub fn finalize(&mut self) -> Result<JsValue, JsValue> {
+        // Phase 2: Selection
+        let selected_seeds = crate::seed_selection::select_interesting_seeds_with_tiers(&self.lightweight_runs);
+        let interesting_seeds: Vec<u64> = selected_seeds.iter().map(|s| s.seed).collect();
+
+        // Phase 3: Deep Dive
+        let mut seed_to_events = HashMap::new();
+        let mut median_run_events = Vec::new();
+
+        let mut global_scores: Vec<(usize, f64)> = self.lightweight_runs.iter().enumerate()
+            .map(|(i, r)| (i, r.final_score)).collect();
+        global_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        let median_seed = self.lightweight_runs[global_scores[global_scores.len() / 2].0].seed;
+
+        for &seed in &interesting_seeds {
+            crate::rng::seed_rng(seed);
+            let (_, events) = crate::simulation::run_single_event_driven_simulation(&self.players, &self.timeline, true);
+
+            if seed == median_seed {
+                median_run_events = events.clone();
+            }
+            seed_to_events.insert(seed, events);
+        }
+
+        let mut final_runs: Vec<SimulationRun> = std::mem::take(&mut self.summarized_results).into_iter()
+            .zip(std::mem::take(&mut self.lightweight_runs))
+            .map(|(result, light)| {
+                let events = seed_to_events.get(&light.seed).cloned().unwrap_or_default();
+                SimulationRun { result, events }
+            }).collect();
+
+        let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", self.players.len());
+
+        let num_encounters = final_runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
+        let mut encounters_analysis = Vec::new();
+        for i in 0..num_encounters {
+            let analysis = crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), self.players.len());
+            encounters_analysis.push(analysis);
+        }
+
+        final_runs.sort_by(|a, b| {
+            let score_a = crate::aggregation::calculate_score(&a.result);
+            let score_b = crate::aggregation::calculate_score(&b.result);
+            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        let total_runs = final_runs.len();
+        let median_idx = total_runs / 2;
+        let decile = total_runs as f64 / 10.0;
+        let representative_indices = vec![
+            (decile * 0.5) as usize,
+            (decile * 2.5) as usize,
+            median_idx,
+            (decile * 7.5) as usize,
+            (decile * 9.5) as usize
+        ];
+
+        let mut reduced_results = Vec::new();
+        for &idx in &representative_indices {
+            if idx < total_runs { reduced_results.push(final_runs[idx].result.clone()); }
+        }
+
+        let output = FullSimulationOutput {
+            results: reduced_results,
+            analysis: FullAnalysisOutput {
+                overall,
+                encounters: encounters_analysis,
+            },
+            first_run_events: if median_run_events.is_empty() {
+                 final_runs[median_idx].events.clone()
+            } else {
+                 median_run_events
+            },
+        };
+
+        let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(false);
+        serde::Serialize::serialize(&output, &serializer)
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
+    }
+}
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoAdjustmentResult {

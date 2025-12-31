@@ -103,7 +103,7 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511) => {
+    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number) => {
         // Ensure worker is initialized before running
         if (!workerRef.current) {
             terminateAndRestart();
@@ -148,7 +148,8 @@ export function useSimulationWorker() {
             type: 'START_SIMULATION',
             players: cleanPlayers,
             timeline: cleanTimeline,
-            iterations
+            iterations,
+            seed
         });
     }, [terminateAndRestart]);
 

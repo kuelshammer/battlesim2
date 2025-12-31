@@ -9,6 +9,7 @@
 
 use crate::model::{Creature, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
+use crate::context::TurnContext;
 use crate::resources::ResetType;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -369,9 +370,11 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
 
         // 2. Basic Short Rest healing
         if current_hp < player.creature.hp {
+            // Wake up if at 0
             if current_hp == 0 {
-                current_hp = 1; // Wake up
+                current_hp = 1;
             }
+            
             let max_hp = player.creature.hp;
             let heal_amount = (max_hp / 4).max(1);
             current_hp = (current_hp + heal_amount).min(max_hp);
@@ -401,50 +404,56 @@ fn apply_short_rest_standalone(
 ) -> Vec<Combattant> {
     let mut updated_players = Vec::new();
 
+    // Create a temporary context to handle unified healing and event emission
+    let mut context = TurnContext::new(players.to_vec(), vec![], None, "Rest".to_string(), true);
+
     for player in players {
-        let mut updated_player = player.clone();
-
-        let mut current_hp = player.final_state.current_hp;
-        let mut resources = crate::resources::ResourceLedger::from(player.final_state.resources.clone());
-
         // 1. Reset Short Rest resources
-        resources.reset_by_type(&ResetType::ShortRest);
+        if let Some(c) = context.get_combatant_mut(&player.id) {
+            c.resources.reset_by_type(&ResetType::ShortRest);
+        }
 
         // 2. Basic Short Rest healing
+        let current_hp = player.final_state.current_hp;
         if current_hp < player.creature.hp {
+            // Wake up if at 0
             if current_hp == 0 {
-                current_hp = 1; // Wake up
+                if let Some(c) = context.get_combatant_mut(&player.id) {
+                    c.current_hp = 1;
+                }
             }
+            
             let max_hp = player.creature.hp;
             let heal_amount = (max_hp / 4).max(1);
-            current_hp = (current_hp + heal_amount).min(max_hp);
-
-            // Emit recovery events
-            events.push(crate::events::Event::ResourceConsumed {
+            
+            // Apply healing through TurnContext (unified method)
+            let heal_event = context.apply_healing(&player.id, heal_amount as f64, false, &player.id);
+            
+            // Add resource consumption event for Hit Dice
+            context.record_event(crate::events::Event::ResourceConsumed {
                 unit_id: player.id.clone(),
                 resource_type: "HitDice".to_string(),
                 amount: 1.0,
             });
-            events.push(crate::events::Event::HealingApplied {
-                target_id: player.id.clone(),
-                amount: heal_amount as f64,
-                source_id: player.id.clone(),
-            });
         }
 
-        // Update state
-        let next_state = crate::model::CreatureState {
-            current_hp,
-            temp_hp: None, // Temp HP lost on rest
-            resources: resources.into(),
-            ..player.final_state.clone()
-        };
-
-        updated_player.initial_state = next_state.clone();
-        updated_player.final_state = next_state;
-
-        updated_players.push(updated_player);
+        // Get updated state back from context
+        if let Some(c_state) = context.get_combatant(&player.id) {
+            let mut updated_player = player.clone();
+            let next_state = crate::model::CreatureState {
+                current_hp: c_state.current_hp,
+                temp_hp: if c_state.temp_hp > 0 { Some(c_state.temp_hp) } else { None },
+                resources: c_state.resources.clone().into(),
+                ..player.final_state.clone()
+            };
+            updated_player.initial_state = next_state.clone();
+            updated_player.final_state = next_state;
+            updated_players.push(updated_player);
+        }
     }
+
+    // Collect all events from temporary context
+    events.extend(context.event_bus.get_all_events().to_vec());
 
     updated_players
 }
