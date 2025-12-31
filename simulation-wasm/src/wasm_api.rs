@@ -168,7 +168,7 @@ impl ChunkedSimulationRunner {
             },
         };
 
-        let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(false);
+        let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
         serde::Serialize::serialize(&output, &serializer)
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
     }
@@ -199,7 +199,7 @@ pub fn auto_adjust_encounter_wasm(players: JsValue, monsters: JsValue, timeline:
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
@@ -243,7 +243,7 @@ pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usiz
     let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&results, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
@@ -404,7 +404,7 @@ pub fn run_simulation_with_callback(
         },
     };
 
-    let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(false);
+    let serializer = serde_wasm_bindgen::Serializer::new().serialize_maps_as_objects(true);
     serde::Serialize::serialize(&output, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
 }
@@ -446,7 +446,7 @@ pub fn run_event_driven_simulation(players: JsValue, timeline: JsValue, iteratio
     }
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&results, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
@@ -459,7 +459,7 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
             match events_guard.as_ref() {
                 Some(events) => {
                     let serializer = serde_wasm_bindgen::Serializer::new()
-                        .serialize_maps_as_objects(false);
+                        .serialize_maps_as_objects(true);
                     serde::Serialize::serialize(&events, &serializer)
                         .map_err(|e| JsValue::from_str(&format!("Failed to serialize events: {}", e)))
                 }
@@ -488,7 +488,7 @@ pub fn run_simulation_wasm_rolling_stats(
     let summary = crate::two_pass::run_simulation_with_three_tier(players, timeline, iterations, false, seed);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&summary, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize summary: {}", e)))
@@ -522,7 +522,7 @@ pub fn run_batch_simulation_wasm(
     let response = crate::model::BatchSimulationResponse { results };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&response, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize batch response: {}", e)))
@@ -569,7 +569,7 @@ pub fn run_batch_simulation_with_callback(
     let response = crate::model::BatchSimulationResponse { results };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&response, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize batch response: {}", e)))
@@ -700,7 +700,7 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&output, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize decile analysis: {}", e)))
@@ -802,7 +802,7 @@ pub fn get_display_results(players: JsValue, timeline: JsValue, iterations: usiz
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&display_result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize display result: {}", e)))
@@ -862,7 +862,7 @@ pub fn user_selected_slot(slot_str: &str) -> Result<JsValue, JsValue> {
     let display_result = display_manager.user_selected_slot(slot_selection);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&display_result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize display result: {}", e)))
@@ -904,7 +904,7 @@ pub fn start_background_simulation(
     let result = user_interaction.handle_event(event);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
@@ -919,7 +919,7 @@ pub fn get_all_progress() -> Result<JsValue, JsValue> {
     let progress_list = progress_ui.get_all_progress();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&progress_list, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize progress list: {}", e)))
@@ -938,7 +938,7 @@ pub fn get_progress(simulation_id: &str) -> Result<JsValue, JsValue> {
     match progress_info {
         Some(info) => {
             let serializer = serde_wasm_bindgen::Serializer::new()
-                .serialize_maps_as_objects(false);
+                .serialize_maps_as_objects(true);
 
             serde::Serialize::serialize(&info, &serializer)
                 .map_err(|e| JsValue::from_str(&format!("Failed to serialize progress info: {}", e)))
@@ -1000,7 +1000,7 @@ pub fn cancel_simulation(simulation_id: &str) -> Result<JsValue, JsValue> {
     let result = user_interaction.handle_event(event);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
@@ -1017,7 +1017,7 @@ pub fn clear_simulation_cache_gui() -> Result<JsValue, JsValue> {
     let result = user_interaction.handle_event(event);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
@@ -1032,7 +1032,7 @@ pub fn get_pending_confirmations() -> Result<JsValue, JsValue> {
     let confirmations = user_interaction.get_pending_confirmations();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&confirmations, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize confirmations: {}", e)))
@@ -1047,7 +1047,7 @@ pub fn answer_confirmation(confirmation_id: &str, confirmed: bool) -> Result<JsV
     let result = user_interaction.answer_confirmation(confirmation_id, confirmed);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))
@@ -1062,7 +1062,7 @@ pub fn get_user_interaction_state() -> Result<JsValue, JsValue> {
     let state = user_interaction.get_state();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&state, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize state: {}", e)))
@@ -1116,7 +1116,7 @@ pub fn get_progress_summary() -> Result<JsValue, JsValue> {
     let summary = progress_ui.get_progress_summary();
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&summary, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize summary: {}", e)))
@@ -1148,7 +1148,7 @@ pub fn handle_parameters_changed(
     let result = user_interaction.handle_event(event);
 
     let serializer = serde_wasm_bindgen::Serializer::new()
-        .serialize_maps_as_objects(false);
+        .serialize_maps_as_objects(true);
 
     serde::Serialize::serialize(&result, &serializer)
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize event result: {}", e)))

@@ -1,4 +1,5 @@
 import { FC, useLayoutEffect, useRef, useMemo } from "react"
+import { Virtuoso } from 'react-virtuoso'
 import styles from './simulation.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faScroll, faFireFlameSimple } from "@fortawesome/free-solid-svg-icons"
@@ -70,9 +71,9 @@ function parseEventText(text: string): React.ReactNode {
             parts.push(text.slice(lastIndex, m.start))
         }
 
-        // Add styled match
+        // Add styled match (React auto-escapes content - no XSS risk)
         const className = styles[m.type as keyof typeof styles] || ''
-        parts.push(<span key={i} className={className} dangerouslySetInnerHTML={{ __html: m.content }} />)
+        parts.push(<span key={i} className={className}>{m.content}</span>)
 
         lastIndex = m.end
     })
@@ -88,14 +89,6 @@ function parseEventText(text: string): React.ReactNode {
 // The Grimoire Log - Avant-garde event display with arcane aesthetic
 const EventLog: FC<EventLogProps> = ({ events, title = "Combat Chronicle" }) => {
     const eventCount = events.length
-    const scrollRef = useRef<HTMLOListElement>(null)
-
-    // Auto-scroll to bottom when new events arrive
-    useLayoutEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }
-    }, [events])
 
     // Memoize parsed events to avoid re-parsing on every render
     const parsedEvents = useMemo(() => {
@@ -115,36 +108,36 @@ const EventLog: FC<EventLogProps> = ({ events, title = "Combat Chronicle" }) => 
                 </div>
             </header>
 
-            {/* Semantic ordered list for events - accessible to screen readers */}
-            <ol
-                ref={scrollRef}
-                className={styles.grimoireContent}
-                aria-label={`${title} - ${eventCount} events`}
-            >
-                {events.map((event, index) => (
-                    <li
-                        key={index}
-                        className={styles.grimoireEntry}
-                        // Cap animation delay at 600ms (first 20 items) for performance
-                        style={{ animationDelay: `${Math.min(index * 30, 600)}ms` }}
-                    >
-                        {/* Ember icon for each entry - decorative */}
-                        <FontAwesomeIcon icon={faFireFlameSimple} className={styles.ember} aria-hidden="true" />
-
-                        {/* The parsed event text with semantic highlighting */}
-                        <span className={styles.chronicleText}>{parsedEvents[index]}</span>
-                    </li>
-                ))}
-
-                {/* Empty state with atmospheric message */}
-                {events.length === 0 && (
+            {/* Virtualized event list using react-virtuoso for performance */}
+            {events.length === 0 ? (
+                <ol className={styles.grimoireContent} aria-label={`${title} - ${eventCount} events`}>
                     <li className={styles.emptyGrimoire}>
                         <FontAwesomeIcon icon={faScroll} className={styles.emptyScroll} aria-hidden="true" />
                         <p className={styles.emptyText}>The pages lie blank...</p>
                         <p className={styles.emptySubtext}>Await thy first tale of battle</p>
                     </li>
-                )}
-            </ol>
+                </ol>
+            ) : (
+                <Virtuoso
+                    style={{ height: '60vh' }}
+                    className={styles.grimoireContent}
+                    data={events}
+                    itemContent={(index, event) => (
+                        <li className={styles.grimoireEntry}>
+                            <FontAwesomeIcon icon={faFireFlameSimple} className={styles.ember} aria-hidden="true" />
+                            <span className={styles.chronicleText}>{parsedEvents[index]}</span>
+                        </li>
+                    )}
+                    components={{
+                        List: ({ children, ...props }) => (
+                            <ol {...props} aria-label={`${title} - ${eventCount} events`}>
+                                {children}
+                            </ol>
+                        ),
+                    }}
+                    defaultItemHeight={60}
+                />
+            )}
 
             {/* Decorative bottom flourish */}
             <div className={styles.grimoireFooter}>
