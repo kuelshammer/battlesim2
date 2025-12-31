@@ -2,7 +2,30 @@
 
 // General style & layout
 html { @include scrollable }
-html, body, #__next, main {min-height: 100vh; background: #433; color: #eee; margin: 0; padding:0;}
+html, body, #__next, main {
+    min-height: 100vh;
+    // Atmospheric depth: gradient mesh instead of flat color
+    background: linear-gradient(145deg, #1a1a1a 0%, #2d2d2d 25%, #3a3a3a 50%, #2d2d2d 75%, #1a1a1a 100%);
+    color: #eee;
+    margin: 0;
+    padding: 0;
+
+    // Parchment noise texture overlay (subtle grain)
+    &::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.015) 2px, rgba(255, 255, 255, 0.015) 4px),
+            repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255, 255, 255, 0.015) 2px, rgba(255, 255, 255, 0.015) 4px);
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.4;
+    }
+}
 
 // Pulse animation for loading states
 @keyframes pulse {
@@ -18,10 +41,16 @@ main {
     flex-direction: column;
     align-items: center;
     padding: 0 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    // Grimoire typography: Georgia for serif elegance, Courier for monospace
+    font-family: 'Georgia', 'Times New Roman', serif;
 }
 
-main, input, button { font-size: 10pt; }
+// Grimoire font sizes
+main { font-size: 10pt; }
+input, button {
+    font-size: 10pt;
+    font-family: 'Courier New', monospace; // Technical/arcane feel for inputs
+}
 
 .content {
     display: flex;
@@ -34,21 +63,88 @@ div, button {
 }
 
 h1, h2 { margin: 0 }
-button {
-    position: relative;
-    @include clickable;
-}
 
 input {
     padding: 1em;
-    border: none;
+    border: 1px solid rgba(212, 175, 55, 0.3);
     outline: none;
-    border-radius: 8px;
-    color: white;
-    background: #fff1;
-    transition: background-color 0.3s;
-    &:hover { background: #fff3 }
-    &::placeholder { color: #aaa }
+    border-radius: 4px; // Less rounded, more arcane
+    color: #e8e0d0;
+    // Grimoire-style input background
+    background: linear-gradient(145deg, rgba(42, 42, 42, 0.9), rgba(26, 26, 26, 0.95));
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+
+    &:hover {
+        background: linear-gradient(145deg, rgba(52, 52, 52, 0.9), rgba(36, 36, 36, 0.95));
+        border-color: rgba(212, 175, 55, 0.5);
+        box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+    }
+
+    &:focus {
+        border-color: #d4af37;
+        box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+    }
+
+    &::placeholder { color: rgba(212, 175, 55, 0.4) }
+}
+
+// Grimoire-style buttons with gold accents
+button {
+    position: relative;
+    @include clickable;
+    // Arcane aesthetic
+    background: linear-gradient(145deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.1));
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 4px;
+    color: #d4af37;
+    padding: 0.5em 1em;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+        background: linear-gradient(145deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.2));
+        border-color: rgba(212, 175, 55, 0.5);
+        transform: translateY(-1px);
+        box-shadow:
+            0 4px 8px rgba(0, 0, 0, 0.4),
+            0 0 12px rgba(212, 175, 55, 0.25);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    // Special variant: danger (red)
+    &.danger {
+        background: linear-gradient(145deg, rgba(220, 53, 69, 0.2), rgba(220, 53, 69, 0.15));
+        border-color: rgba(220, 53, 69, 0.4);
+        color: #ff6b6b;
+
+        &:hover {
+            background: linear-gradient(145deg, rgba(220, 53, 69, 0.3), rgba(220, 53, 69, 0.25));
+            border-color: rgba(220, 53, 69, 0.6);
+            box-shadow:
+                0 4px 8px rgba(0, 0, 0, 0.4),
+                0 0 12px rgba(255, 107, 107, 0.3);
+        }
+    }
+
+    // Special variant: success (green)
+    &.success {
+        background: linear-gradient(145deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.15));
+        border-color: rgba(40, 167, 69, 0.4);
+        color: #6bff6b;
+
+        &:hover {
+            background: linear-gradient(145deg, rgba(40, 167, 69, 0.3), rgba(40, 167, 69, 0.25));
+            border-color: rgba(40, 167, 69, 0.6);
+            box-shadow:
+                0 4px 8px rgba(0, 0, 0, 0.4),
+                0 0 12px rgba(107, 255, 107, 0.3);
+        }
+    }
 }
 
 .tooltipContainer {
@@ -69,17 +165,19 @@ input {
         min-width: 200px;
         padding: 1em;
         border-radius: 8px;
-        background: #433;
+        // Match atmospheric background
+        background: linear-gradient(145deg, #2d2d2d 0%, #3a3a3a 50%, #2d2d2d 100%);
+        border: 1px solid rgba(212, 175, 55, 0.2);
         z-index: 1;
         display: none;
         opacity: 0;
         transition: opacity 0.3s;
-        box-shadow: 0 10px 20px 2px #fff1;
+        box-shadow: 0 10px 20px 2px rgba(0, 0, 0, 0.5);
 
         &::before {
             content: "";
             width: 0;
-            border-top: 8px solid #433;
+            border-top: 8px solid #2d2d2d;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
             position: absolute;

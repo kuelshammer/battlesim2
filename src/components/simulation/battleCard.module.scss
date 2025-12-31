@@ -1,11 +1,43 @@
+// Grimoire-style Battle Card with torn-paper edges and potion HP bars
 .battleCard {
     margin: 20px 0;
     padding: 20px;
-    border: 1px solid #555;
-    border-radius: 8px;
-    background-color: #2a2a2a;
-    color: #eee;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    // Torn-paper effect using clip-path for irregular edges
+    clip-path: polygon(
+        0% 0%,
+        98% 2%,
+        100% 0%,
+        100% 98%,
+        99% 100%,
+        2% 100%,
+        0% 99%,
+        0% 2%
+    );
+    // Grimoire aesthetic instead of flat color
+    background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-left: 3px solid #d4af37; // Golden accent
+    color: #e8e0d0;
+    // Atmospheric shadow
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.5),
+        0 0 12px rgba(212, 175, 55, 0.15),
+        inset 0 0 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+
+    // Subtle parchment texture overlay
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.02) 2px, rgba(255, 255, 255, 0.02) 4px);
+        pointer-events: none;
+        opacity: 0.5;
+    }
 
     .header {
         display: flex;
@@ -13,7 +45,9 @@
         align-items: center;
         margin-bottom: 15px;
         padding-bottom: 10px;
-        border-bottom: 1px solid #444;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        position: relative;
+        z-index: 1;
 
         .decileInfo {
             display: flex;
@@ -21,18 +55,22 @@
             gap: 10px;
 
             .decileLabel {
+                font-family: 'Georgia', 'Times New Roman', serif;
                 font-weight: bold;
                 font-size: 1.1em;
-                color: #fff;
+                color: #d4af37;
+                font-style: italic;
                 display: flex;
                 flex-direction: column;
                 gap: 4px;
+                text-shadow: 0 1px 4px rgba(212, 175, 55, 0.3);
             }
 
             .statisticalMeaning {
                 font-size: 0.7em;
-                color: #aaa;
+                color: rgba(212, 175, 55, 0.7);
                 font-style: italic;
+                font-family: 'Courier New', monospace;
             }
 
             .outcomeBadge {
@@ -40,21 +78,26 @@
                 border-radius: 4px;
                 font-size: 0.9em;
                 font-weight: bold;
+                font-family: 'Courier New', monospace;
+                border: 1px solid rgba(212, 175, 55, 0.3);
 
                 &.dangerBadge {
-                    background-color: #dc3545;
-                    color: #fff;
+                    background: rgba(220, 53, 69, 0.3);
+                    color: #ff6b6b;
+                    border-color: rgba(220, 53, 69, 0.5);
                 }
 
                 &.successBadge {
-                    background-color: #28a745;
-                    color: #fff;
+                    background: rgba(40, 167, 69, 0.3);
+                    color: #6bff6b;
+                    border-color: rgba(40, 167, 69, 0.5);
                 }
             }
         }
 
         .duration {
-            color: #ccc;
+            font-family: 'Courier New', monospace;
+            color: rgba(212, 175, 55, 0.8);
             font-size: 0.9em;
         }
     }
@@ -64,13 +107,15 @@
         flex-direction: column;
         gap: 12px;
         margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
 
         .combatant {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid #444;
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.15);
 
             &:last-child {
                 border-bottom: none;
@@ -78,16 +123,19 @@
 
             .combatantName {
                 flex: 1;
+                font-family: 'Georgia', 'Times New Roman', serif;
                 font-weight: 500;
-                color: #fff;
+                color: #e8e0d0;
+                font-style: italic;
                 display: flex;
                 align-items: center;
                 gap: 8px;
 
                 .deathIndicator {
-                    color: #dc3545;
+                    color: #ff6b6b;
                     font-weight: bold;
                     font-size: 0.9em;
+                    text-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
                 }
             }
 
@@ -95,38 +143,48 @@
                 flex: 2;
                 font-family: 'Courier New', monospace;
                 font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                gap: 4px;
 
+                // Potion-style HP indicators
                 .segmentGreen {
-                    color: #44ff44;
+                    color: #6bff6b;
+                    text-shadow: 0 0 4px rgba(107, 255, 107, 0.5);
+                    font-size: 1.1em;
                 }
 
                 .segmentRed {
-                    color: #ff4444;
+                    color: #ff6b6b;
+                    text-shadow: 0 0 4px rgba(255, 107, 107, 0.5);
+                    font-size: 1.1em;
                 }
 
                 .segmentGrey {
-                    color: #666;
+                    color: #555;
+                    font-size: 1.1em;
                 }
 
                 .hpText {
                     margin-left: 10px;
                     font-weight: bold;
+                    color: #d4af37;
                 }
 
                 .healthy {
-                    color: #28a745;
+                    color: #6bff6b;
                 }
 
                 .bloodied {
-                    color: #ffc107;
+                    color: #ffd700;
                 }
 
                 .danger {
-                    color: #dc3545;
+                    color: #ff6b6b;
                 }
 
                 .dead {
-                    color: #6c757d;
+                    color: #666;
                 }
             }
         }
@@ -137,16 +195,19 @@
         justify-content: space-between;
         align-items: center;
         padding-top: 10px;
-        border-top: 1px solid #444;
+        border-top: 1px solid rgba(212, 175, 55, 0.2);
         font-size: 0.9em;
-        color: #ccc;
+        font-family: 'Courier New', monospace;
+        color: rgba(212, 175, 55, 0.8);
+        position: relative;
+        z-index: 1;
 
         .winRate {
             font-weight: bold;
         }
 
         .survivors {
-            color: #fff;
+            color: #d4af37;
         }
     }
 }
