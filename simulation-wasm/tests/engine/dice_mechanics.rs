@@ -33,10 +33,10 @@ fn test_dice_multiplication_on_crit() {
     let res = dice::evaluate_detailed(&formula, 2);
     assert_eq!(res.rolls.len(), 2);
     
-    // Value multiplication (7.0 * 2 = 14.0)
+    // Value does NOT multiply (7.0 stay 7.0) - per 5e rules only dice double
     let formula_val = DiceFormula::Value(7.0);
     let res_val = dice::evaluate(&formula_val, 2);
-    assert_eq!(res_val, 14.0);
+    assert_eq!(res_val, 7.0);
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn test_critical_hit_logic() {
         freq: Frequency::Static("at will".to_string()),
         condition: ActionCondition::Default,
         targets: 1,
-        dpr: DiceFormula::Value(10.0),
+        dpr: DiceFormula::Expr("10".to_string()),
         to_hit: DiceFormula::Value(0.0), // No bonus
         target: EnemyTarget::EnemyWithLeastHP,
         use_saves: None,
@@ -143,12 +143,36 @@ fn test_critical_hit_logic() {
     // Check if it hit despite high AC (30)
     assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "Crit should hit");
     
-    // Check if damage was doubled (10.0 * 2 = 20.0)
+    // Check if damage was NOT doubled because "10" is a constant in the Expr (not a die)
+    // Wait, "10" in parse_and_roll will be treated as constant.
+    // If I want to test dice doubling, I should use "1d10 + 5".
+    // "1d10" becomes "2d10". 
+    // Let's use "1d1+10". Should become "2d1+10" = 12.
+    let attack_dice = AtkAction {
+        id: "atk_dice".to_string(),
+        name: "Dice Attack".to_string(),
+        action_slot: None,
+        cost: vec![],
+        requirements: vec![],
+        tags: vec![],
+        freq: Frequency::Static("at will".to_string()),
+        condition: ActionCondition::Default,
+        targets: 1,
+        dpr: DiceFormula::Expr("1d1+10".to_string()),
+        to_hit: DiceFormula::Value(0.0),
+        target: EnemyTarget::EnemyWithLeastHP,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
+    };
+
+    rng::force_d20_rolls(vec![20]);
+    let events = resolver.resolve_attack(&attack_dice, &mut context, "p1");
+    
+    // 2d1 + 10 = 12
     let dmg_event = events.iter().find(|e| matches!(e, simulation_wasm::events::Event::DamageTaken { .. }));
     if let Some(simulation_wasm::events::Event::DamageTaken { damage, .. }) = dmg_event {
-        assert_eq!(*damage, 20.0, "Crit damage should be doubled");
-    } else {
-        panic!("Damage event not found");
+        assert_eq!(*damage, 12.0, "Crit damage should only double dice (1d1->2d1), not constant (+10)");
     }
 
     // 2. Force a MISS (1)

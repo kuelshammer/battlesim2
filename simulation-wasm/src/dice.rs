@@ -4,7 +4,7 @@ use crate::rng;
 
 pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
     match formula {
-        DiceFormula::Value(v) => *v * dice_multiplier as f64,
+        DiceFormula::Value(v) => *v,
         DiceFormula::Expr(s) => parse_and_roll(s, dice_multiplier),
     }
 }
@@ -12,11 +12,10 @@ pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
 pub fn evaluate_detailed(formula: &DiceFormula, dice_multiplier: u32) -> RollResult {
     match formula {
         DiceFormula::Value(v) => {
-            let total = *v * dice_multiplier as f64;
             RollResult {
-                total,
+                total: *v,
                 rolls: Vec::new(),
-                modifiers: vec![("Base".to_string(), total)],
+                modifiers: vec![("Base".to_string(), *v)],
                 formula: v.to_string(),
             }
         },
