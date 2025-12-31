@@ -27,13 +27,9 @@ fn test_mock_rng_d20() {
 fn test_dice_multiplication_on_crit() {
     // Expr multiplication (1d6 * 2 = 2d6)
     rng::clear_forced_rolls();
-    // We want to force rolls for 2d6. 
-    // Since we don't have force_dice_rolls yet, we'll use seeding for now or just check the count.
     
     let formula = DiceFormula::Expr("1d6".to_string());
     
-    // We can't easily predict the result without seeding, 
-    // but we can check evaluate_detailed returns 2 rolls.
     let res = dice::evaluate_detailed(&formula, 2);
     assert_eq!(res.rolls.len(), 2);
     
@@ -164,5 +160,125 @@ fn test_critical_hit_logic() {
     // Check if it missed despite high bonus (if we had one) or low AC
     assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackMissed { .. })), "Natural 1 should miss");
     
+    rng::clear_forced_rolls();
+}
+
+#[test]
+fn test_complex_to_hit_formula() {
+    let player_creature = Creature {
+        id: "p1".to_string(),
+        name: "Cleric".to_string(),
+        hp: 100,
+        ac: 10,
+        count: 1.0,
+        mode: "player".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+    
+    let monster_creature = Creature {
+        id: "m1".to_string(),
+        name: "Target".to_string(),
+        hp: 100,
+        ac: 18, // AC 18
+        count: 1.0,
+        mode: "monster".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+
+    let p1 = Combattant { team: 0,
+        id: "p1".to_string(),
+        creature: Arc::new(player_creature),
+        initiative: 10.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+    
+    let m1 = Combattant { team: 1,
+        id: "m1".to_string(),
+        creature: Arc::new(monster_creature),
+        initiative: 5.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+
+    let mut context = TurnContext::new(vec![p1, m1], vec![], None, "Arena".to_string(), true);
+    let resolver = ActionResolver::new();
+    
+    // Complex formula: +7 base + 1d4 bless. Total range: 8-11.
+    // If d20 is 10, total is 18-21. Should hit AC 18.
+    let attack = AtkAction {
+        id: "atk".to_string(),
+        name: "Blessed Attack".to_string(),
+        action_slot: None,
+        cost: vec![],
+        requirements: vec![],
+        tags: vec![],
+        freq: Frequency::Static("at will".to_string()),
+        condition: ActionCondition::Default,
+        targets: 1,
+        dpr: DiceFormula::Value(10.0),
+        to_hit: DiceFormula::Expr("+7 + 1d4[Bless]".to_string()),
+        target: EnemyTarget::EnemyWithLeastHP,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
+    };
+
+    // Force d20=10, d4=1. Total = 10 + 7 + 1 = 18. Exact hit.
+    rng::force_roll(20, 10);
+    rng::force_roll(4, 1);
+    
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "Exact hit with formula should succeed");
+
+    // Force d20=10, d4=1 against AC 19. Should miss.
+    context.combatants.get_mut("m1").unwrap().base_combatant.creature = Arc::new(Creature {
+        ac: 19,
+        ..(*context.combatants.get("m1").unwrap().base_combatant.creature).clone()
+    });
+    
+    rng::force_roll(20, 10);
+    rng::force_roll(4, 1);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackMissed { .. })), "Formula missing AC should fail");
+
     rng::clear_forced_rolls();
 }
