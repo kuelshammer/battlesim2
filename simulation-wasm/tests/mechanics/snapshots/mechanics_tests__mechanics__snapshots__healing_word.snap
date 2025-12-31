@@ -1,0 +1,11 @@
+---
+source: tests/mechanics/snapshots.rs
+assertion_line: 151
+expression: data
+---
+{
+  "description": "Cleric should heal Fighter with Healing Word",
+  "median_win_rate": 100.0,
+  "median_survivors": 2,
+  "party_size": 2
+}

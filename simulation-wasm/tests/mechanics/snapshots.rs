@@ -98,3 +98,81 @@ fn snapshot_heavy_vs_consistent() {
     };
     insta::assert_json_snapshot!("heavy_vs_consistent", data);
 }
+
+/// Snapshot test for Fireball AoE mechanics
+#[test]
+fn snapshot_fireball_aoe() {
+    let scenario_file = "basic/02_fireball_aoe.json";
+    let (players, timeline) = load_scenario(scenario_file);
+
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
+    let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
+
+    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
+        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+        .unwrap_or(std::cmp::Ordering::Equal));
+
+    let party_size = 1; // Wizard vs 4 Goblins
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+
+    let median = &analysis.deciles[4];
+    let data = SnapshotData {
+        description: "Wizard should clear goblins with Fireball",
+        median_win_rate: median.win_rate,
+        median_survivors: median.median_survivors as u32,
+        party_size: median.party_size as u32,
+    };
+    insta::assert_json_snapshot!("fireball_aoe", data);
+}
+
+/// Snapshot test for Healing Word mechanics
+#[test]
+fn snapshot_healing_word() {
+    let scenario_file = "basic/03_healing_word.json";
+    let (players, timeline) = load_scenario(scenario_file);
+
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
+    let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
+
+    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
+        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+        .unwrap_or(std::cmp::Ordering::Equal));
+
+    let party_size = 2; // Cleric + Fighter
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+
+    let median = &analysis.deciles[4];
+    let data = SnapshotData {
+        description: "Cleric should heal Fighter with Healing Word",
+        median_win_rate: median.win_rate,
+        median_survivors: median.median_survivors as u32,
+        party_size: median.party_size as u32,
+    };
+    insta::assert_json_snapshot!("healing_word", data);
+}
+
+/// Snapshot test for Multiattack mechanics
+#[test]
+fn snapshot_multiattack() {
+    let scenario_file = "basic/05_multiattack.json";
+    let (players, timeline) = load_scenario(scenario_file);
+
+    let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
+    let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
+
+    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
+        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+        .unwrap_or(std::cmp::Ordering::Equal));
+
+    let party_size = 1; 
+    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+
+    let median = &analysis.deciles[4];
+    let data = SnapshotData {
+        description: "Multiattack should increase damage throughput",
+        median_win_rate: median.win_rate,
+        median_survivors: median.median_survivors as u32,
+        party_size: median.party_size as u32,
+    };
+    insta::assert_json_snapshot!("multiattack", data);
+}

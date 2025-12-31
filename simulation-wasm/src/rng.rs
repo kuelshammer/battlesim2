@@ -25,13 +25,11 @@
 
 use rand::prelude::*;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 
-/// Thread-local RNG storage
-///
-/// When seeded, this provides deterministic random numbers.
-/// When None, falls back to entropy-based RNG.
 thread_local! {
     static RNG: RefCell<Option<StdRng>> = RefCell::new(None);
+    static FORCED_D20_ROLLS: RefCell<VecDeque<u32>> = RefCell::new(VecDeque::new());
 }
 
 /// Seed the thread-local RNG with the given seed value
@@ -52,6 +50,44 @@ pub fn clear_rng() {
     RNG.with(|rng| {
         *rng.borrow_mut() = None;
     });
+}
+
+/// Force the next d20 roll(s) to return specific values
+///
+/// This is used for testing specific scenarios like forced critical hits.
+/// Only affects calls to `roll_d20()`.
+pub fn force_d20_rolls(rolls: Vec<u32>) {
+    FORCED_D20_ROLLS.with(|f| {
+        let mut queue = f.borrow_mut();
+        for r in rolls {
+            queue.push_back(r);
+        }
+    });
+}
+
+/// Clear all forced d20 rolls
+pub fn clear_forced_rolls() {
+    FORCED_D20_ROLLS.with(|f| {
+        f.borrow_mut().clear();
+    });
+}
+
+/// Roll a d20, respecting forced rolls if any
+pub fn roll_d20() -> u32 {
+    if let Some(forced) = FORCED_D20_ROLLS.with(|f| f.borrow_mut().pop_front()) {
+        return forced;
+    }
+    
+    let mut rng = get_rng();
+    rng.gen_range(1..=20)
+}
+
+/// Roll a die with N sides
+pub fn roll_dice(sides: u32) -> u32 {
+    // We don't currently support forcing specific damage dice rolls, 
+    // but we could extend the MockRng if needed.
+    let mut rng = get_rng();
+    rng.gen_range(1..=sides)
 }
 
 /// A wrapper around the thread-local RNG that ensures state advancement

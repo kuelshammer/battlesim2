@@ -2,9 +2,7 @@ use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::dice;
 use crate::events::{Event, RollResult};
 use crate::model::{Action, AtkAction, Buff, BuffAction, DebuffAction, HealAction, TemplateAction};
-use crate::enums::{TargetType};
 use crate::rng;
-use rand::Rng; // Import Rng trait for gen_range
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -167,7 +165,7 @@ impl ActionResolver {
         // Get targets for healing
         let targets = self.get_heal_targets(heal, context, actor_id);
 
-        let heal_amount = dice::average(&heal.amount);
+        let heal_amount = dice::evaluate(&heal.amount, 1);
         let is_temp_hp = heal.temp_hp.unwrap_or(false);
 
         for target_id in targets {
@@ -250,8 +248,7 @@ impl ActionResolver {
 
         for target_id in targets {
             // 1. Perform saving throw
-            let mut rng = rng::get_rng();
-            let roll = rng.gen_range(1..=20) as f64;
+            let roll = rng::roll_d20() as f64;
             let save_bonus = self.get_save_bonus(&target_id, context);
             let total_save = roll + save_bonus;
 
@@ -357,8 +354,7 @@ impl ActionResolver {
             // Perform saving throw for debuffs (bane)
             let mut should_apply = true;
             if template_name == "bane" {
-                let mut rng = rng::get_rng();
-                let roll = rng.gen_range(1..=20) as f64;
+                let roll = rng::roll_d20() as f64;
                 let save_bonus = self.get_save_bonus(&target_id, context);
                 let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
                 
@@ -769,8 +765,6 @@ impl ActionResolver {
 
     /// Roll attack value
     fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
-        let mut rng = rng::get_rng();
-        
         // 1. Determine Advantage/Disadvantage
         let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
             || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
@@ -784,14 +778,14 @@ impl ActionResolver {
         let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv);
 
         // 2. Perform Roll
-        let roll1 = rng.gen_range(1..=20);
+        let roll1 = rng::roll_d20();
         let natural_roll: u32;
         
         if final_adv {
-            let roll2 = rng.gen_range(1..=20);
+            let roll2 = rng::roll_d20();
             natural_roll = roll1.max(roll2);
         } else if final_dis {
-            let roll2 = rng.gen_range(1..=20);
+            let roll2 = rng::roll_d20();
             natural_roll = roll1.min(roll2);
         } else {
             natural_roll = roll1;

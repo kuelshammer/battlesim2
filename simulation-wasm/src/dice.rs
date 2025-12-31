@@ -1,22 +1,24 @@
 use crate::model::DiceFormula;
 use crate::events::{RollResult, DieRoll};
 use crate::rng;
-use rand::Rng; // Import Rng trait for gen_range
 
 pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
     match formula {
-        DiceFormula::Value(v) => *v,
+        DiceFormula::Value(v) => *v * dice_multiplier as f64,
         DiceFormula::Expr(s) => parse_and_roll(s, dice_multiplier),
     }
 }
 
 pub fn evaluate_detailed(formula: &DiceFormula, dice_multiplier: u32) -> RollResult {
     match formula {
-        DiceFormula::Value(v) => RollResult {
-            total: *v,
-            rolls: Vec::new(),
-            modifiers: vec![("Base".to_string(), *v)],
-            formula: v.to_string(),
+        DiceFormula::Value(v) => {
+            let total = *v * dice_multiplier as f64;
+            RollResult {
+                total,
+                rolls: Vec::new(),
+                modifiers: vec![("Base".to_string(), total)],
+                formula: v.to_string(),
+            }
         },
         DiceFormula::Expr(s) => parse_and_roll_detailed(s, dice_multiplier),
     }
@@ -135,11 +137,10 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
             let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
             let sides = parts[1].parse::<i32>().unwrap_or(6);
 
-            let mut rng = rng::get_rng();
             let mut term_total = 0.0;
             let mut term_rolls = Vec::new();
             for _ in 0..(count * dice_multiplier as i32) {
-                let val = rng.gen_range(1..=sides) as u32;
+                let val = rng::roll_dice(sides as u32);
                 term_total += val as f64;
                 term_rolls.push(DieRoll { sides: sides as u32, value: val });
             }

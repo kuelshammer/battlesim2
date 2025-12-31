@@ -1,0 +1,11 @@
+---
+source: tests/mechanics/snapshots.rs
+assertion_line: 125
+expression: data
+---
+{
+  "description": "Wizard should clear goblins with Fireball",
+  "median_win_rate": 100.0,
+  "median_survivors": 1,
+  "party_size": 1
+}
