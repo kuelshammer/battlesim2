@@ -7,12 +7,13 @@ export const SimulationControls: React.FC = () => {
   const { state, startSimulation, reset } = useSimulation();
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full">
-      <h2 className="text-xl font-semibold mb-4">Simulation Controls</h2>
+    <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full" role="region" aria-labelledby="sim-controls-title">
+      <h2 id="sim-controls-title" className="text-xl font-semibold mb-4">Simulation Controls</h2>
       <div className="flex flex-col gap-4">
         <button
           onClick={startSimulation}
           disabled={state.isRunning}
+          aria-label={state.isRunning ? 'Simulation is running' : 'Run combat simulation'}
           className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           <FontAwesomeIcon icon={faPlay} />
@@ -21,6 +22,7 @@ export const SimulationControls: React.FC = () => {
         {state.results && (
           <button
             onClick={reset}
+            aria-label="Reset simulation results"
             className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded flex items-center justify-center gap-2"
           >
             <FontAwesomeIcon icon={faRedo} />

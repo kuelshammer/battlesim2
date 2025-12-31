@@ -302,6 +302,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 className={styles.helpButton}
                                 onClick={() => setRunTour(true)}
                                 title="Start guided tour"
+                                aria-label="Start guided tour"
                             >
                                 <FontAwesomeIcon icon={faQuestionCircle} />
                                 Help
@@ -310,6 +311,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 className={styles.helpButton}
                                 onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)}
                                 title="Toggle performance dashboard"
+                                aria-label={`${showPerformanceDashboard ? 'Hide' : 'Show'} performance dashboard`}
                             >
                                 <FontAwesomeIcon icon={faTachometerAlt} />
                                 {showPerformanceDashboard ? 'Hide' : 'Perf'}
@@ -319,9 +321,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
                     
                     {/* Backend Features Status Panel */}
-                    <div className={`${styles.backendStatus} simulation-controls`}>
+                    <div className={`${styles.backendStatus} simulation-controls`} role="region" aria-label="Simulation Status">
                         <h4>🔧 Event-Driven Backend {worker.isRunning ? '(Processing...)' : 'Active'}</h4>
-                        <div className={styles.statusItems}>
+                        <div className={styles.statusItems} aria-live="polite" role="status">
                             <span>✅ ActionResolution Engine</span>
                             <span>✅ Event System</span>
                             <span>✅ Reaction Processing</span>
@@ -329,7 +331,14 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             <span>📊 Events: {simulationEvents.length}</span>
                         </div>
                         {worker.isRunning && (
-                            <div className={styles.progressBar}>
+                            <div 
+                                className={styles.progressBar}
+                                role="progressbar"
+                                aria-valuenow={Math.round(worker.progress)}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label="Simulation progress"
+                            >
                                 <div 
                                     className={styles.progressFill} 
                                     style={{ width: `${worker.progress}%` }}

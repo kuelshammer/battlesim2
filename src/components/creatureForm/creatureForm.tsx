@@ -60,21 +60,30 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
     }
 
     return (
-        <Modal onCancel={onCancel} className={styles.creatureForm}>
-            <div className={styles.modes}>
+        <Modal onCancel={onCancel} className={styles.creatureForm} title={`Edit ${value.name}`}>
+            <div className={styles.modes} role="tablist" aria-label="Creature type">
                 <button
+                    role="tab"
+                    aria-selected={value.mode === 'player'}
+                    aria-controls="creature-form-panel"
                     className={(value.mode === 'player') ? styles.active : undefined}
                     onClick={() => update(c => { c.mode = 'player' })}
                 >
                     Player Character
                 </button>
                 <button
+                    role="tab"
+                    aria-selected={value.mode === 'monster'}
+                    aria-controls="creature-form-panel"
                     className={(value.mode === 'monster') ? styles.active : undefined}
                     onClick={() => update(c => { c.mode = 'monster' })}
                 >
                     Monster
                 </button>
                 <button
+                    role="tab"
+                    aria-selected={value.mode === 'custom'}
+                    aria-controls="creature-form-panel"
                     className={(value.mode === 'custom') ? styles.active : undefined}
                     onClick={() => update(c => { c.mode = 'custom' })}
                 >
@@ -82,7 +91,7 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                 </button>
             </div>
 
-            <div className={styles.form}>
+            <div className={styles.form} id="creature-form-panel" role="tabpanel">
                 { (value.mode === "player") ? (
                     <PlayerForm
                         value={value}
@@ -109,37 +118,47 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                         }} 
                         disabled={!isValid}
                         style={{ width: '100%' }}
+                        aria-label="Confirm changes"
                     >
                         <FontAwesomeIcon icon={faCheck} />
                         OK
                     </button>
                     
-                    <div className="tooltip">
+                    <span className="tooltip" role="tooltip">
                         { isValid 
                             ? "Save this creature for the current encounter"
                             : "Please fix the errors in the form before saving"
                         }
-                    </div>
+                    </span>
                 </div>
                 { (value.mode === 'custom') ? null : (
-                    <button onClick={() => setValue({...value, mode: 'custom'})} disabled={!isValid} className="tooltipContainer">
-                        <FontAwesomeIcon icon={faWrench} />
-                        Customize
-
-                        <div className="tooltip">
+                    <div className="tooltipContainer">
+                        <button 
+                            onClick={() => setValue({...value, mode: 'custom'})} 
+                            disabled={!isValid} 
+                            aria-label="Advanced customization"
+                        >
+                            <FontAwesomeIcon icon={faWrench} />
+                            Customize
+                        </button>
+                        <span className="tooltip" role="tooltip">
                             Go to the advanced editing mode
-                        </div>
-                    </button>
+                        </span>
+                    </div>
                 )}
                 { !onDelete ? null : (
-                    <button onClick={onDelete} className="tooltipContainer">
-                        <FontAwesomeIcon icon={faTrash} />
-                        Delete
-                        
-                        <div className="tooltip">
+                    <div className="tooltipContainer">
+                        <button 
+                            onClick={onDelete} 
+                            aria-label="Delete creature"
+                        >
+                            <FontAwesomeIcon icon={faTrash} />
+                            Delete
+                        </button>
+                        <span className="tooltip" role="tooltip">
                             Remove this creature from the current encounter
-                        </div>
-                    </button>
+                        </span>
+                    </div>
                 )}
             </div>
         </Modal>

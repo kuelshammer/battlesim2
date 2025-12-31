@@ -70,17 +70,17 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
             <div className={styles.encounterForm}>
                 <div className={styles.encounterActions}>
                     {!!onDelete && (
-                        <button onClick={onDelete}>
+                        <button onClick={onDelete} aria-label="Delete encounter">
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     )}
                     {(onMoveUp || onMoveDown) && (
-                        <button onClick={onMoveUp} disabled={!onMoveUp}>
+                        <button onClick={onMoveUp} disabled={!onMoveUp} aria-label="Move encounter up">
                             <FontAwesomeIcon icon={faChevronUp} />
                         </button>
                     )}
                     {(onMoveUp || onMoveDown) && (
-                        <button onClick={onMoveDown} disabled={!onMoveDown}>
+                        <button onClick={onMoveDown} disabled={!onMoveDown} aria-label="Move encounter down">
                             <FontAwesomeIcon icon={faChevronDown} />
                         </button>
                     )}
@@ -96,25 +96,30 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                             <div key={creature.id} className={styles.creature}>
                                 <span className={styles.name}>{creature.name}</span>
                                 <span className={styles.inlineInput}>
-                                    <span className={styles.countLabel} >Count:</span>
+                                    <label htmlFor={`count-${creature.id}`} className={styles.countLabel}>Count:</label>
                                     <input
+                                        id={`count-${creature.id}`}
                                         type='number'
                                         min={1} max={20} step={1}
                                         value={creature.count}
                                         onChange={e => updateCreature(index, { ...creature, count: Math.max(0, Math.min(20, Math.round(Number(e.target.value)))) })}
+                                        aria-label={`${creature.name} count`}
                                     />
                                 </span>
                                 {!children && <span className={styles.inlineInput}>
-                                    <span className={styles.countLabel}>Arrives on round:</span>
+                                    <label htmlFor={`arrival-${creature.id}`} className={styles.countLabel}>Arrives on round:</label>
                                     <input
+                                        id={`arrival-${creature.id}`}
                                         type='number'
                                         min={1} max={19} step={1}
                                         value={creature.arrival || 1}
-                                        onChange={e => updateCreature(index, { ...creature, arrival: Math.max(0, Math.min(20, Math.round(Number(e.target.value)))) })} />
+                                        onChange={e => updateCreature(index, { ...creature, arrival: Math.max(0, Math.min(20, Math.round(Number(e.target.value)))) })}
+                                        aria-label={`${creature.name} arrival round`}
+                                    />
                                 </span>}
-                                <button onClick={() => handleSetUpdating(index)}>
+                                <button onClick={() => handleSetUpdating(index)} aria-label={`Edit ${creature.name}`}>
                                     <FontAwesomeIcon icon={faPen} />
-                                    <label>Edit</label>
+                                    <span>Edit</span>
                                 </button>
                             </div>
                         ))}
