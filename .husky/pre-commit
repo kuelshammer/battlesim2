@@ -99,7 +99,8 @@ fi
 echo "🧪 Running tests..."
 echo "  → Rust tests..."
 cd simulation-wasm
-cargo test --quiet || {
+# Skip stress tests in pre-commit (they take too long, run manually with: cd simulation-wasm && cargo test --test stress)
+cargo test --quiet -- --skip stress || {
     echo "❌ Rust tests failed. Fix with: cd simulation-wasm && cargo test"
     exit 1
 }
