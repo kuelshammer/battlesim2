@@ -2,7 +2,7 @@
 
 ## Overview
 
-Battlesim2 is a high-fidelity D&D 5e combat simulator built with a Rust/WASM backend and a React/Next.js frontend. The architecture focuses on deterministic, event-driven simulation capable of performing large-scale batch runs for statistical analysis (decile analysis).
+Battlesim2 is a high-fidelity D&D 5e combat simulator built with a Rust/WASM backend and a React/Next.js frontend. The architecture focuses on deterministic, event-driven simulation capable of performing large-scale batch runs for statistical analysis (1% bucketing).
 
 ## Core Architecture
 
@@ -15,9 +15,10 @@ The simulation engine uses an event-driven model to ensure a "Single Source of T
 - **ResourceLedger**: Tracks discrete (Spell Slots, Ki) and variable resources with standardized reset rules (Short Rest, Long Rest).
 
 ### 2. Two-Pass Simulation System
-To handle the high memory cost of detailed logs in batch simulations (e.g., 10,000+ runs):
+To handle the high memory cost of detailed logs in batch simulations (e.g., 10,100 runs):
 - **Phase 1 (Survey)**: Executes lightweight simulations tracking only final outcomes and scores.
-- **Phase 2 (Re-simulation)**: Re-runs specific "interesting" seeds (deciles) with full event collection for detailed UI visualization.
+- **Phase 2 (Seed Selection)**: Uses 1% bucketing (100 buckets, each representing 101 runs) to identify median seeds for each percentile.
+- **Phase 3 (Re-simulation)**: Re-runs specific "interesting" seeds with full event collection for detailed UI visualization.
 
 ### 3. Frontend Architecture (React/TypeScript)
 The UI is designed around "Intentional Minimalism" and "Arcane Aesthetics."
@@ -25,7 +26,7 @@ The UI is designed around "Intentional Minimalism" and "Arcane Aesthetics."
 - **State Management**: Uses `useStoredState` for persistent configuration and `useSimulationWorker` to offload heavy computations to background threads.
 - **Visual Language**: 
     - **Arcane Vitals Vellum**: A high-fidelity, glassmorphic resource panel for combatants featuring staggered animations and bespoke typography (`Cinzel Decorative`, `Crimson Pro`).
-    - **Interactive Grimoire**: Detailed combat logs and decile dashboards providing staggered, readable breakdowns of complex simulations.
+    - **Interactive Grimoire**: Detailed combat logs and 1% granularity dashboards providing staggered, readable breakdowns of complex simulations.
 - **Accessibility**: Comprehensive ARIA support and keyboard navigation (Escape to close modals, tab-indexed controls).
 
 ## Implementation Status
