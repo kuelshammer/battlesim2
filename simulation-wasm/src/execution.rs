@@ -105,9 +105,9 @@ impl ActionExecutionEngine {
         let initiative_order = sorted_combatants.into_iter().map(|c| c.id).collect();
 
         let mut engine = Self {
-            context,
+            context: context.clone(),
             reaction_manager: ReactionManager::new(),
-            action_resolver: ActionResolver::new(),
+            action_resolver: ActionResolver::with_cache(context.combat_stats_cache.clone()),
             initiative_order,
         };
 

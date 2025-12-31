@@ -155,6 +155,15 @@ pub fn get_targets(
             }
         }
         Action::Template(a) => {
+            let target_type = a.template_options.target.clone().unwrap_or_else(|| {
+                let name = a.template_options.template_name.to_lowercase();
+                if name == "bane" || name == "hex" || name == "hunter's mark" || name == "hypnotic pattern" {
+                    TargetType::Enemy(EnemyTarget::EnemyWithLeastHP)
+                } else {
+                    TargetType::Ally(AllyTarget::AllyWithLeastHP)
+                }
+            });
+
             for _i in 0..count {
                 #[cfg(debug_assertions)]
                 eprintln!(
@@ -163,26 +172,41 @@ pub fn get_targets(
                     count,
                     c.creature.name
                 );
-                if let Some(idx) = select_enemy_target(
-                    c,
-                    crate::enums::EnemyTarget::EnemyWithLeastHP,
-                    enemies,
-                    &targets,
-                    Some(&a.base().id),
-                ) {
-                    #[cfg(debug_assertions)]
-                    eprintln!(
-                        "            Target selected for {}: Enemy {}",
-                        c.creature.name, enemies[idx].creature.name
-                    );
-                    targets.push((true, idx));
-                } else {
-                    #[cfg(debug_assertions)]
-                    eprintln!(
-                        "            No target found for {}'s template {}.",
-                        c.creature.name,
-                        _i + 1
-                    );
+
+                match &target_type {
+                    TargetType::Enemy(enemy_strategy) => {
+                        if let Some(idx) = select_enemy_target(
+                            c,
+                            enemy_strategy.clone(),
+                            enemies,
+                            &targets,
+                            Some(&a.base().id),
+                        ) {
+                            #[cfg(debug_assertions)]
+                            eprintln!(
+                                "            Target selected for {}: Enemy {}",
+                                c.creature.name, enemies[idx].creature.name
+                            );
+                            targets.push((true, idx));
+                        }
+                    }
+                    TargetType::Ally(ally_strategy) => {
+                        let self_idx = allies.iter().position(|al| al.id == c.id).unwrap_or(0);
+                        if let Some(idx) = select_ally_target(
+                            ally_strategy.clone(),
+                            allies,
+                            self_idx,
+                            &targets,
+                            Some(&a.base().id),
+                        ) {
+                            #[cfg(debug_assertions)]
+                            eprintln!(
+                                "            Target selected for {}: Ally {}",
+                                c.creature.name, allies[idx].creature.name
+                            );
+                            targets.push((false, idx));
+                        }
+                    }
                 }
             }
         }
