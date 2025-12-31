@@ -109,6 +109,8 @@ pub enum CreatureCondition {
     AttacksWithAdvantage,
     #[serde(rename = "Attacks with Disadvantage")]
     AttacksWithDisadvantage,
+    #[serde(rename = "Attacks with Triple Advantage")]
+    AttacksWithTripleAdvantage,
     #[serde(rename = "Is attacked with Advantage")]
     IsAttackedWithAdvantage,
     #[serde(rename = "Is attacked with Disadvantage")]

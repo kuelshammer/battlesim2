@@ -455,3 +455,116 @@ fn test_advantage_disadvantage_scenarios() {
 
     rng::clear_forced_rolls();
 }
+
+#[test]
+fn test_triple_advantage_logic() {
+    let player_creature = Creature {
+        id: "p1".to_string(),
+        name: "Elf".to_string(),
+        hp: 100,
+        ac: 10,
+        count: 1.0,
+        mode: "player".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+    
+    let monster_creature = Creature {
+        id: "m1".to_string(),
+        name: "Monster".to_string(),
+        hp: 100,
+        ac: 25,
+        count: 1.0,
+        mode: "monster".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+
+    let p1 = Combattant { team: 0,
+        id: "p1".to_string(),
+        creature: Arc::new(player_creature),
+        initiative: 10.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+    
+    let m1 = Combattant { team: 1,
+        id: "m1".to_string(),
+        creature: Arc::new(monster_creature),
+        initiative: 5.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+
+    let resolver = ActionResolver::new();
+    let attack = AtkAction {
+        id: "atk".to_string(),
+        name: "Triple Attack".to_string(),
+        action_slot: None,
+        cost: vec![],
+        requirements: vec![],
+        tags: vec![],
+        freq: Frequency::Static("at will".to_string()),
+        condition: ActionCondition::Default,
+        targets: 1,
+        dpr: DiceFormula::Value(10.0),
+        to_hit: DiceFormula::Value(0.0),
+        target: EnemyTarget::EnemyWithLeastHP,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
+    };
+
+    // Force Rolls: 1, 1, 20. Triple advantage should pick 20.
+    let mut context = TurnContext::new(vec![p1.clone(), m1.clone()], vec![], None, "Arena".to_string(), true);
+    context.apply_effect(simulation_wasm::context::ActiveEffect {
+        id: "triple".to_string(),
+        source_id: "p1".to_string(),
+        target_id: "p1".to_string(),
+        effect_type: simulation_wasm::context::EffectType::Condition(simulation_wasm::enums::CreatureCondition::AttacksWithTripleAdvantage),
+        remaining_duration: 10,
+        conditions: vec![],
+    });
+    rng::force_d20_rolls(vec![1, 1, 20]);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "Triple advantage should pick 20 from [1, 1, 20]");
+    
+    rng::clear_forced_rolls();
+}

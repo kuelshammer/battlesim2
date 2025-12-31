@@ -768,20 +768,26 @@ impl ActionResolver {
         // 1. Determine Advantage/Disadvantage
         let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
             || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
+        let attacker_has_triple_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithTripleAdvantage);
         let target_grants_adv = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithAdvantage);
         
         let attacker_has_dis = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithDisadvantage)
             || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndSavesWithDisadvantage);
         let target_grants_dis = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithDisadvantage);
 
-        let final_adv = (attacker_has_adv || target_grants_adv) && !(attacker_has_dis || target_grants_dis);
-        let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv);
+        let final_triple_adv = attacker_has_triple_adv && !(attacker_has_dis || target_grants_dis);
+        let final_adv = (attacker_has_adv || target_grants_adv) && !(attacker_has_dis || target_grants_dis) && !final_triple_adv;
+        let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv);
 
         // 2. Perform Roll
         let roll1 = rng::roll_d20();
         let natural_roll: u32;
         
-        if final_adv {
+        if final_triple_adv {
+            let roll2 = rng::roll_d20();
+            let roll3 = rng::roll_d20();
+            natural_roll = roll1.max(roll2).max(roll3);
+        } else if final_adv {
             let roll2 = rng::roll_d20();
             natural_roll = roll1.max(roll2);
         } else if final_dis {
@@ -1221,6 +1227,7 @@ mod tests {
         // resolve_attack -> get_single_attack_target.
         // Ensure Warlock is enemy of Orc (modes differ). They do (monster vs player).
 
+        rng::force_d20_rolls(vec![10]);
         let events = resolver.resolve_attack(&attack, &mut context, "orc");
 
         // 4. Assertions
