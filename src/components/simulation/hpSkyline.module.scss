@@ -1,0 +1,179 @@
+// HP Skyline Styles
+.hpSkylineContainer {
+  width: 100%;
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(145deg, rgba(42, 42, 42, 0.9), rgba(26, 26, 26, 0.95));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(212, 175, 55, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  // Scroll texture overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.02) 3px,
+        rgba(255, 255, 255, 0.02) 6px
+      );
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  position: relative;
+}
+
+.skylineTitle {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(212, 175, 55, 0.9);
+  text-align: center;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+  z-index: 1;
+}
+
+.charactersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.characterCard {
+  background: linear-gradient(180deg, rgba(42, 42, 42, 0.8), rgba(26, 26, 26, 0.9));
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+  padding: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+  }
+}
+
+.characterName {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d4af37;
+  text-align: center;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.skylineCanvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+  border-radius: 2px;
+
+  &:hover {
+    box-shadow: inset 0 0 8px rgba(212, 175, 55, 0.15);
+  }
+}
+
+// Tooltip for bucket details
+.bucketTooltip {
+  position: fixed;
+  background: linear-gradient(145deg, #2d2d2d 0%, #3a3a3a 50%, #2d2d2d 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 6px;
+  padding: 12px 16px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 10px 20px 2px rgba(0, 0, 0, 0.5);
+  max-width: 250px;
+
+  .tooltipTitle {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: rgba(212, 175, 55, 0.9);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .tooltipRow {
+    display: flex;
+    justify-content: space-between;
+    margin: 4px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+
+    .label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .value {
+      font-weight: bold;
+    }
+
+    &.good {
+      .value {
+        color: #6bff6b;
+      }
+    }
+
+    &.warning {
+      .value {
+        color: #ffd700;
+      }
+    }
+
+    &.danger {
+      .value {
+        color: #ff6b6b;
+      }
+    }
+  }
+
+  .deathIndicator {
+    color: #ff6b6b;
+    font-weight: bold;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .charactersGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .characterCard {
+    padding: 8px;
+  }
+
+  .skylineCanvas {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .charactersGrid {
+    grid-template-columns: 1fr;
+  }
+}
