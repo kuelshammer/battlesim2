@@ -1,0 +1,93 @@
+// Death Bar Styles - 10px overlay strip
+.deathBarGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.deathBarContainer {
+  position: relative;
+}
+
+.characterName {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: left;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deathBar {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: help;
+  border-radius: 2px;
+
+  &:hover {
+    box-shadow: 0 0 6px rgba(255, 107, 107, 0.3);
+  }
+}
+
+// Death tooltip
+.deathTooltip {
+  position: fixed;
+  background: linear-gradient(145deg, #2d2d2d 0%, #3a3a3a 50%, #2d2d2d 100%);
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 6px;
+  padding: 10px 14px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 10px 20px 2px rgba(0, 0, 0, 0.5);
+  max-width: 200px;
+
+  .tooltipTitle {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: rgba(255, 107, 107, 0.9);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .deathInfo {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #e8e0d0;
+    line-height: 1.4;
+
+    .skull {
+      font-size: 1.2rem;
+      margin-right: 4px;
+    }
+
+    .round {
+      color: #d4af37;
+      font-weight: bold;
+    }
+
+    .survived {
+      color: #6bff6b;
+      font-style: italic;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .deathBarGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .deathBarGrid {
+    grid-template-columns: 1fr;
+  }
+}
