@@ -143,11 +143,6 @@ fn test_critical_hit_logic() {
     // Check if it hit despite high AC (30)
     assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "Crit should hit");
     
-    // Check if damage was NOT doubled because "10" is a constant in the Expr (not a die)
-    // Wait, "10" in parse_and_roll will be treated as constant.
-    // If I want to test dice doubling, I should use "1d10 + 5".
-    // "1d10" becomes "2d10". 
-    // Let's use "1d1+10". Should become "2d1+10" = 12.
     let attack_dice = AtkAction {
         id: "atk_dice".to_string(),
         name: "Dice Attack".to_string(),
@@ -303,6 +298,160 @@ fn test_complex_to_hit_formula() {
     rng::force_roll(4, 1);
     let events = resolver.resolve_attack(&attack, &mut context, "p1");
     assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackMissed { .. })), "Formula missing AC should fail");
+
+    rng::clear_forced_rolls();
+}
+
+#[test]
+fn test_advantage_disadvantage_scenarios() {
+    let player_creature = Creature {
+        id: "p1".to_string(),
+        name: "Player".to_string(),
+        hp: 100,
+        ac: 10,
+        count: 1.0,
+        mode: "player".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+    
+    let monster_creature = Creature {
+        id: "m1".to_string(),
+        name: "Monster".to_string(),
+        hp: 100,
+        ac: 15,
+        count: 1.0,
+        mode: "monster".to_string(),
+        arrival: None,
+        speed_fly: None,
+        save_bonus: 0.0,
+        str_save_bonus: None,
+        dex_save_bonus: None,
+        con_save_bonus: None,
+        int_save_bonus: None,
+        wis_save_bonus: None,
+        cha_save_bonus: None,
+        con_save_advantage: None,
+        save_advantage: None,
+        initiative_bonus: DiceFormula::Value(0.0),
+        initiative_advantage: false,
+        actions: vec![],
+        triggers: vec![],
+        spell_slots: None,
+        class_resources: None,
+        hit_dice: None,
+        con_modifier: None,
+    };
+
+    let p1 = Combattant { team: 0,
+        id: "p1".to_string(),
+        creature: Arc::new(player_creature),
+        initiative: 10.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+    
+    let m1 = Combattant { team: 1,
+        id: "m1".to_string(),
+        creature: Arc::new(monster_creature),
+        initiative: 5.0,
+        initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+        actions: vec![],
+    };
+
+    let resolver = ActionResolver::new();
+    let attack = AtkAction {
+        id: "atk".to_string(),
+        name: "Attack".to_string(),
+        action_slot: None,
+        cost: vec![],
+        requirements: vec![],
+        tags: vec![],
+        freq: Frequency::Static("at will".to_string()),
+        condition: ActionCondition::Default,
+        targets: 1,
+        dpr: DiceFormula::Value(10.0),
+        to_hit: DiceFormula::Value(5.0), // +5 bonus
+        target: EnemyTarget::EnemyWithLeastHP,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
+    };
+
+    // 1. DIS(20, 7) + 5 bonus = 12. vs AC 15. Should MISS.
+    let mut context = TurnContext::new(vec![p1.clone(), m1.clone()], vec![], None, "Arena".to_string(), true);
+    context.apply_effect(simulation_wasm::context::ActiveEffect {
+        id: "dis".to_string(),
+        source_id: "p1".to_string(),
+        target_id: "p1".to_string(),
+        effect_type: simulation_wasm::context::EffectType::Condition(simulation_wasm::enums::CreatureCondition::AttacksWithDisadvantage),
+        remaining_duration: 10,
+        conditions: vec![],
+    });
+    rng::force_d20_rolls(vec![20, 7]);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackMissed { .. })), "dis(20, 7) + 5 = 12 should miss AC 15");
+
+    // 2. ADV(11, 20) + 5 bonus = CRIT. Should HIT.
+    let mut context = TurnContext::new(vec![p1.clone(), m1.clone()], vec![], None, "Arena".to_string(), true);
+    context.apply_effect(simulation_wasm::context::ActiveEffect {
+        id: "adv".to_string(),
+        source_id: "p1".to_string(),
+        target_id: "p1".to_string(),
+        effect_type: simulation_wasm::context::EffectType::Condition(simulation_wasm::enums::CreatureCondition::AttacksWithAdvantage),
+        remaining_duration: 10,
+        conditions: vec![],
+    });
+    rng::force_d20_rolls(vec![11, 20]);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "adv(11, 20) should be a crit hit");
+
+    // 3. DIS(17, 1) + 5 bonus = 1. Should MISS (Natural 1).
+    let mut context = TurnContext::new(vec![p1.clone(), m1.clone()], vec![], None, "Arena".to_string(), true);
+    context.apply_effect(simulation_wasm::context::ActiveEffect {
+        id: "dis".to_string(),
+        source_id: "p1".to_string(),
+        target_id: "p1".to_string(),
+        effect_type: simulation_wasm::context::EffectType::Condition(simulation_wasm::enums::CreatureCondition::AttacksWithDisadvantage),
+        remaining_duration: 10,
+        conditions: vec![],
+    });
+    rng::force_d20_rolls(vec![17, 1]);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackMissed { .. })), "dis(17, 1) should miss (Natural 1)");
+
+    // 4. ADV(12, 1) + 5 bonus = 17. vs AC 15. Should HIT.
+    let mut context = TurnContext::new(vec![p1.clone(), m1.clone()], vec![], None, "Arena".to_string(), true);
+    context.apply_effect(simulation_wasm::context::ActiveEffect {
+        id: "adv".to_string(),
+        source_id: "p1".to_string(),
+        target_id: "p1".to_string(),
+        effect_type: simulation_wasm::context::EffectType::Condition(simulation_wasm::enums::CreatureCondition::AttacksWithAdvantage),
+        remaining_duration: 10,
+        conditions: vec![],
+    });
+    rng::force_d20_rolls(vec![12, 1]);
+    let events = resolver.resolve_attack(&attack, &mut context, "p1");
+    assert!(events.iter().any(|e| matches!(e, simulation_wasm::events::Event::AttackHit { .. })), "adv(12, 1) + 5 = 17 should hit AC 15");
 
     rng::clear_forced_rolls();
 }
