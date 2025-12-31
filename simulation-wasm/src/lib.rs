@@ -22,6 +22,7 @@ pub mod creature_adjustment;
 pub mod adjustment_test;
 pub mod auto_balancer;
 pub mod encounter_balancer;
+pub mod percentile_analysis;
 pub mod dice_reconstruction;
 pub mod intensity_calculation;
 #[cfg(test)]

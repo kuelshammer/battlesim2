@@ -593,6 +593,40 @@ pub fn get_cache_stats() -> JsValue {
     JsValue::from_str(&stats.to_string())
 }
 
+/// Run Skyline Spectrogram analysis - 100-bucket percentile aggregation
+///
+/// Returns per-character HP/Resources data for visualization in the Skyline UI.
+/// Results should be pre-sorted by score (worst to best).
+#[wasm_bindgen]
+pub fn run_skyline_analysis_wasm(
+    results: JsValue,
+    party_size: usize,
+    encounter_index: Option<usize>,
+) -> Result<JsValue, JsValue> {
+    let mut results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
+
+    // Sort results by score (worst to best)
+    results.sort_by(|a, b| {
+        let score_a = crate::aggregation::calculate_score(a);
+        let score_b = crate::aggregation::calculate_score(b);
+        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    // Run skyline analysis
+    let analysis = crate::percentile_analysis::run_skyline_analysis(
+        &results,
+        party_size,
+        encounter_index,
+    );
+
+    let serializer = serde_wasm_bindgen::Serializer::new()
+        .serialize_maps_as_objects(true);
+
+    serde::Serialize::serialize(&analysis, &serializer)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize skyline analysis: {}", e)))
+}
+
 /// Public Rust function for event-driven simulation (for CLI/testing)
 /// Returns all simulation runs with their results and events
 pub fn run_event_driven_simulation_rust(
