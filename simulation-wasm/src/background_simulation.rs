@@ -1,8 +1,15 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[cfg(not(target_arch = "wasm32"))]
 use crate::model::SimulationResult;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::user_interaction::ScenarioParameters;
+#[cfg(not(target_arch = "wasm32"))]
 use std::sync::{Arc, Mutex, mpsc, PoisonError};
+#[cfg(not(target_arch = "wasm32"))]
 use std::thread;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+#[cfg(not(target_arch = "wasm32"))]
+use std::time::Instant;
 
 /// Unique identifier for a background simulation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]

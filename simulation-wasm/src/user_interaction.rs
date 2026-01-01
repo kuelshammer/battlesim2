@@ -194,10 +194,10 @@ pub struct UserInteractionManager {
 impl UserInteractionManager {
     /// Create a new user interaction manager
     pub fn new(
-        _display_manager: Arc<Mutex<DisplayManager>>,
-        _progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-        _queue_manager: Arc<Mutex<QueueManager>>,
-        _config: UserInteractionConfig,
+        display_manager: Arc<Mutex<DisplayManager>>,
+        progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+        queue_manager: Arc<Mutex<QueueManager>>,
+        config: UserInteractionConfig,
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -360,7 +360,7 @@ impl UserInteractionManager {
     /// Handle simulation request
     fn handle_simulation_request(
         &self,
-        parameters: ScenarioParameters,
+        _parameters: ScenarioParameters,
         priority: SimulationPriority,
     ) -> UserEventResult {
         let mut messages = Vec::new();
@@ -382,7 +382,7 @@ impl UserInteractionManager {
 
         // Start simulation
         #[cfg(not(target_arch = "wasm32"))]
-        let sim_result = self.start_background_simulation(&parameters, priority);
+        let sim_result = self.start_background_simulation(&_parameters, priority);
         #[cfg(target_arch = "wasm32")]
         let sim_result: Result<BackgroundSimulationId, String> = Err("Background simulation not available in WASM".to_string());
 
