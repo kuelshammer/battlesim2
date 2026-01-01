@@ -5,7 +5,7 @@
 
 use crate::model::*;
 use crate::intensity_calculation::*;
-use crate::aggregation::calculate_score;
+use crate::aggregation::{calculate_score, calculate_encounter_score};
 use crate::resources::{ResourceLedger, ResetType};
 use serde::{Deserialize, Serialize};
 
@@ -393,12 +393,32 @@ pub fn run_skyline_analysis_sorted(
     party_size: usize,
     encounter_index: Option<usize>,
 ) -> SkylineAnalysis {
-    // Ensure results are sorted
-    results.sort_by(|a, b| {
-        let score_a = calculate_score(a);
-        let score_b = calculate_score(b);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
-    });
+    // Sort results by the appropriate score
+    if let Some(idx) = encounter_index {
+        // Sort by this specific encounter's score
+        results.sort_by(|a, b| {
+            let encounter_a = a.encounters.get(idx);
+            let encounter_b = b.encounters.get(idx);
+
+            match (encounter_a, encounter_b) {
+                (Some(ea), Some(eb)) => {
+                    let score_a = calculate_encounter_score(ea);
+                    let score_b = calculate_encounter_score(eb);
+                    score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+                }
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            }
+        });
+    } else {
+        // Sort by overall score
+        results.sort_by(|a, b| {
+            let score_a = calculate_score(a);
+            let score_b = calculate_score(b);
+            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+    }
 
     run_skyline_analysis(&results, party_size, encounter_index)
 }
