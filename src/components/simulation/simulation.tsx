@@ -24,7 +24,7 @@ import DescentGraph from "./DescentGraph"
 import AssistantSummary from "./AssistantSummary"
 import { calculatePacingData } from "./pacingUtils"
 import SkylineSpectrogram from "./SkylineSpectrogram"
-import { useSkylineAnalysis } from "@/hooks"
+import { SkylineAnalysis } from "@/model/skylineTypes"
 
 
 
@@ -106,16 +106,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [autoSimulate, setAutoSimulate] = useState(true);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Skyline Analysis - Generate percentile buckets from simulation results
-    const skylineData = useSkylineAnalysis(
-        worker.results || [],
-        {
-            partySize: players.length,
-            encounterIndex: null, // Overall analysis (not per-encounter)
-            enabled: !!worker.results && worker.results.length >= 30 // Only with 30+ iterations (Fast Sim is 31)
-        }
-    );
-    
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
         const hasPlayers = !!players.length
@@ -568,9 +558,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     )}
 
                     {/* Skyline Spectrogram Display */}
-                    {skylineData.data && !skylineData.error && (
+                    {worker.analysis?.overall?.skyline && (
                         <div className="skyline-spectrogram-section">
-                            <SkylineSpectrogram data={skylineData.data} />
+                            <SkylineSpectrogram data={worker.analysis.overall.skyline as SkylineAnalysis} />
                         </div>
                     )}
 

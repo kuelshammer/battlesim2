@@ -513,6 +513,50 @@ export const EventSchema = z.discriminatedUnion('type', [
 
 export type Event = z.infer<typeof EventSchema>
 
+// Skyline Spectrogram Types
+export const SpellSlotLevelSchema = z.object({
+    level: z.number(),
+    remaining: z.number(),
+    max: z.number(),
+})
+
+export const ResourceBreakdownSchema = z.object({
+    spellSlots: z.array(SpellSlotLevelSchema),
+    shortRestFeatures: z.array(z.string()),
+    longRestFeatures: z.array(z.string()),
+    hitDice: z.number(),
+    hitDiceMax: z.number(),
+    totalEhp: z.number(),
+    maxEhp: z.number(),
+})
+
+export const CharacterBucketDataSchema = z.object({
+    name: z.string(),
+    id: z.string(),
+    maxHp: z.number(),
+    hpPercent: z.number(),
+    resourcePercent: z.number(),
+    resourceBreakdown: ResourceBreakdownSchema,
+    deathRound: z.number().nullable(),
+    isDead: z.boolean(),
+})
+
+export const PercentileBucketSchema = z.object({
+    percentile: z.number(),
+    runCount: z.number(),
+    characters: z.array(CharacterBucketDataSchema),
+    partyHpPercent: z.number(),
+    partyResourcePercent: z.number(),
+    deathCount: z.number(),
+})
+
+export const SkylineAnalysisSchema = z.object({
+    buckets: z.array(PercentileBucketSchema),
+    totalRuns: z.number(),
+    partySize: z.number(),
+    encounterIndex: z.number().nullable(),
+})
+
 // Decile Analysis Types
 export const CombatantVisualizationSchema = z.object({
     name: z.string(),
@@ -558,6 +602,7 @@ export const AggregateOutputSchema = z.object({
     stars: z.number().optional().default(0),
     tdnw: z.number().optional().default(0),
     numEncounters: z.number().optional().default(0),
+    skyline: SkylineAnalysisSchema.optional().nullable(),
 }).passthrough()
 
 export const AutoAdjustmentResultSchema = z.object({

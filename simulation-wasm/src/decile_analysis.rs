@@ -130,6 +130,7 @@ pub struct AggregateOutput {
     pub stars: usize,
     pub tdnw: f64, // Total Daily Net Worth
     pub num_encounters: usize,
+    pub skyline: Option<crate::percentile_analysis::SkylineAnalysis>,
 }
 
 fn extract_combatant_visualization_partial(result: &SimulationResult, encounter_idx: Option<usize>) -> (Vec<CombatantVisualization>, usize) {
@@ -494,12 +495,18 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
             analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
             tdnw: 0.0,
             num_encounters: 0,
+            skyline: None,
         };
     }
 
     let tdnw = calculate_tdnw(results[0]);
     let num_encounters = results[0].encounters.len();
     
+    // Compute skyline analysis (100 buckets)
+    // results are already sorted by overall score
+    let owned_results: Vec<SimulationResult> = results.iter().map(|&r| r.clone()).collect();
+    let skyline = Some(crate::percentile_analysis::run_skyline_analysis(&owned_results, party_size, encounter_idx));
+
     // Collect all timelines for independent percentile calculation
     let mut all_vits = Vec::with_capacity(results.len());
     let mut all_pows = Vec::with_capacity(results.len());
@@ -689,6 +696,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
         tdnw,
         num_encounters,
+        skyline,
     }
 }
 
