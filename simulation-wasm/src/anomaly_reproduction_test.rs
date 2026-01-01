@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
     use crate::model::*;
-    use crate::execution::ActionExecutionEngine;
     use crate::safe_aggregation::aggregate_results_safe;
     use crate::simulation::run_single_event_driven_simulation;
     use crate::enums::EnemyTarget;
@@ -75,8 +74,8 @@ mod tests {
 
         let iterations = 10;
         let mut results = Vec::new();
-        
-        for i in 0..iterations {
+
+        for _i in 0..iterations {
             let (res, _) = run_single_event_driven_simulation(&players, &timeline, true);
             results.push(res);
         }
