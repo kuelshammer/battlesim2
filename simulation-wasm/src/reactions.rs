@@ -723,6 +723,7 @@ mod tests {
     }
 
     // Helper function to create a test TurnContext
+    #[allow(dead_code)]
     fn create_test_context() -> crate::context::TurnContext {
         use crate::model::{Creature, Combattant};
 

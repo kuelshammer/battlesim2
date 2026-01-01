@@ -57,6 +57,7 @@ fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &
     }
 }
 
+#[allow(dead_code)]
 fn create_test_timeline(num_encounters: usize) -> Vec<TimelineStep> {
     (0..num_encounters).map(|_| {
         TimelineStep::Combat(Encounter {
@@ -150,13 +151,14 @@ fn test_survey_pass_seeds_are_unique() {
         create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
     ];
     let timeline = create_simple_timeline();
-    let iterations = 50;
+    let iterations = 100;
+    let expected = 100;
 
     let results = run_survey_pass(players, timeline, iterations, None);
 
     // All seeds should be unique
     let seeds: std::collections::HashSet<_> = results.iter().map(|r| r.seed).collect();
-    assert_eq!(seeds.len(), iterations, "All seeds should be unique");
+    assert_eq!(seeds.len(), expected, "All seeds should be unique");
 }
 
 #[test]
@@ -298,11 +300,13 @@ fn test_two_pass_consistency() {
         create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
     ];
     let timeline = create_simple_timeline();
-    let iterations = 50;
+    let iterations = 100;
+    let expected = 100;
     let base_seed = Some(77777);
 
     // Run survey pass
     let lightweight_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, base_seed);
+    assert_eq!(lightweight_runs.len(), expected);
 
     // Select interesting seeds
     let interesting_seeds = select_interesting_seeds_with_tiers(&lightweight_runs);

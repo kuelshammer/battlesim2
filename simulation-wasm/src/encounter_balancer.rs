@@ -157,7 +157,7 @@ pub enum TuningKnob {
 ///
 /// # Returns
 /// Adjusted encounter copy
-pub fn adjust_encounter_parameter(encounter: &Encounter, knob: TuningKnob, amount: f64) -> Encounter {
+pub fn adjust_encounter_parameter(encounter: &Encounter, knob: TuningKnob, _amount: f64) -> Encounter {
     let mut adjusted = encounter.clone();
 
     match knob {
@@ -530,7 +530,6 @@ mod tests {
 
         // Should have some drain based on CR
         assert!(metrics.resource_drain_percent >= 0.0);
-        assert!(metrics.deaths_p1 >= 0);
         assert!(metrics.party_size == 4);
     }
 
