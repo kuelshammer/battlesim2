@@ -15,7 +15,6 @@ import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { getFinalAction } from "@/data/actions"
-import DecileAnalysis from "./decileAnalysis"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
@@ -93,7 +92,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [loading, setLoading] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [showLogModal, setShowLogModal] = useState(false)
-    const [showDecileModal, setShowDecileModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     const [selectedDecileIndex, setSelectedDecileIndex] = useState<number>(5) // Default to 50% Median
     const [runTour, setRunTour] = useState(false)
@@ -521,15 +519,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                             <FontAwesomeIcon icon={faEye} />
                                                             Show Log
                                                         </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedEncounterIndex(index);
-                                                                setShowDecileModal(true);
-                                                            }}
-                                                            className={styles.showDecileButton}>
-                                                            <FontAwesomeIcon icon={faChartLine} />
-                                                            Show Decile Analysis
-                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -550,12 +539,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                 Add Short Rest
                                             </button>
                                         </div>
-{/* Decile Analysis Display */}
-                    {worker.analysis && (
-                        <div className="decile-chart-section">
-                            <DecileAnalysis analysis={worker.analysis.overall} />
-                        </div>
-                    )}
 
                     {/* Skyline Spectrogram Display */}
                     {worker.analysis?.overall?.skyline && (
@@ -623,25 +606,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             }}
                             onEditingChange={setIsEditing}
                         />
-                    )}
-
-                    {/* Decile Analysis Modal */}
-                    {showDecileModal && selectedEncounterIndex !== null && (
-                        <div className={styles.logModalOverlay}>
-                            <div className={styles.logModal}>
-                                <div className={styles.modalHeader}>
-                                    <h3>Decile Analysis - Encounter {selectedEncounterIndex + 1}</h3>
-                                    <button 
-                                        onClick={() => setShowDecileModal(false)}
-                                        className={styles.closeButton}>
-                                        <FontAwesomeIcon icon={faTimes} />
-                                    </button>
-                                </div>
-                                <div className={styles.logBody}>
-                                    <DecileAnalysis analysis={worker.analysis?.encounters?.[selectedEncounterIndex] ?? null} />
-                                </div>
-                            </div>
-                        </div>
                     )}
 
                     {/* Adjustment Preview Modal */}
