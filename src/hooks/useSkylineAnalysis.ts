@@ -76,11 +76,9 @@ export function useSkylineAnalysis(
 
         try {
             // Call WASM function to generate Skyline data
-            // Note: results need to be sorted by score (worst to best) for correct percentile buckets
-            const sortedResults = [...results].sort((a, b) => a.score - b.score);
-
+            // WASM will handle sorting by encounter-specific score when encounterIndex is provided
             const wasmResult = simulation_wasm.run_skyline_analysis_wasm(
-                sortedResults,
+                results,
                 partySize,
                 encounterIndex
             );
@@ -153,9 +151,9 @@ export function useSkylineAnalysisDebounced(
         // Debounce the analysis
         timeoutRef.current = setTimeout(() => {
             try {
-                const sortedResults = [...results].sort((a, b) => a.score - b.score);
+                // WASM will handle sorting by encounter-specific score when encounterIndex is provided
                 const wasmResult = simulation_wasm.run_skyline_analysis_wasm(
-                    sortedResults,
+                    results,
                     options.partySize,
                     options.encounterIndex
                 );
