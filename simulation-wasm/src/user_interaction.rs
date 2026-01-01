@@ -194,10 +194,10 @@ pub struct UserInteractionManager {
 impl UserInteractionManager {
     /// Create a new user interaction manager
     pub fn new(
-        display_manager: Arc<Mutex<DisplayManager>>,
-        progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-        queue_manager: Arc<Mutex<QueueManager>>,
-        config: UserInteractionConfig,
+        _display_manager: Arc<Mutex<DisplayManager>>,
+        _progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+        _queue_manager: Arc<Mutex<QueueManager>>,
+        _config: UserInteractionConfig,
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
