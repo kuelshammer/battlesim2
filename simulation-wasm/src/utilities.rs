@@ -1,7 +1,6 @@
 use crate::dice;
 use crate::model::Creature;
 use crate::rng; // Import rng module
-use rand::Rng; // Import Rng trait for gen_range
 use std::hash::{Hash, Hasher};
 
 pub fn hash_f64<H: Hasher>(val: f64, state: &mut H) {
