@@ -1,10 +1,10 @@
 use simulation_wasm::decile_analysis::run_decile_analysis;
-use simulation_wasm::model::{Creature, Encounter, SimulationResult};
+use simulation_wasm::model::{Creature, SimulationResult};
 use std::collections::HashMap;
 
 #[test]
 fn test_decile_analysis_median_run_visualization() {
-    let mut players: Vec<Creature> = Vec::new();
+    let _players: Vec<Creature> = Vec::new();
 
     // Create a dummy result set
     let scenario_name = "Test Scenario";
@@ -34,7 +34,7 @@ fn test_decile_analysis_median_run_visualization() {
 
 #[test]
 fn test_star_ratings() {
-    use simulation_wasm::decile_analysis::{run_decile_analysis, IntensityTier};
+    use simulation_wasm::decile_analysis::run_decile_analysis;
     
     // Test Tier 4 -> 3 Stars
     let mut results: Vec<SimulationResult> = Vec::new();
@@ -62,14 +62,13 @@ fn test_star_ratings() {
 fn test_intensity_regression_high_penalty() {
     use simulation_wasm::decile_analysis::run_decile_analysis;
     use simulation_wasm::model::*;
-    use std::collections::HashMap;
 
     // Create a mock run: 2 fighters, both survive but heavily damaged and high penalty.
     // Max HP: 145. Remaining HP: 100. Attrition: 45.
     // Survivors: 2.
     // Score should be (2 * 1,000,000) + 100 - 0 (monsters) - 150 (penalty) = 1,999,950.
-    
-    let mut fighter = Creature {
+
+    let fighter = Creature {
         id: "f".to_string(), name: "f".to_string(), hp: 75, ac: 10, count: 2.0,
         arrival: None, mode: "p".to_string(), speed_fly: None, save_bonus: 0.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
@@ -80,7 +79,7 @@ fn test_intensity_regression_high_penalty() {
         hit_dice: None, con_modifier: None,
     };
 
-    let mut encounter_res = EncounterResult {
+    let encounter_res = EncounterResult {
         stats: HashMap::new(),
         rounds: vec![Round {
             team1: vec![
@@ -158,7 +157,7 @@ fn test_resource_timeline_points() {
     use simulation_wasm::model::*;
     use std::collections::HashMap;
 
-    let mut fighter = Creature {
+    let fighter = Creature {
         id: "f".to_string(), name: "f".to_string(), hp: 100, ac: 10, count: 1.0,
         arrival: None, mode: "p".to_string(), speed_fly: None, save_bonus: 0.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,

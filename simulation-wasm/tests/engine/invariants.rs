@@ -7,10 +7,13 @@ use simulation_wasm::model::{EncounterResult, SimulationResult};
 use simulation_wasm::events::Event;
 
 /// Check that no combatant has negative HP (below 0 = dead, not negative)
+#[allow(dead_code)]
 pub fn assert_no_negative_hp(result: &EncounterResult) -> Result<(), String> {
     for round in &result.rounds {
         for combatant in round.team1.iter().chain(round.team2.iter()) {
-            if combatant.final_state.current_hp < 0 {
+            // current_hp is unsigned (usize), so this check is always false
+            // Kept for documentation purposes of what we're ensuring
+            if false {
                 return Err(format!(
                     "Negative HP detected: {} has {:.1} HP",
                     combatant.id, combatant.final_state.current_hp
@@ -22,6 +25,7 @@ pub fn assert_no_negative_hp(result: &EncounterResult) -> Result<(), String> {
 }
 
 /// Check that all resource values are non-negative
+#[allow(dead_code)]
 pub fn assert_no_negative_resources(result: &EncounterResult) -> Result<(), String> {
     for round in &result.rounds {
         for combatant in round.team1.iter().chain(round.team2.iter()) {
@@ -39,6 +43,7 @@ pub fn assert_no_negative_resources(result: &EncounterResult) -> Result<(), Stri
 }
 
 /// Check that damage dealt equals damage taken (conservation of energy)
+#[allow(dead_code)]
 pub fn assert_damage_conservation(events: &[Event]) -> Result<(), String> {
     let mut total_damage_dealt: f64 = 0.0;
     let mut total_damage_taken: f64 = 0.0;
@@ -49,7 +54,7 @@ pub fn assert_damage_conservation(events: &[Event]) -> Result<(), String> {
                 total_damage_dealt += damage;
                 total_damage_taken += damage;
             }
-            Event::DamageTaken { damage, .. } => {
+            Event::DamageTaken { .. } => {
                 // DamageTaken events are usually redundant with AttackHit
                 // but we track them separately for validation
             }
@@ -70,6 +75,7 @@ pub fn assert_damage_conservation(events: &[Event]) -> Result<(), String> {
 }
 
 /// Check that event sequence is valid (no impossible state transitions)
+#[allow(dead_code)]
 pub fn assert_event_sequence_valid(events: &[Event]) -> Result<(), String> {
     use std::collections::HashSet;
 
@@ -108,6 +114,7 @@ pub fn assert_event_sequence_valid(events: &[Event]) -> Result<(), String> {
 }
 
 /// Check that action economy is respected (max 1 action/turn per combatant)
+#[allow(dead_code)]
 pub fn assert_action_economy(events: &[Event]) -> Result<(), String> {
     use std::collections::HashMap;
 
@@ -126,6 +133,7 @@ pub fn assert_action_economy(events: &[Event]) -> Result<(), String> {
 }
 
 /// Run all invariant checks on a simulation result
+#[allow(dead_code)]
 pub fn assert_all_invariants(result: &SimulationResult) -> Result<(), String> {
     // Check each encounter
     for (idx, encounter) in result.encounters.iter().enumerate() {
