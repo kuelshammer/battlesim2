@@ -422,13 +422,13 @@ fn apply_short_rest_standalone(
                     c.current_hp = 1;
                 }
             }
-            
+
             let max_hp = player.creature.hp;
             let heal_amount = (max_hp / 4).max(1);
-            
+
             // Apply healing through TurnContext (unified method)
-            let heal_event = context.apply_healing(&player.id, heal_amount as f64, false, &player.id);
-            
+            let _heal_event = context.apply_healing(&player.id, heal_amount as f64, false, &player.id);
+
             // Add resource consumption event for Hit Dice
             context.record_event(crate::events::Event::ResourceConsumed {
                 unit_id: player.id.clone(),
