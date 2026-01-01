@@ -96,30 +96,32 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
 
                 const x = offsetX + bucketIdx * effectiveBucketWidth
 
-                // HP bar (left bar in each bucket)
+                // HP bar (left bar) - grows UP from bottom axis
+                // Green at bottom (remaining HP), red on top (damage taken)
                 const hpHeight = (charData.hpPercent / 100) * cellHeight
                 const damageHeight = cellHeight - hpHeight
 
-                // Draw damage (red, bottom)
-                ctx.fillStyle = colors.red
-                ctx.fillRect(x, offsetY + cellHeight - damageHeight, effectiveBarWidth, damageHeight)
-
-                // Draw remaining HP (green, top)
+                // Draw green (remaining HP) from bottom
                 ctx.fillStyle = colors.green
-                ctx.fillRect(x, offsetY, effectiveBarWidth, hpHeight)
+                ctx.fillRect(x, offsetY + cellHeight - hpHeight, effectiveBarWidth, hpHeight)
 
-                // Resources bar (right bar in each bucket)
+                // Draw red (damage taken) on top of green
+                ctx.fillStyle = colors.red
+                ctx.fillRect(x, offsetY, effectiveBarWidth, damageHeight)
+
+                // Resources bar (right bar) - grows DOWN from top axis
+                // Blue near axis (remaining resources), yellow away (used resources)
                 const resX = x + effectiveBarWidth + effectiveGapWidth
                 const resHeight = (charData.resourcePercent / 100) * cellHeight
                 const usedHeight = cellHeight - resHeight
 
-                // Draw used resources (yellow, bottom)
-                ctx.fillStyle = colors.yellow
-                ctx.fillRect(resX, offsetY + cellHeight - usedHeight, effectiveBarWidth, usedHeight)
-
-                // Draw remaining resources (blue, top)
+                // Draw blue (remaining resources) from top
                 ctx.fillStyle = colors.blue
                 ctx.fillRect(resX, offsetY, effectiveBarWidth, resHeight)
+
+                // Draw yellow (used resources) below blue
+                ctx.fillStyle = colors.yellow
+                ctx.fillRect(resX, offsetY + resHeight, effectiveBarWidth, usedHeight)
             })
 
             // Draw X-axis labels (every 20 buckets)
@@ -135,10 +137,10 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
         // Draw legend
         const legendY = height - 15
         const legendItems = [
-            { color: colors.green, label: 'HP' },
-            { color: colors.red, label: 'Damage' },
-            { color: colors.blue, label: 'Resources' },
-            { color: colors.yellow, label: 'Used' }
+            { color: colors.green, label: 'HP (remaining)' },
+            { color: colors.red, label: 'Damage taken' },
+            { color: colors.blue, label: 'Resources (remaining)' },
+            { color: colors.yellow, label: 'Resources used' }
         ]
 
         legendItems.forEach((item, idx) => {
