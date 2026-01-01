@@ -128,10 +128,14 @@ const SkylinePlayerStats: FC<SkylinePlayerStatsProps> = memo(({ skyline, players
 
     return (
         <div className={styles.skylineStats}>
-            <h4>Skyline Analysis (Median Run)</h4>
+            <h4>Skyline HD (Median Run)</h4>
             <div className={styles.skylineStatsGrid}>
                 {players.map(player => {
-                    const charData = medianBucket.characters.find(c => c.id === player.creature.id);
+                    // Try ID match first, fallback to name match
+                    let charData = medianBucket.characters.find(c => c.id === player.creature.id);
+                    if (!charData) {
+                        charData = medianBucket.characters.find(c => c.name === player.creature.name);
+                    }
                     if (!charData) return null;
 
                     const hpColor = valueToColor(charData.hpPercent, DEFAULT_SKYLINE_COLORS);
@@ -216,6 +220,10 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
             <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
             <div className={styles.detailsSection}>
+                {analysis?.skyline && hasRounds && value && lastRound && (
+                    <SkylinePlayerStats skyline={analysis.skyline} players={lastRound.team1} />
+                )}
+
                 <button
                     className={styles.detailsToggle}
                     onClick={() => setDetailsExpanded(!detailsExpanded)}
@@ -233,7 +241,6 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
                                 <TeamResults round={lastRound} team={lastRound.team2} stats={value.stats} />
                             </div>
                         </div>
-                        <SkylinePlayerStats skyline={analysis?.skyline || null} players={lastRound.team1} />
                     </div>
                 )}
             </div>
