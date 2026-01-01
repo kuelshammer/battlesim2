@@ -9,7 +9,8 @@ import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
 import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
-import { SkylineAnalysis, CharacterBucketData, valueToColor, DEFAULT_SKYLINE_COLORS } from "@/model/skylineTypes"
+import SkylineHeatmap from "./SkylineHeatmap"
+import { SkylineAnalysis } from "@/model/model"
 
 type TeamPropType = {
     round: Round,
@@ -114,68 +115,6 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
     )
 })
 
-// Skyline stats display for players (HD = Heat & Drain)
-type SkylinePlayerStatsProps = {
-    skyline: SkylineAnalysis | null | undefined;
-    players: Combattant[];
-}
-
-const SkylinePlayerStats: FC<SkylinePlayerStatsProps> = memo(({ skyline, players }) => {
-    if (!skyline || !skyline.buckets.length) return null;
-
-    // Get median bucket (50th percentile = index 49)
-    const medianBucket = skyline.buckets[49];
-
-    return (
-        <div className={styles.skylineStats}>
-            <h4>Skyline HD (Median Run)</h4>
-            <div className={styles.skylineStatsGrid}>
-                {players.map(player => {
-                    // Try ID match first, fallback to name match
-                    let charData = medianBucket.characters.find(c => c.id === player.creature.id);
-                    if (!charData) {
-                        charData = medianBucket.characters.find(c => c.name === player.creature.name);
-                    }
-                    if (!charData) return null;
-
-                    const hpColor = valueToColor(charData.hpPercent, DEFAULT_SKYLINE_COLORS);
-                    const resourceColor = valueToColor(charData.resourcePercent, DEFAULT_SKYLINE_COLORS);
-
-                    return (
-                        <div key={player.creature.id} className={styles.skylineStatCard}>
-                            <div className={styles.skylineStatName}>{player.creature.name}</div>
-                            <div className={styles.skylineStatRow}>
-                                <span className={styles.skylineStatLabel}>HP:</span>
-                                <span
-                                    className={styles.skylineStatValue}
-                                    style={{ backgroundColor: hpColor, color: charData.hpPercent < 50 ? '#fff' : '#000' }}
-                                >
-                                    {charData.hpPercent.toFixed(0)}%
-                                </span>
-                            </div>
-                            <div className={styles.skylineStatRow}>
-                                <span className={styles.skylineStatLabel}>Resources:</span>
-                                <span
-                                    className={styles.skylineStatValue}
-                                    style={{ backgroundColor: resourceColor, color: charData.resourcePercent < 50 ? '#fff' : '#000' }}
-                                >
-                                    {charData.resourcePercent.toFixed(0)}%
-                                </span>
-                            </div>
-                            <div className={styles.skylineStatRow}>
-                                <span className={styles.skylineStatLabel}>Hit Dice:</span>
-                                <span className={styles.skylineStatText}>
-                                    {charData.resourceBreakdown.hitDice}/{charData.resourceBreakdown.hitDiceMax}
-                                </span>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-});
-
 type PropType = {
     value?: EncounterResultType,
     analysis?: AggregateOutput | null,
@@ -221,7 +160,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
 
             <div className={styles.detailsSection}>
                 {analysis?.skyline && hasRounds && value && lastRound && (
-                    <SkylinePlayerStats skyline={analysis.skyline} players={lastRound.team1} />
+                    <SkylineHeatmap skyline={analysis.skyline} players={lastRound.team1} />
                 )}
 
                 <button
