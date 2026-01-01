@@ -106,7 +106,8 @@ pub struct BackgroundSimulation {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl BackgroundSimulation {
-    pub fn new(parameters: ScenarioParameters, priority: SimulationPriority) -> Self {
+    pub fn new(mut parameters: ScenarioParameters, priority: SimulationPriority) -> Self {
+        parameters.iterations = parameters.iterations.max(100);
         let id = BackgroundSimulationId::new();
         let progress = Arc::new(Mutex::new(SimulationProgress::new(id.clone(), parameters.iterations)));
 
@@ -216,11 +217,12 @@ impl BackgroundSimulationEngine {
     #[cfg(not(target_arch = "wasm32"))]
     fn run_simulation_worker(
         _simulation_id: BackgroundSimulationId,
-        parameters: ScenarioParameters,
+        mut parameters: ScenarioParameters,
         progress: Arc<Mutex<SimulationProgress>>,
         cancellation_requested: Arc<Mutex<bool>>,
         progress_sender: mpsc::Sender<SimulationProgress>,
     ) {
+        parameters.iterations = parameters.iterations.max(100);
         let start_time = Instant::now();
         let mut results = Vec::new();
         let mut error_message: Option<String> = None;

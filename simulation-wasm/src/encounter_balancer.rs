@@ -69,15 +69,17 @@ pub fn calculate_required_isolated_tier(
 
 /// Project encounter metrics by running simulations
 ///
-/// Runs the actual simulation engine to get percentile death rates and resource drain.
+    /// Runs the actual simulation engine to get percentile death rates and resource drain.
 pub fn project_encounter_metrics(
     encounter: &Encounter,
     party: &[crate::model::Creature],
     iterations: usize,
 ) -> EncounterMetrics {
     use crate::simulation::run_single_lightweight_simulation;
+    let iterations = iterations.max(100);
 
     // Create a single-encounter timeline
+
     let timeline = vec![TimelineStep::Combat(encounter.clone())];
 
     // Track deaths across all runs

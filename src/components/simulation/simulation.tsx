@@ -41,7 +41,7 @@ const emptyCombat: TimelineEvent = {
     targetRole: 'Standard',
 }
 
-const FAST_ITERATIONS = 31;
+const FAST_ITERATIONS = 100;
 const PRECISE_ITERATIONS = 2511;
 
 // Sanitization helper: Fix duplicate IDs in players array

@@ -40,7 +40,7 @@ describe('SimulationWorker', () => {
   });
 
   it('should use ChunkedSimulationRunner with correct iterations', async () => {
-    const iterations = 31;
+    const iterations = 100;
     const event = {
       data: {
         type: 'START_SIMULATION',

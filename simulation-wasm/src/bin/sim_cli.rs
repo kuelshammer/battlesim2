@@ -89,8 +89,8 @@ enum Commands {
     BatchLog {
         /// Path to the scenario JSON file
         scenario: PathBuf,
-        /// Number of runs to generate (default 10)
-        #[arg(short, long, default_value = "10")]
+        /// Number of runs to generate (default 100)
+        #[arg(short, long, default_value = "100")]
         count: usize,
     },
 }
@@ -226,13 +226,10 @@ fn run_aggregate(scenario_path: &PathBuf) {
 fn run_log(scenario_path: &PathBuf, format: &str, run_index: Option<usize>) {
     let (players, timeline, _) = load_scenario(scenario_path);
 
-    // If run_index is provided, run that many + 1 and pick the specific one
-    // Otherwise, run a single simulation with logging enabled
-    let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players, timeline, idx + 1, true, None)
-    } else {
-        run_event_driven_simulation_rust(players, timeline, 1, true, None)
-    };
+    // If run_index is provided, run that many + 1 (min 100) and pick the specific one
+    // Otherwise, run 100 simulations with logging enabled
+    let iterations = run_index.map(|idx| (idx + 1).max(100)).unwrap_or(100);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations, true, None);
 
     if runs.is_empty() {
         println!("No simulation results!");
@@ -444,12 +441,8 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
     let (players, timeline, _) = load_scenario(scenario_path);
 
     // Run simulation
-    let _idx = run_index.unwrap_or(0);
-    let runs = if let Some(idx) = run_index {
-        run_event_driven_simulation_rust(players.clone(), timeline.clone(), idx + 1, true, None)
-    } else {
-        run_event_driven_simulation_rust(players.clone(), timeline.clone(), 1, true, None)
-    };
+    let iterations = run_index.map(|idx| (idx + 1).max(100)).unwrap_or(100);
+    let runs = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, true, None);
 
     // Extract results and events from the runs
     let results: Vec<SimulationResult> = runs.iter().map(|run| run.result.clone()).collect();

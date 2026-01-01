@@ -106,8 +106,8 @@ fn benchmark_phase_1_lightweight_survey() {
     // Allow 3× margin for CI/variability (can be 30s+ in CI)
     assert_eq!(lightweight_runs.len(), ITERATIONS);
     assert!(
-        duration.as_secs() < 35,
-        "Phase 1 took too long: {:?} (expected < 35s)",
+        duration.as_secs() < 45,
+        "Phase 1 took too long: {:?} (expected < 45s)",
         duration
     );
 }

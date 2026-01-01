@@ -26,11 +26,11 @@ describe('useSimulationWorker', () => {
     const { result } = renderHook(() => useSimulationWorker());
     
     act(() => {
-      result.current.runSimulation([], [], 31);
+      result.current.runSimulation([], [], 100);
     });
 
     expect(result.current.isRunning).toBe(true);
-    expect(result.current.currentIterations).toBe(31);
+    expect(result.current.currentIterations).toBe(100);
   });
 
   it('should default to 2511 iterations if not specified', () => {

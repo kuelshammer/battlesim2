@@ -41,6 +41,7 @@ pub struct ChunkedSimulationRunner {
 impl ChunkedSimulationRunner {
     #[wasm_bindgen(constructor)]
     pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>) -> Result<ChunkedSimulationRunner, JsValue> {
+        let iterations = iterations.max(100);
         let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -226,6 +227,7 @@ pub fn should_force_lightweight_mode(iterations: usize) -> bool {
 
 #[wasm_bindgen]
 pub fn run_simulation_wasm(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+    let iterations = iterations.max(100);
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -256,6 +258,7 @@ pub fn run_simulation_with_callback(
     iterations: usize,
     callback: &js_sys::Function,
 ) -> Result<JsValue, JsValue> {
+    let iterations = iterations.max(100);
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -414,6 +417,7 @@ static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[wasm_bindgen]
 pub fn run_event_driven_simulation(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
+    let iterations = iterations.max(100);
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -479,6 +483,7 @@ pub fn run_simulation_wasm_rolling_stats(
     iterations: usize,
     seed: Option<u64>,
 ) -> Result<JsValue, JsValue> {
+    let iterations = iterations.max(100);
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -506,10 +511,11 @@ pub fn run_batch_simulation_wasm(
 
     for job in request.jobs {
         // Use the new three-tier system with 1% granularity
+        let iterations = job.iterations.max(100);
         let summary = crate::two_pass::run_simulation_with_three_tier(
             job.players,
             job.timeline,
-            job.iterations,
+            iterations,
             false,
             job.seed,
         );
@@ -542,10 +548,11 @@ pub fn run_batch_simulation_with_callback(
 
     for (i, job) in request.jobs.into_iter().enumerate() {
         // Use the new three-tier system with 1% granularity
+        let iterations = job.iterations.max(100);
         let summary = crate::two_pass::run_simulation_with_three_tier(
             job.players,
             job.timeline,
-            job.iterations,
+            iterations,
             false,
             job.seed,
         );
@@ -636,6 +643,7 @@ pub fn run_event_driven_simulation_rust(
     _log_enabled: bool,
     seed: Option<u64>,
 ) -> Vec<crate::model::SimulationRun> {
+    let iterations = iterations.max(100);
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     let _ = console_log::init_with_level(log::Level::Info);
 

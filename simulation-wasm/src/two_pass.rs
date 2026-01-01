@@ -43,6 +43,7 @@ pub fn run_simulation_with_rolling_stats(
     _log_enabled: bool,
     seed: Option<u64>,
 ) -> crate::model::SimulationSummary {
+    let iterations = iterations.max(100);
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     let _ = console_log::init_with_level(log::Level::Info);
 
@@ -159,6 +160,7 @@ pub fn run_simulation_with_three_tier(
     _log_enabled: bool,
     seed: Option<u64>,
 ) -> crate::model::SimulationSummary {
+    let iterations = iterations.max(100);
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     let _ = console_log::init_with_level(log::Level::Info);
 
