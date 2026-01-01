@@ -8,6 +8,7 @@ use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteraction
 #[cfg(not(target_arch = "wasm32"))]
 use crate::background_simulation::BackgroundSimulationEngine;
 use crate::queue_manager::{QueueManager, QueueManagerConfig};
+use crate::aggregation::{calculate_score, calculate_encounter_score};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock, PoisonError, Arc};
 
@@ -613,12 +614,32 @@ pub fn run_skyline_analysis_wasm(
     let mut results: Vec<SimulationResult> = serde_wasm_bindgen::from_value(results)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse results: {}", e)))?;
 
-    // Sort results by score (worst to best)
-    results.sort_by(|a, b| {
-        let score_a = crate::aggregation::calculate_score(a);
-        let score_b = crate::aggregation::calculate_score(b);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
-    });
+    // Sort results by the appropriate score (per-encounter or overall)
+    if let Some(idx) = encounter_index {
+        // Sort by this specific encounter's score
+        results.sort_by(|a, b| {
+            let encounter_a = a.encounters.get(idx);
+            let encounter_b = b.encounters.get(idx);
+
+            match (encounter_a, encounter_b) {
+                (Some(ea), Some(eb)) => {
+                    let score_a = calculate_encounter_score(ea);
+                    let score_b = calculate_encounter_score(eb);
+                    score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+                }
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => std::cmp::Ordering::Equal,
+            }
+        });
+    } else {
+        // Sort by overall score
+        results.sort_by(|a, b| {
+            let score_a = calculate_score(a);
+            let score_b = calculate_score(b);
+            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+    }
 
     // Run skyline analysis
     let analysis = crate::percentile_analysis::run_skyline_analysis(

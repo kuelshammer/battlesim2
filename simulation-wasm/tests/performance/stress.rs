@@ -72,11 +72,12 @@ fn test_fast_simulation_iterations() {
     })];
 
     let iterations = 31;
+    let expected = 100;
     let runs = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, false, None);
 
-    assert_eq!(runs.len(), iterations, "Should have exactly 31 runs");
+    assert_eq!(runs.len(), expected, "Should have exactly 100 runs (minimum enforced)");
 
-    // Check decile analysis works with 31 runs
+    // Check decile analysis works with 100 runs
     let results: Vec<_> = runs.iter().map(|r| r.result.clone()).collect();
     let analysis = run_decile_analysis(&results, "Fast Test", 1);
 

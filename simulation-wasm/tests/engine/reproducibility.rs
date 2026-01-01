@@ -7,12 +7,13 @@ use crate::common::load_scenario;
 fn test_two_pass_reproducibility() {
     let (players, timeline) = load_scenario("fast_init_PlayerA_wins.json");
     let base_seed = 12345;
-    let iterations = 50;
+    let iterations = 100; // Minimum enforced
+    let expected = 100;
 
     // 1. Run Survey Pass (Phase 1)
     let survey_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, Some(base_seed));
 
-    assert_eq!(survey_runs.len(), iterations, "Should have correct number of survey runs");
+    assert_eq!(survey_runs.len(), expected, "Should have 100 survey runs (minimum enforced)");
 
     // 2. Pick specific indices to verify
     // We verify start, middle, and end to ensure RNG offset is correct
@@ -58,9 +59,11 @@ fn test_reproducibility_complex_mechanics() {
     // Using a scenario with more variables (damage vs precision) to test deeper mechanics
     let (players, timeline) = load_scenario("damage_vs_precision_MonsterB_wins.json");
     let base_seed = 999;
-    let iterations = 20;
+    let iterations = 100; // Minimum enforced
+    let expected = 100;
 
     let survey_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, Some(base_seed));
+    assert_eq!(survey_runs.len(), expected);
 
     for (index, lightweight_run) in survey_runs.iter().enumerate() {
         let expected_seed = base_seed + index as u64;

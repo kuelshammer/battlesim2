@@ -91,8 +91,8 @@ fn measure_structure_sizes() {
 fn estimate_memory_for_iterations() {
     let (players, timeline) = create_test_scenario();
 
-    // Run a small number of iterations to get a baseline
-    let iterations = 10;
+    // Run 100 iterations to get a baseline (minimum enforced)
+    let iterations = 100;
     let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, Some(42));
 
     // Calculate theoretical memory based on structure sizes and content
@@ -146,12 +146,13 @@ fn estimate_memory_for_iterations() {
 fn test_small_iteration_count() {
     let (players, timeline) = create_test_scenario();
 
-    // Fast iterations (31) should work fine
-    let iterations = 31;
-    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, Some(42));
+    // Requested 31, but should get 100 (enforced minimum)
+    let requested = 31;
+    let expected = 100;
+    let runs = run_event_driven_simulation_rust(players, timeline, requested, false, Some(42));
 
-    assert_eq!(runs.len(), iterations);
-    println!("✓ {} iterations completed successfully", iterations);
+    assert_eq!(runs.len(), expected);
+    println!("✓ Requested {} iterations, received {} (minimum enforced)", requested, runs.len());
 }
 
 #[test]
@@ -190,6 +191,7 @@ fn demonstrate_memory_growth() {
     println!("=== Memory Growth Demonstration ===");
 
     for iterations in [10, 50, 100, 500] {
+        let actual_expected = iterations.max(100);
         let start = std::time::Instant::now();
         let runs = run_event_driven_simulation_rust(
             players.clone(),
@@ -219,7 +221,7 @@ fn demonstrate_memory_growth() {
             iterations,
             total_size,
             elapsed.as_millis(),
-            total_size / iterations,
+            total_size / actual_expected,
             total_size as f64 / (1024.0 * 1024.0)
         );
     }
