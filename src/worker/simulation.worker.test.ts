@@ -56,9 +56,10 @@ describe('SimulationWorker', () => {
       expect.anything(),
       expect.anything(),
       iterations,
-      undefined
+      undefined,
+      undefined  // preciseMode parameter
     );
-    
+
     // We can't easily access the internal mock instances from outside if they are defined inside vi.mock
     // but the test above already verifies the constructor call which is the most important part.
   });

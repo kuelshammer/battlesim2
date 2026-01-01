@@ -373,9 +373,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                     )}
                                 </div>
                                 {worker.currentIterations <= FAST_ITERATIONS && (
-                                    <button 
+                                    <button
                                         className={styles.preciseButton}
-                                        onClick={() => worker.runSimulation(players, timeline, PRECISE_ITERATIONS)}
+                                        onClick={() => worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, true)}
                                         disabled={worker.isRunning}>
                                         Run Precise Sim
                                     </button>

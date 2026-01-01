@@ -36,13 +36,20 @@ pub struct ChunkedSimulationRunner {
     summarized_results: Vec<crate::model::SimulationResult>,
     lightweight_runs: Vec<crate::model::LightweightRun>,
     base_seed: u64,
+    precise_mode: bool,
 }
 
 #[wasm_bindgen]
 impl ChunkedSimulationRunner {
     #[wasm_bindgen(constructor)]
-    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>) -> Result<ChunkedSimulationRunner, JsValue> {
-        let iterations = iterations.max(100);
+    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>, precise_mode: Option<bool>) -> Result<ChunkedSimulationRunner, JsValue> {
+        let precise_mode = precise_mode.unwrap_or(false);
+        let iterations = if precise_mode {
+            10_100  // 101 runs × 100 percentile buckets for precise simulation
+        } else {
+            iterations.max(100)
+        };
+
         let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
@@ -56,6 +63,7 @@ impl ChunkedSimulationRunner {
             summarized_results: Vec::with_capacity(iterations),
             lightweight_runs: Vec::with_capacity(iterations),
             base_seed: seed.unwrap_or(0),
+            precise_mode,
         })
     }
 
@@ -88,7 +96,7 @@ impl ChunkedSimulationRunner {
                 first_death_encounter: None,
             });
 
-            self.summarized_results.push(crate::utils::summarize_result(result));
+            self.summarized_results.push(crate::utils::summarize_result(result, seed));
         }
 
         self.current_iteration = end;
@@ -138,24 +146,48 @@ impl ChunkedSimulationRunner {
         final_runs.sort_by(|a, b| {
             let score_a = crate::aggregation::calculate_score(&a.result);
             let score_b = crate::aggregation::calculate_score(&b.result);
-            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+            // Use seed as tie-breaker for deterministic sorting
+            score_a.partial_cmp(&score_b)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.result.seed.cmp(&b.result.seed))
         });
 
         let total_runs = final_runs.len();
-        let median_idx = total_runs / 2;
-        let decile = total_runs as f64 / 10.0;
-        let representative_indices = vec![
-            (decile * 0.5) as usize,
-            (decile * 2.5) as usize,
-            median_idx,
-            (decile * 7.5) as usize,
-            (decile * 9.5) as usize
-        ];
 
-        let mut reduced_results = Vec::new();
-        for &idx in &representative_indices {
-            if idx < total_runs { reduced_results.push(final_runs[idx].result.clone()); }
-        }
+        // In precise mode, return 100 bucket medians instead of representative runs
+        // Each bucket contains ~101 runs (10,100 / 100), median is at index 50
+        let reduced_results = if self.precise_mode {
+            let bucket_size = total_runs / 100;  // 101 items per bucket
+            let mut bucket_medians = Vec::with_capacity(100);
+
+            for percentile in 0..100 {
+                let start_idx = percentile * bucket_size;
+                let end_idx = start_idx + bucket_size;
+                let median_idx = start_idx + (bucket_size / 2);  // Index 50 of 101 items
+
+                if median_idx < total_runs {
+                    bucket_medians.push(final_runs[median_idx].result.clone());
+                }
+            }
+            bucket_medians
+        } else {
+            // Fast mode: return 5 representative runs (P5, P25, P50, P75, P95)
+            let median_idx = total_runs / 2;
+            let decile = total_runs as f64 / 10.0;
+            let representative_indices = vec![
+                (decile * 0.5) as usize,
+                (decile * 2.5) as usize,
+                median_idx,
+                (decile * 7.5) as usize,
+                (decile * 9.5) as usize
+            ];
+
+            let mut reps = Vec::new();
+            for &idx in &representative_indices {
+                if idx < total_runs { reps.push(final_runs[idx].result.clone()); }
+            }
+            reps
+        };
 
         let output = FullSimulationOutput {
             results: reduced_results,
@@ -164,7 +196,7 @@ impl ChunkedSimulationRunner {
                 encounters: encounters_analysis,
             },
             first_run_events: if median_run_events.is_empty() {
-                 final_runs[median_idx].events.clone()
+                 final_runs[total_runs / 2].events.clone()
             } else {
                  median_run_events
             },
@@ -306,7 +338,7 @@ pub fn run_simulation_with_callback(
             first_death_encounter: None, // Simplified for now
         });
 
-        summarized_results.push(crate::utils::summarize_result(result));
+        summarized_results.push(crate::utils::summarize_result(result, seed));
 
         let is_last_iteration = i == iterations - 1;
         if (i + 1) % batch_size == 0 || is_last_iteration {

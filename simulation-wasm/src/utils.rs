@@ -7,12 +7,13 @@ use crate::model::SimulationResult;
 ///
 /// This is used to minimize memory footprint when storing simulation runs for later analysis.
 /// For most visualization purposes, only the initial state (round 0) and final state are needed.
-pub fn summarize_result(mut result: SimulationResult) -> SimulationResult {
+pub fn summarize_result(mut result: SimulationResult, seed: u64) -> SimulationResult {
+    result.seed = seed;
     for encounter in &mut result.encounters {
         if encounter.rounds.len() > 2 {
             let first = encounter.rounds.first().cloned();
             let last = encounter.rounds.last().cloned();
-            
+
             if let (Some(f), Some(l)) = (first, last) {
                 encounter.rounds = vec![f, l];
             }

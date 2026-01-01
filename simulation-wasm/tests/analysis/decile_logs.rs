@@ -45,6 +45,7 @@ fn test_cumulative_log_sorting() {
                 encounters,
                 score: Some(i as f64), // Global score (matches E1)
                 num_combat_encounters: 2,
+                seed: i as u64,
             },
             events,
         });

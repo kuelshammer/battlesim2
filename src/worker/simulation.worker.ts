@@ -11,13 +11,13 @@ async function ensureWasmInitialized() {
 }
 
 export const handleMessage = async (e: MessageEvent) => {
-    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed } = e.data;
+    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed, preciseMode } = e.data;
 
     if (messageType === 'START_SIMULATION') {
         try {
             await ensureWasmInitialized();
 
-            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed);
+            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed, preciseMode);
             const CHUNK_SIZE = 500;
             
             const runChunk = () => {

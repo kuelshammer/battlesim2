@@ -86,6 +86,7 @@ fn create_test_simulation_result() -> SimulationResult {
         encounters: vec![encounter],
         score: Some(100.0),
         num_combat_encounters: 1,
+        seed: 0,
     }
 }
 
@@ -110,7 +111,7 @@ fn test_empty_result_handling() {
     }
     
     // Test safe score calculation with empty results
-    let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0 };
+    let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0, seed: 0 };
     match calculate_score_safe(&empty_result) {
         Err(SimulationError::EmptyResult(_)) => {
             // Expected behavior
@@ -279,7 +280,7 @@ fn test_safe_score_calculation() {
     }
     
     // Test with empty result
-    let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0 };
+    let empty_result = SimulationResult { encounters: vec![], score: None, num_combat_encounters: 0, seed: 0 };
     match calculate_score_safe(&empty_result) {
         Err(SimulationError::EmptyResult(_)) => {
             // Expected

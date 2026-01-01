@@ -1282,6 +1282,9 @@ pub struct SimulationRunData {
     pub score: Option<f64>,
     #[serde(rename = "numCombatEncounters", default)]
     pub num_combat_encounters: usize,
+    /// The RNG seed used for this run - enables exact reproduction
+    #[serde(default)]
+    pub seed: u64,
 }
 
 impl std::ops::Deref for SimulationRunData {

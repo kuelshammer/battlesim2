@@ -171,6 +171,9 @@ pub fn run_single_event_driven_simulation(
     timeline: &[crate::model::TimelineStep],
     _log_enabled: bool,
 ) -> (SimulationResult, Vec<crate::events::Event>) {
+    // Get the current RNG seed that was set before calling this function
+    // This ensures the seed is preserved in the result for reproducibility
+    let seed = crate::rng::get_current_seed();
     let mut all_events = Vec::new();
     let mut players_with_state = initialize_players(players);
 
@@ -235,6 +238,7 @@ pub fn run_single_event_driven_simulation(
         encounters: encounter_results,
         score: None,
         num_combat_encounters,
+        seed,
     };
 
     // Calculate efficiency score

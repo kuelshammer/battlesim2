@@ -10,6 +10,7 @@ use std::collections::VecDeque;
 
 thread_local! {
     static RNG: RefCell<Option<StdRng>> = RefCell::new(None);
+    static CURRENT_SEED: RefCell<u64> = RefCell::new(0);
     static FORCED_ROLLS: RefCell<VecDeque<(u32, u32)>> = RefCell::new(VecDeque::new()); // (sides, value)
 }
 
@@ -18,6 +19,14 @@ pub fn seed_rng(seed: u64) {
     RNG.with(|rng| {
         *rng.borrow_mut() = Some(StdRng::seed_from_u64(seed));
     });
+    CURRENT_SEED.with(|s| {
+        *s.borrow_mut() = seed;
+    });
+}
+
+/// Get the current seed value that was last used to seed the RNG
+pub fn get_current_seed() -> u64 {
+    CURRENT_SEED.with(|s| *s.borrow())
 }
 
 /// Clear any seeded RNG and forced rolls

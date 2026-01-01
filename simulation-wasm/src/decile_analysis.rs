@@ -462,10 +462,13 @@ pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize
 
 pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
     // 1. Sort the runs based on cumulative score up to encounter_idx
+    // Use seed as tie-breaker for deterministic results
     runs.sort_by(|a, b| {
         let score_a = crate::aggregation::calculate_cumulative_score(&a.result, encounter_idx);
         let score_b = crate::aggregation::calculate_cumulative_score(&b.result, encounter_idx);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+        score_a.partial_cmp(&score_b)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.result.seed.cmp(&b.result.seed))
     });
 
     // 2. Perform analysis using refs

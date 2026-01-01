@@ -18,6 +18,7 @@ fn test_decile_analysis_median_run_visualization() {
             encounters: vec![],
             score: Some(i as f64),
             num_combat_encounters: 1,
+            seed: i as u64,
         });
     }
 
@@ -45,6 +46,7 @@ fn test_star_ratings() {
             encounters: vec![],
             score: Some(1_000_000.0 + 25.0), // 1 survivor, 25 HP left. If max HP is 100, loss is 75%
             num_combat_encounters: 1,
+            seed: 0,
         });
     }
 
@@ -133,6 +135,7 @@ fn test_intensity_regression_high_penalty() {
         encounters: vec![encounter_res],
         score: Some(1_999_950.0), // Penalty of 150 pushed it below 2M
         num_combat_encounters: 1,
+        seed: 0,
     };
 
     let output = run_decile_analysis(&vec![run; 100], "Regression Test", 2);
@@ -206,6 +209,7 @@ fn test_resource_timeline_points() {
         encounters,
         score: Some(1_000_080.0),
         num_combat_encounters: 3,
+        seed: 0,
     };
 
     let output = run_decile_analysis(&vec![run; 11], "Timeline Test", 1);

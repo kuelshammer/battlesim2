@@ -103,7 +103,7 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number) => {
+    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number, preciseMode?: boolean) => {
         // Ensure worker is initialized before running
         if (!workerRef.current) {
             terminateAndRestart();
@@ -114,8 +114,8 @@ export function useSimulationWorker() {
             isRunning: true,
             progress: 0,
             completed: 0,
-            total: iterations,
-            currentIterations: iterations,
+            total: preciseMode ? 10100 : iterations,  // In precise mode, show 10,100 iterations
+            currentIterations: preciseMode ? 10100 : iterations,
             error: null,
             optimizedResult: null
         }));
@@ -149,7 +149,8 @@ export function useSimulationWorker() {
             players: cleanPlayers,
             timeline: cleanTimeline,
             iterations,
-            seed
+            seed,
+            preciseMode
         });
     }, [terminateAndRestart]);
 
