@@ -40,9 +40,13 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        // Set canvas size
+        // Set canvas size (must be set on the element, not just in CSS)
         canvas.width = canvasWidth
         canvas.height = canvasHeight
+
+        // Also set CSS style explicitly to prevent scaling
+        canvas.style.width = `${canvasWidth}px`
+        canvas.style.height = `${canvasHeight}px`
 
         // Clear canvas
         ctx.clearRect(0, 0, canvasWidth, canvasHeight)
@@ -58,7 +62,12 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
             partySize,
             bucketCount: skyline.buckets.length,
             sampleBucket: skyline.buckets[0],
+            partySlotsCount: partySlots.length,
         })
+
+        // Fill background to make canvas visible
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
         // Draw axis line
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'

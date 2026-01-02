@@ -37,15 +37,18 @@
         width: 100%;
         overflow-x: auto;
         margin-bottom: 1em;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 100, 100, 0.5); // Red border to debug sizing
         border-radius: 4px;
+        background: rgba(255, 0, 0, 0.1); // Red tint to debug container
+        padding: 4px;
 
         .spectrogram {
             display: block;
-            max-width: none;
+            // Don't override width/height - let inline styles control exact pixels
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
+            border: 1px solid rgba(0, 255, 0, 0.5); // Green border to see canvas bounds
         }
     }
 
