@@ -1,5 +1,5 @@
 import React, { FC, useRef, useEffect, useMemo, useState } from 'react'
-import { SkylineAnalysis, PlayerSlot, PercentileBucket } from '@/model/model'
+import { SkylineAnalysis, PlayerSlot } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 
 interface PartyOverviewProps {
@@ -44,39 +44,17 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
     const partySize = skyline.partySize || partySlots.length
 
     // 1. Sort Players by Survivability (Highest/Tank -> Lowest/Glass Cannon)
-    // The user wants: "Highest on Left -> Lowest on Right" within a group
-    // In our vertical stack logic (previous code), it was Top -> Bottom.
-    // "Bottom Panel (Resources): Each stripe is a stacked bar." 
-    // Wait, the user said: "For each of the 100 X-Axis buckets, draw a 'Group' of N vertical stripes"
-    // So the players are SIDE-BY-SIDE in a group, not stacked vertically on top of each other?
-    // "Inner-Group: Within each run group, the players must ALWAYS be ordered by their survivabilityScore (Highest on Left -> Lowest on Right)."
-    // Yes, they are vertical stripes next to each other.
-    
-    // Top Panel (HP): Each stripe is a stacked bar (Green vs Red).
-    // Bottom Panel (Resources): Each stripe is a stacked bar (Blue vs Yellow).
-    
     const sortedPlayers = useMemo(() => {
         return [...partySlots].sort((a, b) => b.survivabilityScore - a.survivabilityScore)
     }, [partySlots])
 
     // 2. Triage Sort for Runs (X-Axis)
-    // Primary: survivorCount (Ascending) -> TPKs on left
-    // Secondary: totalPartyHpPercent (Ascending)
     const sortedBuckets = useMemo(() => {
-        // Clone buckets to avoid mutating prop
         const buckets = [...skyline.buckets]
-        
         return buckets.sort((a, b) => {
-            // survivorCount = partySize - deathCount
-            // So survivorCount Ascending == deathCount Descending
             const survivorsA = partySize - a.deathCount
             const survivorsB = partySize - b.deathCount
-            
-            if (survivorsA !== survivorsB) {
-                return survivorsA - survivorsB
-            }
-            
-            // Secondary: HP Percent
+            if (survivorsA !== survivorsB) return survivorsA - survivorsB
             return a.partyHpPercent - b.partyHpPercent
         })
     }, [skyline.buckets, partySize])
@@ -89,38 +67,33 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         if (!ctx) return
 
         // Constants
-        const RUNS_COUNT = 100 // We enforce 100 runs
-        const CANVAS_HEIGHT = 120 // 60px Top + 60px Bottom
-        const AXIS_Y = CANVAS_HEIGHT / 2
+        const RUNS_COUNT = 100
+        const GRAPH_HEIGHT = 120
+        const LABEL_HEIGHT = 20
+        const TOTAL_HEIGHT = GRAPH_HEIGHT + LABEL_HEIGHT
+        const AXIS_Y = GRAPH_HEIGHT / 2
         
-        // Handle high-DPI displays
         const dpr = window.devicePixelRatio || 1
         canvas.width = width * dpr
-        canvas.height = CANVAS_HEIGHT * dpr
+        canvas.height = TOTAL_HEIGHT * dpr
         canvas.style.width = `${width}px`
-        canvas.style.height = `${CANVAS_HEIGHT}px`
+        canvas.style.height = `${TOTAL_HEIGHT}px`
         ctx.scale(dpr, dpr)
 
-        // Clear
-        ctx.clearRect(0, 0, width, CANVAS_HEIGHT)
+        ctx.clearRect(0, 0, width, TOTAL_HEIGHT)
 
-        // Calculate sizing
-        // Total Groups = 100
-        // Stripes per Group = PartySize
-        // Total Stripes = 100 * PartySize
-        // We also need gaps between groups.
-        
-        const gapSize = partySize > 6 ? 0.5 : 1
+        // Sizing
+        const gapSize = 2 // Increased gap for clarity
         const totalGapSpace = (RUNS_COUNT - 1) * gapSize
         const availableWidth = width - totalGapSpace
         const stripeWidth = availableWidth / (RUNS_COUNT * partySize)
         
-        // Draw background/guides
-        ctx.fillStyle = '#0a0a0a' // Deep void
-        ctx.fillRect(0, 0, width, CANVAS_HEIGHT)
+        // Draw background
+        ctx.fillStyle = '#0a0a0a'
+        ctx.fillRect(0, 0, width, GRAPH_HEIGHT)
         
         // Axis line
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)' // Gold axis
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(0, AXIS_Y)
@@ -129,60 +102,71 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
 
         // Render Runs
         sortedBuckets.forEach((bucket, runIdx) => {
-            // X position for this run group
             const groupX = runIdx * (partySize * stripeWidth + gapSize)
             
-            // Iterate players in fixed survivability order
             sortedPlayers.forEach((playerSlot, playerIdx) => {
-                const charData = bucket.characters.find(c => c.id === playerSlot.playerId || c.name === playerSlot.playerId)
+                // Robust lookup: try ID, then Name, then partial match
+                const charData = bucket.characters.find(c => 
+                    c.id === playerSlot.playerId || 
+                    c.name === playerSlot.playerId ||
+                    playerSlot.playerId.includes(c.id) ||
+                    c.id.includes(playerSlot.playerId)
+                )
                 
-                // Stripe X position
                 const stripeX = groupX + (playerIdx * stripeWidth)
-                
-                // Safety check for sub-pixel rendering gaps
-                const drawWidth = stripeWidth + 0.1 
+                const drawWidth = Math.max(0.5, stripeWidth) // Prevent invisible stripes
 
                 if (!charData) {
-                    // Missing data placeholder
-                    ctx.fillStyle = '#1f2937'
-                    ctx.fillRect(stripeX, 0, drawWidth, CANVAS_HEIGHT)
+                    ctx.fillStyle = '#1f2937' // Missing data
+                    ctx.fillRect(stripeX, 0, drawWidth, GRAPH_HEIGHT)
                     return
                 }
 
-                // --- Top Panel: HP (Above Axis) ---
-                const panelHeight = AXIS_Y
+                const panelHalf = AXIS_Y
                 
+                // HP Panel (Above Axis)
                 if (charData.isDead) {
-                    // Dead State
-                    ctx.fillStyle = '#000000' // Void
-                    ctx.fillRect(stripeX, 0, drawWidth, panelHeight) // Fill entire top panel
+                    ctx.fillStyle = '#000000'
+                    ctx.fillRect(stripeX, 0, drawWidth, panelHalf)
                 } else {
                     const hpPct = Math.max(0, Math.min(100, charData.hpPercent)) / 100
-                    const hpHeight = panelHeight * hpPct
-                    const dmgHeight = panelHeight * (1 - hpPct)
+                    const hpHeight = panelHalf * hpPct
+                    const dmgHeight = panelHalf * (1 - hpPct)
                     
-                    // Green (HP) - Bottom of the top panel (closer to axis)
-                    ctx.fillStyle = '#10b981' // Emerald
+                    ctx.fillStyle = '#22c55e' // Vibrant Green
                     ctx.fillRect(stripeX, AXIS_Y - hpHeight, drawWidth, hpHeight)
                     
-                    // Red (Damage) - Top of the top panel (away from axis)
-                    ctx.fillStyle = '#7f1d1d' // Deep Blood
+                    ctx.fillStyle = '#ef4444' // Vibrant Red
                     ctx.fillRect(stripeX, 0, drawWidth, dmgHeight)
                 }
 
-                // --- Bottom Panel: Resources (Below Axis) ---
+                // Resource Panel (Below Axis)
                 const resPct = Math.max(0, Math.min(100, charData.resourcePercent)) / 100
-                const resHeight = panelHeight * resPct
-                const spentHeight = panelHeight * (1 - resPct)
+                const resHeight = panelHalf * resPct
+                const spentHeight = panelHalf * (1 - resPct)
                 
-                // Blue (Remaining) - Top of the bottom panel (closer to axis)
-                ctx.fillStyle = '#2563eb' // Royal Blue
+                ctx.fillStyle = '#3b82f6' // Vibrant Blue
                 ctx.fillRect(stripeX, AXIS_Y, drawWidth, resHeight)
                 
-                // Yellow (Spent) - Bottom of the bottom panel (away from axis)
-                ctx.fillStyle = '#b45309' // Deep Amber
+                ctx.fillStyle = '#eab308' // Vibrant Yellow
                 ctx.fillRect(stripeX, AXIS_Y + resHeight, drawWidth, spentHeight)
             })
+
+            // Draw labels for every 20th bucket
+            if (runIdx % 20 === 0 || runIdx === 99) {
+                ctx.fillStyle = 'rgba(232, 224, 208, 0.5)'
+                ctx.font = '10px "Courier New", monospace'
+                ctx.textAlign = 'center'
+                const labelX = groupX + (partySize * stripeWidth) / 2
+                ctx.fillText(`P${runIdx === 99 ? 100 : runIdx}`, labelX, GRAPH_HEIGHT + 14)
+                
+                // Tick mark
+                ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)'
+                ctx.beginPath()
+                ctx.moveTo(labelX, GRAPH_HEIGHT)
+                ctx.lineTo(labelX, GRAPH_HEIGHT + 4)
+                ctx.stroke()
+            }
         })
 
     }, [skyline, partySlots, width, sortedPlayers, sortedBuckets, partySize])
