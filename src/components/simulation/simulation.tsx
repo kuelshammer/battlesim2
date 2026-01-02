@@ -23,7 +23,9 @@ import DescentGraph from "./DescentGraph"
 import AssistantSummary from "./AssistantSummary"
 import { calculatePacingData } from "./pacingUtils"
 import SkylineSpectrogram from "./SkylineSpectrogram"
-import { SkylineAnalysis } from "@/model/skylineTypes"
+import PartyOverview from "./PartyOverview"
+import PlayerGraphs from "./PlayerGraphs"
+import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 
 
 
@@ -547,6 +549,22 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         <div className="skyline-spectrogram-section">
                             <SkylineSpectrogram data={worker.analysis.overall.skyline as SkylineAnalysis} />
                         </div>
+                    )}
+
+                    {/* Party Overview - Compact spectrogram */}
+                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                        <PartyOverview
+                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                        />
+                    )}
+
+                    {/* Individual Player Statistics */}
+                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                        <PlayerGraphs
+                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                        />
                     )}
 
                     {/* Event Log Modal */}
