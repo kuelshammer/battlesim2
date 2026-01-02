@@ -610,9 +610,18 @@ export const AutoAdjustmentResultSchema = z.object({
     analysis: AggregateOutputSchema,
 })
 
+// Party slot assignment from Rust backend (Shield Wall ordering)
+export const PlayerSlotSchema = z.object({
+    position: z.number(),
+    playerId: z.string(),
+    survivabilityScore: z.number(),
+})
+
 export const FullAnalysisOutputSchema = z.object({
     overall: AggregateOutputSchema,
     encounters: z.array(AggregateOutputSchema),
+    averageMonsterAttackBonus: z.number(),
+    partySlots: z.array(PlayerSlotSchema),
 })
 
 export const FullSimulationOutputSchema = z.object({
@@ -624,6 +633,7 @@ export const FullSimulationOutputSchema = z.object({
 export type CombatantVisualization = z.infer<typeof CombatantVisualizationSchema>
 export type DecileStats = z.infer<typeof DecileStatsSchema>
 export type AggregateOutput = z.infer<typeof AggregateOutputSchema>
+export type PlayerSlot = z.infer<typeof PlayerSlotSchema>
 export type AutoAdjustmentResult = z.infer<typeof AutoAdjustmentResultSchema>
 export type FullAnalysisOutput = z.infer<typeof FullAnalysisOutputSchema>
 export type FullSimulationOutput = z.infer<typeof FullSimulationOutputSchema>

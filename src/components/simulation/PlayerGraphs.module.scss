@@ -1,0 +1,169 @@
+.playerGraphs {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1em;
+    margin-top: 1em;
+
+    .title {
+        color: #fff;
+        font-size: 1.1em;
+        font-weight: 600;
+        margin: 0 0 1em 0;
+        text-align: center;
+    }
+
+    .grid {
+        display: grid;
+        gap: 1em;
+        // Columns set via inline style based on party size
+    }
+
+    .playerCard {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75em;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    }
+
+    .cardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5em;
+    }
+
+    .playerInfo {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25em;
+    }
+
+    .playerName {
+        color: #fff;
+        font-size: 1.1em;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .survivabilityBadge {
+        background: rgba(79, 172, 254, 0.2);
+        border: 1px solid rgba(79, 172, 254, 0.4);
+        border-radius: 4px;
+        padding: 0.2em 0.5em;
+        font-size: 0.75em;
+        color: #4facfe;
+        font-weight: 600;
+        display: inline-block;
+        width: fit-content;
+    }
+
+    .roleIcon {
+        font-size: 1.5em;
+        line-height: 1;
+    }
+
+    .statsSummary {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4em;
+        padding: 0.5em;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+    }
+
+    .statItem {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85em;
+    }
+
+    .statLabel {
+        color: #aaa;
+    }
+
+    .statValue {
+        color: #fff;
+        font-weight: 600;
+
+        &.highDeath {
+            color: #ef4444;
+        }
+
+        &.lowDeath {
+            color: #22c55e;
+        }
+    }
+
+    .hpVisualization {
+        display: flex;
+        gap: 1px;
+        height: 60px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        overflow: hidden;
+        padding: 2px;
+    }
+
+    .hpBar {
+        flex: 1;
+        min-width: 2px;
+        border-radius: 1px;
+        transition: height 0.2s ease;
+        cursor: pointer;
+
+        &:hover {
+            filter: brightness(1.2);
+            transform: scaleX(1.5);
+            z-index: 10;
+        }
+    }
+
+    .miniLegend {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7em;
+        color: #888;
+    }
+
+    .legendLabel {
+        padding: 0 0.25em;
+    }
+
+    // Responsive adjustments
+    @media (width < 1200px) {
+        .grid {
+            // Force 2 columns on medium screens
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+
+    @media (width < 768px) {
+        .grid {
+            // Single column on mobile
+            grid-template-columns: 1fr !important;
+        }
+
+        .playerCard {
+            padding: 0.75em;
+        }
+
+        .hpVisualization {
+            height: 50px;
+        }
+    }
+}

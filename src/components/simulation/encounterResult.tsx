@@ -1,5 +1,5 @@
 import { FC, useState, memo, useMemo } from "react"
-import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula, AggregateOutput } from "@/model/model"
+import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula, AggregateOutput, FullAnalysisOutput, PlayerSlot } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import styles from './encounterResult.module.scss'
 import { Round } from "@/model/model"
@@ -10,6 +10,8 @@ import { useUIToggle } from "@/model/uiToggleState"
 import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
 import SkylineHeatmap from "./SkylineHeatmap"
+import PartyOverview from "./PartyOverview"
+import PlayerGraphs from "./PlayerGraphs"
 import { SkylineAnalysis } from "@/model/model"
 
 type TeamPropType = {
@@ -118,6 +120,7 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
 type PropType = {
     value?: EncounterResultType,
     analysis?: AggregateOutput | null,
+    fullAnalysis?: FullAnalysisOutput | null,
     isStale?: boolean,
     isPreliminary?: boolean,
     targetPercent?: number,
@@ -125,7 +128,7 @@ type PropType = {
     cumulativeDrift?: number,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -159,6 +162,22 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, isStale, isPrelim
             <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
             <div className={styles.detailsSection}>
+                {fullAnalysis?.partySlots && fullAnalysis.partySlots.length > 0 && analysis?.skyline && (
+                    <>
+                        {/* Party Overview - Top Section */}
+                        <PartyOverview
+                            skyline={analysis.skyline}
+                            partySlots={fullAnalysis.partySlots}
+                        />
+
+                        {/* Individual Player Graphs - Below Party Overview */}
+                        <PlayerGraphs
+                            skyline={analysis.skyline}
+                            partySlots={fullAnalysis.partySlots}
+                        />
+                    </>
+                )}
+
                 {analysis?.skyline && hasRounds && value && lastRound && (
                     <SkylineHeatmap skyline={analysis.skyline} players={lastRound.team1} />
                 )}

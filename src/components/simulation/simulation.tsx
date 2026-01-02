@@ -475,9 +475,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                 )}
                                                 
                                                 {item.type === 'combat' && (worker.analysis?.encounters?.[index] ? (
-                                                    <EncounterResult 
-                                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]} 
-                                                        analysis={worker.analysis.encounters[index]} 
+                                                    <EncounterResult
+                                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
+                                                        analysis={worker.analysis.encounters[index]}
+                                                        fullAnalysis={worker.analysis} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                         targetPercent={targetPercent}
@@ -485,9 +486,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         cumulativeDrift={cumulativeDrift}
                                                     />
                                                 ) : (simulationResults[index] ? (
-                                                    <EncounterResult 
-                                                        value={simulationResults[index]} 
-                                                        analysis={null} 
+                                                    <EncounterResult
+                                                        value={simulationResults[index]}
+                                                        analysis={null}
+                                                        fullAnalysis={worker.analysis} 
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                         targetPercent={targetPercent}
