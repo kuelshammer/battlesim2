@@ -1,5 +1,5 @@
-import { FC, useMemo } from 'react'
-import { SkylineAnalysis, PlayerSlot, PercentileBucket } from '@/model/model'
+import { FC, useRef, useEffect } from 'react'
+import { SkylineAnalysis, PlayerSlot } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 
 interface PartyOverviewProps {
@@ -8,140 +8,177 @@ interface PartyOverviewProps {
 }
 
 /**
- * PartyOverview displays HP status across 100 simulation runs.
+ * PartyOverview displays a horizontal spectrogram of HP and resources across 100 runs.
  *
  * Layout:
- * - Y-axis: Players sorted by survivability (Tank on top → Glass Cannon on bottom)
- * - X-axis: 100 runs (P0-P100 buckets)
- * - Each row: Horizontal bar showing HP % (green) vs damage (red)
+ * - X-axis: 100 percentile buckets (P1 left/worst → P100 right/best)
+ * - Each bucket is a vertical column:
+ *   - Width: player_count pixels (e.g., 4 players = 4px wide)
+ *   - Height: 100px (50px above axis for HP, 50px below for resources)
+ *   - 1px spacing between columns
+ * - ABOVE axis: HP bars stacked by player (1px each)
+ *   - Order: Tank (top) → Glass Cannon (bottom)
+ *   - Green = near axis (remaining HP), Red = away (damage)
+ * - BELOW axis: Resource bars stacked by player (1px each)
+ *   - Same player order
+ *   - Blue = near axis (remaining), Yellow = away (spent)
  */
 const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
-    // Map party slots to skyline data
-    const playerRows = useMemo(() => {
-        return partySlots.map((slot) => {
-            // Find this player's data in each bucket
-            const bucketData = skyline.buckets.map((bucket) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    const partySize = partySlots.length
+
+    // Calculate canvas dimensions
+    // Width: (playerSize + 1 spacing) * 100 buckets
+    const canvasWidth = (partySize + 1) * skyline.buckets.length
+    const canvasHeight = 150 // 100px for data + 50px for labels/legend
+
+    useEffect(() => {
+        const canvas = canvasRef.current
+        if (!canvas) return
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        // Set canvas size
+        canvas.width = canvasWidth
+        canvas.height = canvasHeight
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+
+        const axisY = 75 // Middle horizontal line
+        const playerHeight = 1 // 1px per player bar
+        const columnWidth = partySize // player_count pixels wide per bucket
+
+        // Draw axis line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(0, axisY)
+        ctx.lineTo(canvasWidth, axisY)
+        ctx.stroke()
+
+        // Draw each percentile bucket
+        skyline.buckets.forEach((bucket, bucketIdx) => {
+            const x = bucketIdx * (columnWidth + 1) // +1 for spacing
+
+            // Draw player bars (ordered by survivability: Tank top → Glass Cannon bottom)
+            partySlots.forEach((slot, playerIdx) => {
                 const character = bucket.characters.find(
                     (c) => c.id === slot.playerId || c.name === slot.playerId
                 )
-                return {
-                    percentile: bucket.percentile,
-                    character: character || null,
+
+                if (!character) return
+
+                // Y position: above axis for HP, below for resources
+                // Players stacked from top (Tank) to bottom (Glass Cannon)
+                // Each player gets exactly 1px height
+                const hpBarY = axisY - (playerIdx + 1) * playerHeight
+                const resBarY = axisY + playerIdx * playerHeight
+
+                // HP bar (above axis) - 1px high, divided horizontally into green/red
+                const hpPercent = character.hpPercent
+                if (character.isDead) {
+                    // Dead = black bar
+                    ctx.fillStyle = '#0f172a'
+                    ctx.fillRect(x, hpBarY, columnWidth, playerHeight)
+                } else {
+                    // Green portion (remaining HP) - from left
+                    const greenWidth = (hpPercent / 100) * columnWidth
+                    ctx.fillStyle = '#22c55e'
+                    ctx.fillRect(x, hpBarY, greenWidth, playerHeight)
+
+                    // Red portion (damage taken) - from right
+                    const redWidth = columnWidth - greenWidth
+                    if (redWidth > 0) {
+                        ctx.fillStyle = '#ef4444'
+                        ctx.fillRect(x + greenWidth, hpBarY, redWidth, playerHeight)
+                    }
+                }
+
+                // Resources bar (below axis) - 1px high, divided horizontally into blue/yellow
+                const resPercent = character.resourcePercent || 0
+                // Blue portion (remaining resources) - from left
+                const blueWidth = (resPercent / 100) * columnWidth
+                ctx.fillStyle = '#4488ff'
+                ctx.fillRect(x, resBarY, blueWidth, playerHeight)
+
+                // Yellow portion (resources spent) - from right
+                const yellowWidth = columnWidth - blueWidth
+                if (yellowWidth > 0) {
+                    ctx.fillStyle = '#ffcc00'
+                    ctx.fillRect(x + blueWidth, resBarY, yellowWidth, playerHeight)
                 }
             })
+        })
 
-            return {
-                slot,
-                bucketData,
+        // Draw X-axis labels (every 20 buckets)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+        ctx.font = '10px sans-serif'
+        ctx.textAlign = 'center'
+        skyline.buckets.forEach((bucket, idx) => {
+            if (bucket.percentile % 20 === 0) {
+                const x = idx * (columnWidth + 1) + columnWidth / 2
+                ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 5)
             }
         })
-    }, [skyline.buckets, partySlots])
 
-    if (playerRows.length === 0) {
-        return (
-            <div className={styles.partyOverview}>
-                <p className={styles.emptyMessage}>No player data available</p>
-            </div>
-        )
-    }
+    }, [skyline, partySlots, canvasWidth, canvasHeight, partySize])
 
     return (
         <div className={styles.partyOverview}>
-            <h4 className={styles.title}>Party Overview - HP Status Across 100 Runs</h4>
+            <h4 className={styles.title}>Party Overview - HP & Resources (P1 → P100)</h4>
 
-            <div className={styles.gridContainer} style={{ gridTemplateRows: `repeat(${playerRows.length}, auto)` }}>
-                {playerRows.map(({ slot, bucketData }) => (
-                    <div key={slot.playerId} className={styles.playerRow}>
-                        {/* Player label column */}
-                        <div className={styles.playerLabel}>
-                            <div className={styles.playerName}>{slot.playerId}</div>
-                            <div className={styles.survivabilityBadge}>
-                                EHP: {Math.round(slot.survivabilityScore)}
-                            </div>
-                            {slot.position === 0 && (
-                                <div className={styles.roleBadge} title="Tank - Highest Survivability">
-                                    🛡️ Tank
-                                </div>
-                            )}
-                            {slot.position === partySlots.length - 1 && partySlots.length > 1 && (
-                                <div className={styles.roleBadge} title="Glass Cannon - Lowest Survivability">
-                                    🎯 Glass Cannon
-                                </div>
-                            )}
-                        </div>
-
-                        {/* HP bars row */}
-                        <div className={styles.barsRow}>
-                            {bucketData.map(({ percentile, character }, idx) => {
-                                const hpPercent = character?.hpPercent ?? 0
-                                const isDead = character?.isDead ?? false
-
-                                return (
-                                    <div
-                                        key={idx}
-                                        className={styles.barCell}
-                                        title={`
-                                            Run: P${percentile}
-                                            Player: ${slot.playerId}
-                                            HP: ${character ? `${character.hpPercent}%` : 'N/A'}
-                                            ${isDead ? '💀 DECEASED' : 'Alive'}
-                                        `}
-                                    >
-                                        {isDead ? (
-                                            <div className={`${styles.barSegment} ${styles.dead}`}>
-                                                💀
-                                            </div>
-                                        ) : (
-                                            <div className={styles.barContainer}>
-                                                {/* Green portion: Current HP */}
-                                                <div
-                                                    className={`${styles.barSegment} ${styles.health}`}
-                                                    style={{ width: `${hpPercent}%` }}
-                                                />
-                                                {/* Red portion: Damage taken */}
-                                                <div
-                                                    className={`${styles.barSegment} ${styles.damage}`}
-                                                    style={{ width: `${100 - hpPercent}%` }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </div>
+            {/* Player order legend */}
+            <div className={styles.playerLegend}>
+                <span className={styles.legendLabel}>Top:</span>
+                {partySlots.map((slot, idx) => (
+                    <span key={slot.playerId} className={styles.playerName}>
+                        {slot.playerId}
+                        {idx < partySlots.length - 1 && ' → '}
+                    </span>
                 ))}
+                <span className={styles.legendLabel}>:Bottom</span>
             </div>
 
-            {/* Legend */}
-            <div className={styles.legend}>
+            {/* Spectrogram canvas */}
+            <div className={styles.spectrogramContainer}>
+                <canvas
+                    ref={canvasRef}
+                    width={canvasWidth}
+                    height={canvasHeight}
+                    className={styles.spectrogram}
+                    style={{
+                        width: '100%',
+                        height: 'auto',
+                        imageRendering: 'pixelated',
+                    }}
+                />
+            </div>
+
+            {/* Color legend */}
+            <div className={styles.colorLegend}>
                 <div className={styles.legendItem}>
-                    <div className={`${styles.legendSwatch} ${styles.health}`} />
+                    <div className={`${styles.legendSwatch} ${styles.green}`} />
                     <span>HP Remaining</span>
                 </div>
                 <div className={styles.legendItem}>
-                    <div className={`${styles.legendSwatch} ${styles.damage}`} />
+                    <div className={`${styles.legendSwatch} ${styles.red}`} />
                     <span>Damage Taken</span>
                 </div>
                 <div className={styles.legendItem}>
-                    <div className={`${styles.legendSwatch} ${styles.dead}`}>
-                        💀
-                    </div>
+                    <div className={`${styles.legendSwatch} ${styles.blue}`} />
+                    <span>Resources Left</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendSwatch} ${styles.yellow}`} />
+                    <span>Resources Spent</span>
+                </div>
+                <div className={styles.legendItem}>
+                    <div className={`${styles.legendSwatch} ${styles.black}`} />
                     <span>Deceased</span>
                 </div>
-            </div>
-
-            {/* X-axis labels */}
-            <div className={styles.xAxis}>
-                {skyline.buckets.filter((_, i) => i % 20 === 0).map((bucket, i) => (
-                    <span
-                        key={i}
-                        className={styles.xAxisLabel}
-                        style={{ left: `${(bucket.percentile / 100) * 100}%` }}
-                    >
-                        P{bucket.percentile}
-                    </span>
-                ))}
             </div>
         </div>
     )

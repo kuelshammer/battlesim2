@@ -9,120 +9,48 @@
         color: #fff;
         font-size: 1.1em;
         font-weight: 600;
-        margin: 0 0 1em 0;
+        margin: 0 0 0.75em 0;
         text-align: center;
     }
 
-    .emptyMessage {
-        color: #888;
-        text-align: center;
-        padding: 2em;
-        font-style: italic;
-    }
-
-    .gridContainer {
-        display: grid;
+    .playerLegend {
+        display: flex;
+        justify-content: center;
+        align-items: center;
         gap: 0.5em;
         margin-bottom: 1em;
-    }
+        flex-wrap: wrap;
+        font-size: 0.9em;
 
-    .playerRow {
-        display: grid;
-        grid-template-columns: 120px 1fr;
-        gap: 0.75em;
-        align-items: center;
-        min-height: 25px;
-    }
-
-    .playerLabel {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25em;
-        justify-content: center;
+        .legendLabel {
+            color: #888;
+            font-weight: 600;
+        }
 
         .playerName {
-            color: #fff;
-            font-weight: 600;
-            font-size: 0.95em;
-            text-align: right;
-            padding-right: 0.5em;
-        }
-
-        .survivabilityBadge {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            padding: 0.15em 0.4em;
-            font-size: 0.75em;
-            color: #aaa;
-            text-align: right;
-        }
-
-        .roleBadge {
-            font-size: 0.7em;
-            color: #ffa;
-            text-align: right;
-            padding-right: 0.5em;
+            color: #4facfe;
+            font-weight: 500;
         }
     }
 
-    .barsRow {
-        display: grid;
-        grid-template-columns: repeat(100, 1fr);
-        gap: 1px;
-        height: 20px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .barCell {
-        position: relative;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: transform 0.1s ease;
-
-        &:hover {
-            transform: scaleY(1.2);
-            z-index: 10;
-        }
-    }
-
-    .barContainer {
+    .spectrogramContainer {
         width: 100%;
-        height: 100%;
-        display: flex;
-    }
+        overflow-x: auto;
+        margin-bottom: 1em;
 
-    .barSegment {
-        height: 100%;
-
-        &.health {
-            background: #22c55e; // Green
-        }
-
-        &.damage {
-            background: #ef4444; // Red
-        }
-
-        &.dead {
-            background: #0f172a; // Black/dark red
-            color: #ff4444;
-            font-size: 0.7em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .spectrogram {
+            display: block;
+            margin: 0 auto;
+            border-radius: 4px;
         }
     }
 
-    .legend {
+    .colorLegend {
         display: flex;
         gap: 1.5em;
         justify-content: center;
         align-items: center;
+        flex-wrap: wrap;
         padding: 0.75em 0;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
@@ -136,71 +64,43 @@
     }
 
     .legendSwatch {
-        width: 20px;
+        width: 16px;
         height: 12px;
         border-radius: 2px;
         border: 1px solid rgba(255, 255, 255, 0.3);
 
-        &.health {
+        &.green {
             background: #22c55e;
         }
 
-        &.damage {
+        &.red {
             background: #ef4444;
         }
 
-        &.dead {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0f172a;
-            color: #ff4444;
-            font-size: 0.7em;
+        &.blue {
+            background: #4488ff;
         }
-    }
 
-    .xAxis {
-        position: relative;
-        height: 20px;
-        margin-top: 0.5em;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
+        &.yellow {
+            background: #ffcc00;
+        }
 
-    .xAxisLabel {
-        position: absolute;
-        transform: translateX(-50%);
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 0.75em;
-        top: 2px;
+        &.black {
+            background: #0f172a;
+            border: 1px solid #ff4444;
+        }
     }
 
     // Responsive adjustments
     @media (width < 768px) {
-        .playerRow {
-            grid-template-columns: 80px 1fr;
+        .playerLegend {
+            font-size: 0.8em;
+            gap: 0.25em;
         }
 
-        .playerLabel {
-            .playerName {
-                font-size: 0.85em;
-            }
-
-            .survivabilityBadge {
-                font-size: 0.7em;
-            }
-
-            .roleBadge {
-                font-size: 0.6em;
-            }
-        }
-
-        .barsRow {
-            height: 16px;
-        }
-
-        .legend {
-            flex-wrap: wrap;
+        .colorLegend {
             gap: 1em;
+            font-size: 0.8em;
         }
     }
 }
