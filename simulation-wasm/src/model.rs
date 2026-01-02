@@ -1121,6 +1121,64 @@ impl Default for CreatureState {
     }
 }
 
+impl CreatureState {
+    /// Check if this combatant has Rage active (Barbarian class feature)
+    /// Checks both active buffs and resource ledger
+    pub fn has_rage_active(&self) -> bool {
+        // Check for Rage buff (active effect)
+        if self.buffs.contains_key("Rage") {
+            return true;
+        }
+
+        // Check resource ledger for Rage uses remaining
+        if let Some(&current) = self.resources.current.get("Rage") {
+            if current > 0.0 {
+                return true;
+            }
+        }
+
+        false
+    }
+}
+
+impl Creature {
+    /// Calculate the survivability score for UI slot ordering (Tank → Glass Cannon)
+    /// Uses MAX HP and assumes Rage is available for Barbarians (static ordering)
+    ///
+    /// Formula: HP × (1 + (AC - 10) / 20) × Rage Multiplier
+    /// - K = 20: Each AC point above 10 adds ~5% to effective health
+    /// - Rage Multiplier: 2.0 for Barbarians, 1.0 for others
+    pub fn max_survivability_score(&self) -> f64 {
+        let ac_modifier = 1.0 + ((self.ac as f64 - 10.0) / 20.0);
+        let rage_multiplier = if self.is_barbarian() { 2.0 } else { 1.0 };
+
+        self.hp as f64 * ac_modifier * rage_multiplier
+    }
+
+    /// Check if this creature is a Barbarian (has Rage class resource)
+    fn is_barbarian(&self) -> bool {
+        // Check class_resources for Rage
+        if let Some(resources) = &self.class_resources {
+            return resources.contains_key("Rage");
+        }
+        false
+    }
+}
+
+impl Combattant {
+    /// Calculate the CURRENT survivability score for AI targeting decisions
+    /// Uses CURRENT HP and checks if Rage is actually active right now
+    ///
+    /// Formula: Current HP × (1 + (AC - 10) / 20) × Rage Multiplier
+    /// - Rage Multiplier: 2.0 IF Rage is active, 1.0 otherwise
+    pub fn current_survivability_score(&self) -> f64 {
+        let ac_modifier = 1.0 + ((self.creature.ac as f64 - 10.0) / 20.0);
+        let rage_multiplier = if self.final_state.has_rage_active() { 2.0 } else { 1.0 };
+
+        self.final_state.current_hp as f64 * ac_modifier * rage_multiplier
+    }
+}
+
 // Combattant now uses Arc<Creature> for shared ownership.
 // When cloning a Combattant, the Creature is not deep-copied - only the Arc pointer is copied.
 // This significantly reduces memory usage when creating many clones (e.g., in simulation iterations).
