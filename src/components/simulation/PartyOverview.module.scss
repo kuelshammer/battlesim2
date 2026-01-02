@@ -44,6 +44,10 @@
 
         .spectrogram {
             display: block;
+            min-width: 0;
+            max-width: none;
+            width: auto !important;
+            height: auto !important;
             // Don't override width/height - let inline styles control exact pixels
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;

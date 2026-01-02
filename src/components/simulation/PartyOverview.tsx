@@ -64,108 +64,111 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         canvas.style.width = `${canvasWidth}px`
         canvas.style.height = `${canvasHeight}px`
 
-        // Force a reflow to ensure sizes are applied
-        canvas.getBoundingClientRect()
+        // Use requestAnimationFrame to ensure DOM has been updated before drawing
+        requestAnimationFrame(() => {
+            // Force a reflow to ensure sizes are applied
+            canvas.getBoundingClientRect()
 
-        console.log('[PartyOverview] AFTER sizing:', {
-            canvasWidthAttr: canvas.width,
-            canvasHeightAttr: canvas.height,
-            canvasStyleWidth: canvas.style.width,
-            canvasStyleHeight: canvas.style.height,
-            clientWidth: canvas.clientWidth,
-            clientHeight: canvas.clientHeight,
-        })
+            console.log('[PartyOverview] AFTER sizing:', {
+                canvasWidthAttr: canvas.width,
+                canvasHeightAttr: canvas.height,
+                canvasStyleWidth: canvas.style.width,
+                canvasStyleHeight: canvas.style.height,
+                clientWidth: canvas.clientWidth,
+                clientHeight: canvas.clientHeight,
+            })
 
-        // Clear canvas
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight)
+            // Clear canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-        const axisY = canvasHeight / 2 // Middle horizontal line at 50px
-        const playerHeight = 1 // 1px per player bar
-        const columnWidth = partySize // player_count pixels wide per bucket
+            const axisY = canvasHeight / 2 // Middle horizontal line at 50px
+            const playerHeight = 1 // 1px per player bar
+            const columnWidth = partySize // player_count pixels wide per bucket
 
-        console.log('[PartyOverview] Drawing parameters:', {
-            axisY,
-            playerHeight,
-            columnWidth,
-            sampleBucket: skyline.buckets[0],
-            partySlotsCount: partySlots.length,
-        })
+            console.log('[PartyOverview] Drawing parameters:', {
+                axisY,
+                playerHeight,
+                columnWidth,
+                sampleBucket: skyline.buckets[0],
+                partySlotsCount: partySlots.length,
+            })
 
-        // Fill background to make canvas visible
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+            // Fill background to make canvas visible
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
 
-        // Draw axis line
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(0, axisY)
-        ctx.lineTo(canvasWidth, axisY)
-        ctx.stroke()
+            // Draw axis line
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(0, axisY)
+            ctx.lineTo(canvasWidth, axisY)
+            ctx.stroke()
 
-        // Draw each percentile bucket
-        skyline.buckets.forEach((bucket, bucketIdx) => {
-            const x = bucketIdx * (columnWidth + 1) // +1 for spacing
+            // Draw each percentile bucket
+            skyline.buckets.forEach((bucket, bucketIdx) => {
+                const x = bucketIdx * (columnWidth + 1) // +1 for spacing
 
-            // Draw player bars (ordered by survivability: Tank top → Glass Cannon bottom)
-            partySlots.forEach((slot, playerIdx) => {
-                const character = bucket.characters.find(
-                    (c) => c.id === slot.playerId || c.name === slot.playerId
-                )
+                // Draw player bars (ordered by survivability: Tank top → Glass Cannon bottom)
+                partySlots.forEach((slot, playerIdx) => {
+                    const character = bucket.characters.find(
+                        (c) => c.id === slot.playerId || c.name === slot.playerId
+                    )
 
-                if (!character) return
+                    if (!character) return
 
-                // Y position: above axis for HP, below for resources
-                // Players stacked from top (Tank) to bottom (Glass Cannon)
-                // Each player gets exactly 1px height
-                const hpBarY = axisY - (playerIdx + 1) * playerHeight
-                const resBarY = axisY + playerIdx * playerHeight
+                    // Y position: above axis for HP, below for resources
+                    // Players stacked from top (Tank) to bottom (Glass Cannon)
+                    // Each player gets exactly 1px height
+                    const hpBarY = axisY - (playerIdx + 1) * playerHeight
+                    const resBarY = axisY + playerIdx * playerHeight
 
-                // HP bar (above axis) - 1px high, divided horizontally into green/red
-                const hpPercent = character.hpPercent
-                if (character.isDead) {
-                    // Dead = black bar
-                    ctx.fillStyle = '#0f172a'
-                    ctx.fillRect(x, hpBarY, columnWidth, playerHeight)
-                } else {
-                    // Green portion (remaining HP) - from left
-                    const greenWidth = (hpPercent / 100) * columnWidth
-                    ctx.fillStyle = '#22c55e'
-                    ctx.fillRect(x, hpBarY, greenWidth, playerHeight)
+                    // HP bar (above axis) - 1px high, divided horizontally into green/red
+                    const hpPercent = character.hpPercent
+                    if (character.isDead) {
+                        // Dead = black bar
+                        ctx.fillStyle = '#0f172a'
+                        ctx.fillRect(x, hpBarY, columnWidth, playerHeight)
+                    } else {
+                        // Green portion (remaining HP) - from left
+                        const greenWidth = (hpPercent / 100) * columnWidth
+                        ctx.fillStyle = '#22c55e'
+                        ctx.fillRect(x, hpBarY, greenWidth, playerHeight)
 
-                    // Red portion (damage taken) - from right
-                    const redWidth = columnWidth - greenWidth
-                    if (redWidth > 0) {
-                        ctx.fillStyle = '#ef4444'
-                        ctx.fillRect(x + greenWidth, hpBarY, redWidth, playerHeight)
+                        // Red portion (damage taken) - from right
+                        const redWidth = columnWidth - greenWidth
+                        if (redWidth > 0) {
+                            ctx.fillStyle = '#ef4444'
+                            ctx.fillRect(x + greenWidth, hpBarY, redWidth, playerHeight)
+                        }
                     }
-                }
 
-                // Resources bar (below axis) - 1px high, divided horizontally into blue/yellow
-                const resPercent = character.resourcePercent || 0
-                // Blue portion (remaining resources) - from left
-                const blueWidth = (resPercent / 100) * columnWidth
-                ctx.fillStyle = '#4488ff'
-                ctx.fillRect(x, resBarY, blueWidth, playerHeight)
+                    // Resources bar (below axis) - 1px high, divided horizontally into blue/yellow
+                    const resPercent = character.resourcePercent || 0
+                    // Blue portion (remaining resources) - from left
+                    const blueWidth = (resPercent / 100) * columnWidth
+                    ctx.fillStyle = '#4488ff'
+                    ctx.fillRect(x, resBarY, blueWidth, playerHeight)
 
-                // Yellow portion (resources spent) - from right
-                const yellowWidth = columnWidth - blueWidth
-                if (yellowWidth > 0) {
-                    ctx.fillStyle = '#ffcc00'
-                    ctx.fillRect(x + blueWidth, resBarY, yellowWidth, playerHeight)
+                    // Yellow portion (resources spent) - from right
+                    const yellowWidth = columnWidth - blueWidth
+                    if (yellowWidth > 0) {
+                        ctx.fillStyle = '#ffcc00'
+                        ctx.fillRect(x + blueWidth, resBarY, yellowWidth, playerHeight)
+                    }
+                })
+            })
+
+            // Draw X-axis labels (every 20 buckets)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+            ctx.font = '9px sans-serif'
+            ctx.textAlign = 'center'
+            skyline.buckets.forEach((bucket, idx) => {
+                if (bucket.percentile % 20 === 0) {
+                    const x = idx * (columnWidth + 1) + columnWidth / 2
+                    ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 2)
                 }
             })
-        })
-
-        // Draw X-axis labels (every 20 buckets)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        ctx.font = '9px sans-serif'
-        ctx.textAlign = 'center'
-        skyline.buckets.forEach((bucket, idx) => {
-            if (bucket.percentile % 20 === 0) {
-                const x = idx * (columnWidth + 1) + columnWidth / 2
-                ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 2)
-            }
         })
 
     }, [skyline, partySlots, canvasWidth, canvasHeight, partySize])
