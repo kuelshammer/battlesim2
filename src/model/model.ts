@@ -637,3 +637,9 @@ export type PlayerSlot = z.infer<typeof PlayerSlotSchema>
 export type AutoAdjustmentResult = z.infer<typeof AutoAdjustmentResultSchema>
 export type FullAnalysisOutput = z.infer<typeof FullAnalysisOutputSchema>
 export type FullSimulationOutput = z.infer<typeof FullSimulationOutputSchema>
+
+export type SpellSlotLevel = z.infer<typeof SpellSlotLevelSchema>
+export type ResourceBreakdown = z.infer<typeof ResourceBreakdownSchema>
+export type CharacterBucketData = z.infer<typeof CharacterBucketDataSchema>
+export type PercentileBucket = z.infer<typeof PercentileBucketSchema>
+export type SkylineAnalysis = z.infer<typeof SkylineAnalysisSchema>

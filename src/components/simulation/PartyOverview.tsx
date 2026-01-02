@@ -116,11 +116,11 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         const stripeWidth = availableWidth / (RUNS_COUNT * partySize)
         
         // Draw background/guides
-        ctx.fillStyle = '#111827' // Dark background
+        ctx.fillStyle = '#0a0a0a' // Deep void
         ctx.fillRect(0, 0, width, CANVAS_HEIGHT)
         
         // Axis line
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)' // Gold axis
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(0, AXIS_Y)
@@ -140,36 +140,21 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 const stripeX = groupX + (playerIdx * stripeWidth)
                 
                 // Safety check for sub-pixel rendering gaps
-                // Use a slightly larger width to prevent hairline cracks if width is fractional
                 const drawWidth = stripeWidth + 0.1 
 
                 if (!charData) {
                     // Missing data placeholder
-                    ctx.fillStyle = '#374151'
+                    ctx.fillStyle = '#1f2937'
                     ctx.fillRect(stripeX, 0, drawWidth, CANVAS_HEIGHT)
                     return
                 }
 
                 // --- Top Panel: HP (Above Axis) ---
-                // Bottom is Green (currentHp), Top is Red (Damage taken)
-                // Growing UP from Axis? Or Top-Down?
-                // Usually "Stacked Bar" means Base is at 0.
-                // For "HP Remaining", usually we want the Green bar to start at the Axis and go UP (or Down).
-                // Let's assume standard graph: Axis is 0.
-                // HP Panel is the TOP half (0 to AXIS_Y).
-                // If we want it to look like a skyline/equalizer, bars usually grow from the axis.
-                // So Axis is "Floor" for Top Panel and "Ceiling" for Bottom Panel?
-                // Or "Floor" for both?
-                // "Top Panel (Health): Shows HP Remaining vs. Damage Taken."
-                // "Bottom is Green (currentHp), Top is Red (Damage taken)."
-                // This implies a vertical bar where the bottom part is green and top is red.
-                // If the panel is above the axis, "Bottom" means closer to the axis.
-                
                 const panelHeight = AXIS_Y
                 
                 if (charData.isDead) {
                     // Dead State
-                    ctx.fillStyle = '#450a0a' // Dark red for dead
+                    ctx.fillStyle = '#000000' // Void
                     ctx.fillRect(stripeX, 0, drawWidth, panelHeight) // Fill entire top panel
                 } else {
                     const hpPct = Math.max(0, Math.min(100, charData.hpPercent)) / 100
@@ -177,48 +162,25 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                     const dmgHeight = panelHeight * (1 - hpPct)
                     
                     // Green (HP) - Bottom of the top panel (closer to axis)
-                    ctx.fillStyle = '#22c55e'
+                    ctx.fillStyle = '#10b981' // Emerald
                     ctx.fillRect(stripeX, AXIS_Y - hpHeight, drawWidth, hpHeight)
                     
                     // Red (Damage) - Top of the top panel (away from axis)
-                    ctx.fillStyle = '#ef4444'
+                    ctx.fillStyle = '#7f1d1d' // Deep Blood
                     ctx.fillRect(stripeX, 0, drawWidth, dmgHeight)
                 }
 
                 // --- Bottom Panel: Resources (Below Axis) ---
-                // "Bottom is Blue (currentResources), Top is Yellow (Resources spent)."
-                // Since this panel is BELOW the axis, "Top" is closer to the axis.
-                // "Bottom" is further away.
-                // So Blue is at the bottom of the bar (furthest from axis)?
-                // Or "Bottom" in the visual stack logic?
-                // Usually "Bottom is X" means X is the base.
-                // Let's assume standard orientation:
-                // [Yellow (Spent)]
-                // [Blue (Remaining)]
-                // ---------------- Axis
-                // Wait, if it's below axis:
-                // ---------------- Axis
-                // [Blue (Remaining)]
-                // [Yellow (Spent)]
-                //
-                // Let's interpret "Bottom is Blue" relative to the bar's own coordinate system (0 to 100).
-                // If the bar grows DOWN from the axis:
-                // Axis (0) -> 
-                // Blue Bar (Remaining)
-                // Yellow Bar (Spent)
-                // This keeps "Remaining" closer to the axis, which mirrors the HP (Remaining closer to axis).
-                // Symmetry is usually desired.
-                
                 const resPct = Math.max(0, Math.min(100, charData.resourcePercent)) / 100
                 const resHeight = panelHeight * resPct
                 const spentHeight = panelHeight * (1 - resPct)
                 
                 // Blue (Remaining) - Top of the bottom panel (closer to axis)
-                ctx.fillStyle = '#3b82f6'
+                ctx.fillStyle = '#2563eb' // Royal Blue
                 ctx.fillRect(stripeX, AXIS_Y, drawWidth, resHeight)
                 
                 // Yellow (Spent) - Bottom of the bottom panel (away from axis)
-                ctx.fillStyle = '#eab308'
+                ctx.fillStyle = '#b45309' // Deep Amber
                 ctx.fillRect(stripeX, AXIS_Y + resHeight, drawWidth, spentHeight)
             })
         })
@@ -228,15 +190,15 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
     return (
         <div className={`${styles.partyOverview} ${className || ''}`}>
             <div className={styles.header}>
-                <h4 className={styles.title}>Party Overview: The "Barcode"</h4>
+                <h4 className={styles.title}>Survival Spectrogram</h4>
                 <div className={styles.subtext}>
-                    100 Runs sorted by Survival • Grouped by Player (Tank → Glass Cannon)
+                    100 Timelines • Sorted by Fate
                 </div>
             </div>
 
             <div className={styles.legend}>
+                <span className={styles.legendLabel}>Cohort:</span>
                 <div className={styles.legendGroup}>
-                    <span className={styles.legendLabel}>Players:</span>
                     {sortedPlayers.map((p, i) => (
                         <span key={p.playerId} className={styles.playerTag}>
                             {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
@@ -253,21 +215,21 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
             
             <div className={styles.colorKey}>
                 <div className={styles.keyItem}>
-                    <div className={`${styles.swatch} ${styles.green}`} /> HP Remaining
+                    <div className={`${styles.swatch} ${styles.green}`} /> Life
                 </div>
                 <div className={styles.keyItem}>
-                    <div className={`${styles.swatch} ${styles.red}`} /> Damage Taken
+                    <div className={`${styles.swatch} ${styles.red}`} /> Wounds
                 </div>
                 <div className={styles.separator} />
                 <div className={styles.keyItem}>
-                    <div className={`${styles.swatch} ${styles.blue}`} /> Resources Left
+                    <div className={`${styles.swatch} ${styles.blue}`} /> Power
                 </div>
                 <div className={styles.keyItem}>
                     <div className={`${styles.swatch} ${styles.yellow}`} /> Spent
                 </div>
                 <div className={styles.separator} />
                 <div className={styles.keyItem}>
-                    <div className={`${styles.swatch} ${styles.dead}`} /> Unconscious/Dead
+                    <div className={`${styles.swatch} ${styles.dead}`} /> Fallen
                 </div>
             </div>
         </div>
