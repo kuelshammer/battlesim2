@@ -220,23 +220,23 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
 
             {/* Color legend */}
             <div className={styles.colorLegend}>
-                <div className={styles.legendItem}>
+                <div className={styles.legendItem} key="legend-hp-remaining">
                     <div className={`${styles.legendSwatch} ${styles.green}`} />
                     <span>HP Remaining</span>
                 </div>
-                <div className={styles.legendItem}>
+                <div className={styles.legendItem} key="legend-damage">
                     <div className={`${styles.legendSwatch} ${styles.red}`} />
                     <span>Damage Taken</span>
                 </div>
-                <div className={styles.legendItem}>
+                <div className={styles.legendItem} key="legend-resources">
                     <div className={`${styles.legendSwatch} ${styles.blue}`} />
                     <span>Resources Left</span>
                 </div>
-                <div className={styles.legendItem}>
+                <div className={styles.legendItem} key="legend-spent">
                     <div className={`${styles.legendSwatch} ${styles.yellow}`} />
                     <span>Resources Spent</span>
                 </div>
-                <div className={styles.legendItem}>
+                <div className={styles.legendItem} key="legend-deceased">
                     <div className={`${styles.legendSwatch} ${styles.black}`} />
                     <span>Deceased</span>
                 </div>
