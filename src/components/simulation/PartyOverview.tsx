@@ -33,12 +33,28 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
     const canvasWidth = partySize * skyline.buckets.length + (skyline.buckets.length - 1)
     const canvasHeight = 100 // Exactly 100px as specified
 
+    console.log('[PartyOverview] Component render:', {
+        partySize,
+        bucketCount: skyline.buckets.length,
+        canvasWidth,
+        canvasHeight,
+        partySlots: partySlots.map(p => ({ id: p.playerId, score: p.survivabilityScore })),
+    })
+
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
+
+        console.log('[PartyOverview] BEFORE sizing:', {
+            canvasWidth,
+            canvasHeight,
+            partySize,
+            bucketsLength: skyline.buckets.length,
+            partySlotsLength: partySlots.length,
+        })
 
         // Set canvas size (must be set on the element, not just in CSS)
         canvas.width = canvasWidth
@@ -48,6 +64,18 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         canvas.style.width = `${canvasWidth}px`
         canvas.style.height = `${canvasHeight}px`
 
+        // Force a reflow to ensure sizes are applied
+        canvas.getBoundingClientRect()
+
+        console.log('[PartyOverview] AFTER sizing:', {
+            canvasWidthAttr: canvas.width,
+            canvasHeightAttr: canvas.height,
+            canvasStyleWidth: canvas.style.width,
+            canvasStyleHeight: canvas.style.height,
+            clientWidth: canvas.clientWidth,
+            clientHeight: canvas.clientHeight,
+        })
+
         // Clear canvas
         ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
@@ -55,12 +83,10 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         const playerHeight = 1 // 1px per player bar
         const columnWidth = partySize // player_count pixels wide per bucket
 
-        console.log('[PartyOverview] Drawing spectrogram:', {
-            canvasWidth,
-            canvasHeight,
+        console.log('[PartyOverview] Drawing parameters:', {
             axisY,
-            partySize,
-            bucketCount: skyline.buckets.length,
+            playerHeight,
+            columnWidth,
             sampleBucket: skyline.buckets[0],
             partySlotsCount: partySlots.length,
         })
