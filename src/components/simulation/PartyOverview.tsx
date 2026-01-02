@@ -1,244 +1,273 @@
-import { FC, useRef, useEffect } from 'react'
-import { SkylineAnalysis, PlayerSlot } from '@/model/model'
+import React, { FC, useRef, useEffect, useMemo, useState } from 'react'
+import { SkylineAnalysis, PlayerSlot, PercentileBucket } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 
 interface PartyOverviewProps {
     skyline: SkylineAnalysis
     partySlots: PlayerSlot[]
+    className?: string
 }
 
 /**
  * PartyOverview displays a horizontal spectrogram of HP and resources across 100 runs.
  *
  * Layout:
- * - X-axis: 100 percentile buckets (P1 left/worst → P100 right/best)
- * - Each bucket is a vertical column:
- *   - Width: player_count pixels (e.g., 4 players = 4px wide)
- *   - Height: 100px (50px above axis for HP, 50px below for resources)
- *   - 1px spacing between columns
- * - ABOVE axis: HP bars stacked by player (1px each)
- *   - Order: Tank (top) → Glass Cannon (bottom)
- *   - Green = near axis (remaining HP), Red = away (damage)
- * - BELOW axis: Resource bars stacked by player (1px each)
- *   - Same player order
- *   - Blue = near axis (remaining), Yellow = away (spent)
+ * - X-axis: 100 runs (sorted by Survivorship -> HP%)
+ * - Each run is a vertical group of N stripes (where N is party size)
+ * - Dynamic Sizing: Width scales to fit canvas
+ * - ABOVE axis: HP bars stacked by Tankiness
+ * - BELOW axis: Resource bars stacked by Tankiness
+ * - Inner Group Sorting: Always Tank (Left) -> Glass Cannon (Right) within a run group
  */
-const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
+const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [width, setWidth] = useState(0)
 
-    const partySize = partySlots.length
+    // Handle resize
+    useEffect(() => {
+        if (!containerRef.current) return
+        
+        const updateWidth = () => {
+            if (containerRef.current) {
+                setWidth(containerRef.current.clientWidth)
+            }
+        }
+        
+        const resizeObserver = new ResizeObserver(updateWidth)
+        resizeObserver.observe(containerRef.current)
+        updateWidth()
+        
+        return () => resizeObserver.disconnect()
+    }, [])
 
-    // Calculate canvas dimensions
-    // Width: playerSize pixels per bucket * 100 buckets + spacing
-    const canvasWidth = partySize * skyline.buckets.length + (skyline.buckets.length - 1)
-    const canvasHeight = 100 // Exactly 100px as specified
+    const partySize = skyline.partySize || partySlots.length
 
-    console.log('[PartyOverview] Component render:', {
-        partySize,
-        bucketCount: skyline.buckets.length,
-        canvasWidth,
-        canvasHeight,
-        partySlots: partySlots.map(p => ({ id: p.playerId, score: p.survivabilityScore })),
-    })
+    // 1. Sort Players by Survivability (Highest/Tank -> Lowest/Glass Cannon)
+    // The user wants: "Highest on Left -> Lowest on Right" within a group
+    // In our vertical stack logic (previous code), it was Top -> Bottom.
+    // "Bottom Panel (Resources): Each stripe is a stacked bar." 
+    // Wait, the user said: "For each of the 100 X-Axis buckets, draw a 'Group' of N vertical stripes"
+    // So the players are SIDE-BY-SIDE in a group, not stacked vertically on top of each other?
+    // "Inner-Group: Within each run group, the players must ALWAYS be ordered by their survivabilityScore (Highest on Left -> Lowest on Right)."
+    // Yes, they are vertical stripes next to each other.
+    
+    // Top Panel (HP): Each stripe is a stacked bar (Green vs Red).
+    // Bottom Panel (Resources): Each stripe is a stacked bar (Blue vs Yellow).
+    
+    const sortedPlayers = useMemo(() => {
+        return [...partySlots].sort((a, b) => b.survivabilityScore - a.survivabilityScore)
+    }, [partySlots])
+
+    // 2. Triage Sort for Runs (X-Axis)
+    // Primary: survivorCount (Ascending) -> TPKs on left
+    // Secondary: totalPartyHpPercent (Ascending)
+    const sortedBuckets = useMemo(() => {
+        // Clone buckets to avoid mutating prop
+        const buckets = [...skyline.buckets]
+        
+        return buckets.sort((a, b) => {
+            // survivorCount = partySize - deathCount
+            // So survivorCount Ascending == deathCount Descending
+            const survivorsA = partySize - a.deathCount
+            const survivorsB = partySize - b.deathCount
+            
+            if (survivorsA !== survivorsB) {
+                return survivorsA - survivorsB
+            }
+            
+            // Secondary: HP Percent
+            return a.partyHpPercent - b.partyHpPercent
+        })
+    }, [skyline.buckets, partySize])
 
     useEffect(() => {
         const canvas = canvasRef.current
-        if (!canvas) return
+        if (!canvas || width === 0) return
 
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        console.log('[PartyOverview] BEFORE sizing:', {
-            canvasWidth,
-            canvasHeight,
-            partySize,
-            bucketsLength: skyline.buckets.length,
-            partySlotsLength: partySlots.length,
-        })
+        // Constants
+        const RUNS_COUNT = 100 // We enforce 100 runs
+        const CANVAS_HEIGHT = 120 // 60px Top + 60px Bottom
+        const AXIS_Y = CANVAS_HEIGHT / 2
+        
+        // Handle high-DPI displays
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = width * dpr
+        canvas.height = CANVAS_HEIGHT * dpr
+        canvas.style.width = `${width}px`
+        canvas.style.height = `${CANVAS_HEIGHT}px`
+        ctx.scale(dpr, dpr)
 
-        // Set canvas size (must be set on the element, not just in CSS)
-        canvas.width = canvasWidth
-        canvas.height = canvasHeight
+        // Clear
+        ctx.clearRect(0, 0, width, CANVAS_HEIGHT)
 
-        // Also set CSS style explicitly to prevent scaling
-        canvas.style.width = `${canvasWidth}px`
-        canvas.style.height = `${canvasHeight}px`
+        // Calculate sizing
+        // Total Groups = 100
+        // Stripes per Group = PartySize
+        // Total Stripes = 100 * PartySize
+        // We also need gaps between groups.
+        
+        const gapSize = partySize > 6 ? 0.5 : 1
+        const totalGapSpace = (RUNS_COUNT - 1) * gapSize
+        const availableWidth = width - totalGapSpace
+        const stripeWidth = availableWidth / (RUNS_COUNT * partySize)
+        
+        // Draw background/guides
+        ctx.fillStyle = '#111827' // Dark background
+        ctx.fillRect(0, 0, width, CANVAS_HEIGHT)
+        
+        // Axis line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(0, AXIS_Y)
+        ctx.lineTo(width, AXIS_Y)
+        ctx.stroke()
 
-        // Use requestAnimationFrame to ensure DOM has been updated before drawing
-        requestAnimationFrame(() => {
-            // Force a reflow to ensure sizes are applied
-            const rect = canvas.getBoundingClientRect()
+        // Render Runs
+        sortedBuckets.forEach((bucket, runIdx) => {
+            // X position for this run group
+            const groupX = runIdx * (partySize * stripeWidth + gapSize)
+            
+            // Iterate players in fixed survivability order
+            sortedPlayers.forEach((playerSlot, playerIdx) => {
+                const charData = bucket.characters.find(c => c.id === playerSlot.playerId || c.name === playerSlot.playerId)
+                
+                // Stripe X position
+                const stripeX = groupX + (playerIdx * stripeWidth)
+                
+                // Safety check for sub-pixel rendering gaps
+                // Use a slightly larger width to prevent hairline cracks if width is fractional
+                const drawWidth = stripeWidth + 0.1 
 
-            console.log('[PartyOverview] AFTER sizing:', {
-                canvasWidthAttr: canvas.width,
-                canvasHeightAttr: canvas.height,
-                canvasStyleWidth: canvas.style.width,
-                canvasStyleHeight: canvas.style.height,
-                clientWidth: canvas.clientWidth,
-                clientHeight: canvas.clientHeight,
-                boundingRect: {
-                    width: rect.width,
-                    height: rect.height,
-                    x: rect.x,
-                    y: rect.y,
-                },
-            })
-
-            // Clear canvas
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-
-            const axisY = canvasHeight / 2 // Middle horizontal line at 50px
-            const playerHeight = 1 // 1px per player bar
-            const columnWidth = partySize // player_count pixels wide per bucket
-
-            console.log('[PartyOverview] Drawing parameters:', {
-                axisY,
-                playerHeight,
-                columnWidth,
-                sampleBucket: skyline.buckets[0],
-                partySlotsCount: partySlots.length,
-            })
-
-            // Fill background to make canvas visible
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
-
-            // Draw a test rectangle to verify canvas scaling
-            // This should fill the entire canvas with a semi-transparent blue
-            ctx.fillStyle = 'rgba(0, 100, 255, 0.3)'
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
-
-            // Draw diagonal line from top-left to bottom-right
-            ctx.strokeStyle = '#ff00ff'
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.moveTo(0, 0)
-            ctx.lineTo(canvasWidth - 1, canvasHeight - 1)
-            ctx.stroke()
-
-            // Draw axis line
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.moveTo(0, axisY)
-            ctx.lineTo(canvasWidth, axisY)
-            ctx.stroke()
-
-            // Draw each percentile bucket
-            skyline.buckets.forEach((bucket, bucketIdx) => {
-                const x = bucketIdx * (columnWidth + 1) // +1 for spacing
-
-                // Draw player bars (ordered by survivability: Tank top → Glass Cannon bottom)
-                partySlots.forEach((slot, playerIdx) => {
-                    const character = bucket.characters.find(
-                        (c) => c.id === slot.playerId || c.name === slot.playerId
-                    )
-
-                    if (!character) return
-
-                    // Y position: above axis for HP, below for resources
-                    // Players stacked from top (Tank) to bottom (Glass Cannon)
-                    // Each player gets exactly 1px height
-                    const hpBarY = axisY - (playerIdx + 1) * playerHeight
-                    const resBarY = axisY + playerIdx * playerHeight
-
-                    // HP bar (above axis) - 1px high, divided horizontally into green/red
-                    const hpPercent = character.hpPercent
-                    if (character.isDead) {
-                        // Dead = black bar
-                        ctx.fillStyle = '#0f172a'
-                        ctx.fillRect(x, hpBarY, columnWidth, playerHeight)
-                    } else {
-                        // Green portion (remaining HP) - from left
-                        const greenWidth = (hpPercent / 100) * columnWidth
-                        ctx.fillStyle = '#22c55e'
-                        ctx.fillRect(x, hpBarY, greenWidth, playerHeight)
-
-                        // Red portion (damage taken) - from right
-                        const redWidth = columnWidth - greenWidth
-                        if (redWidth > 0) {
-                            ctx.fillStyle = '#ef4444'
-                            ctx.fillRect(x + greenWidth, hpBarY, redWidth, playerHeight)
-                        }
-                    }
-
-                    // Resources bar (below axis) - 1px high, divided horizontally into blue/yellow
-                    const resPercent = character.resourcePercent || 0
-                    // Blue portion (remaining resources) - from left
-                    const blueWidth = (resPercent / 100) * columnWidth
-                    ctx.fillStyle = '#4488ff'
-                    ctx.fillRect(x, resBarY, blueWidth, playerHeight)
-
-                    // Yellow portion (resources spent) - from right
-                    const yellowWidth = columnWidth - blueWidth
-                    if (yellowWidth > 0) {
-                        ctx.fillStyle = '#ffcc00'
-                        ctx.fillRect(x + blueWidth, resBarY, yellowWidth, playerHeight)
-                    }
-                })
-            })
-
-            // Draw X-axis labels (every 20 buckets)
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-            ctx.font = '9px sans-serif'
-            ctx.textAlign = 'center'
-            skyline.buckets.forEach((bucket, idx) => {
-                if (bucket.percentile % 20 === 0) {
-                    const x = idx * (columnWidth + 1) + columnWidth / 2
-                    ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 2)
+                if (!charData) {
+                    // Missing data placeholder
+                    ctx.fillStyle = '#374151'
+                    ctx.fillRect(stripeX, 0, drawWidth, CANVAS_HEIGHT)
+                    return
                 }
+
+                // --- Top Panel: HP (Above Axis) ---
+                // Bottom is Green (currentHp), Top is Red (Damage taken)
+                // Growing UP from Axis? Or Top-Down?
+                // Usually "Stacked Bar" means Base is at 0.
+                // For "HP Remaining", usually we want the Green bar to start at the Axis and go UP (or Down).
+                // Let's assume standard graph: Axis is 0.
+                // HP Panel is the TOP half (0 to AXIS_Y).
+                // If we want it to look like a skyline/equalizer, bars usually grow from the axis.
+                // So Axis is "Floor" for Top Panel and "Ceiling" for Bottom Panel?
+                // Or "Floor" for both?
+                // "Top Panel (Health): Shows HP Remaining vs. Damage Taken."
+                // "Bottom is Green (currentHp), Top is Red (Damage taken)."
+                // This implies a vertical bar where the bottom part is green and top is red.
+                // If the panel is above the axis, "Bottom" means closer to the axis.
+                
+                const panelHeight = AXIS_Y
+                
+                if (charData.isDead) {
+                    // Dead State
+                    ctx.fillStyle = '#450a0a' // Dark red for dead
+                    ctx.fillRect(stripeX, 0, drawWidth, panelHeight) // Fill entire top panel
+                } else {
+                    const hpPct = Math.max(0, Math.min(100, charData.hpPercent)) / 100
+                    const hpHeight = panelHeight * hpPct
+                    const dmgHeight = panelHeight * (1 - hpPct)
+                    
+                    // Green (HP) - Bottom of the top panel (closer to axis)
+                    ctx.fillStyle = '#22c55e'
+                    ctx.fillRect(stripeX, AXIS_Y - hpHeight, drawWidth, hpHeight)
+                    
+                    // Red (Damage) - Top of the top panel (away from axis)
+                    ctx.fillStyle = '#ef4444'
+                    ctx.fillRect(stripeX, 0, drawWidth, dmgHeight)
+                }
+
+                // --- Bottom Panel: Resources (Below Axis) ---
+                // "Bottom is Blue (currentResources), Top is Yellow (Resources spent)."
+                // Since this panel is BELOW the axis, "Top" is closer to the axis.
+                // "Bottom" is further away.
+                // So Blue is at the bottom of the bar (furthest from axis)?
+                // Or "Bottom" in the visual stack logic?
+                // Usually "Bottom is X" means X is the base.
+                // Let's assume standard orientation:
+                // [Yellow (Spent)]
+                // [Blue (Remaining)]
+                // ---------------- Axis
+                // Wait, if it's below axis:
+                // ---------------- Axis
+                // [Blue (Remaining)]
+                // [Yellow (Spent)]
+                //
+                // Let's interpret "Bottom is Blue" relative to the bar's own coordinate system (0 to 100).
+                // If the bar grows DOWN from the axis:
+                // Axis (0) -> 
+                // Blue Bar (Remaining)
+                // Yellow Bar (Spent)
+                // This keeps "Remaining" closer to the axis, which mirrors the HP (Remaining closer to axis).
+                // Symmetry is usually desired.
+                
+                const resPct = Math.max(0, Math.min(100, charData.resourcePercent)) / 100
+                const resHeight = panelHeight * resPct
+                const spentHeight = panelHeight * (1 - resPct)
+                
+                // Blue (Remaining) - Top of the bottom panel (closer to axis)
+                ctx.fillStyle = '#3b82f6'
+                ctx.fillRect(stripeX, AXIS_Y, drawWidth, resHeight)
+                
+                // Yellow (Spent) - Bottom of the bottom panel (away from axis)
+                ctx.fillStyle = '#eab308'
+                ctx.fillRect(stripeX, AXIS_Y + resHeight, drawWidth, spentHeight)
             })
         })
 
-    }, [skyline, partySlots, canvasWidth, canvasHeight, partySize])
+    }, [skyline, partySlots, width, sortedPlayers, sortedBuckets, partySize])
 
     return (
-        <div className={styles.partyOverview}>
-            <h4 className={styles.title}>Party Overview - HP & Resources (P1 → P100)</h4>
-
-            {/* Player order legend */}
-            <div className={styles.playerLegend}>
-                <span className={styles.legendLabel}>Top:</span>
-                {partySlots.map((slot, idx) => (
-                    <span key={slot.playerId} className={styles.playerName}>
-                        {slot.playerId}
-                        {idx < partySlots.length - 1 && ' → '}
-                    </span>
-                ))}
-                <span className={styles.legendLabel}>:Bottom</span>
+        <div className={`${styles.partyOverview} ${className || ''}`}>
+            <div className={styles.header}>
+                <h4 className={styles.title}>Party Overview: The "Barcode"</h4>
+                <div className={styles.subtext}>
+                    100 Runs sorted by Survival • Grouped by Player (Tank → Glass Cannon)
+                </div>
             </div>
 
-            {/* Spectrogram canvas */}
-            <div className={styles.spectrogramContainer}>
-                <canvas
-                    ref={canvasRef}
-                    width={canvasWidth}
-                    height={canvasHeight}
-                    className={styles.spectrogram}
-                />
+            <div className={styles.legend}>
+                <div className={styles.legendGroup}>
+                    <span className={styles.legendLabel}>Players:</span>
+                    {sortedPlayers.map((p, i) => (
+                        <span key={p.playerId} className={styles.playerTag}>
+                            {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
+                            {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
+                            {p.playerId}
+                        </span>
+                    ))}
+                </div>
             </div>
 
-            {/* Color legend */}
-            <div className={styles.colorLegend}>
-                <div className={styles.legendItem} key="legend-hp-remaining">
-                    <div className={`${styles.legendSwatch} ${styles.green}`} />
-                    <span>HP Remaining</span>
+            <div ref={containerRef} className={styles.canvasContainer}>
+                <canvas ref={canvasRef} />
+            </div>
+            
+            <div className={styles.colorKey}>
+                <div className={styles.keyItem}>
+                    <div className={`${styles.swatch} ${styles.green}`} /> HP Remaining
                 </div>
-                <div className={styles.legendItem} key="legend-damage">
-                    <div className={`${styles.legendSwatch} ${styles.red}`} />
-                    <span>Damage Taken</span>
+                <div className={styles.keyItem}>
+                    <div className={`${styles.swatch} ${styles.red}`} /> Damage Taken
                 </div>
-                <div className={styles.legendItem} key="legend-resources">
-                    <div className={`${styles.legendSwatch} ${styles.blue}`} />
-                    <span>Resources Left</span>
+                <div className={styles.separator} />
+                <div className={styles.keyItem}>
+                    <div className={`${styles.swatch} ${styles.blue}`} /> Resources Left
                 </div>
-                <div className={styles.legendItem} key="legend-spent">
-                    <div className={`${styles.legendSwatch} ${styles.yellow}`} />
-                    <span>Resources Spent</span>
+                <div className={styles.keyItem}>
+                    <div className={`${styles.swatch} ${styles.yellow}`} /> Spent
                 </div>
-                <div className={styles.legendItem} key="legend-deceased">
-                    <div className={`${styles.legendSwatch} ${styles.black}`} />
-                    <span>Deceased</span>
+                <div className={styles.separator} />
+                <div className={styles.keyItem}>
+                    <div className={`${styles.swatch} ${styles.dead}`} /> Unconscious/Dead
                 </div>
             </div>
         </div>
