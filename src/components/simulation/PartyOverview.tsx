@@ -29,9 +29,9 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
     const partySize = partySlots.length
 
     // Calculate canvas dimensions
-    // Width: (playerSize + 1 spacing) * 100 buckets
-    const canvasWidth = (partySize + 1) * skyline.buckets.length
-    const canvasHeight = 150 // 100px for data + 50px for labels/legend
+    // Width: playerSize pixels per bucket * 100 buckets + spacing
+    const canvasWidth = partySize * skyline.buckets.length + (skyline.buckets.length - 1)
+    const canvasHeight = 100 // Exactly 100px as specified
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -47,9 +47,18 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         // Clear canvas
         ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
-        const axisY = 75 // Middle horizontal line
+        const axisY = canvasHeight / 2 // Middle horizontal line at 50px
         const playerHeight = 1 // 1px per player bar
         const columnWidth = partySize // player_count pixels wide per bucket
+
+        console.log('[PartyOverview] Drawing spectrogram:', {
+            canvasWidth,
+            canvasHeight,
+            axisY,
+            partySize,
+            bucketCount: skyline.buckets.length,
+            sampleBucket: skyline.buckets[0],
+        })
 
         // Draw axis line
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
@@ -115,12 +124,12 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
 
         // Draw X-axis labels (every 20 buckets)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        ctx.font = '10px sans-serif'
+        ctx.font = '9px sans-serif'
         ctx.textAlign = 'center'
         skyline.buckets.forEach((bucket, idx) => {
             if (bucket.percentile % 20 === 0) {
                 const x = idx * (columnWidth + 1) + columnWidth / 2
-                ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 5)
+                ctx.fillText(`P${bucket.percentile}`, x, canvasHeight - 2)
             }
         })
 
@@ -149,11 +158,6 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
                     width={canvasWidth}
                     height={canvasHeight}
                     className={styles.spectrogram}
-                    style={{
-                        width: '100%',
-                        height: 'auto',
-                        imageRendering: 'pixelated',
-                    }}
                 />
             </div>
 
