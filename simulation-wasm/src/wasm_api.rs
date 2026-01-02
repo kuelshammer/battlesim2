@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 use web_sys::console;
 use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun};
+use crate::sorting::{PlayerSlot, calculate_average_attack_bonus, assign_party_slots};
 use crate::storage_manager::StorageManager;
 use crate::display_manager::{DisplayManager, DisplayMode, DisplayConfig};
 use crate::progress_ui::{ProgressUIManager, ProgressUIConfig};
@@ -17,6 +18,14 @@ use std::sync::{Mutex, OnceLock, PoisonError, Arc};
 struct FullAnalysisOutput {
     overall: crate::decile_analysis::AggregateOutput,
     encounters: Vec<crate::decile_analysis::AggregateOutput>,
+    /// Average attack bonus from all monsters in the timeline
+    /// Used for contextual survivability calculations
+    #[serde(rename = "averageMonsterAttackBonus")]
+    average_monster_attack_bonus: f64,
+    /// Player slots ordered from Tank (position 0) to Glass Cannon (position N)
+    /// Based on survivability scores against the average monster attack bonus
+    #[serde(rename = "partySlots")]
+    party_slots: Vec<PlayerSlot>,
 }
 
 #[derive(serde::Serialize)]
@@ -189,11 +198,20 @@ impl ChunkedSimulationRunner {
             reps
         };
 
+        // Calculate contextual average attack bonus from all monsters in the timeline
+        let avg_attack_bonus = calculate_average_attack_bonus(&self.timeline);
+        let avg_attack_bonus_int = avg_attack_bonus.round() as i32;
+
+        // Assign party slots based on survivability against the average attack bonus
+        let party_slots = assign_party_slots(&self.players, avg_attack_bonus_int);
+
         let output = FullSimulationOutput {
             results: reduced_results,
             analysis: FullAnalysisOutput {
                 overall,
                 encounters: encounters_analysis,
+                average_monster_attack_bonus: avg_attack_bonus,
+                party_slots,
             },
             first_run_events: if median_run_events.is_empty() {
                  final_runs[total_runs / 2].events.clone()
@@ -426,11 +444,20 @@ pub fn run_simulation_with_callback(
         if idx < total_runs { reduced_results.push(final_runs[idx].result.clone()); }
     }
 
+    // Calculate contextual average attack bonus from all monsters in the timeline
+    let avg_attack_bonus = calculate_average_attack_bonus(&timeline);
+    let avg_attack_bonus_int = avg_attack_bonus.round() as i32;
+
+    // Assign party slots based on survivability against the average attack bonus
+    let party_slots = assign_party_slots(&players, avg_attack_bonus_int);
+
     let output = FullSimulationOutput {
         results: reduced_results,
         analysis: FullAnalysisOutput {
             overall,
             encounters: encounters_analysis,
+            average_monster_attack_bonus: avg_attack_bonus,
+            party_slots,
         },
         first_run_events: if median_run_events.is_empty() {
              // Fallback if median wasn't in interesting seeds (unlikely)
@@ -789,9 +816,12 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
 
     console::log_1(&format!("Generated overall analysis + {} encounter analyses", encounters.len()).into());
 
+    // Note: This function doesn't have access to timeline or players, so we use defaults
     let output = FullAnalysisOutput {
         overall,
         encounters,
+        average_monster_attack_bonus: 5.0, // Default value
+        party_slots: Vec::new(), // Empty - cannot calculate without player data
     };
 
     let serializer = serde_wasm_bindgen::Serializer::new()

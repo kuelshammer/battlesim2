@@ -11,6 +11,7 @@ pub mod resources;
 pub mod events;
 pub mod context;
 pub mod reactions;
+pub mod sorting;
 pub mod execution;
 pub mod action_resolver;
 pub mod validation; // New module for requirement validation
