@@ -67,7 +67,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
         // Use requestAnimationFrame to ensure DOM has been updated before drawing
         requestAnimationFrame(() => {
             // Force a reflow to ensure sizes are applied
-            canvas.getBoundingClientRect()
+            const rect = canvas.getBoundingClientRect()
 
             console.log('[PartyOverview] AFTER sizing:', {
                 canvasWidthAttr: canvas.width,
@@ -76,6 +76,12 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
                 canvasStyleHeight: canvas.style.height,
                 clientWidth: canvas.clientWidth,
                 clientHeight: canvas.clientHeight,
+                boundingRect: {
+                    width: rect.width,
+                    height: rect.height,
+                    x: rect.x,
+                    y: rect.y,
+                },
             })
 
             // Clear canvas
@@ -96,6 +102,19 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots }) => {
             // Fill background to make canvas visible
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
             ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+            // Draw a test rectangle to verify canvas scaling
+            // This should fill the entire canvas with a semi-transparent blue
+            ctx.fillStyle = 'rgba(0, 100, 255, 0.3)'
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+
+            // Draw diagonal line from top-left to bottom-right
+            ctx.strokeStyle = '#ff00ff'
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.moveTo(0, 0)
+            ctx.lineTo(canvasWidth - 1, canvasHeight - 1)
+            ctx.stroke()
 
             // Draw axis line
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
