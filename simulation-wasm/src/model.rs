@@ -1141,18 +1141,52 @@ impl CreatureState {
     }
 }
 
+/// Calculate hit chance for a monster with given attack bonus against the target AC
+/// Uses D20 rules: roll + attack_bonus >= AC to hit
+/// Clamped between 0.05 (nat 20 always hits) and 0.95 (nat 1 always misses)
+fn calculate_hit_chance(ac: u32, attack_bonus: i32) -> f64 {
+    // Roll needed on d20 = AC - attack_bonus
+    let roll_needed = ac as i32 - attack_bonus;
+
+    if roll_needed <= 1 {
+        // Even with a roll of 1, we hit (only miss on nat 1)
+        0.95
+    } else if roll_needed >= 20 {
+        // Need a 20 or better (only hit on nat 20)
+        0.05
+    } else {
+        // Hit chance = (21 - roll_needed) / 20
+        // Example: AC 15 vs +5 attack → roll_needed = 10 → hit chance = 11/20 = 55%
+        (21 - roll_needed) as f64 / 20.0
+    }
+}
+
 impl Creature {
     /// Calculate the survivability score for UI slot ordering (Tank → Glass Cannon)
     /// Uses MAX HP and assumes Rage is available for Barbarians (static ordering)
     ///
-    /// Formula: HP × (1 + (AC - 10) / 20) × Rage Multiplier
-    /// - K = 20: Each AC point above 10 adds ~5% to effective health
+    /// Improved Formula: EHP = HP / hit_chance × Rage Multiplier
+    /// - hit_chance: Based on monster attack bonus vs AC (clamped 5%-95%)
+    /// - Default monster attack bonus: +5 (typical for CR 1/2 at level 1)
     /// - Rage Multiplier: 2.0 for Barbarians, 1.0 for others
+    ///
+    /// This accounts for diminishing returns of AC:
+    /// - AC 10 vs +5: 75% hit rate → 1.33x EHP
+    /// - AC 15 vs +5: 50% hit rate → 2.0x EHP
+    /// - AC 20 vs +5: 25% hit rate → 4.0x EHP
+    /// - AC 26 vs +5: 5% hit rate (nat 20 only) → 20x EHP
     pub fn max_survivability_score(&self) -> f64 {
-        let ac_modifier = 1.0 + ((self.ac as f64 - 10.0) / 20.0);
+        self.max_survivability_score_vs_attack(5)
+    }
+
+    /// Calculate survivability score against a specific monster attack bonus
+    pub fn max_survivability_score_vs_attack(&self, monster_attack_bonus: i32) -> f64 {
+        let hit_chance = calculate_hit_chance(self.ac, monster_attack_bonus);
         let rage_multiplier = if self.is_barbarian() { 2.0 } else { 1.0 };
 
-        self.hp as f64 * ac_modifier * rage_multiplier
+        // EHP = HP / hit_chance × rage_multiplier
+        // Higher AC → lower hit chance → higher EHP
+        self.hp as f64 / hit_chance * rage_multiplier
     }
 
     /// Check if this creature is a Barbarian (has Rage class resource)
@@ -1169,13 +1203,19 @@ impl Combattant {
     /// Calculate the CURRENT survivability score for AI targeting decisions
     /// Uses CURRENT HP and checks if Rage is actually active right now
     ///
-    /// Formula: Current HP × (1 + (AC - 10) / 20) × Rage Multiplier
+    /// Improved Formula: EHP = Current_HP / hit_chance × Rage Multiplier
+    /// - Uses default monster attack bonus: +5
     /// - Rage Multiplier: 2.0 IF Rage is active, 1.0 otherwise
     pub fn current_survivability_score(&self) -> f64 {
-        let ac_modifier = 1.0 + ((self.creature.ac as f64 - 10.0) / 20.0);
+        self.current_survivability_score_vs_attack(5)
+    }
+
+    /// Calculate current survivability score against a specific monster attack bonus
+    pub fn current_survivability_score_vs_attack(&self, monster_attack_bonus: i32) -> f64 {
+        let hit_chance = calculate_hit_chance(self.creature.ac, monster_attack_bonus);
         let rage_multiplier = if self.final_state.has_rage_active() { 2.0 } else { 1.0 };
 
-        self.final_state.current_hp as f64 * ac_modifier * rage_multiplier
+        self.final_state.current_hp as f64 / hit_chance * rage_multiplier
     }
 }
 
