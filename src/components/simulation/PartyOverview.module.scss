@@ -110,30 +110,26 @@
 
     .canvasContainer {
         width: 100%;
-        height: 140px; // Graph (120) + Labels (20)
+        height: 160px; // 60 + 60 + 20 + padding
         background: #000;
         border: 1px solid rgba(212, 175, 55, 0.15);
         position: relative;
         overflow: hidden;
         box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
 
-        // Scanline effect (Subtler)
-        &::after {
-            content: " ";
-            display: block;
+        .labelVitality, .labelPower {
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(
-                rgba(18, 16, 16, 0) 50%, 
-                rgba(0, 0, 0, 0.1) 50%
-            );
-            background-size: 100% 4px;
-            z-index: 2;
+            left: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            color: rgba(232, 224, 208, 0.3);
             pointer-events: none;
+            z-index: 1;
         }
+
+        .labelVitality { top: 4px; }
+        .labelPower { top: 69px; }
 
         canvas {
             display: block;
