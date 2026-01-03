@@ -83,10 +83,11 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         ctx.clearRect(0, 0, width, TOTAL_HEIGHT)
 
         // Sizing
-        const gapSize = 2 // Increased gap for clarity
+        const gapSize = 2 // Gap between buckets
         const totalGapSpace = (RUNS_COUNT - 1) * gapSize
         const availableWidth = width - totalGapSpace
-        const stripeWidth = availableWidth / (RUNS_COUNT * partySize)
+        const groupWidth = availableWidth / RUNS_COUNT
+        const stripeWidth = groupWidth / partySize
         
         // Draw background
         ctx.fillStyle = '#0a0a0a'
@@ -102,22 +103,25 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
 
         // Render Runs
         sortedBuckets.forEach((bucket, runIdx) => {
-            const groupX = runIdx * (partySize * stripeWidth + gapSize)
+            const groupX = runIdx * (groupWidth + gapSize)
             
             sortedPlayers.forEach((playerSlot, playerIdx) => {
-                // Robust lookup: try ID, then Name, then partial match
-                const charData = bucket.characters.find(c => 
-                    c.id === playerSlot.playerId || 
-                    c.name === playerSlot.playerId ||
-                    playerSlot.playerId.includes(c.id) ||
-                    c.id.includes(playerSlot.playerId)
-                )
+                // Safer lookup to prevent crash
+                const charData = bucket.characters.find(c => {
+                    const pid = playerSlot.playerId || ''
+                    const cid = c.id || ''
+                    const cname = c.name || ''
+                    return cid === pid || 
+                           cname === pid || 
+                           (pid && cid && pid.includes(cid)) || 
+                           (cid && pid && cid.includes(pid))
+                })
                 
                 const stripeX = groupX + (playerIdx * stripeWidth)
-                const drawWidth = Math.max(0.5, stripeWidth) // Prevent invisible stripes
+                const drawWidth = Math.max(0.5, stripeWidth) 
 
                 if (!charData) {
-                    ctx.fillStyle = '#1f2937' // Missing data
+                    ctx.fillStyle = '#1f2937' 
                     ctx.fillRect(stripeX, 0, drawWidth, GRAPH_HEIGHT)
                     return
                 }
@@ -157,7 +161,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 ctx.fillStyle = 'rgba(232, 224, 208, 0.5)'
                 ctx.font = '10px "Courier New", monospace'
                 ctx.textAlign = 'center'
-                const labelX = groupX + (partySize * stripeWidth) / 2
+                const labelX = groupX + groupWidth / 2
                 ctx.fillText(`P${runIdx === 99 ? 100 : runIdx}`, labelX, GRAPH_HEIGHT + 14)
                 
                 // Tick mark
@@ -176,7 +180,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
             <div className={styles.header}>
                 <h4 className={styles.title}>Survival Spectrogram</h4>
                 <div className={styles.subtext}>
-                    100 Timelines • Sorted by Fate
+                    100 Timelines • Sorted by Fatality
                 </div>
             </div>
 
@@ -184,7 +188,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 <span className={styles.legendLabel}>Cohort:</span>
                 <div className={styles.legendGroup}>
                     {sortedPlayers.map((p, i) => (
-                        <span key={p.playerId} className={styles.playerTag}>
+                        <span key={p.playerId || i} className={styles.playerTag}>
                             {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
                             {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
                             {p.playerId}
