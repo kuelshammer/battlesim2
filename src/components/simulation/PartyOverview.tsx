@@ -1,5 +1,5 @@
 import React, { FC, useRef, useEffect, useMemo, useState } from 'react'
-import { SkylineAnalysis, PlayerSlot, PercentileBucket } from '@/model/model'
+import { SkylineAnalysis, PlayerSlot, CharacterBucketData } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 
 interface PartyOverviewProps {
@@ -9,9 +9,23 @@ interface PartyOverviewProps {
 }
 
 /**
+ * Robust character lookup to handle prefixing and ID/Name mismatches
+ */
+export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], playerId: string) => {
+    return bucketCharacters.find(c => {
+        const pid = playerId.toLowerCase()
+        const cid = (c.id || '').toLowerCase()
+        const cname = (c.name || '').toLowerCase()
+        return cid === pid || 
+               cname === pid || 
+               (pid && cid && pid.includes(cid)) || 
+               (cid && pid && cid.includes(pid))
+    })
+}
+
+/**
  * PartyOverview displays two grouped stacked bar charts (Vitality and Power).
  * X-axis: 100 runs sorted by Overall Party Success.
- * Within each run: Players are side-by-side (Tank -> Glass Cannon).
  */
 const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -52,7 +66,8 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         const RUNS_COUNT = 100
         const BAND_HEIGHT = 60
         const LABEL_HEIGHT = 20
-        const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT + 10 // Two bands + axis labels
+        const GAP_BETWEEN_BANDS = 10
+        const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT + GAP_BETWEEN_BANDS
         const dpr = window.devicePixelRatio || 1
         
         canvas.width = width * dpr
@@ -63,36 +78,31 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
 
         ctx.clearRect(0, 0, width, TOTAL_HEIGHT)
 
-        const gapSize = 2
-        const totalGapSpace = (RUNS_COUNT - 1) * gapSize
+        const bucketGap = 2
+        const totalGapSpace = (RUNS_COUNT - 1) * bucketGap
         const groupWidth = (width - totalGapSpace) / RUNS_COUNT
         const stripeWidth = groupWidth / partySize
 
         // Backgrounds
         ctx.fillStyle = '#050505'
         ctx.fillRect(0, 0, width, BAND_HEIGHT) // Vitality band
-        ctx.fillRect(0, BAND_HEIGHT + 5, width, BAND_HEIGHT) // Power band
-
-        // Axis line
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)'
-        ctx.lineWidth = 1
-        ctx.beginPath()
-        ctx.moveTo(0, BAND_HEIGHT)
-        ctx.lineTo(width, BAND_HEIGHT)
-        ctx.stroke()
+        ctx.fillRect(0, BAND_HEIGHT + GAP_BETWEEN_BANDS, width, BAND_HEIGHT) // Power band
 
         sortedBuckets.forEach((bucket, runIdx) => {
-            const groupX = runIdx * (groupWidth + gapSize)
+            const groupX = runIdx * (groupWidth + bucketGap)
             
             sortedPlayers.forEach((playerSlot, playerIdx) => {
-                const charData = bucket.characters.find(c => 
-                    c.id === playerSlot.playerId || c.name === playerSlot.playerId
-                )
-                
+                const charData = findCharacterInBucket(bucket.characters, playerSlot.playerId)
                 const stripeX = groupX + (playerIdx * stripeWidth)
                 const drawWidth = Math.max(0.5, stripeWidth)
 
-                if (!charData) return
+                if (!charData) {
+                    // Fallback visual if no data found
+                    ctx.fillStyle = '#111'
+                    ctx.fillRect(stripeX, 0, drawWidth, BAND_HEIGHT)
+                    ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS, drawWidth, BAND_HEIGHT)
+                    return
+                }
 
                 // --- Vitality Band (HP) ---
                 if (charData.isDead) {
@@ -111,9 +121,9 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 const resPct = Math.max(0, Math.min(100, charData.resourcePercent)) / 100
                 const resH = BAND_HEIGHT * resPct
                 ctx.fillStyle = '#3b82f6' // Power
-                ctx.fillRect(stripeX, BAND_HEIGHT + 5, drawWidth, resH)
+                ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS, drawWidth, resH)
                 ctx.fillStyle = '#eab308' // Spent
-                ctx.fillRect(stripeX, BAND_HEIGHT + 5 + resH, drawWidth, BAND_HEIGHT - resH)
+                ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS + resH, drawWidth, BAND_HEIGHT - resH)
             })
 
             // Labels
@@ -125,6 +135,17 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 ctx.fillText(`P${runIdx === 99 ? 100 : runIdx}`, labelX, TOTAL_HEIGHT - 4)
             }
         })
+
+        // Axis divider lines
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(0, BAND_HEIGHT)
+        ctx.lineTo(width, BAND_HEIGHT)
+        ctx.moveTo(0, BAND_HEIGHT + GAP_BETWEEN_BANDS)
+        ctx.lineTo(width, BAND_HEIGHT + GAP_BETWEEN_BANDS)
+        ctx.stroke()
+
     }, [sortedBuckets, sortedPlayers, width, partySize])
 
     return (

@@ -1,5 +1,6 @@
 import { FC, useMemo } from 'react'
 import { SkylineAnalysis, PlayerSlot } from '@/model/model'
+import { findCharacterInBucket } from './PartyOverview'
 import styles from './PlayerGraphs.module.scss'
 
 interface PlayerGraphsProps {
@@ -36,9 +37,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}>
                 {partySlots.map((slot) => {
                     const playerBuckets = sortedBuckets.map((bucket) => {
-                        const character = bucket.characters.find(
-                            (c) => c.id === slot.playerId || c.name === slot.playerId
-                        )
+                        const character = findCharacterInBucket(bucket.characters, slot.playerId)
                         return { percentile: bucket.percentile, character: character || null }
                     })
 
