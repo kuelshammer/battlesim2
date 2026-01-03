@@ -35,9 +35,9 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
             <h4 className={styles.title}>Individual Performance Breakdown</h4>
 
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}>
-                {partySlots.map((slot) => {
+                {partySlots.map((slot, playerIdx) => {
                     const playerBuckets = sortedBuckets.map((bucket) => {
-                        const character = findCharacterInBucket(bucket.characters, slot.playerId)
+                        const character = findCharacterInBucket(bucket.characters, slot.playerId, playerIdx)
                         return { percentile: bucket.percentile, character: character || null }
                     })
 
@@ -46,12 +46,15 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
                     const hpValues = playerBuckets.map((b) => b.character?.hpPercent ?? 0).filter((hp) => hp > 0)
                     const avgHp = hpValues.length > 0 ? hpValues.reduce((sum, hp) => sum + hp, 0) / hpValues.length : 0
 
+                    const ehpValue = Math.round(slot.survivabilityScore)
+                    const displayEHP = isNaN(ehpValue) ? '---' : ehpValue
+
                     return (
                         <div key={`${slot.playerId}-${slot.position}`} className={styles.playerCard}>
                             <div className={styles.cardHeader}>
                                 <div className={styles.playerInfo}>
-                                    <h5 className={styles.playerName}>{slot.playerId}</h5>
-                                    <div className={styles.survivabilityBadge}>EHP: {Math.round(slot.survivabilityScore)}</div>
+                                    <h5 className={styles.playerName}>{slot.playerId || `Player ${playerIdx + 1}`}</h5>
+                                    <div className={styles.survivabilityBadge}>EHP: {displayEHP}</div>
                                 </div>
                                 <div className={styles.roleIcon}>
                                     {slot.position === 0 && <span title="Shield Wall">🛡️</span>}

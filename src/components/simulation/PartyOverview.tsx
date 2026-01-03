@@ -11,21 +11,47 @@ interface PartyOverviewProps {
 /**
  * Robust character lookup to handle prefixing and ID/Name mismatches
  */
-export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], playerId: string) => {
-    return bucketCharacters.find(c => {
-        const pid = playerId.toLowerCase()
+export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], playerId: string, fallbackIndex?: number) => {
+    if (!playerId || typeof playerId !== 'string' || playerId.trim() === '') {
+        if (fallbackIndex !== undefined && bucketCharacters && bucketCharacters[fallbackIndex]) {
+            return bucketCharacters[fallbackIndex]
+        }
+        return undefined
+    }
+
+    const pid = playerId.toLowerCase()
+    
+    // 1. Try exact match on ID or Name
+    let found = bucketCharacters.find(c => {
+        if (!c) return false
         const cid = (c.id || '').toLowerCase()
         const cname = (c.name || '').toLowerCase()
-        return cid === pid || 
-               cname === pid || 
-               (pid && cid && pid.includes(cid)) || 
-               (cid && pid && cid.includes(pid))
+        return cid === pid || cname === pid
     })
+
+    // 2. Try partial match
+    if (!found) {
+        found = bucketCharacters.find(c => {
+            if (!c) return false
+            const cid = (c.id || '').toLowerCase()
+            const cname = (c.name || '').toLowerCase()
+            return (cid && cid.includes(pid)) || 
+                   (pid && pid.includes(cid)) || 
+                   (cname && cname.includes(pid)) || 
+                   (pid && pid.includes(cname))
+        })
+    }
+
+    // 3. Fallback to index if still not found and index is provided
+    if (!found && fallbackIndex !== undefined && bucketCharacters && bucketCharacters[fallbackIndex]) {
+        return bucketCharacters[fallbackIndex]
+    }
+
+    return found
 }
 
 /**
  * PartyOverview displays two grouped stacked bar charts (Vitality and Power).
- * X-axis: 100 runs sorted by Overall Party Success.
  */
 const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -44,7 +70,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
     const partySize = skyline.partySize || partySlots.length
 
     const sortedPlayers = useMemo(() => {
-        return [...partySlots].sort((a, b) => b.survivabilityScore - a.survivabilityScore)
+        return [...partySlots].sort((a, b) => (b.survivabilityScore || 0) - (a.survivabilityScore || 0))
     }, [partySlots])
 
     const sortedBuckets = useMemo(() => {
@@ -84,7 +110,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         const stripeWidth = groupWidth / partySize
 
         // Backgrounds
-        ctx.fillStyle = '#050505'
+        ctx.fillStyle = '#0a0a0a'
         ctx.fillRect(0, 0, width, BAND_HEIGHT) // Vitality band
         ctx.fillRect(0, BAND_HEIGHT + GAP_BETWEEN_BANDS, width, BAND_HEIGHT) // Power band
 
@@ -92,17 +118,11 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
             const groupX = runIdx * (groupWidth + bucketGap)
             
             sortedPlayers.forEach((playerSlot, playerIdx) => {
-                const charData = findCharacterInBucket(bucket.characters, playerSlot.playerId)
+                const charData = findCharacterInBucket(bucket.characters, playerSlot.playerId, playerIdx)
                 const stripeX = groupX + (playerIdx * stripeWidth)
                 const drawWidth = Math.max(0.5, stripeWidth)
 
-                if (!charData) {
-                    // Fallback visual if no data found
-                    ctx.fillStyle = '#111'
-                    ctx.fillRect(stripeX, 0, drawWidth, BAND_HEIGHT)
-                    ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS, drawWidth, BAND_HEIGHT)
-                    return
-                }
+                if (!charData) return
 
                 // --- Vitality Band (HP) ---
                 if (charData.isDead) {
@@ -137,7 +157,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
         })
 
         // Axis divider lines
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)'
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)'
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(0, BAND_HEIGHT)
@@ -156,13 +176,13 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
             </div>
 
             <div className={styles.legend}>
-                <span className={styles.legendLabel}>Cohort (Tank → Glass):</span>
+                <span className={styles.legendLabel}>Cohort:</span>
                 <div className={styles.legendGroup}>
                     {sortedPlayers.map((p, i) => (
                         <span key={`${p.playerId}-${p.position}`} className={styles.playerTag}>
                             {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
                             {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
-                            {p.playerId}
+                            {p.playerId || `Player ${i + 1}`}
                         </span>
                     ))}
                 </div>
