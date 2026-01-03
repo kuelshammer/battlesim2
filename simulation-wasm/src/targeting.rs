@@ -275,6 +275,22 @@ pub fn select_enemy_target(
         let est_ac1 = get_estimated_ac(e1);
         let est_ac2 = get_estimated_ac(e2);
 
+        let get_attacker_to_hit = |attacker: &Combattant| -> f64 {
+            attacker.creature.actions.iter().filter_map(|a| {
+                if let Action::Atk(atk) = a {
+                    Some(match &atk.to_hit {
+                        DiceFormula::Value(v) => *v,
+                        DiceFormula::Expr(e) => crate::dice::parse_average(e),
+                    })
+                } else {
+                    None
+                }
+            }).max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal)).unwrap_or(5.0)
+        };
+
+        let atk_to_hit = get_attacker_to_hit(attacker);
+        let atk_to_hit_int = atk_to_hit.round() as i32;
+
         // 1. Primary Strategy Comparison
         let v1 = match strategy {
             EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp as f64,
@@ -282,6 +298,7 @@ pub fn select_enemy_target(
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
             EnemyTarget::EnemyWithLowestAC => e1.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e1.creature.ac as f64),
+            EnemyTarget::EnemyWithHighestSurvivability => -e1.current_survivability_score_vs_attack(atk_to_hit_int),
         };
 
         let v2 = match strategy {
@@ -290,6 +307,7 @@ pub fn select_enemy_target(
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
             EnemyTarget::EnemyWithLowestAC => e2.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e2.creature.ac as f64),
+            EnemyTarget::EnemyWithHighestSurvivability => -e2.current_survivability_score_vs_attack(atk_to_hit_int),
         };
 
         // Using partial_cmp for floats. We want strict ordering.
@@ -342,6 +360,7 @@ pub fn select_enemy_target(
                 EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
                 EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
                 EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
+                EnemyTarget::EnemyWithHighestSurvivability => 0.0, // Placeholder for logging
             };
             println!("  - Candidate {}: Score {:.1}", e.creature.name, val);
         }
@@ -427,8 +446,23 @@ pub fn select_enemy_target_cached(
         let est_ac2 = get_estimated_ac(e2);
 
         // 1. Primary Strategy Comparison using cached stats
-        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp as f64, e1.final_state.concentrating_on.is_some(), est_ac1);
-        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp as f64, e2.final_state.concentrating_on.is_some(), est_ac2);
+        let get_attacker_to_hit = |attacker: &Combattant| -> f64 {
+            attacker.creature.actions.iter().filter_map(|a| {
+                if let Action::Atk(atk) = a {
+                    Some(match &atk.to_hit {
+                        DiceFormula::Value(v) => *v,
+                        DiceFormula::Expr(e) => crate::dice::parse_average(e),
+                    })
+                } else {
+                    None
+                }
+            }).max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal)).unwrap_or(5.0)
+        };
+
+        let atk_to_hit = get_attacker_to_hit(attacker);
+
+        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp as f64, e1.final_state.concentrating_on.is_some(), est_ac1, atk_to_hit);
+        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp as f64, e2.final_state.concentrating_on.is_some(), est_ac2, atk_to_hit);
 
         // Using partial_cmp for floats. We want strict ordering.
         match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
@@ -485,6 +519,7 @@ pub fn select_enemy_target_cached(
                 EnemyTarget::EnemyWithHighestDPR => -stats.total_dpr,
                 EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
                 EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
+                EnemyTarget::EnemyWithHighestSurvivability => 0.0, // Placeholder
             };
             println!("  - Candidate {}: Score {:.1} (DPR: {:.1})", e.creature.name, val, stats.total_dpr);
         }
@@ -655,13 +690,13 @@ fn select_injured_ally_target(
     best_target
 }
 
-/// Calculate target score using cached combat statistics for O(1) performance
 fn calculate_target_score_cached(
     strategy: &EnemyTarget,
     target_stats: &CombatantStats,
     target_current_hp: f64,
     _target_concentrating: bool,
     attacker_estimated_ac: f64,
+    attacker_to_hit: f64,
 ) -> f64 {
     match strategy {
         EnemyTarget::EnemyWithLeastHP => target_current_hp,
@@ -669,6 +704,18 @@ fn calculate_target_score_cached(
         EnemyTarget::EnemyWithHighestDPR => -target_stats.total_dpr,
         EnemyTarget::EnemyWithLowestAC => attacker_estimated_ac,
         EnemyTarget::EnemyWithHighestAC => -attacker_estimated_ac,
+        EnemyTarget::EnemyWithHighestSurvivability => {
+            let ac = target_stats.ac as i32;
+            let to_hit = attacker_to_hit.round() as i32;
+            let roll_needed = ac - to_hit;
+            let hit_chance = if roll_needed <= 1 { 0.95 }
+                else if roll_needed >= 20 { 0.05 }
+                else { (21 - roll_needed) as f64 / 20.0 };
+            
+            // Simplified Rage check for cached stats - check if id contains "Barbarian" or similar?
+            // Actually CombatantStats doesn't have Rage info. We'll stick to HP/hit_chance.
+            -(target_current_hp / hit_chance)
+        }
     }
 }
 

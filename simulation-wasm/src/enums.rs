@@ -27,6 +27,8 @@ pub enum EnemyTarget {
     EnemyWithLowestAC,
     #[serde(rename = "enemy with highest AC", alias = "enemy with the highest AC")]
     EnemyWithHighestAC,
+    #[serde(rename = "enemy with highest survivability", alias = "enemy with the highest survivability")]
+    EnemyWithHighestSurvivability,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

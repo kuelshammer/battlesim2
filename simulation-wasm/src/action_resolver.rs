@@ -94,7 +94,7 @@ impl ActionResolver {
     ) -> Vec<Event> {
         let mut events = Vec::new();
 
-        // 1. Get actor and teammates/enemies for targeting
+        // 1. Get actor
         let actor = match context.get_combatant(actor_id) {
             Some(c) => c.base_combatant.clone(),
             None => return events,
@@ -102,35 +102,25 @@ impl ActionResolver {
 
         let actor_side = context.get_combatant(actor_id).unwrap().side;
         
-        let all_combatants = context.get_alive_combatants();
-        let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
-            .map(|c| c.base_combatant.clone())
-            .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
+        // 2. Resolve hits
+        let count = attack.targets.max(1) as usize;
+        
+        for _ in 0..count {
+            // Refresh alive enemies for every hit to support dynamic strategies (Most HP, Highest Survivability)
+            let all_alive = context.get_alive_combatants();
+            let enemies: Vec<_> = all_alive.into_iter()
+                .filter(|c| c.side != actor_side)
+                .map(|c| c.base_combatant.clone())
+                .collect();
 
-        // 2. Get smart targets from targeting module
-        let target_indices = targeting::get_targets(&actor, &Action::Atk(attack.clone()), &allies, &enemies);
-
-        for (is_enemy, idx) in target_indices {
-            let target_id = if is_enemy {
-                if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+            let strategy = attack.target.clone();
+            
+            if let Some(idx) = targeting::select_enemy_target(&actor, strategy, &enemies, &[], None) {
+                let target_id = enemies[idx].id.clone();
+                self.resolve_single_attack_hit(attack, context, actor_id, &target_id, &mut events);
             } else {
-                if idx < allies.len() { allies[idx].id.clone() } else { continue }
-            };
-
-            // Verify target is still alive (in case it died during previous hits of same multiattack)
-            if !context.is_combatant_alive(&target_id) {
-                // Try to find a new target for this specific hit if it was an enemy attack
-                if is_enemy {
-                    if let Some(new_idx) = targeting::select_enemy_target(&actor, attack.target.clone(), &enemies, &[], None) {
-                        let new_id = enemies[new_idx].id.clone();
-                        // Recursive-ish call but just for the ID
-                        self.resolve_single_attack_hit(attack, context, actor_id, &new_id, &mut events);
-                    }
-                }
-                continue;
+                break; // No targets available
             }
-
-            self.resolve_single_attack_hit(attack, context, actor_id, &target_id, &mut events);
         }
 
         events

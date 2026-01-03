@@ -98,6 +98,7 @@ const EnemyTargetOptions: Options<EnemyTarget> = [
     { value: 'enemy with highest DPR', label: 'Enemy with highest DPR' },
     { value: 'enemy with lowest AC', label: 'Enemy with lowest AC' },
     { value: 'enemy with highest AC', label: 'Enemy with highest AC' },
+    { value: 'enemy with highest survivability', label: 'Enemy with highest survivability' },
 ]
 
 const AllyTargetOptions: Options<AllyTarget> = [

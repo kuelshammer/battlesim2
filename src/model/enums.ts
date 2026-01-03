@@ -22,6 +22,7 @@ export const EnemyTargetList = [
     'enemy with highest DPR',
     'enemy with lowest AC',
     'enemy with highest AC',
+    'enemy with highest survivability',
 ] as const
 export const EnemyTargetSchema = z.enum(EnemyTargetList)
 export type EnemyTarget = z.infer<typeof EnemyTargetSchema>
