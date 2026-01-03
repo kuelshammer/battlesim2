@@ -188,7 +188,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
                 <span className={styles.legendLabel}>Cohort:</span>
                 <div className={styles.legendGroup}>
                     {sortedPlayers.map((p, i) => (
-                        <span key={p.playerId || i} className={styles.playerTag}>
+                        <span key={`${p.playerId}-${p.position}`} className={styles.playerTag}>
                             {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
                             {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
                             {p.playerId}

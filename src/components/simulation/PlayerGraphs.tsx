@@ -64,7 +64,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
                     const bestHp = Math.max(...hpValues, 0)
 
                     return (
-                        <div key={slot.playerId} className={styles.playerCard}>
+                        <div key={`${slot.playerId}-${slot.position}`} className={styles.playerCard}>
                             {/* Card Header */}
                             <div className={styles.cardHeader}>
                                 <div className={styles.playerInfo}>
