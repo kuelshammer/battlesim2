@@ -98,7 +98,7 @@ impl TurnContext {
                     resources.current.insert(key.clone(), *val);
                 }
 
-                let state = CombattantState {
+                let mut state = CombattantState {
                     id: c.id.clone(),
                     side: c.team,
                     current_hp: c.initial_state.current_hp,
@@ -112,6 +112,11 @@ impl TurnContext {
                     known_ac: c.initial_state.known_ac.clone(),
                     cached_stats: None, 
                 };
+                
+                // Sync initial state to base_combatant for immediate use in targeting logic
+                state.base_combatant.final_state.current_hp = state.current_hp;
+                state.base_combatant.final_state.temp_hp = Some(state.temp_hp);
+
                 (state.id.clone(), state)
             })
             .collect();

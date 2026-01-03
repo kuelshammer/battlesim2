@@ -350,33 +350,15 @@ pub fn select_enemy_target(
         e1.creature.name.cmp(&e2.creature.name)
     });
 
-    if let Some(first_idx) = candidates.first() {
-        let best = &enemies[*first_idx];
-        println!(
-            "DEBUG: Strategy '{:?}' selected {} (Index {})",
-            strategy, best.creature.name, first_idx
-        );
-        for idx in &candidates {
-            let e = &enemies[*idx];
-            let val = match strategy {
-                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp as f64,
-                EnemyTarget::EnemyWithMostHP => -(e.final_state.current_hp as f64),
-                EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e),
-                EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
-                EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
-                EnemyTarget::EnemyWithHighestSurvivability => 0.0, // Placeholder for logging
-            };
-            println!("  - Candidate {}: Score {:.1}", e.creature.name, val);
-        }
-    }
-
     let best_target = candidates.first().copied();
 
     #[cfg(debug_assertions)]
-    eprintln!(
-        "            Selected target: {:?}",
-        best_target.map(|idx| enemies[idx].creature.name.clone())
-    );
+    if let Some(idx) = best_target {
+        eprintln!(
+            "            Selected target: {}",
+            enemies[idx].creature.name
+        );
+    }
 
     best_target
 }
@@ -523,33 +505,15 @@ pub fn select_enemy_target_cached(
         e1.creature.name.cmp(&e2.creature.name)
     });
 
-    if let Some((first_idx, _)) = candidates.first() {
-        let best = &enemies[*first_idx];
-        println!(
-            "DEBUG CACHED: Strategy '{:?}' selected {} (Index {})",
-            strategy, best.creature.name, first_idx
-        );
-        for (idx, stats) in &candidates {
-            let e = &enemies[*idx];
-            let val = match strategy {
-                EnemyTarget::EnemyWithLeastHP => e.final_state.current_hp as f64,
-                EnemyTarget::EnemyWithMostHP => -(e.final_state.current_hp as f64),
-                EnemyTarget::EnemyWithHighestDPR => -stats.total_dpr,
-                EnemyTarget::EnemyWithLowestAC => e.creature.ac as f64,
-                EnemyTarget::EnemyWithHighestAC => -(e.creature.ac as f64),
-                EnemyTarget::EnemyWithHighestSurvivability => 0.0, // Placeholder
-            };
-            println!("  - Candidate {}: Score {:.1} (DPR: {:.1})", e.creature.name, val, stats.total_dpr);
-        }
-    }
-
     let best_target = candidates.first().map(|(idx, _)| *idx);
 
     #[cfg(debug_assertions)]
-    eprintln!(
-        "            Selected cached target: {:?}",
-        best_target.map(|idx| enemies[idx].creature.name.clone())
-    );
+    if let Some(idx) = best_target {
+        eprintln!(
+            "            Selected cached target: {}",
+            enemies[idx].creature.name
+        );
+    }
 
     best_target
 }
