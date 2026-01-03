@@ -1215,7 +1215,8 @@ impl Combattant {
         let hit_chance = calculate_hit_chance(self.creature.ac, monster_attack_bonus);
         let rage_multiplier = if self.final_state.has_rage_active() { 2.0 } else { 1.0 };
 
-        self.final_state.current_hp as f64 / hit_chance * rage_multiplier
+        let total_hp = self.final_state.current_hp as f64 + self.final_state.temp_hp.unwrap_or(0) as f64;
+        total_hp / hit_chance * rage_multiplier
     }
 }
 

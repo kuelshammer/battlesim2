@@ -503,6 +503,10 @@ impl TurnContext {
             // 3. Apply remaining damage to HP
             let actual_damage = remaining_damage;
             combatant.current_hp = ((combatant.current_hp as f64) - actual_damage).max(0.0).round() as u32;
+            
+            // Sync with base_combatant for targeting modules
+            combatant.base_combatant.final_state.current_hp = combatant.current_hp;
+            combatant.base_combatant.final_state.temp_hp = Some(combatant.temp_hp);
 
             events.push(Event::DamageTaken {
                 target_id: target_id.to_string(),
@@ -546,6 +550,7 @@ impl TurnContext {
         if let Some(combatant) = self.combatants.get_mut(target_id) {
             let event = if is_temp_hp {
                 combatant.temp_hp = ((combatant.temp_hp as f64) + amount).round() as u32;
+                combatant.base_combatant.final_state.temp_hp = Some(combatant.temp_hp);
                 Event::TempHPGranted {
                     target_id: target_id.to_string(),
                     amount,
@@ -559,6 +564,7 @@ impl TurnContext {
                 
                 // Update HP
                 combatant.current_hp = (current_hp + actual_healing).round() as u32;
+                combatant.base_combatant.final_state.current_hp = combatant.current_hp;
                 
                 Event::HealingApplied {
                     target_id: target_id.to_string(),

@@ -292,9 +292,13 @@ pub fn select_enemy_target(
         let atk_to_hit_int = atk_to_hit.round() as i32;
 
         // 1. Primary Strategy Comparison
+        let get_effective_vitality = |e: &Combattant| -> f64 {
+            e.final_state.current_hp as f64 + e.final_state.temp_hp.unwrap_or(0) as f64
+        };
+
         let v1 = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e1.final_state.current_hp as f64,
-            EnemyTarget::EnemyWithMostHP => -(e1.final_state.current_hp as f64),
+            EnemyTarget::EnemyWithLeastHP => get_effective_vitality(e1),
+            EnemyTarget::EnemyWithMostHP => -get_effective_vitality(e1),
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
             EnemyTarget::EnemyWithLowestAC => e1.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e1.creature.ac as f64),
@@ -302,8 +306,8 @@ pub fn select_enemy_target(
         };
 
         let v2 = match strategy {
-            EnemyTarget::EnemyWithLeastHP => e2.final_state.current_hp as f64,
-            EnemyTarget::EnemyWithMostHP => -(e2.final_state.current_hp as f64),
+            EnemyTarget::EnemyWithLeastHP => get_effective_vitality(e2),
+            EnemyTarget::EnemyWithMostHP => -get_effective_vitality(e2),
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
             EnemyTarget::EnemyWithLowestAC => e2.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e2.creature.ac as f64),
@@ -461,8 +465,22 @@ pub fn select_enemy_target_cached(
 
         let atk_to_hit = get_attacker_to_hit(attacker);
 
-        let v1 = calculate_target_score_cached(&strategy, stats1, e1.final_state.current_hp as f64, e1.final_state.concentrating_on.is_some(), est_ac1, atk_to_hit);
-        let v2 = calculate_target_score_cached(&strategy, stats2, e2.final_state.current_hp as f64, e2.final_state.concentrating_on.is_some(), est_ac2, atk_to_hit);
+        let v1 = calculate_target_score_cached(
+            &strategy, 
+            stats1, 
+            e1.final_state.current_hp as f64 + e1.final_state.temp_hp.unwrap_or(0) as f64, 
+            e1.final_state.concentrating_on.is_some(), 
+            est_ac1, 
+            atk_to_hit
+        );
+        let v2 = calculate_target_score_cached(
+            &strategy, 
+            stats2, 
+            e2.final_state.current_hp as f64 + e2.final_state.temp_hp.unwrap_or(0) as f64, 
+            e2.final_state.concentrating_on.is_some(), 
+            est_ac2, 
+            atk_to_hit
+        );
 
         // Using partial_cmp for floats. We want strict ordering.
         match v1.partial_cmp(&v2).unwrap_or(Ordering::Equal) {
@@ -698,6 +716,10 @@ fn calculate_target_score_cached(
     attacker_estimated_ac: f64,
     attacker_to_hit: f64,
 ) -> f64 {
+    // Note: target_current_hp passed here should already be synced.
+    // For Most/Least HP, we should ideally include THP if we want monsters to be smart.
+    // However, the caller only passes current_hp.
+    
     match strategy {
         EnemyTarget::EnemyWithLeastHP => target_current_hp,
         EnemyTarget::EnemyWithMostHP => -target_current_hp,
@@ -712,8 +734,6 @@ fn calculate_target_score_cached(
                 else if roll_needed >= 20 { 0.05 }
                 else { (21 - roll_needed) as f64 / 20.0 };
             
-            // Simplified Rage check for cached stats - check if id contains "Barbarian" or similar?
-            // Actually CombatantStats doesn't have Rage info. We'll stick to HP/hit_chance.
             -(target_current_hp / hit_chance)
         }
     }
