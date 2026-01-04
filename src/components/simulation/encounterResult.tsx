@@ -9,7 +9,6 @@ import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
 import { EncounterRating } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
-import SkylineHeatmap from "./SkylineHeatmap"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
 import { SkylineAnalysis } from "@/model/model"
@@ -175,10 +174,6 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, isS
                             partySlots={fullAnalysis.partySlots}
                         />
                     </>
-                )}
-
-                {analysis?.skyline && hasRounds && value && lastRound && (
-                    <SkylineHeatmap skyline={analysis.skyline} players={lastRound.team1} />
                 )}
 
                 <button
