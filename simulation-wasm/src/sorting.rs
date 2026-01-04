@@ -7,6 +7,7 @@ use crate::model::{Creature, TimelineStep};
 
 /// Represents a player's assigned position in the UI layout
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PlayerSlot {
     /// Position index (0 = Tank/Left, N = Glass Cannon/Right)
     pub position: usize,

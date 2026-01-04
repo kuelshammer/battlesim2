@@ -124,7 +124,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                 const name = (p.count || 1) > 1 ? `${p.name} ${i + 1}` : p.name
                 names.set(id, name)
             }
-            // Fallback for base ID
+            // Fallback for base ID - VERY IMPORTANT for resolving WASM partySlots
             names.set(p.id, p.name)
         })
 
