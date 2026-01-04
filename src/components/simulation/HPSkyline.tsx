@@ -17,6 +17,7 @@ import {
     valueToColor,
     DEFAULT_SKYLINE_COLORS,
     SkylineInteractionState,
+    ColorScale,
 } from '@/model/skylineTypes';
 
 export interface HPSkylineProps {
@@ -35,6 +36,16 @@ export interface HPSkylineProps {
     width?: number;
     height?: number;
     colors?: typeof DEFAULT_SKYLINE_COLORS;
+}
+
+export interface SingleCharacterSkylineProps {
+    characterData: CharacterBucketData[];
+    characterName: string;
+    width: number;
+    height: number;
+    colors: { hp: ColorScale };
+    onHover?: (bucket: number | null) => void;
+    hoveredBucket?: number | null;
 }
 
 /**
@@ -258,10 +269,10 @@ const HPSkyline: React.FC<HPSkylineProps> = memo(({
         if (!analysisData.buckets || analysisData.buckets.length === 0) return [];
 
         // Get character IDs from first bucket
-        const charIds = characterFilter || data.buckets[0].characters.map(c => c.id);
+        const charIds = characterFilter || analysisData.buckets[0].characters.map(c => c.id);
 
         return charIds.map(charId => {
-            const characterData: CharacterBucketData[] = data.buckets.map(bucket => {
+            const characterData: CharacterBucketData[] = analysisData.buckets.map(bucket => {
                 const char = bucket.characters.find(c => c.id === charId);
                 return char || {
                     name: 'Unknown',
@@ -290,12 +301,17 @@ const HPSkyline: React.FC<HPSkylineProps> = memo(({
                 data: characterData,
             };
         });
-    }, [data.buckets, characterFilter]);
+    }, [analysisData.buckets, characterFilter]);
 
-    const handleBucketHover = useCallback((bucketIndex: number, charId: string) => {
+    const handleBucketHover = useCallback((bucketIndex: number | null, charId: string) => {
         setHoveredBucket(bucketIndex);
-        setHoveredCharId(charId);
-        onHover?.({ hoveredBucket: bucketIndex, hoveredCharacter: charId });
+        if (bucketIndex === null) {
+            setHoveredCharId(null);
+            onHover?.({ hoveredBucket: null, hoveredCharacter: null });
+        } else {
+            setHoveredCharId(charId);
+            onHover?.({ hoveredBucket: bucketIndex, hoveredCharacter: charId });
+        }
     }, [onHover]);
 
     const handleBucketClick = useCallback((bucket: any) => {
@@ -308,7 +324,7 @@ const HPSkyline: React.FC<HPSkylineProps> = memo(({
     return (
         <div className={`${styles.hpSkylineContainer} ${className || ''}`}>
             <div className={styles.skylineTitle}>
-                HP Skyline - {data.totalRuns} runs, {data.buckets.length} buckets
+                HP Skyline - {analysisData.totalRuns} runs, {analysisData.buckets.length} buckets
             </div>
 
             <div className={styles.charactersGrid}>

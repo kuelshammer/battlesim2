@@ -337,6 +337,7 @@ export type TemplateAction = z.infer<typeof TemplateActionSchema>
 export type Action = z.infer<typeof ActionSchema>
 export type FinalAction = z.infer<typeof FinalActionSchema>
 export type Creature = z.infer<typeof CreatureSchema>
+export type CreatureType = z.infer<typeof CreatureTypeSchema>
 export type Team = z.infer<typeof TeamSchema>
 export type CreatureState = z.infer<typeof CreatureStateSchema>
 export type Combattant = z.infer<typeof CombattantSchema>

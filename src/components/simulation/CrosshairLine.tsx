@@ -6,7 +6,7 @@
  */
 
 import React, { memo, useRef, useEffect, useCallback } from 'react';
-import { useCrosshair } from './CrosshairContext';
+import { useCrosshair, CrosshairState } from './CrosshairContext';
 import styles from './crosshairLine.module.scss';
 
 export interface CrosshairLineProps {

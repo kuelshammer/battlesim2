@@ -206,7 +206,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                     ) : (
                         <DiceFormulaInput
                             value={value[modifier] as any}
-                            onChange={v => updateDiceFormula(modifier as any, v)}
+                            onChange={v => updateDiceFormula(modifier as any, v ?? '')}
                         />
                     )}
                     <button onClick={() => setModifier(index, null)}>

@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
     faBolt, faDiceD6, faHandPaper, faHatWizard, 
     faHeart, faPlus, faStar, faShoePrints,
-    faSparkles, faShieldHalved
+    faMagic, faShieldHalved
 } from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -100,7 +100,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
             animate="visible"
         >
             <div className={styles.vellumHeader}>
-                <span className={styles.sigil}><FontAwesomeIcon icon={faSparkles} /></span>
+                <span className={styles.sigil}><FontAwesomeIcon icon={faMagic} /></span>
                 <h4>{creature.name}</h4>
             </div>
 

@@ -17,8 +17,15 @@ export interface DeathBarProps {
     data: SkylineAnalysis | CharacterBucketData[];
     width: number;
     characterFilter?: string[];
-    onHover?: (bucketIndex: number, characterId: string, deathRound: number | null) => void;
+    onHover?: (bucketIndex: number | null, characterId: string, deathRound: number | null) => void;
     className?: string;
+}
+
+export interface CharacterDeathBarProps {
+    characterData: CharacterBucketData[];
+    characterName: string;
+    width: number;
+    onHover?: (bucketIndex: number | null, characterId: string, deathRound: number | null) => void;
 }
 
 /**

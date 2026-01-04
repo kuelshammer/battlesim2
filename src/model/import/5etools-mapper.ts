@@ -2,6 +2,7 @@ import { Creature, Action, CreatureType } from "../model";
 import { Monster5eImport } from "./5etools-schema";
 import { v4 as uuid } from 'uuid';
 import { parse5eAttack, parse5eMultiattack } from "./5etools-action-parser";
+import { evaluateDiceFormula } from "../dice";
 
 export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
     // Extract base AC: usually the first number in the array
@@ -39,7 +40,8 @@ export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
 
             if (act.entries && act.entries.length > 0 && typeof act.entries[0] === 'string') {
                 const parsedAction = parse5eAttack(act.name || "Unknown", act.entries[0]);
-                if (parsedAction.toHit > 0 || parsedAction.dpr > 0) {
+                // Cast to any because TS struggles with DiceFormula string|number comparison, use evaluate for safety
+                if (evaluateDiceFormula(parsedAction.toHit, 0.5) > 0 || evaluateDiceFormula(parsedAction.dpr, 0.5) > 0) {
                     // Apply multiattack: if this attack is mentioned in multiattack details,
                     // or if it's the only attack and total > 1
                     if (multiattackInfo && act.name) {

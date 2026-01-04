@@ -7,7 +7,7 @@ import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
-import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
+import { EncounterRating } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
 import SkylineHeatmap from "./SkylineHeatmap"
 import PartyOverview from "./PartyOverview"
@@ -159,7 +159,6 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, isS
             )}
 
             <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} />
-            <MedianPerformanceDisplay analysis={analysis || null} isPreliminary={isPreliminary} />
 
             <div className={styles.detailsSection}>
                 {fullAnalysis?.partySlots && fullAnalysis.partySlots.length > 0 && analysis?.skyline && (

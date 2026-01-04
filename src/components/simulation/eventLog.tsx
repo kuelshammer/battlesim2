@@ -123,16 +123,16 @@ const EventLog: FC<EventLogProps> = ({ events, title = "Combat Chronicle" }) => 
                     className={styles.grimoireContent}
                     data={events}
                     itemContent={(index, event) => (
-                        <li className={styles.grimoireEntry}>
+                        <div className={styles.grimoireEntry} role="listitem">
                             <FontAwesomeIcon icon={faFireFlameSimple} className={styles.ember} aria-hidden="true" />
                             <span className={styles.chronicleText}>{parsedEvents[index]}</span>
-                        </li>
+                        </div>
                     )}
                     components={{
                         List: ({ children, ...props }) => (
-                            <ol {...props} aria-label={`${title} - ${eventCount} events`}>
+                            <div {...props} aria-label={`${title} - ${eventCount} events`} role="list">
                                 {children}
-                            </ol>
+                            </div>
                         ),
                     }}
                     defaultItemHeight={60}
