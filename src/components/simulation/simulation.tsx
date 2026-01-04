@@ -466,7 +466,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                     </div>
                                                 )}
                                                 
-                                                {item.type === 'combat' && (worker.analysis?.encounters?.[index] ? (
+                                                {(worker.analysis?.encounters?.[index] ? (
                                                     <EncounterResult
                                                         value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
                                                         analysis={worker.analysis.encounters[index]}
@@ -474,11 +474,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         playerNames={combatantNames}
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
-                                                        targetPercent={targetPercent}
-                                                        actualPercent={actualPercent}
-                                                        cumulativeDrift={cumulativeDrift}
+                                                        targetPercent={item.type === 'combat' ? targetPercent : undefined}
+                                                        actualPercent={item.type === 'combat' ? actualPercent : undefined}
+                                                        cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
                                                     />
-                                                ) : (simulationResults[index] ? (
+                                                ) : (item.type === 'combat' && simulationResults[index] ? (
                                                     <EncounterResult
                                                         value={simulationResults[index]}
                                                         analysis={null}

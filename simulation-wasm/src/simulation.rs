@@ -10,7 +10,7 @@
 use crate::model::{Creature, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
 use crate::context::TurnContext;
-use crate::resources::ResetType;
+use crate::resources::{ResetType, ResourceType};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -372,16 +372,57 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
         // 1. Reset Short Rest resources
         resources.reset_by_type(&ResetType::ShortRest);
 
-        // 2. Basic Short Rest healing
-        if current_hp < player.creature.hp {
-            // Wake up if at 0
-            if current_hp == 0 {
-                current_hp = 1;
-            }
+        // 2. Iterative Hit Dice healing
+        let max_hp = player.creature.hp;
+        let con_mod = player.creature.con_modifier.unwrap_or(0.0);
+
+        // Wake up if at 0
+        if current_hp == 0 {
+            current_hp = 1;
+        }
+
+        // Find available hit dice
+        let hd_types = [
+            ResourceType::HitDiceD12,
+            ResourceType::HitDiceD10,
+            ResourceType::HitDiceD8,
+            ResourceType::HitDiceD6,
+        ];
+
+        while current_hp < max_hp {
+            let mut used_die = false;
             
-            let max_hp = player.creature.hp;
-            let heal_amount = (max_hp / 4).max(1);
-            current_hp = (current_hp + heal_amount).min(max_hp);
+            for hd_type in &hd_types {
+                if resources.has(hd_type.clone(), None, 1.0) {
+                    let sides = match hd_type {
+                        ResourceType::HitDiceD12 => 12.0,
+                        ResourceType::HitDiceD10 => 10.0,
+                        ResourceType::HitDiceD8 => 8.0,
+                        ResourceType::HitDiceD6 => 6.0,
+                        _ => 8.0,
+                    };
+                    
+                    let avg_roll = (sides + 1.0) / 2.0;
+                    let total_avg = avg_roll + con_mod;
+
+                    // Stop if using another hit die would overflow max HP
+                    if current_hp as f64 + total_avg > max_hp as f64 {
+                        break;
+                    }
+
+                    // Consume die and apply healing
+                    if resources.consume(hd_type.clone(), None, 1.0).is_ok() {
+                        current_hp = (current_hp as f64 + total_avg).round() as u32;
+                        current_hp = current_hp.min(max_hp);
+                        used_die = true;
+                        break;
+                    }
+                }
+            }
+
+            if !used_die {
+                break;
+            }
         }
 
         // Update state
@@ -417,28 +458,83 @@ fn apply_short_rest_standalone(
             c.resources.reset_by_type(&ResetType::ShortRest);
         }
 
-        // 2. Basic Short Rest healing
-        let current_hp = player.final_state.current_hp;
-        if current_hp < player.creature.hp {
-            // Wake up if at 0
-            if current_hp == 0 {
+        // 2. Iterative Hit Dice healing
+        let mut current_hp = player.final_state.current_hp;
+        let max_hp = player.creature.hp;
+        let con_mod = player.creature.con_modifier.unwrap_or(0.0);
+
+        // Wake up if at 0
+        if current_hp == 0 {
+            if let Some(c) = context.get_combatant_mut(&player.id) {
+                c.current_hp = 1;
+                current_hp = 1;
+            }
+        }
+
+        // Find available hit dice
+        let hd_types = [
+            ResourceType::HitDiceD12,
+            ResourceType::HitDiceD10,
+            ResourceType::HitDiceD8,
+            ResourceType::HitDiceD6,
+        ];
+
+        while current_hp < max_hp {
+            let mut used_die = false;
+            
+            for hd_type in &hd_types {
+                let mut heal_to_apply = None;
+                
                 if let Some(c) = context.get_combatant_mut(&player.id) {
-                    c.current_hp = 1;
+                    if c.resources.has(hd_type.clone(), None, 1.0) {
+                        let sides = match hd_type {
+                            ResourceType::HitDiceD12 => 12.0,
+                            ResourceType::HitDiceD10 => 10.0,
+                            ResourceType::HitDiceD8 => 8.0,
+                            ResourceType::HitDiceD6 => 6.0,
+                            _ => 8.0,
+                        };
+                        
+                        let avg_roll = (sides + 1.0) / 2.0;
+                        let total_avg = avg_roll + con_mod;
+
+                        // Stop if using another hit die would overflow max HP
+                        if current_hp as f64 + total_avg > max_hp as f64 {
+                            // Break inner loop, but we need to check other die types? 
+                            // Usually all hit dice are same or similar, but let's be safe.
+                            continue; 
+                        }
+
+                        // Consume die
+                        if c.resources.consume(hd_type.clone(), None, 1.0).is_ok() {
+                            heal_to_apply = Some(total_avg);
+                        }
+                    }
+                }
+
+                if let Some(amount) = heal_to_apply {
+                    context.apply_healing(&player.id, amount, false, &player.id);
+                    
+                    // Add resource consumption event
+                    context.record_event(crate::events::Event::ResourceConsumed {
+                        unit_id: player.id.clone(),
+                        resource_type: hd_type.to_key(None),
+                        amount: 1.0,
+                    });
+                    
+                    // Update local current_hp from context
+                    if let Some(c) = context.get_combatant(&player.id) {
+                        current_hp = c.current_hp;
+                    }
+                    
+                    used_die = true;
+                    break;
                 }
             }
 
-            let max_hp = player.creature.hp;
-            let heal_amount = (max_hp / 4).max(1);
-
-            // Apply healing through TurnContext (unified method)
-            let _heal_event = context.apply_healing(&player.id, heal_amount as f64, false, &player.id);
-
-            // Add resource consumption event for Hit Dice
-            context.record_event(crate::events::Event::ResourceConsumed {
-                unit_id: player.id.clone(),
-                resource_type: "HitDice".to_string(),
-                amount: 1.0,
-            });
+            if !used_die {
+                break;
+            }
         }
 
         // Get updated state back from context
@@ -446,7 +542,7 @@ fn apply_short_rest_standalone(
             let mut updated_player = player.clone();
             let next_state = crate::model::CreatureState {
                 current_hp: c_state.current_hp,
-                temp_hp: if c_state.temp_hp > 0 { Some(c_state.temp_hp) } else { None },
+                temp_hp: None, // Temp HP lost on rest
                 resources: c_state.resources.clone().into(),
                 ..player.final_state.clone()
             };
