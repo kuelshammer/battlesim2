@@ -477,6 +477,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         targetPercent={item.type === 'combat' ? targetPercent : undefined}
                                                         actualPercent={item.type === 'combat' ? actualPercent : undefined}
                                                         cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
+                                                        isShortRest={item.type === 'shortRest'}
                                                     />
                                                 ) : (item.type === 'combat' && simulationResults[index] ? (
                                                     <EncounterResult

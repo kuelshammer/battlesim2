@@ -126,9 +126,10 @@ type PropType = {
     targetPercent?: number,
     actualPercent?: number,
     cumulativeDrift?: number,
+    isShortRest?: boolean,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift, isShortRest }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -158,7 +159,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                 />
             )}
 
-            <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} />
+            <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} isShortRest={isShortRest} />
 
             <div className={styles.detailsSection}>
                 {fullAnalysis?.partySlots && fullAnalysis.partySlots.length > 0 && analysis?.skyline && (

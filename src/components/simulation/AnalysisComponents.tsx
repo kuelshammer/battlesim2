@@ -30,7 +30,7 @@ const formatTier = (tier: string): string => {
     }
 };
 
-export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean, label?: string }> = memo(({ analysis, isPreliminary, label = "ENCOUNTER" }) => {
+export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean, label?: string, isShortRest?: boolean }> = memo(({ analysis, isPreliminary, label = "ENCOUNTER", isShortRest }) => {
     const isDaySummary = label.toLowerCase().includes("day");
 
     const ratingInfo = useMemo(() => {
@@ -39,12 +39,13 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
         const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign, stars = 0 } = analysis as any;
         
         const getGradeColor = (grade: string) => {
+            if (isShortRest) return "#2c5282"; // Blue for short rest
             if (grade.startsWith('A')) return "#28a745"; // Green
             if (grade.startsWith('B')) return "#fd7e14"; // Orange (changed from tealish)
             return "#dc3545"; // Red for C, D, F
         };
 
-        let displayLabel = formatLabel(encounterLabel);
+        let displayLabel = isShortRest ? "SHORT REST" : formatLabel(encounterLabel);
         let statusIcon = null;
 
         if (isDaySummary) {
@@ -72,7 +73,7 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
             statusIcon,
             stars: boltCount
         };
-    }, [analysis, isDaySummary]);
+    }, [analysis, isDaySummary, isShortRest]);
 
     if (!ratingInfo) return null;
 
@@ -83,23 +84,27 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
                 <span className={styles.ratingTitle}>
                     {ratingInfo.title}
                 </span>
-                <div className={styles.intensityBolts}>
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <FontAwesomeIcon 
-                            key={i} 
-                            icon={faBolt} 
-                            className={i < ratingInfo.stars ? styles.boltFilled : styles.boltEmpty} 
-                        />
-                    ))}
-                </div>
+                {!isShortRest && (
+                    <div className={styles.intensityBolts}>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <FontAwesomeIcon 
+                                key={i} 
+                                icon={faBolt} 
+                                className={i < ratingInfo.stars ? styles.boltFilled : styles.boltEmpty} 
+                            />
+                        ))}
+                    </div>
+                )}
                 {isPreliminary && <span className={styles.preliminaryNotice}> (ESTIMATING...)</span>}
             </div>
             
-            <div className={styles.ratingSubline}>
-                <span>Grade {ratingInfo.grade}</span>
-                <span className={styles.separator}>|</span>
-                <span>{ratingInfo.tier}</span>
-            </div>
+            {!isShortRest && (
+                <div className={styles.ratingSubline}>
+                    <span>Grade {ratingInfo.grade}</span>
+                    <span className={styles.separator}>|</span>
+                    <span>{ratingInfo.tier}</span>
+                </div>
+            )}
 
             <div className={styles.ratingDetails}>
                 <span>{ratingInfo.summary}</span>
