@@ -22,7 +22,6 @@ import FuelGauge from "./FuelGauge"
 import DescentGraph from "./DescentGraph"
 import AssistantSummary from "./AssistantSummary"
 import { calculatePacingData } from "./pacingUtils"
-import SkylineSpectrogram from "./SkylineSpectrogram"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
@@ -545,13 +544,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                 Add Short Rest
                                             </button>
                                         </div>
-
-                    {/* Skyline Spectrogram Display */}
-                    {worker.analysis?.overall?.skyline && (
-                        <div className="skyline-spectrogram-section">
-                            <SkylineSpectrogram data={worker.analysis.overall.skyline as SkylineAnalysis} />
-                        </div>
-                    )}
 
                     {/* Party Overview - Compact spectrogram */}
                     {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (

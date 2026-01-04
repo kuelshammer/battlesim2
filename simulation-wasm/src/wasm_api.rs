@@ -171,7 +171,7 @@ impl ChunkedSimulationRunner {
 
             for percentile in 0..100 {
                 let start_idx = percentile * bucket_size;
-                let end_idx = start_idx + bucket_size;
+                let _end_idx = start_idx + bucket_size;
                 let median_idx = start_idx + (bucket_size / 2);  // Index 50 of 101 items
 
                 if median_idx < total_runs {
