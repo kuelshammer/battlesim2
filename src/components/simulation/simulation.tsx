@@ -481,6 +481,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
                                                         analysis={worker.analysis.encounters[index]}
                                                         fullAnalysis={worker.analysis} 
+                                                        playerNames={combatantNames}
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                         targetPercent={targetPercent}
@@ -492,6 +493,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         value={simulationResults[index]}
                                                         analysis={null}
                                                         fullAnalysis={worker.analysis} 
+                                                        playerNames={combatantNames}
                                                         isStale={isStale}
                                                         isPreliminary={worker.isRunning && worker.progress < 100}
                                                         targetPercent={targetPercent}
@@ -556,6 +558,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         <PartyOverview
                             skyline={worker.analysis.overall.skyline as SkylineAnalysis}
                             partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                            playerNames={combatantNames}
                         />
                     )}
 
@@ -564,6 +567,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         <PlayerGraphs
                             skyline={worker.analysis.overall.skyline as SkylineAnalysis}
                             partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                            playerNames={combatantNames}
                         />
                     )}
 

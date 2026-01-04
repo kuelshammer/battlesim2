@@ -120,6 +120,7 @@ type PropType = {
     value?: EncounterResultType,
     analysis?: AggregateOutput | null,
     fullAnalysis?: FullAnalysisOutput | null,
+    playerNames?: Map<string, string>,
     isStale?: boolean,
     isPreliminary?: boolean,
     targetPercent?: number,
@@ -127,7 +128,7 @@ type PropType = {
     cumulativeDrift?: number,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -166,12 +167,14 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, isS
                         <PartyOverview
                             skyline={analysis.skyline}
                             partySlots={fullAnalysis.partySlots}
+                            playerNames={playerNames}
                         />
 
                         {/* Individual Player Graphs - Below Party Overview */}
                         <PlayerGraphs
                             skyline={analysis.skyline}
                             partySlots={fullAnalysis.partySlots}
+                            playerNames={playerNames}
                         />
                     </>
                 )}

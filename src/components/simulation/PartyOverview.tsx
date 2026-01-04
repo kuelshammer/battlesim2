@@ -5,6 +5,7 @@ import styles from './PartyOverview.module.scss'
 interface PartyOverviewProps {
     skyline: SkylineAnalysis
     partySlots: PlayerSlot[]
+    playerNames?: Map<string, string>
     className?: string
 }
 
@@ -53,7 +54,7 @@ export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], p
 /**
  * PartyOverview displays two grouped stacked bar charts (Vitality and Power).
  */
-const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className }) => {
+const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerNames, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const [width, setWidth] = useState(0)
@@ -178,13 +179,16 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, className 
             <div className={styles.legend}>
                 <span className={styles.legendLabel}>Cohort:</span>
                 <div className={styles.legendGroup}>
-                    {sortedPlayers.map((p, i) => (
-                        <span key={`${p.playerId}-${p.position}`} className={styles.playerTag}>
-                            {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
-                            {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
-                            {p.playerId || `Player ${i + 1}`}
-                        </span>
-                    ))}
+                    {sortedPlayers.map((p, i) => {
+                        const displayName = playerNames?.get(p.playerId) || p.playerId || `Player ${i + 1}`
+                        return (
+                            <span key={`${p.playerId}-${p.position}`} className={styles.playerTag}>
+                                {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
+                                {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
+                                {displayName}
+                            </span>
+                        )
+                    })}
                 </div>
             </div>
 

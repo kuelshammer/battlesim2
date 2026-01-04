@@ -6,12 +6,13 @@ import styles from './PlayerGraphs.module.scss'
 interface PlayerGraphsProps {
     skyline: SkylineAnalysis
     partySlots: PlayerSlot[]
+    playerNames?: Map<string, string>
 }
 
 /**
  * PlayerGraphs displays detailed individual statistics for each player.
  */
-const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
+const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames }) => {
     const gridColumns = partySlots.length <= 2 ? 1
         : partySlots.length <= 4 ? 2
         : partySlots.length <= 6 ? 3
@@ -64,6 +65,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
                     const hpValues = playerBuckets.map((b) => b.character?.hpPercent ?? 0).filter((hp) => hp > 0)
                     const avgHp = hpValues.length > 0 ? hpValues.reduce((sum, hp) => sum + hp, 0) / hpValues.length : 0
 
+                    const displayName = playerNames?.get(slot.playerId) || slot.playerId || `Player ${playerIdx + 1}`
                     const ehpValue = Math.round(slot.survivabilityScore)
                     const displayEHP = isNaN(ehpValue) ? '---' : ehpValue
 
@@ -71,7 +73,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
                         <div key={`${slot.playerId}-${slot.position}`} className={styles.playerCard}>
                             <div className={styles.cardHeader}>
                                 <div className={styles.playerInfo}>
-                                    <h5 className={styles.playerName}>{slot.playerId || `Player ${playerIdx + 1}`}</h5>
+                                    <h5 className={styles.playerName}>{displayName}</h5>
                                     <div className={styles.survivabilityBadge}>EHP: {displayEHP}</div>
                                 </div>
                                 <div className={styles.roleIcon}>
