@@ -194,13 +194,18 @@ pub struct UserInteractionManager {
 impl UserInteractionManager {
     /// Create a new user interaction manager
     pub fn new(
-        _display_manager: Arc<Mutex<DisplayManager>>,
-        _progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
-        _queue_manager: Arc<Mutex<QueueManager>>,
-        _config: UserInteractionConfig,
+        display_manager: Arc<Mutex<DisplayManager>>,
+        progress_ui_manager: Arc<Mutex<ProgressUIManager>>,
+        queue_manager: Arc<Mutex<QueueManager>>,
+        config: UserInteractionConfig,
     ) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
+            // Suppress unused warnings for native builds where these aren't used
+            let _ = display_manager;
+            let _ = progress_ui_manager;
+            let _ = queue_manager;
+            let _ = config;
             // For native builds, we need to provide a dummy simulation_engine
             // This constructor shouldn't be used in native code - use new_with_simulation instead
             // But we need to provide something valid to compile
