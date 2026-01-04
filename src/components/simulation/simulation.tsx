@@ -18,8 +18,6 @@ import { getFinalAction } from "@/data/actions"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
-import FuelGauge from "./FuelGauge"
-import DescentGraph from "./DescentGraph"
 import AssistantSummary from "./AssistantSummary"
 import { calculatePacingData } from "./pacingUtils"
 import PartyOverview from "./PartyOverview"
@@ -420,13 +418,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     {worker.analysis && pacingData && (
                         <>
                             <AssistantSummary 
-                                pacingData={pacingData} 
-                            />
-                            <FuelGauge 
-                                pacingData={pacingData} 
-                            />
-                            <DescentGraph 
-                                deciles={worker.analysis.overall.deciles} 
                                 pacingData={pacingData} 
                             />
                         </>
