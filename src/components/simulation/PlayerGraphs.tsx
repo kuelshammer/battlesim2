@@ -12,19 +12,6 @@ interface PlayerGraphsProps {
  * PlayerGraphs displays detailed individual statistics for each player.
  */
 const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
-    const partySize = skyline.partySize || partySlots.length
-
-    // Use same sort as PartyOverview
-    const sortedBuckets = useMemo(() => {
-        return [...skyline.buckets].sort((a, b) => {
-            const sA = partySize - a.deathCount
-            const sB = partySize - b.deathCount
-            if (sA !== sB) return sA - sB
-            if (a.partyHpPercent !== b.partyHpPercent) return a.partyHpPercent - b.partyHpPercent
-            return a.partyResourcePercent - b.partyResourcePercent
-        })
-    }, [skyline.buckets, partySize])
-
     const gridColumns = partySlots.length <= 2 ? 1
         : partySlots.length <= 4 ? 2
         : partySlots.length <= 6 ? 3
@@ -36,13 +23,44 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots }) => {
 
             <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}>
                 {partySlots.map((slot, playerIdx) => {
-                    const playerBuckets = sortedBuckets.map((bucket) => {
+                    // Create a list of buckets with this specific player's data attached
+                    const playerBuckets = skyline.buckets.map((bucket) => {
                         const character = findCharacterInBucket(bucket.characters, slot.playerId, playerIdx)
                         return { percentile: bucket.percentile, character: character || null }
                     })
 
+                    // Sort these buckets based on THIS player's performance
+                    // Criteria: Dead (worst) -> Death Round (earlier is worse) -> HP% (lower is worse) -> Resource% (lower is worse)
+                    playerBuckets.sort((a, b) => {
+                        const charA = a.character
+                        const charB = b.character
+
+                        // 1. Death Status (Dead < Alive)
+                        // If one is dead and other is alive, the dead one comes first (lower index)
+                        const deadA = charA?.isDead ?? false
+                        const deadB = charB?.isDead ?? false
+                        if (deadA !== deadB) return deadA ? -1 : 1
+
+                        // 2. Death Round (Earlier < Later)
+                        if (deadA && deadB) {
+                            const roundA = charA?.deathRound ?? 0
+                            const roundB = charB?.deathRound ?? 0
+                            if (roundA !== roundB) return roundA - roundB
+                        }
+
+                        // 3. HP % (Lower < Higher)
+                        const hpA = charA?.hpPercent ?? 0
+                        const hpB = charB?.hpPercent ?? 0
+                        if (hpA !== hpB) return hpA - hpB
+
+                        // 4. Resource % (Lower < Higher)
+                        const resA = charA?.resourcePercent ?? 0
+                        const resB = charB?.resourcePercent ?? 0
+                        return resA - resB
+                    })
+
                     const deathCount = playerBuckets.filter((b) => b.character?.isDead).length
-                    const deathRate = (deathCount / sortedBuckets.length) * 100
+                    const deathRate = (deathCount / skyline.buckets.length) * 100
                     const hpValues = playerBuckets.map((b) => b.character?.hpPercent ?? 0).filter((hp) => hp > 0)
                     const avgHp = hpValues.length > 0 ? hpValues.reduce((sum, hp) => sum + hp, 0) / hpValues.length : 0
 
