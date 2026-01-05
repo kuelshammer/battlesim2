@@ -156,9 +156,9 @@ mod tests {
             mode: "player".to_string(),
         };
 
-        // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 = 181.8 EHP
+        // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 = 181.8 EHP -> Rounded to 182
         let score = fighter.max_survivability_score();
-        assert!((score - 181.8).abs() < 0.1, "Fighter with AC 15 should have EHP of ~181.8, got {}", score);
+        assert_eq!(score, 182.0, "Fighter with AC 15 should have EHP of 182, got {}", score);
     }
 
     #[test]
@@ -195,9 +195,9 @@ mod tests {
             mode: "player".to_string(),
         };
 
-        // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 × 2 = 363.6 EHP
+        // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 × 2 = 363.6 EHP -> Rounded to 364
         let score = barbarian.max_survivability_score();
-        assert!((score - 363.6).abs() < 0.1, "Barbarian with Rage should have ~363.6 EHP, got {}", score);
+        assert_eq!(score, 364.0, "Barbarian with Rage should have 364 EHP, got {}", score);
     }
 
     #[test]
@@ -348,9 +348,9 @@ mod tests {
             actions: vec![],
         };
 
-        // Expected: 80 HP / 0.55 hit chance × 2 (Rage) = 290.9 EHP
+        // Expected: 80 HP / 0.55 hit chance × 2 (Rage) = 290.9 EHP -> Rounded to 291
         let score = combatant.current_survivability_score();
-        assert!((score - 290.9).abs() < 0.1, "Barbarian with Rage active should have ~290.9 EHP on current HP, got {}", score);
+        assert_eq!(score, 291.0, "Barbarian with Rage active should have 291 EHP on current HP, got {}", score);
     }
 
     #[test]
@@ -405,10 +405,10 @@ mod tests {
             actions: vec![],
         };
 
-        // Expected: 80 HP / 0.55 hit chance × 1 (no Rage) = 145.5 EHP
+        // Expected: 80 HP / 0.55 hit chance × 1 (no Rage) = 145.5 EHP -> Rounded to 145
         // (No Rage multiplier since it's not active)
         let score = combatant.current_survivability_score();
-        assert!((score - 145.5).abs() < 0.1, "Barbarian without Rage active should have ~145.5 EHP, got {}", score);
+        assert_eq!(score, 145.0, "Barbarian without Rage active should have 145 EHP, got {}", score);
     }
 
     #[test]
@@ -479,9 +479,9 @@ mod tests {
             mode: "player".to_string(),
         };
 
-        // Expected: AC 4 vs +5 → need -1 or better → hit on 2-20 (95%) → 20 / 0.95 = 21.05 EHP
+        // Expected: AC 4 vs +5 → need -1 or better → hit on 2-20 (95%) → 20 / 0.95 = 21.05 EHP -> Rounded to 21
         let score = commoner.max_survivability_score();
-        assert!((score - 21.05).abs() < 0.01, "Commoner with AC 4 should have EHP of ~21.05, got {}", score);
+        assert_eq!(score, 21.0, "Commoner with AC 4 should have EHP of 21, got {}", score);
     }
 
     #[test]

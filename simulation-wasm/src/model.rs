@@ -1233,7 +1233,8 @@ impl Creature {
 
         // EHP = HP / hit_chance × rage_multiplier
         // Higher AC → lower hit chance → higher EHP
-        self.hp as f64 / hit_chance * rage_multiplier
+        // Round to nearest integer as requested for cleaner UI and sorting
+        (self.hp as f64 / hit_chance * rage_multiplier).round()
     }
 
     /// Check if this creature is a Barbarian (has Rage class resource)
@@ -1263,7 +1264,7 @@ impl Combattant {
         let rage_multiplier = if self.final_state.has_rage_active() { 2.0 } else { 1.0 };
 
         let total_hp = self.final_state.current_hp as f64 + self.final_state.temp_hp.unwrap_or(0) as f64;
-        total_hp / hit_chance * rage_multiplier
+        (total_hp / hit_chance * rage_multiplier).round()
     }
 }
 

@@ -56,7 +56,7 @@ pub fn calculate_daily_budget(creature: &crate::model::Creature, sr_count: usize
         }
     }
     
-    total
+    total.round()
 }
 
 /// Calculates the Effective HP (EHP) points for a given set of resources.
@@ -92,7 +92,7 @@ pub fn calculate_ehp_points(
         }
     }
 
-    total
+    total.round()
 }
 
 /// Helper to extract level from "SpellSlot(N)"

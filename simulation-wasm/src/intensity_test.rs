@@ -42,7 +42,7 @@ mod tests {
         
         let ehp = calculate_ehp_points(0, 0, &current, &rules);
         
-        // 15 * 3^1.5 = 15 * 5.196 = 77.94
-        assert!((ehp - 77.94).abs() < 0.01);
+        // 15 * 3^1.5 = 15 * 5.196 = 77.94 -> Rounded to 78.0
+        assert_eq!(ehp, 78.0);
     }
 }
