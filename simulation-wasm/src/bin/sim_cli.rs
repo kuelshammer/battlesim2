@@ -19,8 +19,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Generate aggregated statistics for each decile from 2511 simulation runs
+    /// Generate aggregated statistics for each decile
     Aggregate {
+        /// Path to the scenario JSON file
+        scenario: PathBuf,
+        /// K-factor for runs: N = (2K-1) * 100
+        #[arg(short, long, default_value = "1")]
+        k_factor: u32,
+    },
+    /// Benchmark simulation performance for various K values
+    Benchmark {
         /// Path to the scenario JSON file
         scenario: PathBuf,
     },
@@ -101,8 +109,11 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Aggregate { scenario } => {
-            run_aggregate(&scenario);
+        Commands::Aggregate { scenario, k_factor } => {
+            run_aggregate(&scenario, k_factor);
+        }
+        Commands::Benchmark { scenario } => {
+            run_benchmark(&scenario);
         }
         Commands::BatchLog { scenario, count } => {
             run_batch_log(&scenario, count);
@@ -152,15 +163,26 @@ fn main() {
 
 // --- Aggregate Subcommand ---
 
-fn run_aggregate(scenario_path: &PathBuf) {
+fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
     let (players, timeline, scenario_name) = load_scenario(scenario_path);
 
     // Get party size
     let party_size = players.len();
 
-    // Run 2511 iterations to match frontend and methodology (10 slices of 251 + 1 median)
-    let iterations = 2511;
-    println!("Running {} iterations for Adventuring Day: {}...", iterations, scenario_name);
+    // Calculate iterations as N = (2K-1) * 100
+    let iterations = if k_factor > 1 {
+        (2 * k_factor - 1) * 100
+    } else {
+        100 // Default or K=1
+    } as usize;
+
+    // Calculate Short Rest count from timeline
+    let sr_count = timeline.iter().filter(|s| match s {
+        TimelineStep::ShortRest(_) => true,
+        _ => false
+    }).count();
+
+    println!("Running {} iterations (K={}) for Adventuring Day: {}...", iterations, k_factor, scenario_name);
     let mut results = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
     // Sort results by score from worst to best performance
@@ -174,7 +196,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     if num_encounters > 1 {
         println!("\n--- Individual Encounter Breakdown ---");
         for i in 0..num_encounters {
-            let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size);
+            let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size, sr_count);
             println!("Encounter {}: {:<20} | Grade: {:<10} | Tier: {:<15} | {}", 
                 i + 1, 
                 format!("{}", enc_analysis.encounter_label),
@@ -187,7 +209,7 @@ fn run_aggregate(scenario_path: &PathBuf) {
     }
 
     // 2. Run Overall Analysis
-    let output = run_decile_analysis(&raw_results, &scenario_name, party_size);
+    let output = run_decile_analysis(&raw_results, &scenario_name, party_size, sr_count);
 
     // Output summary and rating
     println!("OVERALL ADVENTURING DAY RATING: {}", output.scenario_name);
@@ -218,6 +240,34 @@ fn run_aggregate(scenario_path: &PathBuf) {
             decile.hp_lost_percent, 
             decile.win_rate
         );
+    }
+}
+
+// --- Benchmark Subcommand ---
+
+fn run_benchmark(scenario_path: &PathBuf) {
+    let (players, timeline, scenario_name) = load_scenario(scenario_path);
+    println!("Benchmarking Adventuring Day: {}", scenario_name);
+    println!("| K-Factor | Total Runs (N) | Duration (ms) | Avg ms/Run |");
+    println!("|----------|----------------|---------------|------------|");
+
+    let k_factors = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50];
+
+    for k in k_factors {
+        let iterations = if k > 1 {
+            (2 * k - 1) * 100
+        } else {
+            100
+        } as usize;
+
+        let start = std::time::Instant::now();
+        let _ = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, false, None);
+        let duration = start.elapsed();
+
+        let ms = duration.as_millis();
+        let avg_ms = ms as f64 / iterations as f64;
+
+        println!("| {:>8} | {:>14} | {:>13} | {:>10.3} |", k, iterations, ms, avg_ms);
     }
 }
 
@@ -335,16 +385,16 @@ fn print_markdown_log(result: &SimulationResult, events: &[String]) {
 fn run_find_median(scenario_path: &PathBuf) {
     let (players, timeline, _) = load_scenario(scenario_path);
 
-    // Run 2511 iterations
-    let iterations = 2511;
-    println!("Running {} iterations...", iterations);
-    let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
+    // Use K=51 (10100 iterations) for precise median finding
+    let k_factor = 51;
+    let iterations = (2 * k_factor - 1) * 100;
+    println!("Running {} iterations (K={}) to find median...", iterations, k_factor);
+    let runs = run_event_driven_simulation_rust(players, timeline, iterations as usize, false, None);
 
-    // Results are sorted by score. Middle decile is around indices 1004-1506.
-    // We want to find the run closest to the median of the MIDDLE decile.
-
-    let middle_start = iterations * 4 / 10; // 1004
-    let middle_end = iterations * 6 / 10; // 1506
+    // Results are sorted by score.
+    let total_runs = runs.len();
+    let middle_start = total_runs * 4 / 10;
+    let middle_end = total_runs * 6 / 10;
     let middle_slice = &runs[middle_start..middle_end];
 
     // Calculate median score of middle decile

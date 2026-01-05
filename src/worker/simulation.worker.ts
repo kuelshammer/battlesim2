@@ -11,27 +11,30 @@ async function ensureWasmInitialized() {
 }
 
 export const handleMessage = async (e: MessageEvent) => {
-    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed, preciseMode } = e.data;
+    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed, kFactor } = e.data;
 
     if (messageType === 'START_SIMULATION') {
         try {
             await ensureWasmInitialized();
 
-            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed, preciseMode);
+            const k = kFactor || 1;
+            const total = k > 1 ? (2 * k - 1) * 100 : Math.max(100, iterations);
+
+            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed, k);
             const CHUNK_SIZE = 500;
             
             const runChunk = () => {
                 const progress = runner.run_chunk(CHUNK_SIZE);
-                const completed = Math.min(iterations, Math.floor(progress * iterations / 0.8));
+                const completed = Math.min(total, Math.floor(progress * total / 0.8));
                 
                 self.postMessage({
                     type: 'SIMULATION_PROGRESS',
                     progress,
                     completed,
-                    total: iterations
+                    total
                 });
 
-                if (completed < iterations) {
+                if (completed < total) {
                     // Use setTimeout to yield to the event loop and allow termination/responsiveness
                     setTimeout(runChunk, 0);
                 } else {

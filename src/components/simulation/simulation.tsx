@@ -374,9 +374,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 {worker.currentIterations <= FAST_ITERATIONS && (
                                     <button
                                         className={styles.preciseButton}
-                                        onClick={() => worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, true)}
+                                        onClick={() => worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, 51)}
                                         disabled={worker.isRunning}>
-                                        Run Precise Sim
+                                        Run Precise Sim (K=51)
                                     </button>
                                 )}
                             </div>
@@ -514,7 +514,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                         <button
                                                             onClick={() => {
                                                                 console.log('Manually rerunning simulation...');
-                                                                worker.runSimulation(players, timeline, PRECISE_ITERATIONS);
+                                                                worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, 51);
                                                                 setIsStale(false);
                                                             }}
                                                             className={styles.rerunButton}

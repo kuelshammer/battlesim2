@@ -10,10 +10,12 @@ vi.mock('simulation-wasm', () => {
 
   const mockRunChunk = vi.fn().mockReturnValue(0.8);
 
-  const MockChunkedSimulationRunner = vi.fn().mockImplementation(() => ({
-    run_chunk: mockRunChunk,
-    finalize: mockFinalize
-  }));
+  const MockChunkedSimulationRunner = vi.fn().mockImplementation(function() {
+    return {
+      run_chunk: mockRunChunk,
+      finalize: mockFinalize
+    };
+  });
 
   return {
     default: vi.fn().mockResolvedValue({}),
@@ -57,7 +59,7 @@ describe('SimulationWorker', () => {
       expect.anything(),
       iterations,
       undefined,
-      undefined  // preciseMode parameter
+      1  // kFactor parameter (defaults to 1)
     );
 
     // We can't easily access the internal mock instances from outside if they are defined inside vi.mock

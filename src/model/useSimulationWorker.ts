@@ -103,19 +103,22 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number, preciseMode?: boolean) => {
+    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number, kFactor: number = 1) => {
         // Ensure worker is initialized before running
         if (!workerRef.current) {
             terminateAndRestart();
         }
+
+        const k = kFactor || 1;
+        const total = k > 1 ? (2 * k - 1) * 100 : Math.max(100, iterations);
 
         setState(prev => ({
             ...prev,
             isRunning: true,
             progress: 0,
             completed: 0,
-            total: preciseMode ? 10100 : iterations,  // In precise mode, show 10,100 iterations
-            currentIterations: preciseMode ? 10100 : iterations,
+            total,
+            currentIterations: total,
             error: null,
             optimizedResult: null
         }));
@@ -150,7 +153,7 @@ export function useSimulationWorker() {
             timeline: cleanTimeline,
             iterations,
             seed,
-            preciseMode
+            kFactor: k
         });
     }, [terminateAndRestart]);
 

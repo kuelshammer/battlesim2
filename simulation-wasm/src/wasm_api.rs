@@ -45,16 +45,17 @@ pub struct ChunkedSimulationRunner {
     summarized_results: Vec<crate::model::SimulationResult>,
     lightweight_runs: Vec<crate::model::LightweightRun>,
     base_seed: u64,
-    precise_mode: bool,
+    k_factor: u32,
 }
 
 #[wasm_bindgen]
 impl ChunkedSimulationRunner {
     #[wasm_bindgen(constructor)]
-    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>, precise_mode: Option<bool>) -> Result<ChunkedSimulationRunner, JsValue> {
-        let precise_mode = precise_mode.unwrap_or(false);
-        let iterations = if precise_mode {
-            10_100  // 101 runs × 100 percentile buckets for precise simulation
+    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>, k_factor: Option<u32>) -> Result<ChunkedSimulationRunner, JsValue> {
+        let k_factor = k_factor.unwrap_or(1);
+        let iterations = if k_factor > 1 {
+            // N = (2K-1) * 100
+            ((2 * k_factor - 1) * 100) as usize
         } else {
             iterations.max(100)
         };
@@ -72,7 +73,7 @@ impl ChunkedSimulationRunner {
             summarized_results: Vec::with_capacity(iterations),
             lightweight_runs: Vec::with_capacity(iterations),
             base_seed: seed.unwrap_or(0),
-            precise_mode,
+            k_factor,
         })
     }
 
@@ -165,16 +166,15 @@ impl ChunkedSimulationRunner {
 
         let total_runs = final_runs.len();
 
-        // In precise mode, return 100 bucket medians instead of representative runs
-        // Each bucket contains ~101 runs (10,100 / 100), median is at index 50
-        let reduced_results = if self.precise_mode {
-            let bucket_size = total_runs / 100;  // 101 items per bucket
+        // If k_factor > 1, return 100 bucket medians instead of representative runs
+        // Each bucket contains 2K-1 runs, median is at index K-1
+        let reduced_results = if self.k_factor > 1 {
+            let bucket_size = total_runs / 100;  // Should be 2K-1
             let mut bucket_medians = Vec::with_capacity(100);
 
             for percentile in 0..100 {
                 let start_idx = percentile * bucket_size;
-                let _end_idx = start_idx + bucket_size;
-                let median_idx = start_idx + (bucket_size / 2);  // Index 50 of 101 items
+                let median_idx = start_idx + (bucket_size / 2);  // Index K-1 of 2K-1 items
 
                 if median_idx < total_runs {
                     bucket_medians.push(final_runs[median_idx].result.clone());
