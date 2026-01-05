@@ -59,6 +59,7 @@ export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], p
 const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerNames, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
+    const [width, setWidth] = useState(0)
     
     // State for smoothed data
     const [displayBuckets, setDisplayBuckets] = useState(skyline.buckets)
@@ -67,13 +68,22 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const { state: crosshairState, setCrosshair, setHoveredCharacter, clearCrosshair } = useCrosshair()
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
+    useEffect(() => {
+        if (!containerRef.current) return
+        const updateWidth = () => setWidth(containerRef.current?.clientWidth || 0)
+        const resizeObserver = new ResizeObserver(updateWidth)
+        resizeObserver.observe(containerRef.current)
+        updateWidth()
+        return () => resizeObserver.disconnect()
+    }, [])
+
     const partySize = skyline.partySize || partySlots.length
     const RUNS_COUNT = 100
-    const BAND_HEIGHT = 40
+    const BAND_HEIGHT = 60
     const LABEL_HEIGHT = 20
+    const GAP_BETWEEN_BANDS = 0 // Total: 60 + 60 + 20 = 140px
     const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT
     const bucketGap = 1
-    const TOTAL_WIDTH = (partySize * RUNS_COUNT) + (RUNS_COUNT - 1)
 
     // Register buckets for tooltips
     useCrosshairBucketRegistration(`party-overview-${skyline.encounterIndex ?? 'overall'}`, skyline.buckets)
@@ -144,36 +154,39 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
 
     useEffect(() => {
         const canvas = canvasRef.current
-        if (!canvas) return
+        if (!canvas || width === 0) return
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
         const dpr = window.devicePixelRatio || 1
         
-        canvas.width = TOTAL_WIDTH * dpr
+        canvas.width = width * dpr
         canvas.height = TOTAL_HEIGHT * dpr
-        canvas.style.width = `${TOTAL_WIDTH}px`
+        canvas.style.width = `${width}px`
         canvas.style.height = `${TOTAL_HEIGHT}px`
         ctx.scale(dpr, dpr)
 
-        ctx.clearRect(0, 0, TOTAL_WIDTH, TOTAL_HEIGHT)
+        ctx.clearRect(0, 0, width, TOTAL_HEIGHT)
 
         // Backgrounds
         ctx.fillStyle = '#0a0a0a'
-        ctx.fillRect(0, 0, TOTAL_WIDTH, BAND_HEIGHT) // Vitality band
-        ctx.fillRect(0, BAND_HEIGHT, TOTAL_WIDTH, BAND_HEIGHT) // Power band
+        ctx.fillRect(0, 0, width, BAND_HEIGHT) // Vitality band
+        ctx.fillRect(0, BAND_HEIGHT, width, BAND_HEIGHT) // Power band
+
+        const groupWidth = (width - (RUNS_COUNT - 1) * bucketGap) / RUNS_COUNT
 
         const hoveredBucket = crosshairState.bucketIndex;
         const hoveredCharId = crosshairState.hoveredCharacterId;
 
         sortedBuckets.forEach((bucket, runIdx) => {
-            const groupX = runIdx * (partySize + bucketGap)
+            const groupX = runIdx * (groupWidth + bucketGap)
             const isBucketHovered = hoveredBucket === runIdx + 1;
+            const stripeWidth = groupWidth / partySize
             
             sortedPlayers.forEach((playerSlot, playerIdx) => {
                 const charData = findCharacterInBucket(bucket.characters, playerSlot.playerId, playerIdx)
-                const stripeX = groupX + playerIdx
-                const drawWidth = 1
+                const stripeX = groupX + (playerIdx * stripeWidth)
+                const drawWidth = Math.max(0.5, stripeWidth)
 
                 if (!charData) return
 
@@ -208,7 +221,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
 
             // Labels
             if (runIdx % 20 === 0 || runIdx === 99) {
-                const labelX = groupX + partySize / 2
+                const labelX = groupX + groupWidth / 2
                 ctx.fillStyle = isBucketHovered ? '#d4af37' : 'rgba(232, 224, 208, 0.5)'
                 ctx.font = isBucketHovered ? 'bold 10px "Courier New", monospace' : '10px "Courier New", monospace'
                 ctx.textAlign = 'center'
@@ -221,25 +234,27 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(0, BAND_HEIGHT)
-        ctx.lineTo(TOTAL_WIDTH, BAND_HEIGHT)
+        ctx.lineTo(width, BAND_HEIGHT)
         ctx.stroke()
 
-    }, [sortedBuckets, sortedPlayers, partySize, TOTAL_WIDTH, TOTAL_HEIGHT, crosshairState.bucketIndex, crosshairState.hoveredCharacterId])
+    }, [sortedBuckets, sortedPlayers, partySize, width, crosshairState.bucketIndex, crosshairState.hoveredCharacterId])
 
     const handleMouseMove = useCallback((e: React.MouseEvent) => {
         const rect = e.currentTarget.getBoundingClientRect()
-        const x = e.clientX - rect.left + e.currentTarget.scrollLeft
+        const x = e.clientX - rect.left
         
         // Find bucket
-        const bucketWidth = partySize + bucketGap
+        const bucketWidth = (width - (RUNS_COUNT - 1) * bucketGap) / RUNS_COUNT + bucketGap
         const bucketIdx = Math.floor(x / bucketWidth)
         
         if (bucketIdx >= 0 && bucketIdx < RUNS_COUNT) {
             // Find specific character stripe within bucket
             const stripeX = x % bucketWidth
             let charId: string | null = null
-            if (stripeX < partySize) {
-                const playerIdx = Math.floor(stripeX)
+            const groupWidth = bucketWidth - bucketGap
+            if (stripeX < groupWidth) {
+                const stripeWidth = groupWidth / partySize
+                const playerIdx = Math.floor(stripeX / stripeWidth)
                 const bucket = sortedBuckets[bucketIdx]
                 const playerSlot = sortedPlayers[playerIdx]
                 const charData = findCharacterInBucket(bucket.characters, playerSlot?.playerId, playerIdx)
@@ -252,7 +267,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
         } else {
             clearCrosshair()
         }
-    }, [partySize, setCrosshair, setHoveredCharacter, clearCrosshair, sortedBuckets, sortedPlayers])
+    }, [partySize, width, setCrosshair, setHoveredCharacter, clearCrosshair, sortedBuckets, sortedPlayers])
 
     return (
         <div className={`${styles.partyOverview} ${className || ''}`}>
@@ -293,7 +308,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 <div className={styles.labelPower}>Power</div>
                 <canvas ref={canvasRef} />
                 <CrosshairLine 
-                    width={TOTAL_WIDTH} 
+                    width={width} 
                     height={TOTAL_HEIGHT} 
                     padding={{ top: 0, right: 0, bottom: 0, left: 0 }}
                 />

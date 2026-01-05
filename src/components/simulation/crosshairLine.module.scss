@@ -23,13 +23,12 @@
   border: 1px solid rgba(212, 175, 55, 0.5);
   border-radius: 6px;
   padding: 12px;
-  min-width: 200px;
-  max-width: 280px;
+  min-width: 240px;
+  max-width: 320px;
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.6),
     0 0 20px rgba(212, 175, 55, 0.15);
   pointer-events: none;
-  transform: translate(12px, 12px);
   transition: opacity 0.15s ease;
 }
 
@@ -122,6 +121,13 @@
   font-size: 0.65rem;
 }
 
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  margin-top: 4px;
+}
+
 .breakdownRow {
   display: flex;
   justify-content: space-between;
@@ -134,7 +140,6 @@
   color: rgba(212, 175, 55, 0.8);
   font-weight: 600;
   flex-shrink: 0;
-  min-width: 70px;
 }
 
 .breakdownValue {

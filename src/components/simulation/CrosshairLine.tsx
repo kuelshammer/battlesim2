@@ -155,6 +155,38 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
     y,
     className,
 }) => {
+    const tooltipRef = useRef<HTMLDivElement>(null);
+    const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
+
+    useEffect(() => {
+        if (!tooltipRef.current || !bucketData) return;
+
+        const padding = 15;
+        const tooltipWidth = tooltipRef.current.offsetWidth;
+        const tooltipHeight = tooltipRef.current.offsetHeight;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let finalX = x + padding;
+        let finalY = y + padding;
+
+        // Flip horizontally if overflow
+        if (finalX + tooltipWidth > viewportWidth) {
+            finalX = x - tooltipWidth - padding;
+        }
+
+        // Flip vertically if overflow
+        if (finalY + tooltipHeight > viewportHeight) {
+            finalY = y - tooltipHeight - padding;
+        }
+
+        setStyle({
+            left: Math.max(padding, finalX),
+            top: Math.max(padding, finalY),
+            opacity: 1
+        });
+    }, [x, y, bucketData]);
+
     if (!bucketData || !bucketData.bucket) {
         return null;
     }
@@ -163,8 +195,9 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
 
     return (
         <div
+            ref={tooltipRef}
             className={`${styles.tooltip} ${className || ''}`}
-            style={{ left: x, top: y }}
+            style={style}
             role="tooltip"
         >
             <div className={styles.tooltipHeader}>
@@ -207,45 +240,47 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
                                         </div>
                                     )}
 
-                                    {/* Short rest features */}
-                                    {breakdown.shortRestFeatures && breakdown.shortRestFeatures.length > 0 && (
-                                        <div className={styles.breakdownRow}>
-                                            <span className={styles.breakdownLabel}>Short Rest:</span>
-                                            <span className={styles.breakdownValue}>
-                                                {formatFeatures(breakdown.shortRestFeatures)}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div className={styles.breakdownGrid}>
+                                        {/* Short rest features */}
+                                        {breakdown.shortRestFeatures && breakdown.shortRestFeatures.length > 0 && (
+                                            <div className={styles.breakdownRow}>
+                                                <span className={styles.breakdownLabel}>Short Rest:</span>
+                                                <span className={styles.breakdownValue}>
+                                                    {formatFeatures(breakdown.shortRestFeatures)}
+                                                </span>
+                                            </div>
+                                        )}
 
-                                    {/* Long rest features */}
-                                    {breakdown.longRestFeatures && breakdown.longRestFeatures.length > 0 && (
-                                        <div className={styles.breakdownRow}>
-                                            <span className={styles.breakdownLabel}>Long Rest:</span>
-                                            <span className={styles.breakdownValue}>
-                                                {formatFeatures(breakdown.longRestFeatures)}
-                                            </span>
-                                        </div>
-                                    )}
+                                        {/* Long rest features */}
+                                        {breakdown.longRestFeatures && breakdown.longRestFeatures.length > 0 && (
+                                            <div className={styles.breakdownRow}>
+                                                <span className={styles.breakdownLabel}>Long Rest:</span>
+                                                <span className={styles.breakdownValue}>
+                                                    {formatFeatures(breakdown.longRestFeatures)}
+                                                </span>
+                                            </div>
+                                        )}
 
-                                    {/* Hit dice */}
-                                    {breakdown.hitDiceMax > 0 && (
-                                        <div className={styles.breakdownRow}>
-                                            <span className={styles.breakdownLabel}>Hit Dice:</span>
-                                            <span className={styles.breakdownValue}>
-                                                {breakdown.hitDice}/{breakdown.hitDiceMax}
-                                            </span>
-                                        </div>
-                                    )}
+                                        {/* Hit dice */}
+                                        {breakdown.hitDiceMax > 0 && (
+                                            <div className={styles.breakdownRow}>
+                                                <span className={styles.breakdownLabel}>Hit Dice:</span>
+                                                <span className={styles.breakdownValue}>
+                                                    {breakdown.hitDice}/{breakdown.hitDiceMax}
+                                                </span>
+                                            </div>
+                                        )}
 
-                                    {/* EHP */}
-                                    {breakdown.maxEhp > 0 && (
-                                        <div className={styles.breakdownRow}>
-                                            <span className={styles.breakdownLabel}>EHP:</span>
-                                            <span className={styles.breakdownValue}>
-                                                {breakdown.totalEhp.toFixed(0)}/{breakdown.maxEhp}
-                                            </span>
-                                        </div>
-                                    )}
+                                        {/* EHP */}
+                                        {breakdown.maxEhp > 0 && (
+                                            <div className={styles.breakdownRow}>
+                                                <span className={styles.breakdownLabel}>EHP:</span>
+                                                <span className={styles.breakdownValue}>
+                                                    {breakdown.totalEhp.toFixed(0)}/{breakdown.maxEhp}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 

@@ -100,7 +100,7 @@
 
     .canvasContainer {
         width: 100%;
-        height: 100px;
+        height: 140px;
         background: #000;
         border: 1px solid rgba(212, 175, 55, 0.15);
         position: relative;
@@ -134,7 +134,7 @@
         }
 
         .labelVitality { top: 4px; }
-        .labelPower { top: 44px; }
+        .labelPower { top: 64px; }
 
         canvas {
             display: block;
