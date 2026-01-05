@@ -193,6 +193,46 @@ pub enum TriggerCondition {
     AttackWasMelee,
 }
 
+impl TriggerCondition {
+    /// Evaluate if this trigger condition matches the given event
+    pub fn evaluate(&self, event: &crate::events::Event) -> bool {
+        use crate::events::Event;
+
+        match self {
+            // Simple event type checks
+            TriggerCondition::OnHit => matches!(event, Event::AttackHit { .. }),
+            TriggerCondition::OnBeingAttacked => matches!(event, Event::AttackHit { .. }),
+            TriggerCondition::OnMiss => matches!(event, Event::AttackMissed { .. }),
+            TriggerCondition::OnBeingDamaged => matches!(event, Event::DamageTaken { .. }),
+            TriggerCondition::OnAllyAttacked => matches!(event, Event::AttackHit { .. }),
+            TriggerCondition::OnEnemyDeath => matches!(event, Event::UnitDied { .. }),
+            TriggerCondition::OnCriticalHit => matches!(event, Event::AttackHit { .. }),
+            TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
+
+            // Composite triggers - recursive evaluation
+            TriggerCondition::And { conditions } => {
+                conditions.iter().all(|c| c.evaluate(event))
+            }
+            TriggerCondition::Or { conditions } => {
+                conditions.iter().any(|c| c.evaluate(event))
+            }
+            TriggerCondition::Not { condition } => {
+                !condition.evaluate(event)
+            }
+
+            // State conditions - require additional context
+            // These return false for now as they need combat state
+            TriggerCondition::EnemyCountAtLeast { count: _ } => false,
+            TriggerCondition::DamageExceedsPercent { threshold: _ } => {
+                matches!(event, Event::DamageTaken { .. })
+            }
+            TriggerCondition::AttackWasMelee => {
+                matches!(event, Event::AttackHit { .. })
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(tag = "type", content = "value")]
 pub enum TriggerRequirement {
