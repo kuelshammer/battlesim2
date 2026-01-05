@@ -11,6 +11,8 @@ use simulation_wasm::{run_single_lightweight_simulation, run_survey_pass, select
 
 fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &str) -> Creature {
     Creature {
+        magic_items: vec![],
+        max_arcane_ward_hp: None,
         id: name.to_string(),
         name: name.to_string(),
         hp,

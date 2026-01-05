@@ -513,31 +513,11 @@ impl EventListener {
             return false;
         }
 
-        // Check trigger condition against event
-        match (&self.trigger_condition, event) {
-            (TriggerCondition::OnHit, Event::AttackHit { .. }) => true,
-            (TriggerCondition::OnBeingAttacked, Event::AttackHit { target_id, .. }) => {
-                // Check if the listener's owner is the target
-                self.owner_id == *target_id
-            }
-            (TriggerCondition::OnMiss, Event::AttackMissed { .. }) => true,
-            (TriggerCondition::OnBeingDamaged, Event::DamageTaken { target_id, .. }) => {
-                self.owner_id == *target_id
-            }
-            (TriggerCondition::OnAllyAttacked, Event::AttackHit { target_id: _, .. }) => {
-                // This would need to check if target is an ally - complex logic for later
-                false // Placeholder
-            }
-            (TriggerCondition::OnEnemyDeath, Event::UnitDied { unit_id: _, .. }) => {
-                // This would need to check if unit is an enemy - complex logic for later
-                false // Placeholder
-            }
-            (TriggerCondition::OnCriticalHit, Event::AttackHit { .. }) => {
-                // This would need to check if attack was a critical hit
-                false // Placeholder
-            }
-            _ => false,
-        }
+        // Use the new evaluate method for trigger condition checking
+        // Note: For conditions that need owner_id context (OnBeingAttacked, OnBeingDamaged),
+        // the evaluate method provides a basic check. Additional context-specific filtering
+        // can be added here if needed in the future.
+        self.trigger_condition.evaluate(event)
     }
 
     /// Use this listener (decrement remaining uses)

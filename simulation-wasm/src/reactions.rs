@@ -237,58 +237,8 @@ impl ReactionManager {
             return false;
         }
 
-        // Then check the specific trigger condition
-        match trigger_condition {
-            TriggerCondition::OnHit => matches!(event, Event::AttackHit { .. }),
-            TriggerCondition::OnBeingAttacked => {
-                matches!(event, Event::AttackHit { .. })
-                // This is a simplified check - in a full implementation,
-                // you'd need to know which combatant we're checking for
-            }
-            TriggerCondition::OnMiss => matches!(event, Event::AttackMissed { .. }),
-            TriggerCondition::OnBeingDamaged => {
-                matches!(event, Event::DamageTaken { .. })
-            }
-            TriggerCondition::OnAllyAttacked => {
-                matches!(event, Event::AttackHit { .. }) // Placeholder for ally checking
-            }
-            TriggerCondition::OnEnemyDeath => {
-                matches!(event, Event::UnitDied { .. }) // Placeholder for enemy checking
-            }
-            TriggerCondition::OnCriticalHit => {
-                matches!(event, Event::AttackHit { .. }) // Placeholder for critical checking
-            }
-            TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
-            // Composite triggers - require additional context
-            TriggerCondition::And { conditions: _ } => {
-                // TODO: Implement recursive condition evaluation
-                // For now, return false as these need combat state context
-                false
-            }
-            TriggerCondition::Or { conditions: _ } => {
-                // TODO: Implement recursive condition evaluation
-                // For now, return false as these need combat state context
-                false
-            }
-            TriggerCondition::Not { condition: _ } => {
-                // TODO: Implement negation
-                // For now, return false as these need combat state context
-                false
-            }
-            // State conditions - require combat context
-            TriggerCondition::EnemyCountAtLeast { count: _ } => {
-                // TODO: Implement enemy count check from combat state
-                false
-            }
-            TriggerCondition::DamageExceedsPercent { threshold: _ } => {
-                // TODO: Implement damage percentage check from event
-                matches!(event, Event::DamageTaken { .. })
-            }
-            TriggerCondition::AttackWasMelee => {
-                // TODO: Implement melee attack check from event metadata
-                matches!(event, Event::AttackHit { .. })
-            }
-        }
+        // Use the new evaluate method for trigger condition checking
+        trigger_condition.evaluate(event)
     }
 
     /// Check combat conditions

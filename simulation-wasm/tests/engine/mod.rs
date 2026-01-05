@@ -4,3 +4,4 @@ pub mod invariants;
 pub mod comprehensive;
 pub mod two_pass;
 pub mod dice_mechanics;
+pub mod trigger_conditions;
