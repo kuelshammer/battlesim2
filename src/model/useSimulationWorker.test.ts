@@ -19,27 +19,23 @@ describe('useSimulationWorker', () => {
   it('should initialize with default state', () => {
     const { result } = renderHook(() => useSimulationWorker());
     expect(result.current.isRunning).toBe(false);
-    expect(result.current.currentIterations).toBe(0);
+    expect(result.current.genId).toBe(0);
   });
 
-  it('should update currentIterations when runSimulation is called', () => {
-    const { result } = renderHook(() => useSimulationWorker());
-    
-    act(() => {
-      result.current.runSimulation([], [], 100);
-    });
-
-    expect(result.current.isRunning).toBe(true);
-    expect(result.current.currentIterations).toBe(100);
-  });
-
-  it('should default to 2511 iterations if not specified', () => {
+  it('should increment genId when runSimulation is called', () => {
     const { result } = renderHook(() => useSimulationWorker());
     
     act(() => {
       result.current.runSimulation([], []);
     });
 
-    expect(result.current.currentIterations).toBe(2511);
+    expect(result.current.isRunning).toBe(true);
+    expect(result.current.genId).toBe(1);
+
+    act(() => {
+      result.current.runSimulation([], []);
+    });
+
+    expect(result.current.genId).toBe(2);
   });
 });

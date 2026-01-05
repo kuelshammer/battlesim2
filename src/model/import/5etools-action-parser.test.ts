@@ -9,7 +9,7 @@ describe('5etools-action-parser', () => {
         expect(result.id).toBeDefined();
         expect(result.name).toBe("Bite");
         expect(result.toHit).toBe(4);
-        expect(result.dpr).toBe(5.5); // 1d6 + 2 = 3.5 + 2 = 5.5
+        expect(result.dpr).toBe("1d6 + 2");
     });
 
     it('should parse a standard ranged attack', () => {
@@ -18,7 +18,7 @@ describe('5etools-action-parser', () => {
         
         expect(result.name).toBe("Longbow");
         expect(result.toHit).toBe(5);
-        expect(result.dpr).toBe(12); // 2d8 + 3 = 9 + 3 = 12
+        expect(result.dpr).toBe("2d8 + 3");
     });
 
     it('should handle entries with multiple damage types (ignoring secondary for now)', () => {
@@ -27,7 +27,7 @@ describe('5etools-action-parser', () => {
         
         expect(result.name).toBe("Fire Sword");
         expect(result.toHit).toBe(7);
-        expect(result.dpr).toBe(9.5); // 1d10 + 4 = 5.5 + 4 = 9.5
+        expect(result.dpr).toBe("1d10 + 4");
     });
 
     describe('parse5eMultiattack', () => {

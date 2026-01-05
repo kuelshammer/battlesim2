@@ -6,55 +6,50 @@ import { SimulationEvent } from '@/model/events';
 export interface SimulationWorkerState {
     isRunning: boolean;
     progress: number;
-    completed: number;
-    total: number;
-    currentIterations: number;
+    kFactor: number;
+    maxK: number;
     results: SimulationResult[] | null;
     analysis: FullAnalysisOutput | null;
     events: SimulationEvent[] | null;
     error: string | null;
     optimizedResult: AutoAdjustmentResult | null;
+    genId: number;
 }
 
 export function useSimulationWorker() {
     const [state, setState] = useState<SimulationWorkerState>({
         isRunning: false,
         progress: 0,
-        completed: 0,
-        total: 0,
-        currentIterations: 0,
+        kFactor: 0,
+        maxK: 51,
         results: null,
         analysis: null,
         events: null,
         error: null,
         optimizedResult: null,
+        genId: 0
     });
 
     const workerRef = useRef<Worker | null>(null);
+    const currentGenIdRef = useRef(0);
 
     const setupWorkerListener = useCallback((worker: Worker) => {
         worker.onmessage = (e) => {
-            const { type, progress, completed, total, results, analysis, events, error, result } = e.data;
+            const { type, genId, results, analysis, events, error, result, kFactor, isFinal } = e.data;
+
+            // Discard messages from old generations
+            if (genId !== undefined && genId < currentGenIdRef.current) return;
 
             switch (type) {
-                case 'SIMULATION_PROGRESS':
+                case 'SIMULATION_UPDATE':
                     setState(prev => ({
                         ...prev,
-                        progress: progress * 100,
-                        completed,
-                        total,
-                        results: results || prev.results,
-                        analysis: analysis || prev.analysis
-                    }));
-                    break;
-                case 'SIMULATION_COMPLETE':
-                    setState(prev => ({
-                        ...prev,
-                        isRunning: false,
-                        progress: 100,
+                        isRunning: !isFinal,
+                        progress: (kFactor / prev.maxK) * 100,
+                        kFactor,
                         results,
                         analysis,
-                        events,
+                        events: events || prev.events,
                         error: null
                     }));
                     break;
@@ -103,26 +98,31 @@ export function useSimulationWorker() {
         return worker;
     }, [setupWorkerListener]);
 
-    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number, kFactor: number = 1) => {
-        // Always terminate and restart to ensure we don't have multiple loops running
-        // and to clear any previous state in the worker.
-        const worker = terminateAndRestart();
+    const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], maxK: number = 51, seed?: number) => {
+        // Increment Generation ID
+        currentGenIdRef.current += 1;
+        const genId = currentGenIdRef.current;
 
-        const k = kFactor || 1;
-        const total = k > 1 ? (2 * k - 1) * 100 : Math.max(100, iterations);
+        // Note: We DON'T necessarily need to terminate and restart if the worker is responsive.
+        // But for safety against overlapping loops from the same worker (if any survived), 
+        // we can still restart or just rely on the genId check in the worker refinement loop.
+        // Given the instructions, we'll keep the worker alive but the refinement loop will stop itself.
+        if (!workerRef.current) {
+            terminateAndRestart();
+        }
+        const worker = workerRef.current!;
 
         setState(prev => ({
             ...prev,
             isRunning: true,
             progress: 0,
-            completed: 0,
-            total,
-            currentIterations: total,
+            kFactor: 0,
+            maxK,
             error: null,
-            optimizedResult: null
+            optimizedResult: null,
+            genId
         }));
 
-        // ... data cleaning ...
         const cleanPlayers = players.map(p => ({
             ...p,
             actions: p.actions.map(getFinalAction)
@@ -145,13 +145,17 @@ export function useSimulationWorker() {
             type: 'START_SIMULATION',
             players: cleanPlayers,
             timeline: cleanTimeline,
-            iterations,
+            genId,
             seed,
-            kFactor: k
+            maxK
         });
     }, [terminateAndRestart]);
 
     const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => {
+        // Increment Generation ID to stop any pending simulation updates
+        currentGenIdRef.current += 1;
+        const genId = currentGenIdRef.current;
+
         // Always terminate and restart to clear worker state
         const worker = terminateAndRestart();
 
@@ -159,10 +163,11 @@ export function useSimulationWorker() {
             ...prev,
             isRunning: true,
             progress: 0,
-            completed: 0,
-            total: 1, // Only one step conceptually
+            kFactor: 0,
+            maxK: 1, // Auto-adjust is a single step
             error: null,
-            optimizedResult: null
+            optimizedResult: null,
+            genId
         }));
 
         // Clean data
@@ -199,7 +204,8 @@ export function useSimulationWorker() {
             players: cleanPlayers,
             monsters: cleanMonsters,
             timeline: cleanTimeline,
-            encounterIndex
+            encounterIndex,
+            genId
         });
     }, [terminateAndRestart]);
 

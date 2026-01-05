@@ -2,7 +2,10 @@ import { FC, memo, useMemo } from "react"
 import { AggregateOutput, DecileStats, CombatantVisualization } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faBrain, faTrophy, faCheckCircle, faExclamationTriangle, faBolt } from "@fortawesome/free-solid-svg-icons"
+import { 
+    faBrain, faTrophy, faCheckCircle, faExclamationTriangle, 
+    faBolt, faSkull, faGasPump, faCompass, faExclamationCircle 
+} from "@fortawesome/free-solid-svg-icons"
 
 const formatLabel = (label: string): string => {
     switch (label) {
@@ -30,6 +33,157 @@ const formatTier = (tier: string): string => {
     }
 };
 
+export const ValidationNotice: FC<{ 
+    analysis: AggregateOutput | null, 
+    targetRole?: string,
+    isDaySummary?: boolean 
+}> = memo(({ analysis, targetRole, isDaySummary }) => {
+    if (!analysis || !analysis.vitals) return null;
+
+    const { vitals } = analysis;
+    const { attritionScore } = vitals;
+
+    const warnings: string[] = [];
+
+    // 1. Role Mismatch Validation
+    if (targetRole) {
+        const costPct = attritionScore * 100;
+        let expectedCategory = "";
+        
+        if (costPct < 8) expectedCategory = "Skirmish";
+        else if (costPct < 20) expectedCategory = "Standard";
+        else if (costPct < 45) expectedCategory = "Elite";
+        else expectedCategory = "Boss";
+
+        if (targetRole !== expectedCategory) {
+            warnings.push(`You labeled this '${targetRole}', but it burns ${Math.round(costPct)}% budget, typical of a '${expectedCategory}' encounter.`);
+        }
+    }
+
+    // 2. Budget Overflow Validation (Day Summary only)
+    if (isDaySummary && analysis.tdnw > 0) {
+        const totalCost = (analysis.globalMedian?.totalHpLost || 0) / analysis.tdnw;
+        if (totalCost > 1.0) {
+            warnings.push(`This adventuring day is projected to burn ${Math.round(totalCost * 100)}% of the daily budget. Total failure is mathematically likely.`);
+        }
+    }
+
+    if (warnings.length === 0) return null;
+
+    return (
+        <div className={styles.validationNotice}>
+            {warnings.map((w, i) => (
+                <div key={i} className={styles.warningItem}>
+                    <FontAwesomeIcon icon={faExclamationCircle} /> {w}
+                </div>
+            ))}
+        </div>
+    );
+});
+
+export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean }> = memo(({ analysis, isPreliminary }) => {
+    if (!analysis || !analysis.vitals) return null;
+
+    const { vitals } = analysis;
+    const { lethalityIndex, attritionScore, doomHorizon, difficultyGrade, isVolatile, tpkRisk } = vitals;
+
+    const getGradeColor = (grade: string) => {
+        switch (grade) {
+            case 'S': return '#10b981'; // Emerald
+            case 'A': return '#22c55e'; // Green
+            case 'B': return '#3b82f6'; // Blue
+            case 'C': return '#f59e0b'; // Amber
+            case 'D': return '#ef4444'; // Red
+            case 'F': return '#7f1d1d'; // Dark Red
+            default: return '#6b7280';
+        }
+    };
+
+    const getLethalityText = (index: number) => {
+        if (index === 0) return "Safe";
+        if (index < 0.05) return "Negligible";
+        if (index < 0.15) return "Easy";
+        if (index < 0.30) return "Moderate";
+        if (index < 0.50) return "Risky";
+        return "Lethal";
+    };
+
+    const getAttritionText = (score: number) => {
+        if (score < 0.08) return "Free";
+        if (score < 0.20) return "Standard";
+        if (score < 0.45) return "Taxing";
+        if (score < 0.60) return "Heavy";
+        return "Nova";
+    };
+
+    return (
+        <div className={`${styles.vitalsDashboard} ${isPreliminary ? styles.isUpdating : ''}`}>
+            <div className={styles.vitalsGrid}>
+                {/* 1. Lethality Section */}
+                <div className={styles.vitalsCard}>
+                    <div className={styles.cardHeader}>
+                        <FontAwesomeIcon icon={faSkull} className={styles.iconLethality} />
+                        <span>Lethality</span>
+                    </div>
+                    <div className={styles.cardValue}>
+                        {Math.round(lethalityIndex * 100)}%
+                    </div>
+                    <div className={styles.cardLabel}>{getLethalityText(lethalityIndex)}</div>
+                    <div className={styles.riskBarContainer}>
+                        <div 
+                            className={styles.riskBarFill} 
+                            style={{ width: `${lethalityIndex * 100}%`, backgroundColor: getGradeColor(difficultyGrade) }} 
+                        />
+                    </div>
+                    {tpkRisk > 0.05 && (
+                        <div className={styles.tpkWarning}>
+                            <FontAwesomeIcon icon={faExclamationTriangle} /> {Math.round(tpkRisk * 100)}% TPK Risk
+                        </div>
+                    )}
+                </div>
+
+                {/* 2. Attrition Section */}
+                <div className={styles.vitalsCard}>
+                    <div className={styles.cardHeader}>
+                        <FontAwesomeIcon icon={faGasPump} className={styles.iconAttrition} />
+                        <span>Attrition</span>
+                    </div>
+                    <div className={styles.cardValue}>
+                        {Math.round(attritionScore * 100)}%
+                    </div>
+                    <div className={styles.cardLabel}>{getAttritionText(attritionScore)}</div>
+                    <div className={styles.subtext}>Of Daily Budget</div>
+                </div>
+
+                {/* 3. Forecast Section */}
+                <div className={styles.vitalsCard}>
+                    <div className={styles.cardHeader}>
+                        <FontAwesomeIcon icon={faCompass} className={styles.iconForecast} />
+                        <span>Forecast</span>
+                    </div>
+                    <div className={styles.cardValue}>
+                        {doomHorizon > 10 ? '∞' : doomHorizon.toFixed(1)}
+                    </div>
+                    <div className={styles.cardLabel}>Encounters</div>
+                    <div className={styles.subtext}>Until Failure</div>
+                </div>
+
+                {/* 4. Grade & Tags Section */}
+                <div className={`${styles.vitalsCard} ${styles.gradeCard}`} style={{ borderColor: getGradeColor(difficultyGrade) }}>
+                    <div className={styles.gradeCircle} style={{ backgroundColor: getGradeColor(difficultyGrade) }}>
+                        {difficultyGrade}
+                    </div>
+                    <div className={styles.tagsContainer}>
+                        <span className={styles.tagBase}>{getAttritionText(attritionScore)}</span>
+                        {isVolatile && <span className={styles.tagVolatile}>Volatile</span>}
+                        {!isVolatile && attritionScore > 0.2 && <span className={styles.tagStable}>Stable</span>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPreliminary?: boolean, label?: string, isShortRest?: boolean }> = memo(({ analysis, isPreliminary, label = "ENCOUNTER", isShortRest }) => {
     const isDaySummary = label.toLowerCase().includes("day");
 
@@ -41,7 +195,7 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
         const getGradeColor = (grade: string) => {
             if (isShortRest) return "#2c5282"; // Blue for short rest
             if (grade.startsWith('A')) return "#28a745"; // Green
-            if (grade.startsWith('B')) return "#fd7e14"; // Orange (changed from tealish)
+            if (grade.startsWith('B')) return "#fd7e14"; // Orange
             return "#dc3545"; // Red for C, D, F
         };
 
@@ -61,7 +215,6 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
             }
         }
 
-        // Logic: Tier 1 = 0, Tier 2 = 1, Tier 3 = 2, Tier 4 = 3, Tier 5 = 4
         const boltCount = intensityTier === 'Tier5' ? 4 : Math.max(0, parseInt(intensityTier.replace('Tier', '')) - 1);
 
         return {
@@ -157,8 +310,6 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
         ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
         : '0.0';
 
-    // IMPORTANT: In Day Summary mode, we only show players.
-    // Otherwise, we show EVERYTHING (Players and Monsters).
     const filteredCombatants = isDaySummary 
         ? (medianDecile.medianRunVisualization || []).filter(c => c.isPlayer)
         : (medianDecile.medianRunVisualization || []);

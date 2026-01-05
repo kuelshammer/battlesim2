@@ -2,6 +2,8 @@ import init, { ChunkedSimulationRunner, auto_adjust_encounter_wasm } from 'simul
 import wasmUrl from 'simulation-wasm/simulation_wasm_bg.wasm';
 
 let wasmInitialized = false;
+let currentGenId = 0;
+let activeRunner: ChunkedSimulationRunner | null = null;
 
 async function ensureWasmInitialized() {
     if (!wasmInitialized) {
@@ -10,71 +12,191 @@ async function ensureWasmInitialized() {
     }
 }
 
+function refineSimulation(genId: number, targetK: number, maxK: number) {
+
+    // STOP if generation changed
+
+    if (genId !== currentGenId || !activeRunner) return;
+
+
+
+    // STOP if reached requested max precision
+
+    if (targetK > maxK) return;
+
+
+
+    // Calculate runs needed to reach next K
+
+    // N = (2K-1) * 100
+
+    // K=1: 100
+
+    // K=2: 300 (+200)
+
+    // K=3: 500 (+200)
+
+    const incrementalRuns = 200;
+
+    
+
+    try {
+
+        activeRunner.run_chunk(incrementalRuns);
+
+
+
+        // Check GenID again after potentially slow WASM work
+
+        if (genId !== currentGenId) return;
+
+
+
+        const output = activeRunner.get_analysis(targetK);
+
+        const { results, analysis, firstRunEvents } = output;
+
+
+
+        self.postMessage({
+
+            type: 'SIMULATION_UPDATE',
+
+            genId,
+
+            results,
+
+            analysis,
+
+            events: firstRunEvents,
+
+            kFactor: targetK,
+
+            isFinal: targetK === maxK
+
+        });
+
+
+
+        if (targetK < maxK) {
+
+            setTimeout(() => refineSimulation(genId, targetK + 1, maxK), 0);
+
+        }
+
+    } catch (error) {
+
+        console.error('Refinement error:', error);
+
+    }
+
+}
+
+
+
 export const handleMessage = async (e: MessageEvent) => {
-    const { type: messageType, players, timeline, monsters, iterations, encounterIndex, seed, kFactor } = e.data;
+
+    const { type: messageType, players, timeline, monsters, genId, seed, maxK = 51 } = e.data;
+
+
 
     if (messageType === 'START_SIMULATION') {
+
         try {
+
             await ensureWasmInitialized();
 
-            const k = kFactor || 1;
-            const runsPerPercent = 2 * k - 1;
-            const total = k > 1 ? runsPerPercent * 100 : Math.max(100, iterations);
-
-            const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed, k);
             
-            // Chunk size is runsPerPercent to get exactly 1% increments
-            const CHUNK_SIZE = runsPerPercent; 
+
+            // 1. Update Generation ID
+
+            currentGenId = genId;
+
             
-            const runChunk = () => {
-                const progress = runner.run_chunk(CHUNK_SIZE);
-                // progress from WASM is now (current/total) in 0.0-1.0 range
-                const completed = Math.min(total, Math.floor(progress * total));
-                
-                self.postMessage({
-                    type: 'SIMULATION_PROGRESS',
-                    progress, // 0.0 to 1.0
-                    completed,
-                    total
-                });
 
-                if (completed < total) {
-                    // Use setTimeout to yield to the event loop and allow termination/responsiveness
-                    setTimeout(runChunk, 0);
-                } else {
-                    const output = runner.finalize();
-                    const { results, analysis, firstRunEvents } = output;
+            // 2. Initialize Runner
 
-                    self.postMessage({
-                        type: 'SIMULATION_COMPLETE',
-                        results,
-                        analysis,
-                        events: firstRunEvents
-                    });
-                }
-            };
+            activeRunner = new ChunkedSimulationRunner(players, timeline, seed);
 
-            runChunk();
-        } catch (error) {
-            console.error('Worker simulation error:', error);
+            
+
+            // 3. Initial Pass (K=1, 100 runs)
+
+            activeRunner.run_chunk(100);
+
+            
+
+            const output = activeRunner.get_analysis(1);
+
+            const { results, analysis, firstRunEvents } = output;
+
+
+
+            // 4. Send Instant Result
+
             self.postMessage({
-                type: 'SIMULATION_ERROR',
-                error: error instanceof Error ? error.message : String(error)
+
+                type: 'SIMULATION_UPDATE',
+
+                genId,
+
+                results,
+
+                analysis,
+
+                events: firstRunEvents,
+
+                kFactor: 1,
+
+                isFinal: maxK <= 1
+
             });
+
+
+
+            // 5. Start Background Refinement
+
+            if (maxK > 1) {
+
+                setTimeout(() => refineSimulation(genId, 2, maxK), 0);
+
+            }
+
+
+
+        } catch (error) {
+
+            console.error('Worker simulation error:', error);
+
+            self.postMessage({
+
+                type: 'SIMULATION_ERROR',
+
+                genId,
+
+                error: error instanceof Error ? error.message : String(error)
+
+            });
+
         }
-    } else if (messageType === 'AUTO_ADJUST_ENCOUNTER') {
-        const { players, monsters, timeline, encounterIndex } = e.data;
+
+    }
+
+ else if (messageType === 'AUTO_ADJUST_ENCOUNTER') {
+        const { players, monsters, timeline, encounterIndex, genId } = e.data;
         try {
             await ensureWasmInitialized();
             const adjustmentResult = auto_adjust_encounter_wasm(players, monsters, timeline, encounterIndex);
             self.postMessage({
                 type: 'AUTO_ADJUST_COMPLETE',
+                genId,
                 result: adjustmentResult
             });
         } catch (error) {
             console.error('Worker auto-adjust error:', error);
             self.postMessage({
                 type: 'SIMULATION_ERROR',
+                genId,
                 error: error instanceof Error ? error.message : String(error)
             });
         }

@@ -591,6 +591,21 @@ export const TimelineRangeSchema = z.object({
     p75: z.array(z.number()),
 })
 
+export const DifficultyGradeList = ['S', 'A', 'B', 'C', 'D', 'F'] as const
+export const DifficultyGradeSchema = z.enum(DifficultyGradeList)
+export type DifficultyGrade = z.infer<typeof DifficultyGradeSchema>
+
+export const VitalsSchema = z.object({
+    lethalityIndex: z.number(),
+    tpkRisk: z.number(),
+    attritionScore: z.number(),
+    volatilityIndex: z.number(),
+    doomHorizon: z.number(),
+    difficultyGrade: DifficultyGradeSchema,
+    isVolatile: z.boolean(),
+})
+export type Vitals = z.infer<typeof VitalsSchema>
+
 export const AggregateOutputSchema = z.object({
     scenarioName: z.string(),
     totalRuns: z.number(),
@@ -604,6 +619,7 @@ export const AggregateOutputSchema = z.object({
     tdnw: z.number().optional().default(0),
     numEncounters: z.number().optional().default(0),
     skyline: SkylineAnalysisSchema.optional().nullable(),
+    vitals: VitalsSchema.optional().nullable(),
 }).passthrough()
 
 export const AutoAdjustmentResultSchema = z.object({

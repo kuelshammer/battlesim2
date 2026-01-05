@@ -111,6 +111,41 @@ pub struct TimelineRange {
     pub p75: Vec<f64>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum DifficultyGrade {
+    S, // Trivial
+    A, // Easy
+    B, // Medium
+    C, // Hard
+    D, // Deadly
+    F, // Impossible
+}
+
+impl std::fmt::Display for DifficultyGrade {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DifficultyGrade::S => write!(f, "S (Trivial)"),
+            DifficultyGrade::A => write!(f, "A (Easy)"),
+            DifficultyGrade::B => write!(f, "B (Medium)"),
+            DifficultyGrade::C => write!(f, "C (Hard)"),
+            DifficultyGrade::D => write!(f, "D (Deadly)"),
+            DifficultyGrade::F => write!(f, "F (Impossible)"),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct Vitals {
+    pub lethality_index: f64, // Probability of 1+ death/KO (0.0 - 1.0)
+    pub tpk_risk: f64,        // Probability of TPK (0.0 - 1.0)
+    pub attrition_score: f64, // % of daily budget burned (0.0 - 1.0)
+    pub volatility_index: f64, // Difference between P10 and P50 cost
+    pub doom_horizon: f64,    // Projected encounters until failure
+    pub difficulty_grade: DifficultyGrade,
+    pub is_volatile: bool,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AggregateOutput {
@@ -132,6 +167,7 @@ pub struct AggregateOutput {
     pub tdnw: f64, // Total Daily Net Worth
     pub num_encounters: usize,
     pub skyline: Option<crate::percentile_analysis::SkylineAnalysis>,
+    pub vitals: Option<Vitals>,
 }
 
 fn extract_combatant_visualization_partial(result: &SimulationResult, encounter_idx: Option<usize>) -> (Vec<CombatantVisualization>, usize) {
@@ -263,20 +299,119 @@ fn generate_analysis_summary(grade: &SafetyGrade, tier: &IntensityTier, deciles:
         grade, safety_desc, tier, intensity_desc, typical.median_survivors, typical.party_size)
 }
 
-fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _deciles: &[DecileStats]) -> Vec<String> {
-    let mut suggestions = Vec::new();
-    match grade {
-        SafetyGrade::C => suggestions.push("Risky floor. Consider lowering monster burst damage.".to_string()),
-        SafetyGrade::D => suggestions.push("Unstable. Reduce number of monsters or lower their damage stats.".to_string()),
-        SafetyGrade::F => suggestions.push("Impossible. Major rebalance needed - monsters are too strong.".to_string()),
-        _ => {}
+fn calculate_vitals(
+    results: &[&SimulationResult],
+    encounter_idx: Option<usize>,
+    party_size: usize,
+    tdnw: f64,
+) -> Vitals {
+    let total_runs = results.len();
+    if total_runs == 0 {
+        return Vitals {
+            lethality_index: 0.0,
+            tpk_risk: 0.0,
+            attrition_score: 0.0,
+            volatility_index: 0.0,
+            doom_horizon: 0.0,
+            difficulty_grade: DifficultyGrade::S,
+            is_volatile: false,
+        };
     }
-    match tier {
-        IntensityTier::Tier1 => suggestions.push("Under-tuned. Increase monster HP or count for more impact.".to_string()),
-        IntensityTier::Tier5 => suggestions.push("Resource slog. Ensure players have a rest opportunity after this.".to_string()),
-        _ => {}
+
+    // 1. Calculate Lethality and TPK Risk (Probabilities)
+    let mut ko_count = 0;
+    let mut tpk_count = 0;
+    let mut crisis_count = 0;
+
+    for &run in results {
+        let encounters = if let Some(idx) = encounter_idx {
+            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+        } else {
+            &run.encounters[..]
+        };
+
+        let mut run_has_ko = false;
+        let mut run_is_tpk = false;
+        let mut run_has_crisis = false;
+
+        for enc in encounters {
+            if let Some(last_round) = enc.rounds.last() {
+                let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count();
+                if survivors < party_size { run_has_ko = true; }
+                if survivors == 0 { run_is_tpk = true; }
+                
+                if last_round.team1.iter().any(|c| (c.final_state.current_hp as f64 / c.creature.hp as f64) < 0.1) {
+                    run_has_crisis = true;
+                }
+            }
+        }
+
+        if run_has_ko { ko_count += 1; }
+        if run_is_tpk { tpk_count += 1; }
+        if run_has_crisis { crisis_count += 1; }
     }
-    suggestions
+
+    let lethality_index = ko_count as f64 / total_runs as f64;
+    let tpk_risk = tpk_count as f64 / total_runs as f64;
+    let crisis_risk = crisis_count as f64 / total_runs as f64;
+
+    // 2. Attrition and Volatility
+    // Sort results by score to find P10 and P50
+    // (results are already sorted worst-to-best by the caller analyze_results_internal)
+    
+    let p10_idx = (total_runs as f64 * 0.1) as usize;
+    let p50_idx = total_runs / 2;
+
+    let get_cost = |idx: usize| -> f64 {
+        if idx >= total_runs || tdnw <= 0.0 { return 0.0; }
+        let (burned, _, _, _, _, _, _) = calculate_run_stats_partial(results[idx], encounter_idx, party_size, tdnw, 0);
+        burned / tdnw
+    };
+
+    // Note: results are sorted Worst to Best performance.
+    // Worst performance (lowest score) is at idx 0.
+    // So P10 (Bad Luck) is at idx total_runs * 0.1.
+    // P50 (Median) is at idx total_runs * 0.5.
+    
+    let p10_cost = get_cost(p10_idx);
+    let p50_cost = get_cost(p50_idx);
+    
+    let attrition_score = p50_cost;
+    let volatility_index = (p10_cost - p50_cost).max(0.0);
+    let is_volatile = volatility_index > 0.20;
+
+    // 3. Difficulty Grading
+    let difficulty_grade = if tpk_risk > 0.5 {
+        DifficultyGrade::F
+    } else if tpk_risk > 0.1 || lethality_index > 0.5 {
+        DifficultyGrade::D
+    } else if lethality_index > 0.3 {
+        DifficultyGrade::C
+    } else if lethality_index > 0.15 {
+        DifficultyGrade::B
+    } else if lethality_index > 0.05 || crisis_risk > 0.1 {
+        DifficultyGrade::A
+    } else {
+        DifficultyGrade::S
+    };
+
+    // 4. Doom Horizon
+    // If attrition is 20% (0.2), we can survive 5 encounters (1.0 / 0.2)
+    let doom_horizon = if attrition_score > 0.01 {
+        1.0 / attrition_score
+    } else {
+        10.0 // Practically infinite
+    };
+
+    Vitals {
+        lethality_index,
+        tpk_risk,
+        attrition_score,
+        volatility_index,
+        doom_horizon,
+        difficulty_grade,
+        is_volatile,
+    }
 }
 
 fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usize>, party_size: usize, tdnw: f64, sr_count: usize) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
@@ -489,9 +624,24 @@ pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun]
     output
 }
 
+fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _deciles: &[DecileStats]) -> Vec<String> {
+    let mut suggestions = Vec::new();
+    match grade {
+        SafetyGrade::C => suggestions.push("Risky floor. Consider lowering monster burst damage.".to_string()),
+        SafetyGrade::D => suggestions.push("Unstable. Reduce number of monsters or lower their damage stats.".to_string()),
+        SafetyGrade::F => suggestions.push("Impossible. Major rebalance needed - monsters are too strong.".to_string()),
+        _ => {}
+    }
+    match tier {
+        IntensityTier::Tier1 => suggestions.push("Under-tuned. Increase monster HP or count for more impact.".to_string()),
+        IntensityTier::Tier5 => suggestions.push("Resource slog. Ensure players have a rest opportunity after this.".to_string()),
+        _ => {}
+    }
+    suggestions
+}
+
 fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option<usize>, scenario_name: &str, party_size: usize, runs: Option<&[crate::model::SimulationRun]>, sr_count: usize) -> AggregateOutput {
     if results.is_empty() {
-// ... (omitting body for brevity, but it needs to return AggregateOutput)
                 return AggregateOutput {
                     scenario_name: scenario_name.to_string(),
                     total_runs: 0,
@@ -506,12 +656,16 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
             tdnw: 0.0,
             num_encounters: 0,
             skyline: None,
+            vitals: None,
         };
     }
 
     let tdnw = calculate_tdnw(results[0], sr_count);
     let num_encounters = results[0].encounters.len();
     
+    // Compute vitals
+    let vitals = Some(calculate_vitals(results, encounter_idx, party_size, tdnw));
+
     // Compute skyline analysis (100 buckets)
     // results are already sorted by overall score
     let owned_results: Vec<SimulationResult> = results.iter().map(|&r| r.clone()).collect();
@@ -707,6 +861,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         tdnw,
         num_encounters,
         skyline,
+        vitals,
     }
 }
 

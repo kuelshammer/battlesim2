@@ -19,10 +19,12 @@ import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
 import AssistantSummary from "./AssistantSummary"
+import { VitalsDashboard, ValidationNotice } from "./AnalysisComponents"
 import { calculatePacingData } from "./pacingUtils"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
+import { CrosshairProvider } from "./CrosshairContext"
 
 
 
@@ -100,7 +102,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
     const [isStale, setIsStale] = useState(false);
-    const [autoSimulate, setAutoSimulate] = useState(true);
+    const [highPrecision, setHighPrecision] = useStoredState<boolean>('highPrecision', false, z.boolean().parse);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Memoize expensive computations
@@ -167,8 +169,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
     // Detect changes that need resimulation with debounce
     useEffect(() => {
-        if (!autoSimulate) return;
-
         // Clear previous timer
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         
@@ -181,20 +181,17 @@ const Simulation: FC<PropType> = memo(({ }) => {
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
-    }, [players, timeline, autoSimulate]);
+    }, [players, timeline, highPrecision]);
 
     // Trigger simulation when not editing and needs resimulation
     useEffect(() => {
-        if (!autoSimulate) return;
-        
-        if (!isEditing && !saving && !loading && needsResimulation && !worker.isRunning) {
+        if (!isEditing && !saving && !loading && needsResimulation) {
             if (Array.isArray(timeline) && timeline.length > 0) {
-                // Default to FAST mode for auto-simulation
-                worker.runSimulation(players, timeline, FAST_ITERATIONS);
+                worker.runSimulation(players, timeline, highPrecision ? 51 : 3);
                 setNeedsResimulation(false);
             }
         }
-    }, [isEditing, saving, loading, needsResimulation, worker.isRunning, players, timeline, worker, autoSimulate]);
+    }, [isEditing, saving, loading, needsResimulation, players, timeline, worker, highPrecision]);
 
     // Update display results when worker finishes
     useEffect(() => {
@@ -343,7 +340,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                     style={{ width: `${worker.progress}%` }}
                                 />
                                 <span className={styles.progressText}>
-                                    Simulating {worker.completed} / {worker.total} runs ({Math.round(worker.progress)}%)
+                                    Refining Accuracy (K={worker.kFactor}/{highPrecision ? 51 : 3})
                                 </span>
                             </div>
                         )}
@@ -351,34 +348,28 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             <label className={styles.toggleLabel}>
                                 <input
                                     type="checkbox"
-                                    checked={autoSimulate}
-                                    onChange={(e) => setAutoSimulate(e.target.checked)}
+                                    checked={highPrecision}
+                                    onChange={(e) => setHighPrecision(e.target.checked)}
                                     className={styles.toggleInput}
                                 />
                                 <span className={styles.toggleSwitch}></span>
                                 <span className={styles.toggleText}>
-                                    Auto-Simulate Changes
+                                    High Precision Mode
                                 </span>
                             </label>
                         </div>
 
-                        {worker.analysis && !worker.isRunning && (
+                        {worker.analysis && !worker.isRunning && worker.kFactor < (highPrecision ? 51 : 3) && (
                             <div className={styles.simulationMode}>
-                                <div className={`${styles.modeIndicator} ${worker.currentIterations <= FAST_ITERATIONS ? styles.fast : styles.precise}`}>
-                                    {worker.currentIterations <= FAST_ITERATIONS ? (
-                                        <><FontAwesomeIcon icon={faBolt} /> Fast Sim ({worker.currentIterations} Runs)</>
-                                    ) : (
-                                        <><FontAwesomeIcon icon={faBullseye} /> Precise Sim ({worker.currentIterations} Runs)</>
-                                    )}
+                                <div className={styles.pausedIndicator}>
+                                    <FontAwesomeIcon icon={faBolt} /> Refinement Paused
                                 </div>
-                                {worker.currentIterations <= FAST_ITERATIONS && (
-                                    <button
-                                        className={styles.preciseButton}
-                                        onClick={() => worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, 51)}
-                                        disabled={worker.isRunning}>
-                                        Run Precise Sim (K=51)
-                                    </button>
-                                )}
+                                <button
+                                    className={styles.preciseButton}
+                                    onClick={() => worker.runSimulation(players, timeline, highPrecision ? 51 : 3)}
+                                >
+                                    Resume Refinement
+                                </button>
                             </div>
                         )}
 
@@ -415,128 +406,123 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         </EncounterForm>
                     </div>
 
-                    {worker.analysis && pacingData && (
-                        <>
-                            <AssistantSummary 
-                                pacingData={pacingData} 
-                            />
+                    <CrosshairProvider>
+                        {worker.analysis && pacingData && (
+                            <>
+                                <VitalsDashboard analysis={worker.analysis} isPreliminary={worker.isRunning} />
+                                
+                                <ValidationNotice analysis={worker.analysis} isDaySummary={true} />
 
-                            {/* Overall Day Summary - Prioritized */}
-                            {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
-                                <div className={styles.overallSummary}>
-                                    <PartyOverview
-                                        skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                        partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                        playerNames={combatantNames}
-                                    />
-                                    <PlayerGraphs
-                                        skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                        partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                        playerNames={combatantNames}
-                                    />
-                                </div>
-                            )}
-                        </>
-                    )}
+                                <AssistantSummary 
+                                    pacingData={pacingData} 
+                                />
 
-                                        {timeline.map((item, index) => {
-                                            // Find index within combat-only array for pacingData
-                                            const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
-                                            const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
-                                            const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
-                                            const actualPercent = pacingData?.actualCosts[combatIndex];
-                                            const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
+                                {/* Overall Day Summary - Prioritized */}
+                                {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                                    <div className={styles.overallSummary}>
+                                        <PartyOverview
+                                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                            playerNames={combatantNames}
+                                        />
+                                        <PlayerGraphs
+                                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                            playerNames={combatantNames}
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        )}
 
-                                            return (
-                                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
-                                                    {item.type === 'combat' ? (
-                                                        <div className="monster-form-section">
-                                                            <EncounterForm
-                                                            mode='monster'
-                                                            encounter={item}
-                                                            onUpdate={(newValue) => updateTimelineItem(index, newValue)}
-                                                            onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
-                                                            onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
-                                                            onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
-                                                            onEditingChange={setIsEditing}
-                                                            onAutoAdjust={() => {
-                                                                setSelectedEncounterIndex(index);
-                                                                worker.autoAdjustEncounter(players, item.monsters, timeline, index);
-                                                            }}
-                                                            autoAdjustDisabled={worker.isRunning}
-                                                        />
-                                                        </div>
-                                                ) : (
-                                                    <div className={styles.restCard}>
-                                                        <div className={styles.restHeader}>
-                                                            <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
-                                                            <div className={styles.restControls}>
-                                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
-                                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
-                                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                            {timeline.map((item, index) => {
+                                                // Find index within combat-only array for pacingData
+                                                const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
+                                                const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
+                                                const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
+                                                const actualPercent = pacingData?.actualCosts[combatIndex];
+                                                const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
+
+                                                return (
+                                                    <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
+                                                        {item.type === 'combat' ? (
+                                                            <div className="monster-form-section">
+                                                                <EncounterForm
+                                                                mode='monster'
+                                                                encounter={item}
+                                                                onUpdate={(newValue) => updateTimelineItem(index, newValue)}
+                                                                onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
+                                                                onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
+                                                                onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
+                                                                onEditingChange={setIsEditing}
+                                                                onAutoAdjust={() => {
+                                                                    setSelectedEncounterIndex(index);
+                                                                    worker.autoAdjustEncounter(players, item.monsters, timeline, index);
+                                                                }}
+                                                                autoAdjustDisabled={worker.isRunning}
+                                                            />
+                                                            </div>
+                                                    ) : (
+                                                        <div className={styles.restCard}>
+                                                            <div className={styles.restHeader}>
+                                                                <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
+                                                                <div className={styles.restControls}>
+                                                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
+                                                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
+                                                                    <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                                                </div>
+                                                            </div>
+                                                            <div className={styles.restBody}>
+                                                                Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
                                                             </div>
                                                         </div>
-                                                        <div className={styles.restBody}>
-                                                            Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
+                                                    )}
+                                                    
+                                                    {(worker.analysis?.encounters?.[index] ? (
+                                                        <EncounterResult
+                                                            value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
+                                                            analysis={worker.analysis.encounters[index]}
+                                                            fullAnalysis={worker.analysis} 
+                                                            playerNames={combatantNames}
+                                                            isStale={isStale}
+                                                            isPreliminary={worker.isRunning && worker.progress < 100}
+                                                            targetPercent={item.type === 'combat' ? targetPercent : undefined}
+                                                            actualPercent={item.type === 'combat' ? actualPercent : undefined}
+                                                            cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
+                                                            isShortRest={item.type === 'shortRest'}
+                                                        />
+                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
+                                                        <EncounterResult
+                                                            value={simulationResults[index]}
+                                                            analysis={null}
+                                                            fullAnalysis={worker.analysis} 
+                                                            playerNames={combatantNames}
+                                                            isStale={isStale}
+                                                            isPreliminary={worker.isRunning && worker.progress < 100}
+                                                            targetPercent={targetPercent}
+                                                            actualPercent={actualPercent}
+                                                            cumulativeDrift={cumulativeDrift}
+                                                        />
+                                                    ) : null))}
+                                                    
+                                                    {item.type === 'combat' && (
+                                                        <div className={styles.buttonGroup}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSelectedEncounterIndex(index);
+                                                                    setSelectedDecileIndex(5); // Reset to Median
+                                                                    setShowLogModal(true);
+                                                                }}
+                                                                className={styles.showLogButton}>
+                                                                <FontAwesomeIcon icon={faEye} />
+                                                                Show Log
+                                                            </button>
                                                         </div>
-                                                    </div>
-                                                )}
-                                                
-                                                {(worker.analysis?.encounters?.[index] ? (
-                                                    <EncounterResult
-                                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
-                                                        analysis={worker.analysis.encounters[index]}
-                                                        fullAnalysis={worker.analysis} 
-                                                        playerNames={combatantNames}
-                                                        isStale={isStale}
-                                                        isPreliminary={worker.isRunning && worker.progress < 100}
-                                                        targetPercent={item.type === 'combat' ? targetPercent : undefined}
-                                                        actualPercent={item.type === 'combat' ? actualPercent : undefined}
-                                                        cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
-                                                        isShortRest={item.type === 'shortRest'}
-                                                    />
-                                                ) : (item.type === 'combat' && simulationResults[index] ? (
-                                                    <EncounterResult
-                                                        value={simulationResults[index]}
-                                                        analysis={null}
-                                                        fullAnalysis={worker.analysis} 
-                                                        playerNames={combatantNames}
-                                                        isStale={isStale}
-                                                        isPreliminary={worker.isRunning && worker.progress < 100}
-                                                        targetPercent={targetPercent}
-                                                        actualPercent={actualPercent}
-                                                        cumulativeDrift={cumulativeDrift}
-                                                    />
-                                                ) : null))}
-                                                
-                                                {item.type === 'combat' && (
-                                                    <div className={styles.buttonGroup}>
-                                                        <button
-                                                            onClick={() => {
-                                                                console.log('Manually rerunning simulation...');
-                                                                worker.runSimulation(players, timeline, FAST_ITERATIONS, undefined, 51);
-                                                                setIsStale(false);
-                                                            }}
-                                                            className={styles.rerunButton}
-                                                            disabled={worker.isRunning}>
-                                                            <FontAwesomeIcon icon={faRedo} spin={worker.isRunning} />
-                                                            Rerun (Precise)
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedEncounterIndex(index);
-                                                                setSelectedDecileIndex(5); // Reset to Median
-                                                                setShowLogModal(true);
-                                                            }}
-                                                            className={styles.showLogButton}>
-                                                            <FontAwesomeIcon icon={faEye} />
-                                                            Show Log
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
+                    </CrosshairProvider>
                     
                                         <div className={styles.addButtons}>
                                             <button

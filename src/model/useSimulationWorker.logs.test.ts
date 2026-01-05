@@ -32,10 +32,12 @@ describe('useSimulationWorker Logs', () => {
       
       mockWorkerInstance.onmessage!({
         data: {
-          type: 'SIMULATION_COMPLETE',
+          type: 'SIMULATION_UPDATE',
           results: [],
           analysis: mockAnalysis,
-          events: []
+          events: [],
+          kFactor: 51,
+          isFinal: true
         }
       } as MessageEvent);
     });

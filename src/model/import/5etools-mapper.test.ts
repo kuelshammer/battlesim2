@@ -57,7 +57,7 @@ describe('5etools-mapper', () => {
         const action = creature.actions[0] as any;
         expect(action.name).toBe("Talon");
         expect(action.toHit).toBe(4);
-        expect(action.dpr).toBe(5.5);
+        expect(action.dpr).toBe("1d6 + 2");
     });
 
     it('should map multiattack correctly', () => {

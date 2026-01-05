@@ -2,8 +2,10 @@ import { FC, useMemo } from 'react'
 import { SkylineAnalysis, PlayerSlot } from '@/model/model'
 import { findCharacterInBucket } from './PartyOverview'
 import styles from './PlayerGraphs.module.scss'
+import { useCrosshair } from './CrosshairContext'
 
 interface PlayerGraphsProps {
+// ... props same ...
     skyline: SkylineAnalysis
     partySlots: PlayerSlot[]
     playerNames?: Map<string, string>
@@ -13,18 +15,22 @@ interface PlayerGraphsProps {
  * PlayerGraphs displays detailed individual statistics for each player.
  */
 const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames }) => {
-    const gridColumns = partySlots.length <= 2 ? 1
-        : partySlots.length <= 4 ? 2
-        : partySlots.length <= 6 ? 3
-        : 4
+    const { state: crosshairState, setHoveredCharacter } = useCrosshair()
+
+    const sortedPlayers = useMemo(() => {
+        return [...partySlots].sort((a, b) => (b.survivabilityScore || 0) - (a.survivabilityScore || 0))
+    }, [partySlots])
 
     return (
         <div className={styles.playerGraphs}>
             <h4 className={styles.title}>Individual Performance Breakdown</h4>
 
-            <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}>
-                {partySlots.map((slot, playerIdx) => {
+            <div className={styles.grid}>
+                {sortedPlayers.map((slot, playerIdx) => {
+                    const isHovered = crosshairState.hoveredCharacterId === slot.playerId;
+
                     // Create a list of buckets with this specific player's data attached
+// ... mapping and sorting same ...
                     const playerBuckets = skyline.buckets.map((bucket) => {
                         const character = findCharacterInBucket(bucket.characters, slot.playerId, playerIdx)
                         return { percentile: bucket.percentile, character: character || null }
@@ -70,8 +76,14 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                     const displayEHP = isNaN(ehpValue) ? '---' : ehpValue
 
                     return (
-                        <div key={`${slot.playerId}-${slot.position}`} className={styles.playerCard}>
+                        <div 
+                            key={`${slot.playerId}-${slot.position}`} 
+                            className={`${styles.playerCard} ${isHovered ? styles.hovered : ''}`}
+                            onMouseEnter={() => setHoveredCharacter(slot.playerId)}
+                            onMouseLeave={() => setHoveredCharacter(null)}
+                        >
                             <div className={styles.cardHeader}>
+// ... rest same ...
                                 <div className={styles.playerInfo}>
                                     <h5 className={styles.playerName}>{displayName}</h5>
                                     <div className={styles.survivabilityBadge}>EHP: {displayEHP}</div>

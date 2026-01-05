@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Creature, AutoAdjustmentResult } from '@/model/model';
-import Modal from '@/utils/modal';
+import Modal from '../utils/modal';
 import styles from './adjustmentPreview.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faArrowRight } from '@fortawesome/free-solid-svg-icons';

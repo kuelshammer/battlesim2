@@ -223,7 +223,16 @@
                 &.precise { color: #00f2fe; }
             }
 
-            .preciseButton {
+            .pausedIndicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #f59e0b; // Amber color for paused state
+    font-weight: 600;
+}
+
+.preciseButton {
                 padding: 0.4em 0.8em;
                 background: rgba(0, 242, 254, 0.2);
                 border: 1px solid rgba(0, 242, 254, 0.4);

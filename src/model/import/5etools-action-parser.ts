@@ -8,17 +8,12 @@ export function parse5eAttack(name: string, entry: string): AtkAction {
     const toHit = hitMatch ? parseInt(hitMatch[1]) : 0;
 
     // Extract damage formula: {@damage 1d6 + 2}
-    // Note: We only take the first damage formula for simplicity in the initial version
+    // Note: We only take the first damage formula for simplicity
     const damageMatch = entry.match(/{@damage\s+([^}]+)}/);
-    let dpr = 0;
+    let dpr: string | number = 0;
     if (damageMatch) {
-        const formula = damageMatch[1];
-        try {
-            // Use 0.5 luck for "average" damage calculation
-            dpr = evaluateDiceFormula(formula, 0.5);
-        } catch (e) {
-            console.error(`Failed to evaluate dice formula: ${formula}`, e);
-        }
+        // Store the raw formula string so the engine can roll it
+        dpr = damageMatch[1];
     }
 
     return {

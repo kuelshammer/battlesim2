@@ -112,16 +112,15 @@ const tourSteps = [
   },
   {
     target: '.simulation-controls',
-    title: 'Run Simulations',
+    title: 'Automatic Simulations',
     content: (
       <div>
         <p>
-          Click <strong>"Run 31 Simulations"</strong> for quick results or
-          <strong>"Run 2511"</strong> for precise decile analysis.
+          Simulations start <strong>automatically</strong> as you make changes.
         </p>
         <p>
-          The simulator runs thousands of combat scenarios to predict
-          win rates, resource usage, and more.
+          The engine provides instant feedback and then <strong>progressively refines</strong> accuracy in the background. 
+          Use <strong>"High Precision Mode"</strong> for deep decile analysis.
         </p>
       </div>
     ),

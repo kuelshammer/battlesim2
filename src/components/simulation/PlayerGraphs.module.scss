@@ -15,7 +15,8 @@
 
     .grid {
         display: grid;
-        gap: 1em;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
     }
 
     .playerCard {
@@ -28,9 +29,10 @@
         gap: 0.75em;
         transition: all 0.2s ease;
 
-        &:hover {
+        &:hover, &.hovered {
             background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
         }
     }
 
@@ -136,9 +138,5 @@
         font-family: 'Courier New', monospace;
         color: #666;
         text-transform: uppercase;
-    }
-
-    @media (width < 768px) {
-        .grid { grid-template-columns: 1fr !important; }
     }
 }

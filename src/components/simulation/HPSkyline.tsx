@@ -61,10 +61,50 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
     hoveredBucket,
 }) => {
     const canvasRef = React.useRef<HTMLCanvasElement>(null);
+    const [displayData, setDisplayData] = React.useState(characterData);
+    const animationRef = React.useRef<number | null>(null);
+
+    // Smooth data transition
+    React.useEffect(() => {
+        const startTime = performance.now();
+        const duration = 400;
+        const startData = displayData;
+        const targetData = characterData;
+
+        if (startData.length !== targetData.length) {
+            setDisplayData(targetData);
+            return;
+        }
+
+        const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const ease = progress * (2 - progress);
+
+            if (progress < 1) {
+                const interpolated = targetData.map((target, i) => {
+                    const start = startData[i];
+                    return {
+                        ...target,
+                        hpPercent: start.hpPercent + (target.hpPercent - start.hpPercent) * ease
+                    };
+                });
+                setDisplayData(interpolated);
+                animationRef.current = requestAnimationFrame(animate);
+            } else {
+                setDisplayData(targetData);
+            }
+        };
+
+        animationRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        };
+    }, [characterData]);
 
     const render = useCallback(() => {
         const canvas = canvasRef.current;
-        if (!canvas || characterData.length === 0) return;
+        if (!canvas || displayData.length === 0) return;
 
         const ctx = setupCanvas(canvas, width, height);
         if (!ctx) return;
@@ -95,13 +135,13 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
         });
 
         // Draw HP area chart using vertical segments
-        const bucketWidth = chartWidth / characterData.length;
+        const bucketWidth = chartWidth / displayData.length;
 
         // Create path for area fill
         ctx.beginPath();
         ctx.moveTo(padding.left, padding.top + chartHeight); // Start at bottom-left
 
-        characterData.forEach((bucket, i) => {
+        displayData.forEach((bucket, i) => {
             const x = padding.left + i * bucketWidth;
             const hpHeight = (bucket.hpPercent / 100) * chartHeight;
             const y = padding.top + chartHeight - hpHeight;
@@ -114,19 +154,19 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
         });
 
         // Complete the area path
-        const lastX = padding.left + (characterData.length - 1) * bucketWidth;
+        const lastX = padding.left + (displayData.length - 1) * bucketWidth;
         ctx.lineTo(lastX, padding.top + chartHeight);
         ctx.closePath();
 
         // Fill area with gradient (based on overall HP trend)
-        const avgHp = characterData.reduce((sum, b) => sum + b.hpPercent, 0) / characterData.length;
+        const avgHp = displayData.reduce((sum, b) => sum + b.hpPercent, 0) / displayData.length;
         const baseColor = valueToColor(avgHp, colors.hp);
 
         ctx.fillStyle = baseColor + '40'; // 25% opacity
         ctx.fill();
 
         // Draw each bucket segment with its own color
-        characterData.forEach((bucket, i) => {
+        displayData.forEach((bucket, i) => {
             const x = padding.left + i * bucketWidth;
             const hpHeight = (bucket.hpPercent / 100) * chartHeight;
             const y = padding.top + chartHeight - hpHeight;
@@ -147,7 +187,7 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
         });
 
         // Draw crosshair line if hovering
-        if (hoveredBucket && hoveredBucket >= 1 && hoveredBucket <= characterData.length) {
+        if (hoveredBucket && hoveredBucket >= 1 && hoveredBucket <= displayData.length) {
             const i = hoveredBucket - 1;
             const x = padding.left + i * bucketWidth + bucketWidth / 2;
 
@@ -168,12 +208,12 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
 
         [1, 50, 100].forEach(pct => {
             const idx = pct - 1;
-            if (idx < characterData.length) {
+            if (idx < displayData.length) {
                 const x = padding.left + idx * bucketWidth + bucketWidth / 2;
                 ctx.fillText(`${pct}%`, x, height - padding.bottom + 15);
             }
         });
-    }, [characterData, width, height, colors, hoveredBucket]);
+    }, [displayData, width, height, colors, hoveredBucket]);
 
     // Re-render on data/hover change
     React.useEffect(() => {

@@ -7,7 +7,7 @@ import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
 import { useUIToggle } from "@/model/uiToggleState"
-import { EncounterRating } from "./AnalysisComponents"
+import { EncounterRating, VitalsDashboard, ValidationNotice } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
@@ -168,6 +168,15 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                         playerNames={playerNames}
                     />
                 </div>
+            )}
+
+            {analysis && <VitalsDashboard analysis={analysis} isPreliminary={isPreliminary} />}
+
+            {analysis && (
+                <ValidationNotice 
+                    analysis={analysis} 
+                    targetRole={analysis.deciles?.[0]?.medianRunData?.targetRole || "Standard"} 
+                />
             )}
 
             <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} isShortRest={isShortRest} />

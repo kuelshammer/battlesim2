@@ -2,18 +2,18 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the dependencies
 vi.mock('simulation-wasm', () => {
-  const mockFinalize = vi.fn().mockReturnValue({
+  const mockGetAnalysis = vi.fn().mockReturnValue({
     results: [],
     analysis: {},
     firstRunEvents: []
   });
 
-  const mockRunChunk = vi.fn().mockReturnValue(0.8);
+  const mockRunChunk = vi.fn().mockReturnValue(100);
 
   const MockChunkedSimulationRunner = vi.fn().mockImplementation(function() {
     return {
       run_chunk: mockRunChunk,
-      finalize: mockFinalize
+      get_analysis: mockGetAnalysis
     };
   });
 
@@ -48,14 +48,13 @@ describe('SimulationWorker', () => {
     timeoutCount = 0;
   });
 
-  it('should use ChunkedSimulationRunner with correct iterations', async () => {
-    const iterations = 100;
+  it('should use ChunkedSimulationRunner correctly', async () => {
     const event = {
       data: {
         type: 'START_SIMULATION',
         players: [],
         timeline: [],
-        iterations
+        genId: 1
       }
     } as MessageEvent;
 
@@ -64,12 +63,7 @@ describe('SimulationWorker', () => {
     expect(ChunkedSimulationRunner).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
-      iterations,
-      undefined,
-      1  // kFactor parameter (defaults to 1)
+      undefined
     );
-
-    // We can't easily access the internal mock instances from outside if they are defined inside vi.mock
-    // but the test above already verifies the constructor call which is the most important part.
   });
 });

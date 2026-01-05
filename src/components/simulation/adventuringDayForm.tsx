@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faDownload, faSave, faTrash, faUpload, faPlus, faPen, faTimes, faBed } from "@fortawesome/free-solid-svg-icons"
 import { PlayerTemplates } from "@/data/data"
 import { getMonster } from "@/data/monsters"
-import Modal from "@/utils/modal"
+import Modal from "../utils/modal"
 import Checkbox from "@/utils/checkbox"
 import PlayerForm from "../creatureForm/playerForm"
 import { v4 as uuidv4 } from 'uuid';

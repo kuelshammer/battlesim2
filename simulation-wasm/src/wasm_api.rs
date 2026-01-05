@@ -40,47 +40,39 @@ struct FullSimulationOutput {
 pub struct ChunkedSimulationRunner {
     players: Vec<Creature>,
     timeline: Vec<TimelineStep>,
-    total_iterations: usize,
     current_iteration: usize,
     summarized_results: Vec<crate::model::SimulationResult>,
     lightweight_runs: Vec<crate::model::LightweightRun>,
     base_seed: u64,
-    k_factor: u32,
 }
 
 #[wasm_bindgen]
 impl ChunkedSimulationRunner {
     #[wasm_bindgen(constructor)]
-    pub fn new(players: JsValue, timeline: JsValue, iterations: usize, seed: Option<u64>, k_factor: Option<u32>) -> Result<ChunkedSimulationRunner, JsValue> {
-        let k_factor = k_factor.unwrap_or(1);
-        let iterations = if k_factor > 1 {
-            // N = (2K-1) * 100
-            ((2 * k_factor - 1) * 100) as usize
-        } else {
-            iterations.max(100)
-        };
-
+    pub fn new(players: JsValue, timeline: JsValue, seed: Option<u64>) -> Result<ChunkedSimulationRunner, JsValue> {
         let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
+        // Pre-allocate for max K=51 (10,100 runs)
+        let max_capacity = 10100;
+
         Ok(ChunkedSimulationRunner {
             players,
             timeline,
-            total_iterations: iterations,
             current_iteration: 0,
-            summarized_results: Vec::with_capacity(iterations),
-            lightweight_runs: Vec::with_capacity(iterations),
+            summarized_results: Vec::with_capacity(max_capacity),
+            lightweight_runs: Vec::with_capacity(max_capacity),
             base_seed: seed.unwrap_or(0),
-            k_factor,
         })
     }
 
-    pub fn run_chunk(&mut self, chunk_size: usize) -> f64 {
-        let end = (self.current_iteration + chunk_size).min(self.total_iterations);
+    pub fn run_chunk(&mut self, chunk_size: usize) -> usize {
+        let start = self.current_iteration;
+        let end = start + chunk_size;
         
-        for i in self.current_iteration..end {
+        for i in start..end {
             let seed = self.base_seed.wrapping_add(i as u64);
             crate::rng::seed_rng(seed);
 
@@ -110,22 +102,28 @@ impl ChunkedSimulationRunner {
         }
 
         self.current_iteration = end;
-        self.current_iteration as f64 / self.total_iterations as f64
+        self.current_iteration
     }
 
-    pub fn finalize(&mut self) -> Result<JsValue, JsValue> {
+    pub fn get_analysis(&mut self, k_factor: u32) -> Result<JsValue, JsValue> {
         // Phase 2: Selection
         let selected_seeds = crate::seed_selection::select_interesting_seeds_with_tiers(&self.lightweight_runs);
         let interesting_seeds: Vec<u64> = selected_seeds.iter().map(|s| s.seed).collect();
 
-        // Phase 3: Deep Dive
+        // Phase 3: Deep Dive (Re-run for events)
         let mut seed_to_events = HashMap::new();
         let mut median_run_events = Vec::new();
 
         let mut global_scores: Vec<(usize, f64)> = self.lightweight_runs.iter().enumerate()
             .map(|(i, r)| (i, r.final_score)).collect();
         global_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-        let median_seed = self.lightweight_runs[global_scores[global_scores.len() / 2].0].seed;
+        
+        let total_runs = self.lightweight_runs.len();
+        if total_runs == 0 {
+            return Err(JsValue::from_str("No runs to analyze"));
+        }
+        
+        let median_seed = self.lightweight_runs[global_scores[total_runs / 2].0].seed;
 
         for &seed in &interesting_seeds {
             crate::rng::seed_rng(seed);
@@ -137,7 +135,7 @@ impl ChunkedSimulationRunner {
             seed_to_events.insert(seed, events);
         }
 
-        // Combine results and events into SimulationRun objects
+        // Combine summarized results and events into SimulationRun objects
         let mut final_runs: Vec<SimulationRun> = self.summarized_results.iter().zip(self.lightweight_runs.iter())
             .map(|(result, light)| {
                 let events = seed_to_events.get(&light.seed).cloned().unwrap_or_default();
@@ -155,34 +153,36 @@ impl ChunkedSimulationRunner {
             encounters_analysis.push(analysis);
         }
 
+        // Sort for percentile bucket extraction
         final_runs.sort_by(|a, b| {
             let score_a = crate::aggregation::calculate_score(&a.result);
             let score_b = crate::aggregation::calculate_score(&b.result);
-            // Use seed as tie-breaker for deterministic sorting
             score_a.partial_cmp(&score_b)
                 .unwrap_or(std::cmp::Ordering::Equal)
                 .then_with(|| a.result.seed.cmp(&b.result.seed))
         });
 
-        let total_runs = final_runs.len();
-
-        // If k_factor > 1, return 100 bucket medians instead of representative runs
-        // Each bucket contains 2K-1 runs, median is at index K-1
-        let reduced_results = if self.k_factor > 1 {
-            let bucket_size = total_runs / 100;  // Should be 2K-1
+        // If k_factor > 1, return 100 bucket medians
+        let reduced_results = if k_factor > 1 {
+            let bucket_size = total_runs / 100;
             let mut bucket_medians = Vec::with_capacity(100);
 
-            for percentile in 0..100 {
-                let start_idx = percentile * bucket_size;
-                let median_idx = start_idx + (bucket_size / 2);  // Index K-1 of 2K-1 items
+            if bucket_size > 0 {
+                for percentile in 0..100 {
+                    let start_idx = percentile * bucket_size;
+                    let median_idx = start_idx + (bucket_size / 2);
 
-                if median_idx < total_runs {
-                    bucket_medians.push(final_runs[median_idx].result.clone());
+                    if median_idx < total_runs {
+                        bucket_medians.push(final_runs[median_idx].result.clone());
+                    }
                 }
+            } else {
+                // Fallback for very low run counts
+                bucket_medians = final_runs.iter().map(|r| r.result.clone()).collect();
             }
             bucket_medians
         } else {
-            // Fast mode: return 5 representative runs (P5, P25, P50, P75, P95)
+            // Fast mode (K=1): return representative runs
             let median_idx = total_runs / 2;
             let decile = total_runs as f64 / 10.0;
             let representative_indices = vec![
@@ -200,11 +200,8 @@ impl ChunkedSimulationRunner {
             reps
         };
 
-        // Calculate contextual average attack bonus from all monsters in the timeline
         let avg_attack_bonus = calculate_average_attack_bonus(&self.timeline);
         let avg_attack_bonus_int = avg_attack_bonus.round() as i32;
-
-        // Assign party slots based on survivability against the average attack bonus
         let party_slots = assign_party_slots(&self.players, avg_attack_bonus_int);
 
         let output = FullSimulationOutput {
@@ -227,6 +224,7 @@ impl ChunkedSimulationRunner {
             .map_err(|e| JsValue::from_str(&format!("Failed to serialize results: {}", e)))
     }
 }
+
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]

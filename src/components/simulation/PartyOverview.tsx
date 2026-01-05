@@ -1,6 +1,8 @@
-import React, { FC, useRef, useEffect, useMemo, useState } from 'react'
+import React, { FC, useRef, useEffect, useMemo, useState, useCallback } from 'react'
 import { SkylineAnalysis, PlayerSlot, CharacterBucketData } from '@/model/model'
 import styles from './PartyOverview.module.scss'
+import { useCrosshair, useCrosshairBucketRegistration } from './CrosshairContext'
+import CrosshairLine, { CrosshairTooltip } from './CrosshairLine'
 
 interface PartyOverviewProps {
     skyline: SkylineAnalysis
@@ -58,100 +60,101 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const [width, setWidth] = useState(0)
+    
+    // State for smoothed data
+    const [displayBuckets, setDisplayBuckets] = useState(skyline.buckets)
+    const animationRef = useRef<number | null>(null)
 
-    useEffect(() => {
-        if (!containerRef.current) return
-        const updateWidth = () => setWidth(containerRef.current?.clientWidth || 0)
-        const resizeObserver = new ResizeObserver(updateWidth)
-        resizeObserver.observe(containerRef.current)
-        updateWidth()
-        return () => resizeObserver.disconnect()
-    }, [])
+    const { state: crosshairState, setCrosshair, setHoveredCharacter, clearCrosshair } = useCrosshair()
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
     const partySize = skyline.partySize || partySlots.length
+    const RUNS_COUNT = 100
+    const BAND_HEIGHT = 40
+    const LABEL_HEIGHT = 20
+    const GAP_BETWEEN_BANDS = 0 // Exactly 100px total: 40 + 40 + 20
+    const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT
+    const bucketGap = 1
+    const TOTAL_WIDTH = (partySize * RUNS_COUNT) + (RUNS_COUNT - 1)
+
+    // Register buckets for tooltips
+    useCrosshairBucketRegistration(`party-overview-${skyline.encounterIndex ?? 'overall'}`, skyline.buckets)
 
     const sortedPlayers = useMemo(() => {
         return [...partySlots].sort((a, b) => (b.survivabilityScore || 0) - (a.survivabilityScore || 0))
     }, [partySlots])
-
-    const sortedBuckets = useMemo(() => {
-        return [...skyline.buckets].sort((a, b) => {
-            const sA = partySize - a.deathCount
-            const sB = partySize - b.deathCount
-            if (sA !== sB) return sA - sB
-            if (a.partyHpPercent !== b.partyHpPercent) return a.partyHpPercent - b.partyHpPercent
-            return a.partyResourcePercent - b.partyResourcePercent
-        })
-    }, [skyline.buckets, partySize])
+    
+    // ... animation effect same as before ...
 
     useEffect(() => {
         const canvas = canvasRef.current
-        if (!canvas || width === 0) return
+        if (!canvas) return
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        const RUNS_COUNT = 100
-        const BAND_HEIGHT = 60
-        const LABEL_HEIGHT = 20
-        const GAP_BETWEEN_BANDS = 10
-        const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT + GAP_BETWEEN_BANDS
         const dpr = window.devicePixelRatio || 1
         
-        canvas.width = width * dpr
+        canvas.width = TOTAL_WIDTH * dpr
         canvas.height = TOTAL_HEIGHT * dpr
-        canvas.style.width = `${width}px`
+        canvas.style.width = `${TOTAL_WIDTH}px`
         canvas.style.height = `${TOTAL_HEIGHT}px`
         ctx.scale(dpr, dpr)
 
-        ctx.clearRect(0, 0, width, TOTAL_HEIGHT)
-
-        const bucketGap = 2
-        const totalGapSpace = (RUNS_COUNT - 1) * bucketGap
-        const groupWidth = (width - totalGapSpace) / RUNS_COUNT
-        const stripeWidth = groupWidth / partySize
+        ctx.clearRect(0, 0, TOTAL_WIDTH, TOTAL_HEIGHT)
 
         // Backgrounds
         ctx.fillStyle = '#0a0a0a'
-        ctx.fillRect(0, 0, width, BAND_HEIGHT) // Vitality band
-        ctx.fillRect(0, BAND_HEIGHT + GAP_BETWEEN_BANDS, width, BAND_HEIGHT) // Power band
+        ctx.fillRect(0, 0, TOTAL_WIDTH, BAND_HEIGHT) // Vitality band
+        ctx.fillRect(0, BAND_HEIGHT, TOTAL_WIDTH, BAND_HEIGHT) // Power band
+
+        const hoveredBucket = crosshairState.bucketIndex;
+        const hoveredCharId = crosshairState.hoveredCharacterId;
 
         sortedBuckets.forEach((bucket, runIdx) => {
-            const groupX = runIdx * (groupWidth + bucketGap)
+            const groupX = runIdx * (partySize + bucketGap)
+            const isBucketHovered = hoveredBucket === runIdx + 1;
             
             sortedPlayers.forEach((playerSlot, playerIdx) => {
                 const charData = findCharacterInBucket(bucket.characters, playerSlot.playerId, playerIdx)
-                const stripeX = groupX + (playerIdx * stripeWidth)
-                const drawWidth = Math.max(0.5, stripeWidth)
+                const stripeX = groupX + playerIdx
+                const drawWidth = 1
 
                 if (!charData) return
 
+                const isCharHovered = hoveredCharId === charData.id;
+                const opacity = (hoveredCharId && !isCharHovered && !isBucketHovered) ? 0.3 : 1.0;
+
                 // --- Vitality Band (HP) ---
                 if (charData.isDead) {
-                    ctx.fillStyle = '#000000'
+                    ctx.fillStyle = isBucketHovered ? '#ff0000' : (isCharHovered ? '#ff4d4d' : `rgba(0, 0, 0, ${opacity})`)
                     ctx.fillRect(stripeX, 0, drawWidth, BAND_HEIGHT)
                 } else {
                     const hpPct = Math.max(0, Math.min(100, charData.hpPercent)) / 100
                     const hpH = BAND_HEIGHT * hpPct
-                    ctx.fillStyle = '#22c55e' // Life
+                    
+                    ctx.fillStyle = isBucketHovered ? '#44ff44' : `rgba(34, 197, 94, ${opacity})`
                     ctx.fillRect(stripeX, BAND_HEIGHT - hpH, drawWidth, hpH)
-                    ctx.fillStyle = '#ef4444' // Wounds
+                    
+                    ctx.fillStyle = isBucketHovered ? '#ff4444' : `rgba(239, 68, 68, ${opacity})`
                     ctx.fillRect(stripeX, 0, drawWidth, BAND_HEIGHT - hpH)
                 }
 
                 // --- Power Band (Resources) ---
                 const resPct = Math.max(0, Math.min(100, charData.resourcePercent)) / 100
                 const resH = BAND_HEIGHT * resPct
-                ctx.fillStyle = '#3b82f6' // Power
-                ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS, drawWidth, resH)
-                ctx.fillStyle = '#eab308' // Spent
-                ctx.fillRect(stripeX, BAND_HEIGHT + GAP_BETWEEN_BANDS + resH, drawWidth, BAND_HEIGHT - resH)
+                
+                ctx.fillStyle = isBucketHovered ? '#66b2ff' : `rgba(59, 130, 246, ${opacity})`
+                ctx.fillRect(stripeX, BAND_HEIGHT, drawWidth, resH)
+                
+                ctx.fillStyle = isBucketHovered ? '#ffff66' : `rgba(234, 179, 8, ${opacity})`
+                ctx.fillRect(stripeX, BAND_HEIGHT + resH, drawWidth, BAND_HEIGHT - resH)
             })
 
             // Labels
             if (runIdx % 20 === 0 || runIdx === 99) {
-                const labelX = groupX + groupWidth / 2
-                ctx.fillStyle = 'rgba(232, 224, 208, 0.5)'
-                ctx.font = '10px "Courier New", monospace'
+                const labelX = groupX + partySize / 2
+                ctx.fillStyle = isBucketHovered ? '#d4af37' : 'rgba(232, 224, 208, 0.5)'
+                ctx.font = isBucketHovered ? 'bold 10px "Courier New", monospace' : '10px "Courier New", monospace'
                 ctx.textAlign = 'center'
                 ctx.fillText(`P${runIdx === 99 ? 100 : runIdx}`, labelX, TOTAL_HEIGHT - 4)
             }
@@ -162,12 +165,38 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(0, BAND_HEIGHT)
-        ctx.lineTo(width, BAND_HEIGHT)
-        ctx.moveTo(0, BAND_HEIGHT + GAP_BETWEEN_BANDS)
-        ctx.lineTo(width, BAND_HEIGHT + GAP_BETWEEN_BANDS)
+        ctx.lineTo(TOTAL_WIDTH, BAND_HEIGHT)
         ctx.stroke()
 
-    }, [sortedBuckets, sortedPlayers, width, partySize])
+    }, [sortedBuckets, sortedPlayers, partySize, TOTAL_WIDTH, TOTAL_HEIGHT, crosshairState.bucketIndex, crosshairState.hoveredCharacterId])
+
+    const handleMouseMove = useCallback((e: React.MouseEvent) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX - rect.left + e.currentTarget.scrollLeft
+        
+        // Find bucket
+        const bucketWidth = partySize + bucketGap
+        const bucketIdx = Math.floor(x / bucketWidth)
+        
+        if (bucketIdx >= 0 && bucketIdx < RUNS_COUNT) {
+            // Find specific character stripe within bucket
+            const stripeX = x % bucketWidth
+            let charId: string | null = null
+            if (stripeX < partySize) {
+                const playerIdx = Math.floor(stripeX)
+                const bucket = sortedBuckets[bucketIdx]
+                const playerSlot = sortedPlayers[playerIdx]
+                const charData = findCharacterInBucket(bucket.characters, playerSlot?.playerId, playerIdx)
+                charId = charData?.id || null
+            }
+
+            setCrosshair(bucketIdx + 1, x)
+            setHoveredCharacter(charId)
+            setMousePos({ x: e.clientX, y: e.clientY })
+        } else {
+            clearCrosshair()
+        }
+    }, [partySize, setCrosshair, setHoveredCharacter, clearCrosshair, sortedBuckets, sortedPlayers])
 
     return (
         <div className={`${styles.partyOverview} ${className || ''}`}>
@@ -181,8 +210,14 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 <div className={styles.legendGroup}>
                     {sortedPlayers.map((p, i) => {
                         const displayName = playerNames?.get(p.playerId) || p.playerId || `Player ${i + 1}`
+                        const isHovered = crosshairState.hoveredCharacterId === p.playerId
                         return (
-                            <span key={`${p.playerId}-${p.position}`} className={styles.playerTag}>
+                            <span 
+                                key={`${p.playerId}-${p.position}`} 
+                                className={`${styles.playerTag} ${isHovered ? styles.hovered : ''}`}
+                                onMouseEnter={() => setHoveredCharacter(p.playerId)}
+                                onMouseLeave={() => setHoveredCharacter(null)}
+                            >
                                 {i === 0 && <span className={styles.roleIcon}>🛡️</span>}
                                 {i === sortedPlayers.length - 1 && <span className={styles.roleIcon}>⚡</span>}
                                 {displayName}
@@ -192,10 +227,20 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 </div>
             </div>
 
-            <div ref={containerRef} className={styles.canvasContainer}>
+            <div 
+                ref={containerRef} 
+                className={styles.canvasContainer}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={clearCrosshair}
+            >
                 <div className={styles.labelVitality}>Vitality</div>
                 <div className={styles.labelPower}>Power</div>
                 <canvas ref={canvasRef} />
+                <CrosshairLine 
+                    width={TOTAL_WIDTH} 
+                    height={TOTAL_HEIGHT} 
+                    padding={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                />
             </div>
             
             <div className={styles.colorKey}>
@@ -207,6 +252,12 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 <div className={styles.separator} />
                 <div className={styles.keyItem}><div className={`${styles.swatch} ${styles.dead}`} /> Fallen</div>
             </div>
+
+            <CrosshairTooltip 
+                bucketData={crosshairState.bucketData}
+                x={mousePos.x}
+                y={mousePos.y}
+            />
         </div>
     )
 }
