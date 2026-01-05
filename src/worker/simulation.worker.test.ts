@@ -30,8 +30,14 @@ global.self = {
   onmessage: null
 } as any;
 
-// Mock setTimeout to execute immediately
-vi.stubGlobal('setTimeout', (fn: Function) => fn());
+// Mock setTimeout to execute once to avoid infinite recursion in tests
+let timeoutCount = 0;
+vi.stubGlobal('setTimeout', (fn: Function) => {
+  if (timeoutCount < 2) {
+    timeoutCount++;
+    fn();
+  }
+});
 
 import { handleMessage } from './simulation.worker';
 import { ChunkedSimulationRunner } from 'simulation-wasm';
@@ -39,6 +45,7 @@ import { ChunkedSimulationRunner } from 'simulation-wasm';
 describe('SimulationWorker', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    timeoutCount = 0;
   });
 
   it('should use ChunkedSimulationRunner with correct iterations', async () => {

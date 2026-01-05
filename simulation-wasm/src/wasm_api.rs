@@ -110,7 +110,7 @@ impl ChunkedSimulationRunner {
         }
 
         self.current_iteration = end;
-        (self.current_iteration as f64 / self.total_iterations as f64) * 0.8
+        self.current_iteration as f64 / self.total_iterations as f64
     }
 
     pub fn finalize(&mut self) -> Result<JsValue, JsValue> {

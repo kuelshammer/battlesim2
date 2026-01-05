@@ -18,18 +18,22 @@ export const handleMessage = async (e: MessageEvent) => {
             await ensureWasmInitialized();
 
             const k = kFactor || 1;
-            const total = k > 1 ? (2 * k - 1) * 100 : Math.max(100, iterations);
+            const runsPerPercent = 2 * k - 1;
+            const total = k > 1 ? runsPerPercent * 100 : Math.max(100, iterations);
 
             const runner = new ChunkedSimulationRunner(players, timeline, iterations, seed, k);
-            const CHUNK_SIZE = 500;
+            
+            // Chunk size is runsPerPercent to get exactly 1% increments
+            const CHUNK_SIZE = runsPerPercent; 
             
             const runChunk = () => {
                 const progress = runner.run_chunk(CHUNK_SIZE);
-                const completed = Math.min(total, Math.floor(progress * total / 0.8));
+                // progress from WASM is now (current/total) in 0.0-1.0 range
+                const completed = Math.min(total, Math.floor(progress * total));
                 
                 self.postMessage({
                     type: 'SIMULATION_PROGRESS',
-                    progress,
+                    progress, // 0.0 to 1.0
                     completed,
                     total
                 });

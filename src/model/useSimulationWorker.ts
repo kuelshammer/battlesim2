@@ -104,10 +104,9 @@ export function useSimulationWorker() {
     }, [setupWorkerListener]);
 
     const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], iterations: number = 2511, seed?: number, kFactor: number = 1) => {
-        // Ensure worker is initialized before running
-        if (!workerRef.current) {
-            terminateAndRestart();
-        }
+        // Always terminate and restart to ensure we don't have multiple loops running
+        // and to clear any previous state in the worker.
+        const worker = terminateAndRestart();
 
         const k = kFactor || 1;
         const total = k > 1 ? (2 * k - 1) * 100 : Math.max(100, iterations);
@@ -123,16 +122,11 @@ export function useSimulationWorker() {
             optimizedResult: null
         }));
 
-        // Clean data before sending to worker
+        // ... data cleaning ...
         const cleanPlayers = players.map(p => ({
             ...p,
             actions: p.actions.map(getFinalAction)
         }));
-
-        if (!Array.isArray(timeline)) {
-            console.error("runSimulation called with non-array timeline:", timeline);
-            return;
-        }
 
         const cleanTimeline = timeline.map(event => {
             if (event.type === 'combat') {
@@ -144,10 +138,10 @@ export function useSimulationWorker() {
                     }))
                 };
             }
-            return event; // shortRest needs no specific cleaning for now
+            return event;
         });
 
-        workerRef.current?.postMessage({
+        worker.postMessage({
             type: 'START_SIMULATION',
             players: cleanPlayers,
             timeline: cleanTimeline,
@@ -158,10 +152,8 @@ export function useSimulationWorker() {
     }, [terminateAndRestart]);
 
     const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => {
-        // Ensure worker is initialized before running
-        if (!workerRef.current) {
-            terminateAndRestart();
-        }
+        // Always terminate and restart to clear worker state
+        const worker = terminateAndRestart();
 
         setState(prev => ({
             ...prev,
@@ -202,7 +194,7 @@ export function useSimulationWorker() {
             return event;
         });
 
-        workerRef.current?.postMessage({
+        worker.postMessage({
             type: 'AUTO_ADJUST_ENCOUNTER',
             players: cleanPlayers,
             monsters: cleanMonsters,
