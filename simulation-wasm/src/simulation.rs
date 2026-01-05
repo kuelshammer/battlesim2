@@ -26,7 +26,7 @@ use std::sync::Arc;
 /// - No known AC values
 /// - No arcane ward
 fn create_creature_state(creature: &Creature) -> CreatureState {
-    CreatureState {
+    let mut state = CreatureState {
         current_hp: creature.hp,
         temp_hp: None,
         buffs: HashMap::new(),
@@ -48,7 +48,16 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
         // Initialize Arcane Ward HP to max at encounter start
         arcane_ward_hp: creature.max_arcane_ward_hp,
         cumulative_spent: 0.0,
+    };
+
+    // Apply initial_buffs from magic items
+    for (index, buff) in creature.initial_buffs.iter().enumerate() {
+        let buff_id = buff.display_name.clone()
+            .unwrap_or_else(|| format!("initial-buff-{}", index));
+        state.buffs.insert(buff_id, buff.clone());
     }
+
+    state
 }
 
 /// Create a player Combattant from a Creature template
