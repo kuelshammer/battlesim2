@@ -49,7 +49,15 @@ export const MagicItemTemplates = {
             displayName: 'Cloak of Displacement',
             duration: 'entire encounter',
             condition: 'Is attacked with Disadvantage',
-            // Note: Trigger with SuppressBuff effect to be added when SuppressBuff variant is available
+            triggers: [{
+                condition: 'OnBeingDamaged',
+                requirements: [],
+                effect: {
+                    type: 'SuppressBuff',
+                    buffId: 'Cloak of Displacement',
+                    duration: '1 round',
+                },
+            }],
         }],
     }),
 
