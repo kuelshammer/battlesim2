@@ -24,7 +24,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 4.5,
+                "dpr": "1d6 + 1",
                 "toHit": 3,
                 "target": "enemy with most HP",
                 "targets": 1
@@ -36,7 +36,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 5.5,
+                "dpr": "1d8 + 1",
                 "toHit": 3,
                 "target": "enemy with most HP",
                 "targets": 1
@@ -62,7 +62,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 10,
+                "dpr": "2d6 + 3",
                 "toHit": 5,
                 "target": "enemy with most HP",
                 "targets": 1
@@ -88,7 +88,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 11,
+                "dpr": "2d6 + 4",
                 "toHit": 6,
                 "target": "enemy with most HP",
                 "targets": 1
@@ -114,7 +114,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 42.5,
+                "dpr": "2d8 + 4 + 1d10 + 2 + 4d10",
                 "toHit": 4,
                 "target": "enemy with most HP",
                 "targets": 1
@@ -140,7 +140,7 @@ export const DefaultMonsters: Creature[] = [
                 "actionSlot": 0,
                 "freq": "at will",
                 "condition": "default",
-                "dpr": 15.5,
+                "dpr": "2d6 + 3",
                 "toHit": 6,
                 "target": "enemy with most HP",
                 "targets": 2
