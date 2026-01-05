@@ -54,7 +54,7 @@ fn test_cumulative_log_sorting() {
     // Analysis for E1 (cumulative E1)
     // Runs are sorted by E1 score (hp1 = i). 
     // Decile 1 (5%) should be run with i ~ 5.
-    let output1 = run_encounter_analysis_with_logs(&mut runs, 0, "Enc 1", 1);
+    let output1 = run_encounter_analysis_with_logs(&mut runs, 0, "Enc 1", 1, 0);
     assert_eq!(output1.decile_logs.len(), 11);
     
     // Check slicing: Log for E1 should only contain E1 events
@@ -72,7 +72,7 @@ fn test_cumulative_log_sorting() {
         runs[i].result.encounters[1].rounds[0].team1[0].final_state.current_hp = hp2;
     }
     
-    let output2 = run_encounter_analysis_with_logs(&mut runs, 1, "Enc 2", 1);
+    let output2 = run_encounter_analysis_with_logs(&mut runs, 1, "Enc 2", 1, 0);
     
     // Check slicing: Log for E2 should only contain E2 events
     for log in &output2.decile_logs {

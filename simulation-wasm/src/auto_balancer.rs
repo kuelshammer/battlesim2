@@ -99,8 +99,10 @@ impl AutoBalancer {
         );
         let raw_results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
         
+        let sr_count = full_day_timeline.iter().filter(|s| matches!(s, TimelineStep::ShortRest(_))).count();
+
         // We analyze the SPECIFIC encounter at encounter_index
-        crate::decile_analysis::run_encounter_analysis(&raw_results, encounter_index, "Auto-Balance", players.len())
+        crate::decile_analysis::run_encounter_analysis(&raw_results, encounter_index, "Auto-Balance", players.len(), sr_count)
     }
 
     fn is_balanced(&self, analysis: &AggregateOutput, initial_grade: &SafetyGrade) -> bool {

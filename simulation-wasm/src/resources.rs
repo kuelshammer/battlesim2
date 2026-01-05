@@ -17,6 +17,7 @@ pub enum ResourceType {
     HitDiceD10,
     HitDiceD12,
     HP,
+    ActionUsage,
     Custom,
 }
 
@@ -36,6 +37,7 @@ impl ResourceType {
             ResourceType::HitDiceD8 => "HitDice(d8)".to_string(),                // New
             ResourceType::HitDiceD10 => "HitDice(d10)".to_string(),              // New
             ResourceType::HitDiceD12 => "HitDice(d12)".to_string(),              // New
+            ResourceType::ActionUsage => val.unwrap_or("Action").to_string(),
             ResourceType::Custom => format!("Custom({})", val.unwrap_or("Default")),
         }
     }

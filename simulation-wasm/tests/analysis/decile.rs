@@ -22,7 +22,7 @@ fn test_decile_analysis_median_run_visualization() {
         });
     }
 
-    let output = run_decile_analysis(&results, scenario_name, party_size);
+    let output = run_decile_analysis(&results, scenario_name, party_size, 0);
 
     assert_eq!(output.deciles.len(), 10, "Should have 10 deciles");
     
@@ -53,7 +53,7 @@ fn test_star_ratings() {
     // We need to ensure calculate_run_stats correctly interprets the dummy score.
     // It uses 1,000,000 per survivor + remaining HP.
     
-    let output = run_decile_analysis(&results, "Stars Test", 1);
+    let output = run_decile_analysis(&results, "Stars Test", 1, 0);
     
     // Note: Interpretation depends on party_max_hp which is currently hard to mock without creatures
     // But we can check if the field exists and is reachable.
@@ -138,7 +138,7 @@ fn test_intensity_regression_high_penalty() {
         seed: 0,
     };
 
-    let output = run_decile_analysis(&vec![run; 100], "Regression Test", 2);
+    let output = run_decile_analysis(&vec![run; 100], "Regression Test", 2, 0);
     
     // Calculation:
     // TDNW: 2 * (75 HP + (0 HD * 8) + (0 Slots)) = 150.
@@ -212,7 +212,7 @@ fn test_resource_timeline_points() {
         seed: 0,
     };
 
-    let output = run_decile_analysis(&vec![run; 11], "Timeline Test", 1);
+    let output = run_decile_analysis(&vec![run; 11], "Timeline Test", 1, 0);
     
     // Total steps: Start + 3 encounters = 4 points
     let timeline = &output.deciles[0].resource_timeline;

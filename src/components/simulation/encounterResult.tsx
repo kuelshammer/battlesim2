@@ -159,19 +159,23 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                 />
             )}
 
+            {fullAnalysis?.partySlots && fullAnalysis.partySlots.length > 0 && analysis?.skyline && (
+                <div className={styles.prioritizedSkyline}>
+                    {/* Party Overview - Prioritized */}
+                    <PartyOverview
+                        skyline={analysis.skyline}
+                        partySlots={fullAnalysis.partySlots}
+                        playerNames={playerNames}
+                    />
+                </div>
+            )}
+
             <EncounterRating analysis={analysis || null} isPreliminary={isPreliminary} isShortRest={isShortRest} />
 
             <div className={styles.detailsSection}>
                 {fullAnalysis?.partySlots && fullAnalysis.partySlots.length > 0 && analysis?.skyline && (
                     <>
-                        {/* Party Overview - Top Section */}
-                        <PartyOverview
-                            skyline={analysis.skyline}
-                            partySlots={fullAnalysis.partySlots}
-                            playerNames={playerNames}
-                        />
-
-                        {/* Individual Player Graphs - Below Party Overview */}
+                        {/* Individual Player Graphs - Moved here */}
                         <PlayerGraphs
                             skyline={analysis.skyline}
                             partySlots={fullAnalysis.partySlots}

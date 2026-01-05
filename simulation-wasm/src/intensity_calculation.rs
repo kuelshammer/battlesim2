@@ -7,6 +7,58 @@ pub const SPELL_SLOT_BASE: f64 = 15.0;
 pub const SR_FEATURE_WEIGHT: f64 = 15.0;
 pub const LR_FEATURE_WEIGHT: f64 = 30.0;
 
+pub fn get_hit_die_average(key: &str, con_modifier: f64) -> f64 {
+    let die_size = if key.contains("D6") { 6.0 }
+        else if key.contains("D8") { 8.0 }
+        else if key.contains("D10") { 10.0 }
+        else if key.contains("D12") { 12.0 }
+        else { 8.0 };
+    
+    die_size / 2.0 + 0.5 + con_modifier
+}
+
+pub fn get_resource_weight(key: &str, reset_rules: &HashMap<String, ResetType>, con_modifier: f64) -> f64 {
+    if key.starts_with("HitDice") {
+        return get_hit_die_average(key, con_modifier);
+    } else if key.starts_with("SpellSlot") {
+        if let Some(level_str) = extract_level(key) {
+            if let Ok(level) = level_str.parse::<f64>() {
+                return (SPELL_SLOT_BASE * 1.6_f64.powf(level)).round();
+            }
+        }
+    } else if key.starts_with("ClassResource") || key.starts_with("Custom") || reset_rules.contains_key(key) {
+        if let Some(reset) = reset_rules.get(key) {
+            return match reset {
+                ResetType::ShortRest => 10.0,
+                ResetType::LongRest => 30.0,
+                ResetType::Encounter => 5.0,
+                _ => 0.0,
+            };
+        }
+    }
+    0.0
+}
+
+pub fn calculate_daily_budget(creature: &crate::model::Creature, sr_count: usize) -> f64 {
+    let ledger = creature.initialize_ledger();
+    let mut total = creature.hp as f64 * HP_WEIGHT;
+    let con_mod = creature.con_modifier.unwrap_or(0.0);
+
+    for (key, &max_amt) in &ledger.max {
+        let weight = get_resource_weight(key, &ledger.reset_rules, con_mod);
+        if weight > 0.0 {
+            let multiplier = if ledger.reset_rules.get(key) == Some(&ResetType::ShortRest) {
+                (sr_count + 1) as f64
+            } else {
+                1.0
+            };
+            total += max_amt * weight * multiplier;
+        }
+    }
+    
+    total
+}
+
 /// Calculates the Effective HP (EHP) points for a given set of resources.
 pub fn calculate_ehp_points(
     hp: u32,
@@ -138,5 +190,16 @@ pub fn calculate_power(
         (current_val / max_val) * 100.0
     } else {
         100.0 // Default to full power if no limited resources exist
+    }
+}
+
+pub fn calculate_strategic_power(
+    cumulative_spent: f64,
+    daily_budget: f64,
+) -> f64 {
+    if daily_budget > 0.0 {
+        ((daily_budget - cumulative_spent) / daily_budget * 100.0).max(0.0)
+    } else {
+        100.0
     }
 }

@@ -497,6 +497,14 @@ impl ActionExecutionEngine {
                         .current
                         .insert(tracking_id.clone(), (current - 1.0).max(0.0));
 
+                    // Track cumulative expenditure
+                    let weight = crate::intensity_calculation::get_resource_weight(
+                        &tracking_id,
+                        &combatant.resources.reset_rules,
+                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                    );
+                    combatant.cumulative_spent += weight;
+
                     // Also mark as used in this encounter (for "1/encounter" tracking if used elsewhere)
                     // actions_used_this_encounter is not available on CombattantState, but resource deduction is sufficient.
                 }

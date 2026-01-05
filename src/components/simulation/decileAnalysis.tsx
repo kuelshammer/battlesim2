@@ -35,7 +35,7 @@ const DecileAnalysis: FC<PropType> = memo(({ analysis, isPreliminary }) => {
             </div>
             
             <EncounterRating analysis={analysis} isPreliminary={isPreliminary} label="Day Rating" />
-            <MedianPerformanceDisplay analysis={analysis} isPreliminary={isPreliminary} isDaySummary={true} />
+            {/* MedianPerformanceDisplay hidden per user preference */}
 
             <div className={styles.analysisHeader}>
                 <button

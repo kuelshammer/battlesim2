@@ -34,7 +34,7 @@ fn snapshot_basic_melee_combat() {
 
     // Analyze
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     // Snapshot the key metrics from the median decile
     let median = &analysis.deciles[4];
@@ -61,7 +61,7 @@ fn snapshot_damage_vs_precision() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {
@@ -87,7 +87,7 @@ fn snapshot_heavy_vs_consistent() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1;
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {
@@ -113,7 +113,7 @@ fn snapshot_fireball_aoe() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1; // Wizard vs 4 Goblins
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {
@@ -139,7 +139,7 @@ fn snapshot_healing_word() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 2; // Cleric + Fighter
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {
@@ -165,7 +165,7 @@ fn snapshot_multiattack() {
         .unwrap_or(std::cmp::Ordering::Equal));
 
     let party_size = 1; 
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];
     let data = SnapshotData {

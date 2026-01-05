@@ -136,19 +136,21 @@ impl ChunkedSimulationRunner {
             seed_to_events.insert(seed, events);
         }
 
-        let mut final_runs: Vec<SimulationRun> = std::mem::take(&mut self.summarized_results).into_iter()
-            .zip(std::mem::take(&mut self.lightweight_runs))
+        // Combine results and events into SimulationRun objects
+        let mut final_runs: Vec<SimulationRun> = self.summarized_results.iter().zip(self.lightweight_runs.iter())
             .map(|(result, light)| {
                 let events = seed_to_events.get(&light.seed).cloned().unwrap_or_default();
-                SimulationRun { result, events }
+                SimulationRun { result: result.clone(), events }
             }).collect();
 
-        let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", self.players.len());
+        let sr_count = self.timeline.iter().filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_))).count();
+
+        let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", self.players.len(), sr_count);
 
         let num_encounters = final_runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
         let mut encounters_analysis = Vec::new();
         for i in 0..num_encounters {
-            let analysis = crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), self.players.len());
+            let analysis = crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), self.players.len(), sr_count);
             encounters_analysis.push(analysis);
         }
 
@@ -411,13 +413,15 @@ pub fn run_simulation_with_callback(
             SimulationRun { result, events }
         }).collect();
 
+    let sr_count = timeline.iter().filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_))).count();
+
     // FINAL ANALYSIS
-    let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", players.len());
+    let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", players.len(), sr_count);
 
     let num_encounters = final_runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
     let mut encounters_analysis = Vec::new();
     for i in 0..num_encounters {
-        let analysis = crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), players.len());
+        let analysis = crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), players.len(), sr_count);
         encounters_analysis.push(analysis);
     }
 
@@ -800,8 +804,12 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
 
     console::log_1(&format!("Calculated party size: {}", actual_party_size).into());
 
+    let sr_count = if let Some(first) = results.first() {
+        first.encounters.iter().filter(|e| e.rounds.len() == 1 && e.rounds[0].team2.is_empty()).count()
+    } else { 0 };
+
     // 1. Run Overall Analysis (Adventure-wide)
-    let overall = crate::decile_analysis::run_decile_analysis(&results, scenario_name, actual_party_size);
+    let overall = crate::decile_analysis::run_decile_analysis(&results, scenario_name, actual_party_size, sr_count);
 
     // 2. Run Per-Encounter Analysis
     // Determine number of encounters from the first result
@@ -810,7 +818,7 @@ pub fn run_decile_analysis_wasm(results: JsValue, scenario_name: &str, _party_si
 
     for i in 0..num_encounters {
         let encounter_name = format!("Encounter {}", i + 1);
-        let analysis = crate::decile_analysis::run_encounter_analysis(&results, i, &encounter_name, actual_party_size);
+        let analysis = crate::decile_analysis::run_encounter_analysis(&results, i, &encounter_name, actual_party_size, sr_count);
         encounters.push(analysis);
     }
 

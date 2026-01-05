@@ -46,6 +46,7 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
         bonus_action_used: false,
         known_ac: HashMap::new(),
         arcane_ward_hp: None,
+        cumulative_spent: 0.0,
     }
 }
 
@@ -332,7 +333,8 @@ pub fn run_single_lightweight_simulation(
     let final_score = encounter_scores.last().copied().unwrap_or(0.0);
 
     // total_hp_lost is (Total Daily Net Worth EHP) - (Final EHP)
-    let tdnw = crate::decile_analysis::calculate_tdnw_lightweight(players);
+    let sr_count = timeline.iter().filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_))).count();
+    let tdnw = crate::decile_analysis::calculate_tdnw_lightweight(players, sr_count);
     let mut final_ehp = 0.0;
     for p in &players_with_state {
         let ledger = p.creature.initialize_ledger();
@@ -367,6 +369,7 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
         let mut updated_player = player.clone();
 
         let mut current_hp = player.final_state.current_hp;
+        let mut cumulative_spent = player.final_state.cumulative_spent;
         let mut resources = crate::resources::ResourceLedger::from(player.final_state.resources.clone());
 
         // 1. Reset Short Rest resources
@@ -414,6 +417,10 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
                     if resources.consume(hd_type.clone(), None, 1.0).is_ok() {
                         current_hp = (current_hp as f64 + total_avg).round() as u32;
                         current_hp = current_hp.min(max_hp);
+                        
+                        let weight = crate::intensity_calculation::get_hit_die_average(&hd_type.to_key(None), con_mod);
+                        cumulative_spent += weight;
+                        
                         used_die = true;
                         break;
                     }
@@ -430,6 +437,7 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
             current_hp,
             temp_hp: None, // Temp HP lost on rest
             resources: resources.into(),
+            cumulative_spent,
             ..player.final_state.clone()
         };
 
@@ -521,6 +529,12 @@ fn apply_short_rest_standalone(
                         resource_type: hd_type.to_key(None),
                         amount: 1.0,
                     });
+
+                    // Track cumulative expenditure for strategic attrition model
+                    if let Some(c) = context.get_combatant_mut(&player.id) {
+                        let weight = crate::intensity_calculation::get_hit_die_average(&hd_type.to_key(None), con_mod);
+                        c.cumulative_spent += weight;
+                    }
                     
                     // Update local current_hp from context
                     if let Some(c) = context.get_combatant(&player.id) {
@@ -544,6 +558,7 @@ fn apply_short_rest_standalone(
                 current_hp: c_state.current_hp,
                 temp_hp: None, // Temp HP lost on rest
                 resources: c_state.resources.clone().into(),
+                cumulative_spent: c_state.cumulative_spent,
                 ..player.final_state.clone()
             };
             updated_player.initial_state = next_state.clone();
@@ -615,6 +630,7 @@ fn update_player_states_for_next_encounter(
                 bonus_action_used: false,
                 known_ac: final_state.known_ac.clone(),
                 arcane_ward_hp: final_state.arcane_ward_hp,
+                cumulative_spent: final_state.cumulative_spent,
             };
 
             updated_player.initial_state = next_state.clone();
@@ -751,6 +767,7 @@ fn convert_to_legacy_simulation_result(
                 bonus_action_used: false,
                 known_ac: HashMap::new(),
                 arcane_ward_hp: None,
+                cumulative_spent: state.cumulative_spent,
             };
 
             let mut combatant = state.base_combatant.clone();
@@ -807,6 +824,7 @@ fn convert_to_legacy_simulation_result(
                 bonus_action_used: false,
                 known_ac: HashMap::new(),
                 arcane_ward_hp: None,
+                cumulative_spent: state.cumulative_spent,
             };
 
             let mut combatant = state.base_combatant.clone();

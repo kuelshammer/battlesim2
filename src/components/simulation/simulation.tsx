@@ -420,6 +420,22 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             <AssistantSummary 
                                 pacingData={pacingData} 
                             />
+
+                            {/* Overall Day Summary - Prioritized */}
+                            {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                                <div className={styles.overallSummary}>
+                                    <PartyOverview
+                                        skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                        partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                        playerNames={combatantNames}
+                                    />
+                                    <PlayerGraphs
+                                        skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                        partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                        playerNames={combatantNames}
+                                    />
+                                </div>
+                            )}
                         </>
                     )}
 
@@ -536,24 +552,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                 Add Short Rest
                                             </button>
                                         </div>
-
-                    {/* Party Overview - Compact spectrogram */}
-                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
-                        <PartyOverview
-                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                            playerNames={combatantNames}
-                        />
-                    )}
-
-                    {/* Individual Player Statistics */}
-                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
-                        <PlayerGraphs
-                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                            playerNames={combatantNames}
-                        />
-                    )}
 
                     {/* Event Log Modal */}
                     {showLogModal && selectedEncounterIndex !== null && (

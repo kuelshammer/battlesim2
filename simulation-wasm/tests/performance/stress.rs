@@ -79,7 +79,7 @@ fn test_fast_simulation_iterations() {
 
     // Check decile analysis works with 100 runs
     let results: Vec<_> = runs.iter().map(|r| r.result.clone()).collect();
-    let analysis = run_decile_analysis(&results, "Fast Test", 1);
+    let analysis = run_decile_analysis(&results, "Fast Test", 1, 0);
 
     assert_eq!(analysis.deciles.len(), 10, "Should produce 10 deciles");
     

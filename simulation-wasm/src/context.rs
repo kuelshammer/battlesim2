@@ -47,6 +47,8 @@ pub struct CombattantState {
     #[serde(default)]
     pub arcane_ward_hp: Option<u32>,
     pub known_ac: HashMap<String, crate::model::AcKnowledge>,
+    #[serde(default)]
+    pub cumulative_spent: f64,
     #[serde(skip)]
     pub cached_stats: Option<CombatantStats>, // Cached combat statistics
 }
@@ -110,6 +112,7 @@ impl TurnContext {
                     resources,
                     arcane_ward_hp: c.initial_state.arcane_ward_hp,
                     known_ac: c.initial_state.known_ac.clone(),
+                    cumulative_spent: c.initial_state.cumulative_spent,
                     cached_stats: None, 
                 };
                 
@@ -252,6 +255,15 @@ impl TurnContext {
                         resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *amount,
                     });
+
+                    // Track cumulative expenditure
+                    let key = resource_type.to_key(resource_val.as_deref());
+                    let weight = crate::intensity_calculation::get_resource_weight(
+                        &key,
+                        &combatant.resources.reset_rules,
+                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                    );
+                    combatant.cumulative_spent += *amount * weight;
                 }
                 ActionCost::Variable {
                     resource_type,
@@ -273,6 +285,15 @@ impl TurnContext {
                         resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *max,
                     });
+
+                    // Track cumulative expenditure
+                    let key = resource_type.to_key(resource_val.as_deref());
+                    let weight = crate::intensity_calculation::get_resource_weight(
+                        &key,
+                        &combatant.resources.reset_rules,
+                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                    );
+                    combatant.cumulative_spent += *max * weight;
                 }
             }
         }

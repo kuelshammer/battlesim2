@@ -1,6 +1,7 @@
 use crate::model::*;
 use crate::intensity_calculation::*;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum SafetyGrade {
@@ -278,10 +279,11 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
     suggestions
 }
 
-fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usize>, party_size: usize, tdnw: f64) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
+fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usize>, party_size: usize, tdnw: f64, sr_count: usize) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
     let score = crate::aggregation::calculate_score(run);
     
     // 1. Count survivors
+    // ... (rest of survivor logic remains same)
     let survivors = if let Some(idx) = encounter_idx {
         if let Some(enc) = run.encounters.get(idx) {
             if let Some(last_round) = enc.rounds.last() {
@@ -319,6 +321,9 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
         &run.encounters[..]
     };
 
+    // Pre-calculate daily budgets for all players in this run
+    let mut player_budgets = HashMap::new();
+
     // Start with Initial State
     if let Some(first_enc) = encounters_slice.first() {
         if let Some(first_round) = first_enc.rounds.first() {
@@ -332,6 +337,9 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
                 run_party_max_hp += c.creature.hp as f64;
                 let ledger = c.creature.initialize_ledger();
                 
+                let budget = calculate_daily_budget(&c.creature, sr_count);
+                player_budgets.insert(c.id.clone(), budget);
+
                 start_ehp += calculate_serializable_ehp(
                     c.initial_state.current_hp, 
                     c.initial_state.temp_hp.unwrap_or(0),
@@ -347,10 +355,9 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
                     c.creature.con_modifier.unwrap_or(0.0)
                 );
 
-                start_pow_sum += calculate_power(
-                    &c.initial_state.resources.current, 
-                    &c.initial_state.resources.max, 
-                    &ledger.reset_rules
+                start_pow_sum += calculate_strategic_power(
+                    c.initial_state.cumulative_spent,
+                    budget
                 );
             }
             timeline.push(if tdnw > 0.0 { (start_ehp / tdnw) * 100.0 } else { 100.0 });
@@ -371,6 +378,8 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
                 p_count += 1.0;
                 let ledger = c.creature.initialize_ledger();
                 
+                let budget = *player_budgets.get(&c.id).unwrap_or(&0.0);
+
                 step_ehp += calculate_serializable_ehp(
                     c.final_state.current_hp,
                     c.final_state.temp_hp.unwrap_or(0),
@@ -386,10 +395,9 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
                     c.creature.con_modifier.unwrap_or(0.0)
                 );
 
-                step_pow_sum += calculate_power(
-                    &c.final_state.resources.current, 
-                    &c.final_state.resources.max, 
-                    &ledger.reset_rules
+                step_pow_sum += calculate_strategic_power(
+                    c.final_state.cumulative_spent,
+                    budget
                 );
             }
             timeline.push(if tdnw > 0.0 { (step_ehp / tdnw) * 100.0 } else { 0.0 });
@@ -414,14 +422,13 @@ fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usi
     (burned_resources, run_party_max_hp, survivors, duration, timeline, vitality_timeline, power_timeline)
 }
 
-pub fn calculate_tdnw(run: &SimulationResult) -> f64 {
+pub fn calculate_tdnw(run: &SimulationResult, sr_count: usize) -> f64 {
     let mut total = 0.0;
     // Find the first encounter that has at least one round
     for encounter in &run.encounters {
         if let Some(first_round) = encounter.rounds.first() {
             for c in &first_round.team1 {
-                let ledger = c.creature.initialize_ledger();
-                total += crate::intensity_calculation::calculate_ledger_max_ehp(&c.creature, &ledger);
+                total += crate::intensity_calculation::calculate_daily_budget(&c.creature, sr_count);
             }
             if total > 0.0 {
                 return total;
@@ -431,36 +438,35 @@ pub fn calculate_tdnw(run: &SimulationResult) -> f64 {
     total
 }
 
-pub fn calculate_tdnw_lightweight(players: &[Creature]) -> f64 {
+pub fn calculate_tdnw_lightweight(players: &[Creature], sr_count: usize) -> f64 {
     let mut total = 0.0;
     for p in players {
-        let ledger = p.initialize_ledger();
-        total += crate::intensity_calculation::calculate_ledger_max_ehp(p, &ledger) * (p.count as f64);
+        total += crate::intensity_calculation::calculate_daily_budget(p, sr_count) * (p.count as f64);
     }
     total
 }
 
-pub fn run_decile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_decile_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize, sr_count: usize) -> AggregateOutput {
     let refs: Vec<&SimulationResult> = results.iter().collect();
-    analyze_results_internal(&refs, None, scenario_name, party_size, None)
+    analyze_results_internal(&refs, None, scenario_name, party_size, None, sr_count)
 }
 
-pub fn run_decile_analysis_with_logs(runs: &mut [crate::model::SimulationRun], scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_decile_analysis_with_logs(runs: &mut [crate::model::SimulationRun], scenario_name: &str, party_size: usize, sr_count: usize) -> AggregateOutput {
     let results: Vec<&SimulationResult> = runs.iter().map(|r| &r.result).collect();
-    analyze_results_internal(&results, None, scenario_name, party_size, Some(runs))
+    analyze_results_internal(&results, None, scenario_name, party_size, Some(runs), sr_count)
 }
 
-pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_day_analysis(results: &[SimulationResult], scenario_name: &str, party_size: usize, sr_count: usize) -> AggregateOutput {
     let refs: Vec<&SimulationResult> = results.iter().collect();
-    analyze_results_internal(&refs, None, scenario_name, party_size, None)
+    analyze_results_internal(&refs, None, scenario_name, party_size, None, sr_count)
 }
 
-pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_encounter_analysis(results: &[SimulationResult], encounter_idx: usize, scenario_name: &str, party_size: usize, sr_count: usize) -> AggregateOutput {
     let refs: Vec<&SimulationResult> = results.iter().collect();
-    analyze_results_internal(&refs, Some(encounter_idx), scenario_name, party_size, None)
+    analyze_results_internal(&refs, Some(encounter_idx), scenario_name, party_size, None, sr_count)
 }
 
-pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun], encounter_idx: usize, scenario_name: &str, party_size: usize) -> AggregateOutput {
+pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun], encounter_idx: usize, scenario_name: &str, party_size: usize, sr_count: usize) -> AggregateOutput {
     // 1. Sort the runs based on cumulative score up to encounter_idx
     // Use seed as tie-breaker for deterministic results
     runs.sort_by(|a, b| {
@@ -473,7 +479,7 @@ pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun]
 
     // 2. Perform analysis using refs
     let refs: Vec<&SimulationResult> = runs.iter().map(|r| &r.result).collect();
-    let mut output = analyze_results_internal(&refs, Some(encounter_idx), scenario_name, party_size, Some(runs));
+    let mut output = analyze_results_internal(&refs, Some(encounter_idx), scenario_name, party_size, Some(runs), sr_count);
     
     // 3. Slice the logs to only include events for this specific encounter
     for log in &mut output.decile_logs {
@@ -483,8 +489,9 @@ pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun]
     output
 }
 
-fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option<usize>, scenario_name: &str, party_size: usize, runs: Option<&[crate::model::SimulationRun]>) -> AggregateOutput {
+fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option<usize>, scenario_name: &str, party_size: usize, runs: Option<&[crate::model::SimulationRun]>, sr_count: usize) -> AggregateOutput {
     if results.is_empty() {
+// ... (omitting body for brevity, but it needs to return AggregateOutput)
                 return AggregateOutput {
                     scenario_name: scenario_name.to_string(),
                     total_runs: 0,
@@ -502,7 +509,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         };
     }
 
-    let tdnw = calculate_tdnw(results[0]);
+    let tdnw = calculate_tdnw(results[0], sr_count);
     let num_encounters = results[0].encounters.len();
     
     // Compute skyline analysis (100 buckets)
@@ -514,7 +521,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
     let mut all_vits = Vec::with_capacity(results.len());
     let mut all_pows = Vec::with_capacity(results.len());
     for &run in results {
-        let (_, _, _, _, _, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw);
+        let (_, _, _, _, _, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
         all_vits.push(vit);
         all_pows.push(pow);
     }
@@ -610,7 +617,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
     if is_perfect && total_runs >= 11 {
         let median_idx = total_runs / 2;
         let median_run = results[median_idx];
-        let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw);
+        let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
         let (visualization_data, _) = extract_combatant_visualization_partial(median_run, encounter_idx);
         
         global_median = Some(DecileStats {
@@ -634,7 +641,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
             let end_idx = start_idx + slice_size;
             if start_idx < total_runs && end_idx <= total_runs {
                 let slice = &results[start_idx..end_idx];
-                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw));
+                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count));
             }
         }
     } else {
@@ -644,13 +651,13 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
             let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
             let slice = &results[start_idx..end_idx.min(total_runs)];
             if !slice.is_empty() {
-                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw));
+                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count));
             }
         }
         
         let median_idx = total_runs / 2;
         if let Some(&median_run) = results.get(median_idx) {
-            let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw);
+            let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
             let (visualization_data, _) = extract_combatant_visualization_partial(median_run, encounter_idx);
             
             global_median = Some(DecileStats {
@@ -752,7 +759,7 @@ fn assess_intensity_tier_dynamic(deciles: &[DecileStats], global_median: &Option
     else { IntensityTier::Tier5 }
 }
 
-fn calculate_decile_stats_internal(slice: &[&SimulationResult], encounter_idx: Option<usize>, decile_num: usize, party_size: usize, tdnw: f64) -> DecileStats {
+fn calculate_decile_stats_internal(slice: &[&SimulationResult], encounter_idx: Option<usize>, decile_num: usize, party_size: usize, tdnw: f64, sr_count: usize) -> DecileStats {
     let mut total_wins = 0.0;
     let mut total_hp_lost = 0.0;
     let mut total_survivors = 0;
@@ -762,7 +769,7 @@ fn calculate_decile_stats_internal(slice: &[&SimulationResult], encounter_idx: O
     let mut power_timelines = Vec::new();
 
     for &run in slice {
-        let (hp_lost, _max_hp, survivors, duration, timeline, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw);
+        let (hp_lost, _max_hp, survivors, duration, timeline, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
         if survivors > 0 { total_wins += 1.0; }
         total_survivors += survivors;
         total_hp_lost += hp_lost;

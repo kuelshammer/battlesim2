@@ -961,12 +961,27 @@ impl Creature {
         // Add class resources
         if let Some(resources) = &self.class_resources {
             for (name, count) in resources {
-                let resource_type = ResourceType::ClassResource; // Use resources::ResourceType
+                let resource_type = ResourceType::ClassResource;
+                
+                // Identify common short rest resources
+                let reset_type = match name.as_str() {
+                    "Ki" | "Action Surge" | "Superiority Dice" | "Wild Shape" | 
+                    "Channel Divinity" | "Warlock Spell Slot" | "Bardic Inspiration" |
+                    "Second Wind" | "Frenzy" | "Rage" => {
+                        // Note: Rage is usually LR, but some implementations might use it differently.
+                        // For 5e 2014/2024, Rage is Long Rest. 
+                        // Let's stick to the most common SR ones.
+                        if name == "Rage" { crate::resources::ResetType::LongRest }
+                        else { crate::resources::ResetType::ShortRest }
+                    },
+                    _ => crate::resources::ResetType::LongRest,
+                };
+
                 ledger.register_resource(
                     resource_type,
                     Some(name),
                     *count as f64,
-                    Some(crate::resources::ResetType::LongRest),
+                    Some(reset_type),
                 );
             }
         }
@@ -988,6 +1003,35 @@ impl Creature {
             }
             if !current_term.is_empty() {
                 register_hit_dice_term(&mut ledger, &current_term);
+            }
+        }
+
+        // Add per-action resources (1/fight, 1/day, Limited, Recharge)
+        for action in &self.actions {
+            let base = action.base();
+            let reset_rule = match &base.freq {
+                Frequency::Static(s) if s == "at will" => None,
+                Frequency::Static(s) if s == "1/fight" => Some(crate::resources::ResetType::ShortRest),
+                Frequency::Static(s) if s == "1/day" => Some(crate::resources::ResetType::LongRest),
+                Frequency::Recharge { .. } => Some(crate::resources::ResetType::Encounter),
+                Frequency::Limited { reset, .. } => {
+                    if reset == "lr" { Some(crate::resources::ResetType::LongRest) }
+                    else { Some(crate::resources::ResetType::ShortRest) }
+                }
+                _ => None,
+            };
+
+            if let Some(rule) = reset_rule {
+                let max_uses = match &base.freq {
+                    Frequency::Limited { uses, .. } => *uses as f64,
+                    _ => 1.0,
+                };
+                ledger.register_resource(
+                    crate::resources::ResourceType::ActionUsage,
+                    Some(&base.id),
+                    max_uses,
+                    Some(rule),
+                );
             }
         }
 
@@ -1068,6 +1112,8 @@ pub struct CreatureState {
         skip_serializing_if = "Option::is_none"
     )]
     pub arcane_ward_hp: Option<u32>,
+    #[serde(rename = "cumulativeSpent", default)]
+    pub cumulative_spent: f64,
 }
 
 fn default_serializable_resource_ledger() -> SerializableResourceLedger {
@@ -1117,6 +1163,7 @@ impl Default for CreatureState {
             bonus_action_used: false,
             known_ac: HashMap::new(),
             arcane_ward_hp: None,
+            cumulative_spent: 0.0,
         }
     }
 }

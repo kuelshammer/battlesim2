@@ -51,6 +51,7 @@ fn create_test_combatant(name: &str, hp: f64, current_hp: f64, team: u32) -> Com
         bonus_action_used: false,
         known_ac: std::collections::HashMap::new(),
         arcane_ward_hp: None,
+        cumulative_spent: 0.0,
     };
 
     Combattant {

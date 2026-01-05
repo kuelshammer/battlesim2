@@ -5,6 +5,7 @@ use crate::common::load_scenario;
 fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     println!("Running regression test for: {}", scenario_file);
     let (players, timeline) = load_scenario(scenario_file);
+    let sr_count = timeline.iter().filter(|s| matches!(s, simulation_wasm::model::TimelineStep::ShortRest(_))).count();
 
     // With deterministic RNG, we can use fewer iterations
     // Each run produces the same result when seeded
@@ -21,7 +22,7 @@ fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
 
     // Analyze
     let party_size = 1; // Assuming 1v1 for these tests
-    let analysis = run_decile_analysis(&results, scenario_file, party_size);
+    let analysis = run_decile_analysis(&results, scenario_file, party_size, sr_count);
     let median_decile = &analysis.deciles[4]; // Index 4 is Median (50th percentile)
 
     println!("  Win Rate: {:.1}%", median_decile.win_rate);
