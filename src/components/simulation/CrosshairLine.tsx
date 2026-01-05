@@ -121,18 +121,6 @@ function setupCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
 }
 
 /**
- * Crosshair tooltip showing bucket details with full resource breakdown
- */
-export interface CrosshairTooltipProps {
-    /** Bucket data to display */
-    bucketData: CrosshairState['bucketData'];
-    /** Position for tooltip */
-    x: number;
-    y: number;
-    className?: string;
-}
-
-/**
  * Render spell slot breakdown as compact string
  * e.g., "L1: 2/4, L3: 1/2"
  */
@@ -149,17 +137,17 @@ function formatFeatures(features: string[] | undefined): string | null {
     return features.join(', ');
 }
 
-export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
-    bucketData,
-    x,
-    y,
-    className,
-}) => {
+/**
+ * Crosshair tooltip showing bucket details with full resource breakdown
+ */
+export const CrosshairTooltip: React.FC = memo(() => {
+    const { state } = useCrosshair();
+    const { bucketData, mouseX, mouseY } = state;
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
 
     useEffect(() => {
-        if (!tooltipRef.current || !bucketData) return;
+        if (!tooltipRef.current || !bucketData || mouseX === null || mouseY === null) return;
 
         const padding = 15;
         const tooltipWidth = tooltipRef.current.offsetWidth;
@@ -167,17 +155,17 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        let finalX = x + padding;
-        let finalY = y + padding;
+        let finalX = mouseX + padding;
+        let finalY = mouseY + padding;
 
         // Flip horizontally if overflow
         if (finalX + tooltipWidth > viewportWidth) {
-            finalX = x - tooltipWidth - padding;
+            finalX = mouseX - tooltipWidth - padding;
         }
 
         // Flip vertically if overflow
         if (finalY + tooltipHeight > viewportHeight) {
-            finalY = y - tooltipHeight - padding;
+            finalY = mouseY - tooltipHeight - padding;
         }
 
         setStyle({
@@ -185,9 +173,9 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
             top: Math.max(padding, finalY),
             opacity: 1
         });
-    }, [x, y, bucketData]);
+    }, [mouseX, mouseY, bucketData]);
 
-    if (!bucketData || !bucketData.bucket) {
+    if (!bucketData || !bucketData.bucket || mouseX === null || mouseY === null) {
         return null;
     }
 
@@ -196,7 +184,7 @@ export const CrosshairTooltip: React.FC<CrosshairTooltipProps> = memo(({
     return (
         <div
             ref={tooltipRef}
-            className={`${styles.tooltip} ${className || ''}`}
+            className={styles.tooltip}
             style={style}
             role="tooltip"
         >

@@ -66,11 +66,13 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const animationRef = useRef<number | null>(null)
 
     const { state: crosshairState, setCrosshair, setHoveredCharacter, clearCrosshair } = useCrosshair()
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
     useEffect(() => {
         if (!containerRef.current) return
-        const updateWidth = () => setWidth(containerRef.current?.clientWidth || 0)
+        const updateWidth = () => {
+            const newWidth = containerRef.current?.getBoundingClientRect().width || 0
+            setWidth(Math.floor(newWidth))
+        }
         const resizeObserver = new ResizeObserver(updateWidth)
         resizeObserver.observe(containerRef.current)
         updateWidth()
@@ -244,26 +246,23 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
         const x = e.clientX - rect.left
         
         // Find bucket
-        const bucketWidth = (width - (RUNS_COUNT - 1) * bucketGap) / RUNS_COUNT + bucketGap
+        const bucketWidth = width / RUNS_COUNT
         const bucketIdx = Math.floor(x / bucketWidth)
         
         if (bucketIdx >= 0 && bucketIdx < RUNS_COUNT) {
             // Find specific character stripe within bucket
             const stripeX = x % bucketWidth
             let charId: string | null = null
-            const groupWidth = bucketWidth - bucketGap
-            if (stripeX < groupWidth) {
-                const stripeWidth = groupWidth / partySize
-                const playerIdx = Math.floor(stripeX / stripeWidth)
-                const bucket = sortedBuckets[bucketIdx]
-                const playerSlot = sortedPlayers[playerIdx]
-                const charData = findCharacterInBucket(bucket.characters, playerSlot?.playerId, playerIdx)
-                charId = charData?.id || null
-            }
+            
+            const stripeWidth = bucketWidth / partySize
+            const playerIdx = Math.floor(stripeX / stripeWidth)
+            const bucket = sortedBuckets[bucketIdx]
+            const playerSlot = sortedPlayers[playerIdx]
+            const charData = findCharacterInBucket(bucket.characters, playerSlot?.playerId, playerIdx)
+            charId = charData?.id || null
 
-            setCrosshair(bucketIdx + 1, x)
+            setCrosshair(bucketIdx + 1, x, e.clientX, e.clientY)
             setHoveredCharacter(charId)
-            setMousePos({ x: e.clientX, y: e.clientY })
         } else {
             clearCrosshair()
         }
@@ -303,6 +302,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 className={styles.canvasContainer}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={clearCrosshair}
+                style={{ overflow: 'hidden' }}
             >
                 <div className={styles.labelVitality}>Vitality</div>
                 <div className={styles.labelPower}>Power</div>
@@ -323,12 +323,6 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                 <div className={styles.separator} />
                 <div className={styles.keyItem}><div className={`${styles.swatch} ${styles.dead}`} /> Fallen</div>
             </div>
-
-            <CrosshairTooltip 
-                bucketData={crosshairState.bucketData}
-                x={mousePos.x}
-                y={mousePos.y}
-            />
         </div>
     )
 }

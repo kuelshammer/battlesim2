@@ -25,6 +25,7 @@ import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 import { CrosshairProvider } from "./CrosshairContext"
+import { CrosshairTooltip } from "./CrosshairLine"
 
 
 
@@ -432,6 +433,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                         />
                                     </div>
                                 )}
+
+                                <CrosshairTooltip />
                             </>
                         )}
 

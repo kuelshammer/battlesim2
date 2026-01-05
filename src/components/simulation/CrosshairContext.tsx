@@ -19,6 +19,10 @@ export interface CrosshairState {
     xPosition: number | null;
     /** Currently hovered character ID or null */
     hoveredCharacterId: string | null;
+    /** Viewport-relative X position for tooltip */
+    mouseX: number | null;
+    /** Viewport-relative Y position for tooltip */
+    mouseY: number | null;
     /** Data for all characters at this bucket */
     bucketData: {
         bucket: PercentileBucket | null;
@@ -36,7 +40,7 @@ export interface CrosshairContextValue {
     /** Current crosshair state */
     state: CrosshairState;
     /** Set crosshair position (called from any chart) */
-    setCrosshair: (bucketIndex: number | null, xPosition: number | null) => void;
+    setCrosshair: (bucketIndex: number | null, xPosition: number | null, mouseX?: number | null, mouseY?: number | null) => void;
     /** Set hovered character */
     setHoveredCharacter: (characterId: string | null) => void;
     /** Clear crosshair */
@@ -61,6 +65,8 @@ export const CrosshairProvider: React.FC<CrosshairProviderProps> = memo(({
 }) => {
     const [bucketIndex, setBucketIndex] = useState<number | null>(null);
     const [xPosition, setXPosition] = useState<number | null>(null);
+    const [mouseX, setMouseX] = useState<number | null>(null);
+    const [mouseY, setMouseY] = useState<number | null>(null);
     const [hoveredCharacterId, setHoveredCharacterId] = useState<string | null>(null);
     const [bucketSources, setBucketSources] = useState<Map<string, PercentileBucket[]>>(new Map());
 
@@ -88,9 +94,11 @@ export const CrosshairProvider: React.FC<CrosshairProviderProps> = memo(({
         return { bucket, characters };
     }, [bucketIndex, bucketSources]);
 
-    const setCrosshair = useCallback((newBucketIndex: number | null, newXPosition: number | null) => {
+    const setCrosshair = useCallback((newBucketIndex: number | null, newXPosition: number | null, newMouseX: number | null = null, newMouseY: number | null = null) => {
         setBucketIndex(newBucketIndex);
         setXPosition(newXPosition);
+        setMouseX(newMouseX);
+        setMouseY(newMouseY);
     }, []);
 
     const setHoveredCharacter = useCallback((characterId: string | null) => {
@@ -100,6 +108,8 @@ export const CrosshairProvider: React.FC<CrosshairProviderProps> = memo(({
     const clearCrosshair = useCallback(() => {
         setBucketIndex(null);
         setXPosition(null);
+        setMouseX(null);
+        setMouseY(null);
         setHoveredCharacterId(null);
     }, []);
 
@@ -119,6 +129,8 @@ export const CrosshairProvider: React.FC<CrosshairProviderProps> = memo(({
         state: {
             bucketIndex,
             xPosition,
+            mouseX,
+            mouseY,
             hoveredCharacterId,
             bucketData,
         },
