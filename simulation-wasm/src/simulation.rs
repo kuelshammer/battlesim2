@@ -45,7 +45,8 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
         actions_used_this_encounter: HashSet::new(),
         bonus_action_used: false,
         known_ac: HashMap::new(),
-        arcane_ward_hp: None,
+        // Initialize Arcane Ward HP to max at encounter start
+        arcane_ward_hp: creature.max_arcane_ward_hp,
         cumulative_spent: 0.0,
     }
 }
