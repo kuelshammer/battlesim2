@@ -36,6 +36,12 @@ html, body, #__next, main {
     opacity: .5;
   }
 }
+
+// Scroll lock when modal is open
+html:has(div[role=\"dialog\"]) {
+    overflow: hidden;
+}
+
 main {
     display: flex;
     flex-direction: column;

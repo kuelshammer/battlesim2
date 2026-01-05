@@ -2,39 +2,60 @@
 
 .overlay {
     position: fixed;
-    z-index: 1;
+    z-index: 10000;
     width: 100%;
     height: 100%;
-    padding: 4em 2em;
     top: 0;
     left: 0;
-    background: #fff3;
-    display: flex;
+    background: rgba(0, 0, 0, 0.7);
+    @include mixins.fadeIn;
+}
 
+.contentWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; // Start from top to allow scrolling down
+    padding: 2em;
+    
     overflow-x: hidden;
     @include mixins.scrollable;
-
-    @include mixins.fadeIn;
-
-    .closeBtn {
-        position: absolute;
-        top: 0;
-        right: 0;
-        color: black;
-        margin: 0;
-        background: none!important;
-        transition: color 0.3s, scale 0.3s;
-        padding: 0.5em;
-        font-size: 1.5em;
-
-        &:hover { color: #333; scale: 1.5 }
-    }
 }
 
 .modal {
-    margin: auto 0;
-    width: 100%;
-    padding: 1em;
+    position: relative;
+    margin: auto; // Centers if content is smaller than screen
+    
+    width: 90%;
+    max-width: 800px;
+    padding: 2.5em 2em 2em 2em; // Extra top padding for close button
     border-radius: 8px;
-    background: #544;
+    background: #2a2a2a;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.closeBtn {
+    position: absolute;
+    top: 0.5em;
+    right: 0.5em;
+    color: #d4af37;
+    margin: 0;
+    background: none!important;
+    transition: color 0.3s, transform 0.3s;
+    padding: 0.5em;
+    font-size: 1.5em;
+    border: none;
+    box-shadow: none;
+    z-index: 10002;
+    cursor: pointer;
+
+    &:hover { color: #e8e0d0; transform: scale(1.2) }
 }
