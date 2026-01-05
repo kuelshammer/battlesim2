@@ -63,6 +63,25 @@ export const MagicItemTemplates = {
             ac: 2,
         }],
     }),
+
+    'Armor of Agathys': createTemplate({
+        name: 'Armor of Agathys',
+        description: 'Wondrous item, uncommon (requires attunement)',
+        requiresAttunement: true,
+        buffs: [{
+            displayName: 'Armor of Agathys',
+            duration: 'entire encounter',
+            triggers: [{
+                condition: 'OnBeingHit',
+                requirements: ['HasTempHP'],
+                effect: {
+                    type: 'DealDamage',
+                    amount: '5',
+                    damageType: 'Cold',
+                },
+            }],
+        }],
+    }),
 }
 
 // Helper function to get magic item buffs by name
