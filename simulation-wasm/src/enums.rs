@@ -259,6 +259,12 @@ pub enum TriggerEffect {
     ReduceDamage { amount: String },
     #[serde(rename = "RestoreResource")]
     RestoreResource { resource: String, amount: String },
+    #[serde(rename = "SuppressBuff")]
+    SuppressBuff {
+        #[serde(rename = "buffId")]
+        buff_id: String,
+        duration: BuffDuration,
+    },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
