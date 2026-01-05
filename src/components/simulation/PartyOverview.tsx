@@ -59,7 +59,6 @@ export const findCharacterInBucket = (bucketCharacters: CharacterBucketData[], p
 const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerNames, className }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
-    const [width, setWidth] = useState(0)
     
     // State for smoothed data
     const [displayBuckets, setDisplayBuckets] = useState(skyline.buckets)
@@ -72,7 +71,6 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const RUNS_COUNT = 100
     const BAND_HEIGHT = 40
     const LABEL_HEIGHT = 20
-    const GAP_BETWEEN_BANDS = 0 // Exactly 100px total: 40 + 40 + 20
     const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT
     const bucketGap = 1
     const TOTAL_WIDTH = (partySize * RUNS_COUNT) + (RUNS_COUNT - 1)
@@ -83,8 +81,66 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const sortedPlayers = useMemo(() => {
         return [...partySlots].sort((a, b) => (b.survivabilityScore || 0) - (a.survivabilityScore || 0))
     }, [partySlots])
-    
-    // ... animation effect same as before ...
+
+    // Smooth data transition
+    useEffect(() => {
+        const startTime = performance.now();
+        const duration = 400; // 400ms transition
+        const startBuckets = displayBuckets;
+        const targetBuckets = skyline.buckets;
+
+        // If counts differ (e.g. initial load), skip animation
+        if (startBuckets.length !== targetBuckets.length) {
+            setDisplayBuckets(targetBuckets);
+            return;
+        }
+
+        const animate = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (easeOutQuad)
+            const ease = progress * (2 - progress);
+
+            if (progress < 1) {
+                const interpolated = targetBuckets.map((target, bIdx) => {
+                    const start = startBuckets[bIdx];
+                    return {
+                        ...target,
+                        partyHpPercent: start.partyHpPercent + (target.partyHpPercent - start.partyHpPercent) * ease,
+                        partyResourcePercent: start.partyResourcePercent + (target.partyResourcePercent - start.partyResourcePercent) * ease,
+                        characters: target.characters.map((tChar, cIdx) => {
+                            const sChar = start.characters.find(c => c.id === tChar.id) || tChar;
+                            return {
+                                ...tChar,
+                                hpPercent: sChar.hpPercent + (tChar.hpPercent - sChar.hpPercent) * ease,
+                                resourcePercent: sChar.resourcePercent + (tChar.resourcePercent - sChar.resourcePercent) * ease
+                            }
+                        })
+                    };
+                });
+                setDisplayBuckets(interpolated);
+                animationRef.current = requestAnimationFrame(animate);
+            } else {
+                setDisplayBuckets(targetBuckets);
+            }
+        };
+
+        animationRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        };
+    }, [skyline.buckets]);
+
+    const sortedBuckets = useMemo(() => {
+        return [...displayBuckets].sort((a, b) => {
+            const sA = partySize - a.deathCount
+            const sB = partySize - b.deathCount
+            if (sA !== sB) return sA - sB
+            if (a.partyHpPercent !== b.partyHpPercent) return a.partyHpPercent - b.partyHpPercent
+            return a.partyResourcePercent - b.partyResourcePercent
+        })
+    }, [displayBuckets, partySize])
 
     useEffect(() => {
         const canvas = canvasRef.current
