@@ -191,6 +191,8 @@ pub enum TriggerCondition {
     DamageExceedsPercent { threshold: f64 },
     #[serde(rename = "attackWasMelee")]
     AttackWasMelee,
+    #[serde(rename = "belowHpPercent")]
+    BelowHpPercent { threshold: f64 },
 }
 
 impl TriggerCondition {
@@ -228,6 +230,11 @@ impl TriggerCondition {
             }
             TriggerCondition::AttackWasMelee => {
                 matches!(event, Event::AttackHit { .. })
+            }
+            TriggerCondition::BelowHpPercent { threshold: _ } => {
+                // TODO: Requires combat state to check HP percentage
+                // Implementation: (current_hp / max_hp) * 100.0 < threshold
+                false
             }
         }
     }
