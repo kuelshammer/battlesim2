@@ -351,12 +351,43 @@ pub enum Frequency {
     },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EffectTrigger {
     pub condition: TriggerCondition,
     #[serde(default)]
     pub requirements: Vec<TriggerRequirement>,
     pub effect: TriggerEffect,
+}
+
+impl Hash for EffectTrigger {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        // Hash TriggerCondition using discriminant
+        std::mem::discriminant(&self.condition).hash(state);
+        // Hash variant fields
+        match &self.condition {
+            crate::enums::TriggerCondition::And { conditions } => {
+                conditions.len().hash(state);
+                for cond in conditions {
+                    std::mem::discriminant(cond).hash(state);
+                }
+            }
+            crate::enums::TriggerCondition::Or { conditions } => {
+                conditions.len().hash(state);
+                for cond in conditions {
+                    std::mem::discriminant(cond).hash(state);
+                }
+            }
+            crate::enums::TriggerCondition::EnemyCountAtLeast { count } => {
+                count.hash(state);
+            }
+            crate::enums::TriggerCondition::DamageExceedsPercent { threshold } => {
+                crate::utilities::hash_f64(*threshold, state);
+            }
+            _ => {}
+        }
+        self.requirements.hash(state);
+        self.effect.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -759,12 +790,44 @@ impl TemplateAction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ActionTrigger {
     pub id: String,
     pub condition: TriggerCondition,
     pub action: Action,    // The action to execute when triggered
     pub cost: Option<i32>, // e.g. Reaction (4)
+}
+
+impl Hash for ActionTrigger {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        // Hash TriggerCondition using discriminant
+        std::mem::discriminant(&self.condition).hash(state);
+        // Hash variant fields
+        match &self.condition {
+            crate::enums::TriggerCondition::And { conditions } => {
+                conditions.len().hash(state);
+                for cond in conditions {
+                    std::mem::discriminant(cond).hash(state);
+                }
+            }
+            crate::enums::TriggerCondition::Or { conditions } => {
+                conditions.len().hash(state);
+                for cond in conditions {
+                    std::mem::discriminant(cond).hash(state);
+                }
+            }
+            crate::enums::TriggerCondition::EnemyCountAtLeast { count } => {
+                count.hash(state);
+            }
+            crate::enums::TriggerCondition::DamageExceedsPercent { threshold } => {
+                crate::utilities::hash_f64(*threshold, state);
+            }
+            _ => {}
+        }
+        self.action.hash(state);
+        self.cost.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
@@ -859,6 +922,11 @@ pub struct Creature {
     pub hit_dice: Option<String>, // Changed from DiceFormula
     #[serde(rename = "conModifier")]
     pub con_modifier: Option<f64>, // New field for constitution modifier to apply to hit dice rolls
+    #[serde(default)]
+    #[serde(rename = "magicItems")]
+    pub magic_items: Vec<String>, // Names of magic items equipped
+    #[serde(rename = "maxArcaneWardHp")]
+    pub max_arcane_ward_hp: Option<u32>, // Maximum Arcane Ward HP (for Abjuration Wizard)
 }
 
 impl Hash for Creature {
@@ -904,6 +972,8 @@ impl Hash for Creature {
 
         self.hit_dice.hash(state);
         crate::utilities::hash_opt_f64(self.con_modifier, state);
+        self.magic_items.hash(state);
+        self.max_arcane_ward_hp.hash(state);
     }
 }
 

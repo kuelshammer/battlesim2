@@ -259,6 +259,30 @@ impl ReactionManager {
                 matches!(event, Event::AttackHit { .. }) // Placeholder for critical checking
             }
             TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
+            // Composite triggers - require additional context
+            TriggerCondition::And { conditions: _ } => {
+                // TODO: Implement recursive condition evaluation
+                // For now, return false as these need combat state context
+                false
+            }
+            TriggerCondition::Or { conditions: _ } => {
+                // TODO: Implement recursive condition evaluation
+                // For now, return false as these need combat state context
+                false
+            }
+            // State conditions - require combat context
+            TriggerCondition::EnemyCountAtLeast { count: _ } => {
+                // TODO: Implement enemy count check from combat state
+                false
+            }
+            TriggerCondition::DamageExceedsPercent { threshold: _ } => {
+                // TODO: Implement damage percentage check from event
+                matches!(event, Event::DamageTaken { .. })
+            }
+            TriggerCondition::AttackWasMelee => {
+                // TODO: Implement melee attack check from event metadata
+                matches!(event, Event::AttackHit { .. })
+            }
         }
     }
 

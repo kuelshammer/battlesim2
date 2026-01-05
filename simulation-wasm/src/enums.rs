@@ -155,7 +155,8 @@ pub enum BuffDuration {
 }
 
 // Re-insert TriggerCondition here
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+// Note: No Eq/Hash due to f64 in DamageExceedsPercent (f64 doesn't implement Eq/Hash)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TriggerCondition {
     #[serde(rename = "on hit")]
@@ -174,6 +175,20 @@ pub enum TriggerCondition {
     OnCriticalHit, // e.g. Divine Smite (crit fishing)
     #[serde(rename = "on being hit")]
     OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
+
+    // Composite triggers
+    #[serde(rename = "and")]
+    And { conditions: Vec<TriggerCondition> },
+    #[serde(rename = "or")]
+    Or { conditions: Vec<TriggerCondition> },
+
+    // State conditions
+    #[serde(rename = "enemyCountAtLeast")]
+    EnemyCountAtLeast { count: i32 },
+    #[serde(rename = "damageExceedsPercent")]
+    DamageExceedsPercent { threshold: f64 },
+    #[serde(rename = "attackWasMelee")]
+    AttackWasMelee,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
