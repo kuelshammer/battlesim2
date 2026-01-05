@@ -181,6 +181,8 @@ pub enum TriggerCondition {
     And { conditions: Vec<TriggerCondition> },
     #[serde(rename = "or")]
     Or { conditions: Vec<TriggerCondition> },
+    #[serde(rename = "not")]
+    Not { condition: Box<TriggerCondition> },
 
     // State conditions
     #[serde(rename = "enemyCountAtLeast")]

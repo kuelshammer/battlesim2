@@ -40,6 +40,29 @@ export const MagicItemTemplates = {
             save: 1,
         }],
     }),
+
+    'Cloak of Displacement': createTemplate({
+        name: 'Cloak of Displacement',
+        description: 'Wondrous item, rare (requires attunement)',
+        requiresAttunement: true,
+        buffs: [{
+            displayName: 'Cloak of Displacement',
+            duration: 'entire encounter',
+            condition: 'Is attacked with Disadvantage',
+            // Note: Trigger with SuppressBuff effect to be added when SuppressBuff variant is available
+        }],
+    }),
+
+    'Bracers of Defense': createTemplate({
+        name: 'Bracers of Defense',
+        description: 'Wondrous item, uncommon (requires attunement)',
+        requiresAttunement: true,
+        buffs: [{
+            displayName: 'Bracers of Defense',
+            duration: 'entire encounter',
+            ac: 2,
+        }],
+    }),
 }
 
 // Helper function to get magic item buffs by name

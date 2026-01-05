@@ -270,6 +270,11 @@ impl ReactionManager {
                 // For now, return false as these need combat state context
                 false
             }
+            TriggerCondition::Not { condition: _ } => {
+                // TODO: Implement negation
+                // For now, return false as these need combat state context
+                false
+            }
             // State conditions - require combat context
             TriggerCondition::EnemyCountAtLeast { count: _ } => {
                 // TODO: Implement enemy count check from combat state

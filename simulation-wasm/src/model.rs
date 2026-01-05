@@ -377,6 +377,9 @@ impl Hash for EffectTrigger {
                     std::mem::discriminant(cond).hash(state);
                 }
             }
+            crate::enums::TriggerCondition::Not { condition } => {
+                std::mem::discriminant(condition.as_ref()).hash(state);
+            }
             crate::enums::TriggerCondition::EnemyCountAtLeast { count } => {
                 count.hash(state);
             }
@@ -816,6 +819,9 @@ impl Hash for ActionTrigger {
                 for cond in conditions {
                     std::mem::discriminant(cond).hash(state);
                 }
+            }
+            crate::enums::TriggerCondition::Not { condition } => {
+                std::mem::discriminant(condition.as_ref()).hash(state);
             }
             crate::enums::TriggerCondition::EnemyCountAtLeast { count } => {
                 count.hash(state);
