@@ -267,6 +267,41 @@ pub enum TriggerEffect {
     },
 }
 
+impl TriggerEffect {
+    /// Apply this effect to the target combatant
+    ///
+    /// This is a placeholder implementation - full implementation requires
+    /// access to combat state, damage resolution, and buff management systems.
+    ///
+    /// Returns Ok(()) if the effect was applied, Err with message if it failed.
+    pub fn apply_effect(
+        &self,
+        _target_id: &str,
+        _context: &mut crate::context::TurnContext,
+    ) -> Result<(), String> {
+        match self {
+            TriggerEffect::DealDamage { amount, damage_type } => {
+                // TODO: Parse damage formula and apply damage to target
+                // This requires integration with the damage resolution system
+                Err(format!("DealDamage not yet implemented: {} {}", amount, damage_type))
+            }
+            TriggerEffect::ReduceDamage { amount } => {
+                // TODO: Parse reduction formula and apply to next damage
+                Err(format!("ReduceDamage not yet implemented: {}", amount))
+            }
+            TriggerEffect::RestoreResource { resource, amount } => {
+                // TODO: Parse amount formula and restore to resource
+                Err(format!("RestoreResource not yet implemented: {} {}", resource, amount))
+            }
+            TriggerEffect::SuppressBuff { buff_id, duration } => {
+                // TODO: Find buff by ID and set its suppressed_until field
+                // Requires Buff struct to have suppressed_until field
+                Err(format!("SuppressBuff not yet implemented: {} {:?}", buff_id, duration))
+            }
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ResourceType {
     Action,
