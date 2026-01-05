@@ -72,7 +72,7 @@ fn test_intensity_regression_high_penalty() {
 
     let fighter = Creature {
         id: "f".to_string(), name: "f".to_string(), hp: 75, ac: 10, count: 2.0,
-        arrival: None, mode: "p".to_string(), speed_fly: None, save_bonus: 0.0,
+        arrival: None, mode: "p".to_string(), magic_items: vec![], max_arcane_ward_hp: None, speed_fly: None, save_bonus: 0.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
         int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
         con_save_advantage: None, save_advantage: None,
@@ -162,7 +162,7 @@ fn test_resource_timeline_points() {
 
     let fighter = Creature {
         id: "f".to_string(), name: "f".to_string(), hp: 100, ac: 10, count: 1.0,
-        arrival: None, mode: "p".to_string(), speed_fly: None, save_bonus: 0.0,
+        arrival: None, mode: "p".to_string(), magic_items: vec![], max_arcane_ward_hp: None, speed_fly: None, save_bonus: 0.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
         int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
         con_save_advantage: None, save_advantage: None,

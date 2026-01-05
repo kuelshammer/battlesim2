@@ -60,7 +60,7 @@ fn main() {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     };
     let target = Creature {
         id: "target-template".to_string(),
@@ -87,7 +87,7 @@ fn main() {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     };
 
     let enemy = Creature {
@@ -131,7 +131,7 @@ fn main() {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     };
 
     let players = vec![caster, target];

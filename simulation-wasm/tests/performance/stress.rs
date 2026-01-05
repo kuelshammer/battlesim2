@@ -10,7 +10,7 @@ fn test_fast_simulation_iterations() {
         hp: 100,
         ac: 15,
         count: 1.0,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         arrival: None,
         speed_fly: None,
         save_bonus: 0.0,
@@ -38,7 +38,7 @@ fn test_fast_simulation_iterations() {
         hp: 50,
         ac: 12,
         count: 1.0,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         arrival: None,
         speed_fly: None,
         save_bonus: 0.0,
@@ -98,7 +98,7 @@ fn test_heavy_load_simulation() {
             hp: 100,
             ac: 18,
             count: 1.0,
-            mode: "player".to_string(),
+            mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
             arrival: None,
             speed_fly: None,
             save_bonus: 2.0,
@@ -147,7 +147,7 @@ fn test_heavy_load_simulation() {
             hp: 30,
             ac: 13,
             count: 1.0,
-            mode: "monster".to_string(),
+            mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
             arrival: None,
             speed_fly: None,
             save_bonus: 0.0,
@@ -239,7 +239,7 @@ fn test_heavy_load_simulation() {
 
                 count: 1.0,
 
-                mode: "player".to_string(),
+                mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
 
                 arrival: None,
 
@@ -337,7 +337,7 @@ fn test_heavy_load_simulation() {
 
                 count: 1.0,
 
-                mode: "monster".to_string(),
+                mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
 
                 arrival: None,
 
@@ -483,7 +483,7 @@ fn test_heavy_load_simulation() {
 
                 count: 1.0,
 
-                mode: "player".to_string(),
+                mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
 
                 arrival: None,
 
@@ -585,7 +585,7 @@ fn test_heavy_load_simulation() {
 
                     count: 1.0,
 
-                    mode: "monster".to_string(),
+                    mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
 
                     arrival: None,
 

@@ -30,6 +30,7 @@ function newCreature(mode: 'player'|'monster'): Creature {
         count: 1,
         hp: 10,
         actions: [],
+        magicItems: [],
     }
 }
 

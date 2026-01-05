@@ -36,7 +36,7 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     };
 
     let monster = Creature {
@@ -64,7 +64,7 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     };
 
     let encounter = simulation_wasm::model::Encounter {

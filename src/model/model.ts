@@ -180,6 +180,13 @@ const ActionSchema = z.discriminatedUnion('type', [
     TemplateActionSchema,
 ])
 
+const MagicItemSchema = z.object({
+    id: z.string().default(() => uuid()),
+    name: z.string(),
+    description: z.string().optional(),
+    buffs: z.array(BuffSchema).default([]),
+})
+
 // Creature is the definition of the creature. It's what the user inputs.
 // Combattant (see below) is the representation of a creature during the simulation. 
 // A new combattant is created for each instance of the creature, and for each round of combat.
@@ -235,6 +242,8 @@ export const CreatureSchema = z.object({
     classResources: z.record(z.string(), z.coerce.number()).optional(),
     hitDice: DiceFormulaSchema.optional(), // New field for hit dice for short rest healing
     conModifier: z.coerce.number().optional(), // New field for constitution modifier to apply to hit dice rolls
+    magicItems: z.array(MagicItemSchema).optional().default([]),
+    maxArcaneWardHp: z.number().optional(),
 }).passthrough()
 
 const TeamSchema = z.array(CreatureSchema)
@@ -336,6 +345,7 @@ export type DebuffAction = z.infer<typeof DebuffActionSchema>
 export type TemplateAction = z.infer<typeof TemplateActionSchema>
 export type Action = z.infer<typeof ActionSchema>
 export type FinalAction = z.infer<typeof FinalActionSchema>
+export type MagicItem = z.infer<typeof MagicItemSchema>
 export type Creature = z.infer<typeof CreatureSchema>
 export type CreatureType = z.infer<typeof CreatureTypeSchema>
 export type Team = z.infer<typeof TeamSchema>

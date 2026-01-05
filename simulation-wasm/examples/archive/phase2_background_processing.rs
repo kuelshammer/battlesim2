@@ -20,7 +20,7 @@ fn create_test_creature(name: &str, hp: f64, ac: f64) -> Creature {
     Creature {
         id: name.to_string(),
         arrival: None,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         name: name.to_string(),
         count: 1.0,
         hp,

@@ -92,5 +92,6 @@ export function mapMonster5eToCreature(monster: Monster5eImport): Creature {
         intSaveBonus: intMod,
         wisSaveBonus: wisMod,
         chaSaveBonus: chaMod,
+        magicItems: [],
     };
 }

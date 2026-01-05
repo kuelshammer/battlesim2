@@ -20,7 +20,7 @@ fn create_minimal_creature(id: String, hp: u32, ac: u32, damage_dice: &str) -> C
         hp,
         ac,
         count: 1.0,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         arrival: None,
         speed_fly: None,
         save_bonus: 0.0,

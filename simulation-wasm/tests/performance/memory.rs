@@ -28,7 +28,7 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         actions: vec![],
         triggers: vec![],
         arrival: None,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         speed_fly: None,
         save_bonus: 0.0,
         str_save_bonus: None,

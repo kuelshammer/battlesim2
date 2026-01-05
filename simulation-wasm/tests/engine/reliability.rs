@@ -29,7 +29,7 @@ fn create_test_creature(name: &str, hp: f64) -> Creature {
         class_resources: None,
         hit_dice: None,
         con_modifier: None,
-        mode: "player".to_string(),
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
         count: 1.0,
     }
 }

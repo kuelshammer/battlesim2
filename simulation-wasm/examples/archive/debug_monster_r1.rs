@@ -64,7 +64,7 @@ fn create_fighter(id: &str, name: &str, init_bonus: f64, init_advantage: bool) -
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(),
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
     }
 }
 fn main() {

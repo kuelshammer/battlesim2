@@ -88,7 +88,7 @@ fn dummy_combatant(id: &str, hp: u32) -> Combattant {
         creature: std::sync::Arc::new(Creature {
             id: id.to_string(),
             arrival: None,
-            mode: "player".to_string(),
+            mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
             name: id.to_string(),
             count: 1.0,
             hp: 100,
