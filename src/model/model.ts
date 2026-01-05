@@ -244,6 +244,7 @@ export const CreatureSchema = z.object({
     conModifier: z.coerce.number().optional(), // New field for constitution modifier to apply to hit dice rolls
     magicItems: z.array(MagicItemSchema).optional().default([]),
     maxArcaneWardHp: z.number().optional(),
+    initialBuffs: z.array(BuffSchema).optional().default([]),
 }).passthrough()
 
 const TeamSchema = z.array(CreatureSchema)

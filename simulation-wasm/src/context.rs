@@ -108,12 +108,13 @@ impl TurnContext {
                     conditions: Vec::new(),
                     concentration: c.initial_state.concentrating_on.clone(),
                     position: None,
-                    base_combatant: c.clone(), 
+                    base_combatant: c.clone(),
                     resources,
-                    arcane_ward_hp: c.initial_state.arcane_ward_hp,
+                    // Reset Arcane Ward HP to max at the start of each encounter
+                    arcane_ward_hp: c.creature.max_arcane_ward_hp,
                     known_ac: c.initial_state.known_ac.clone(),
                     cumulative_spent: c.initial_state.cumulative_spent,
-                    cached_stats: None, 
+                    cached_stats: None,
                 };
                 
                 // Sync initial state to base_combatant for immediate use in targeting logic

@@ -933,6 +933,9 @@ pub struct Creature {
     pub magic_items: Vec<String>, // Names of magic items equipped
     #[serde(rename = "maxArcaneWardHp")]
     pub max_arcane_ward_hp: Option<u32>, // Maximum Arcane Ward HP (for Abjuration Wizard)
+    #[serde(default)]
+    #[serde(rename = "initialBuffs")]
+    pub initial_buffs: Vec<Buff>, // Buffs from magic items applied at encounter start
 }
 
 impl Hash for Creature {
@@ -980,6 +983,7 @@ impl Hash for Creature {
         crate::utilities::hash_opt_f64(self.con_modifier, state);
         self.magic_items.hash(state);
         self.max_arcane_ward_hp.hash(state);
+        self.initial_buffs.hash(state);
     }
 }
 
