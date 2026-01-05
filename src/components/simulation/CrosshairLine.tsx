@@ -5,7 +5,7 @@
  * Shows bucket number and median values in tooltip
  */
 
-import React, { memo, useRef, useEffect, useCallback } from 'react';
+import React, { memo, useRef, useEffect, useCallback, useState } from 'react';
 import { useCrosshair, CrosshairState } from './CrosshairContext';
 import styles from './crosshairLine.module.scss';
 

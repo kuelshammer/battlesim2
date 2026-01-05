@@ -127,9 +127,10 @@ type PropType = {
     actualPercent?: number,
     cumulativeDrift?: number,
     isShortRest?: boolean,
+    targetRole?: string,
 }
 
-const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift, isShortRest }) => {
+const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift, isShortRest, targetRole }) => {
     const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
@@ -175,7 +176,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
             {analysis && (
                 <ValidationNotice 
                     analysis={analysis} 
-                    targetRole={analysis.deciles?.[0]?.medianRunData?.targetRole || "Standard"} 
+                    targetRole={targetRole} 
                 />
             )}
 

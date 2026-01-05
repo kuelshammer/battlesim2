@@ -409,9 +409,9 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     <CrosshairProvider>
                         {worker.analysis && pacingData && (
                             <>
-                                <VitalsDashboard analysis={worker.analysis} isPreliminary={worker.isRunning} />
+                                <VitalsDashboard analysis={worker.analysis.overall} isPreliminary={worker.isRunning} />
                                 
-                                <ValidationNotice analysis={worker.analysis} isDaySummary={true} />
+                                <ValidationNotice analysis={worker.analysis.overall} isDaySummary={true} />
 
                                 <AssistantSummary 
                                     pacingData={pacingData} 
@@ -488,10 +488,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                             isPreliminary={worker.isRunning && worker.progress < 100}
                                                             targetPercent={item.type === 'combat' ? targetPercent : undefined}
                                                             actualPercent={item.type === 'combat' ? actualPercent : undefined}
-                                                            cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
-                                                            isShortRest={item.type === 'shortRest'}
-                                                        />
-                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
+                                                                                                                    cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
+                                                                                                                    isShortRest={item.type === 'shortRest'}
+                                                                                                                    targetRole={item.type === 'combat' ? item.targetRole : undefined}
+                                                                                                                />                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
                                                         <EncounterResult
                                                             value={simulationResults[index]}
                                                             analysis={null}
@@ -500,10 +500,10 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                                             isStale={isStale}
                                                             isPreliminary={worker.isRunning && worker.progress < 100}
                                                             targetPercent={targetPercent}
-                                                            actualPercent={actualPercent}
-                                                            cumulativeDrift={cumulativeDrift}
-                                                        />
-                                                    ) : null))}
+                                                                                                                    actualPercent={actualPercent}
+                                                                                                                    cumulativeDrift={cumulativeDrift}
+                                                                                                                    targetRole={item.targetRole}
+                                                                                                                />                                                    ) : null))}
                                                     
                                                     {item.type === 'combat' && (
                                                         <div className={styles.buttonGroup}>
