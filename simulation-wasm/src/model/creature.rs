@@ -5,7 +5,8 @@ use std::sync::Arc;
 use crate::resources::{ResourceLedger, ResourceType, ResetType};
 use super::formula::DiceFormula;
 use super::buff::Buff;
-use super::action::{Action, ActionTrigger, AcKnowledge, Frequency};
+use super::action::{Action, ActionTrigger, Frequency};
+use super::types::{AcKnowledge, SerializableResourceLedger};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Creature {
@@ -385,30 +386,6 @@ pub struct CreatureState {
 
 fn default_serializable_resource_ledger() -> SerializableResourceLedger {
     SerializableResourceLedger::from(ResourceLedger::new())
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SerializableResourceLedger {
-    pub current: HashMap<String, f64>,
-    pub max: HashMap<String, f64>,
-}
-
-impl From<ResourceLedger> for SerializableResourceLedger {
-    fn from(ledger: ResourceLedger) -> Self {
-        let current = ledger.current.into_iter().collect();
-        let max = ledger.max.into_iter().collect();
-        SerializableResourceLedger { current, max }
-    }
-}
-
-impl From<SerializableResourceLedger> for ResourceLedger {
-    fn from(ledger: SerializableResourceLedger) -> Self {
-        ResourceLedger {
-            current: ledger.current,
-            max: ledger.max,
-            reset_rules: HashMap::new(),
-        }
-    }
 }
 
 impl Default for CreatureState {

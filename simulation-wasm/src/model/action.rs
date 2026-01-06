@@ -21,18 +21,6 @@ pub enum Frequency {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
-pub struct AcKnowledge {
-    pub min: i32,
-    pub max: i32,
-}
-
-impl Default for AcKnowledge {
-    fn default() -> Self {
-        Self { min: 0, max: 30 }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 #[serde(tag = "type")]
 pub enum Action {
     #[serde(rename = "atk")]

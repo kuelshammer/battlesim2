@@ -4,6 +4,7 @@ pub mod actions;
 pub mod targeting;
 pub mod enums;
 pub mod model;
+pub mod resolvers;
 pub mod aggregation;
 pub mod cleanup;
 pub mod resolution;

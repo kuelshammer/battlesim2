@@ -1,12 +1,11 @@
-use crate::context::{ActiveEffect, EffectType, TurnContext};
+use crate::context::{EffectType, TurnContext};
 use crate::dice;
 use crate::events::{Event, RollResult};
-use crate::model::{Action, AtkAction, Buff, BuffAction, DebuffAction, HealAction, TemplateAction};
+use crate::model::{Action, AtkAction};
 use crate::rng;
 use crate::targeting;
 use crate::combat_stats::CombatStatsCache;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Event-driven action resolver that converts actions into events
 #[derive(Debug, Clone)]
@@ -75,11 +74,17 @@ impl ActionResolver {
     ) -> Vec<Event> {
         match action {
             Action::Atk(attack_action) => self.resolve_attack(attack_action, context, actor_id),
-            Action::Heal(heal_action) => self.resolve_heal(heal_action, context, actor_id),
-            Action::Buff(buff_action) => self.resolve_buff(buff_action, context, actor_id),
-            Action::Debuff(debuff_action) => self.resolve_debuff(debuff_action, context, actor_id),
+            Action::Heal(heal_action) => {
+                crate::resolvers::resolve_heal(self, heal_action, context, actor_id)
+            }
+            Action::Buff(buff_action) => {
+                crate::resolvers::resolve_buff(self, buff_action, context, actor_id)
+            }
+            Action::Debuff(debuff_action) => {
+                crate::resolvers::resolve_debuff(self, debuff_action, context, actor_id)
+            }
             Action::Template(template_action) => {
-                self.resolve_template(template_action, context, actor_id)
+                crate::resolvers::resolve_template(self, template_action, context, actor_id)
             }
         }
     }
@@ -208,339 +213,6 @@ impl ActionResolver {
     }
 
     /// Resolve healing actions with proper event emission
-    pub fn resolve_heal(
-        &self,
-        heal: &HealAction,
-        context: &mut TurnContext,
-        actor_id: &str,
-    ) -> Vec<Event> {
-        let mut events = Vec::new();
-
-        // 1. Get actor and teammates/enemies for targeting
-        let actor = match context.get_combatant(actor_id) {
-            Some(c) => c.base_combatant.clone(),
-            None => return events,
-        };
-
-        let actor_side = context.get_combatant(actor_id).unwrap().side;
-        
-        let all_combatants = context.get_alive_combatants();
-        let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
-            .map(|c| c.base_combatant.clone())
-            .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
-
-        // 2. Get smart targets from targeting module
-        let target_indices = targeting::get_targets(&actor, &Action::Heal(heal.clone()), &allies, &enemies);
-
-        let heal_amount = dice::evaluate(&heal.amount, 1);
-        let is_temp_hp = heal.temp_hp.unwrap_or(false);
-
-        for (is_enemy, idx) in target_indices {
-            // Check for interruption
-            if context.action_interrupted {
-                break;
-            }
-
-            let target_id = if is_enemy {
-                if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
-            } else {
-                if idx < allies.len() { allies[idx].id.clone() } else { continue }
-            };
-
-            // Apply healing through TurnContext (unified method)
-            let healing_event = context.apply_healing(&target_id, heal_amount, is_temp_hp, actor_id);
-            events.push(healing_event);
-        }
-
-        events
-    }
-
-    /// Resolve buff/debuff actions with proper event emission
-    pub fn resolve_effect(
-        &self,
-        effect_action: &impl EffectAction,
-        context: &mut TurnContext,
-        actor_id: &str,
-        is_buff: bool,
-    ) -> Vec<Event> {
-        let events = Vec::new();
-
-        let targets = effect_action.get_targets(context, actor_id);
-
-        for target_id in targets {
-            // Check for interruption
-            if context.action_interrupted {
-                break;
-            }
-
-            let effect_id = effect_action.base().id.clone();
-
-            // Note: Event emission is handled by apply_effect_to_combatant -> context.apply_effect
-            // No need to push events here manually anymore.
-
-            // Apply effect through the context's effect system
-            self.apply_effect_to_combatant(&target_id, &effect_id, actor_id, is_buff, context);
-        }
-
-        events
-    }
-
-    /// Resolve buff actions
-    pub fn resolve_buff(
-        &self,
-        buff_action: &BuffAction,
-        context: &mut TurnContext,
-        actor_id: &str,
-    ) -> Vec<Event> {
-        let mut events = Vec::new();
-
-        // 1. Get actor and teammates/enemies for targeting
-        let actor = match context.get_combatant(actor_id) {
-            Some(c) => c.base_combatant.clone(),
-            None => return events,
-        };
-
-        let actor_side = context.get_combatant(actor_id).unwrap().side;
-        
-        let all_combatants = context.get_alive_combatants();
-        let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
-            .map(|c| c.base_combatant.clone())
-            .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
-
-        // 2. Get smart targets from targeting module
-        let target_indices = targeting::get_targets(&actor, &Action::Buff(buff_action.clone()), &allies, &enemies);
-
-        for (is_enemy, idx) in target_indices {
-            // Check for interruption
-            if context.action_interrupted {
-                break;
-            }
-
-            let target_id = if is_enemy {
-                if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
-            } else {
-                if idx < allies.len() { allies[idx].id.clone() } else { continue }
-            };
-
-            let effect = ActiveEffect {
-                id: format!("{}-{}-{}", buff_action.name, actor_id, target_id),
-                source_id: actor_id.to_string(),
-                target_id: target_id.clone(),
-                effect_type: EffectType::Buff(buff_action.buff.clone()),
-                remaining_duration: 10,
-                conditions: Vec::new(),
-            };
-
-            events.push(context.apply_effect(effect));
-        }
-
-        events
-    }
-
-
-    /// Resolve debuff actions
-    pub fn resolve_debuff(
-        &self,
-        debuff_action: &DebuffAction,
-        context: &mut TurnContext,
-        actor_id: &str,
-    ) -> Vec<Event> {
-        let mut events = Vec::new();
-
-        // 1. Get actor and teammates/enemies for targeting
-        let actor = match context.get_combatant(actor_id) {
-            Some(c) => c.base_combatant.clone(),
-            None => return events,
-        };
-
-        let actor_side = context.get_combatant(actor_id).unwrap().side;
-        
-        let all_combatants = context.get_alive_combatants();
-        let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
-            .map(|c| c.base_combatant.clone())
-            .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
-
-        // 2. Get smart targets from targeting module
-        let target_indices = targeting::get_targets(&actor, &Action::Debuff(debuff_action.clone()), &allies, &enemies);
-
-        for (is_enemy, idx) in target_indices {
-            // Check for interruption
-            if context.action_interrupted {
-                break;
-            }
-
-            let target_id = if is_enemy {
-                if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
-            } else {
-                if idx < allies.len() { allies[idx].id.clone() } else { continue }
-            };
-
-            // 1. Perform saving throw
-            let total_save = self.roll_save(&target_id, context);
-
-            if total_save < debuff_action.save_dc {
-                // Save failed! Apply buff
-                let effect = ActiveEffect {
-                    id: format!("{}-{}-{}", debuff_action.name, actor_id, target_id),
-                    source_id: actor_id.to_string(),
-                    target_id: target_id.clone(),
-                    effect_type: EffectType::Buff(debuff_action.buff.clone()),
-                    remaining_duration: 10,
-                    conditions: Vec::new(),
-                };
-
-                events.push(context.apply_effect(effect));
-            } else {
-                // Save succeeded
-                events.push(Event::SpellSaved {
-                    target_id: target_id.clone(),
-                    spell_id: debuff_action.name.clone(),
-                });
-            }
-        }
-
-        events
-    }
-
-    /// Resolve template actions
-    pub fn resolve_template(
-        &self,
-        template_action: &TemplateAction,
-        context: &mut TurnContext,
-        actor_id: &str,
-    ) -> Vec<Event> {
-        let mut events = Vec::new();
-        let template_name = template_action
-            .template_options
-            .template_name
-            .to_lowercase();
-
-        // 1. Get actor and teammates/enemies for targeting
-        let actor = match context.get_combatant(actor_id) {
-            Some(c) => c.base_combatant.clone(),
-            None => return events,
-        };
-
-        let actor_side = context.get_combatant(actor_id).unwrap().side;
-        
-        let all_combatants = context.get_alive_combatants();
-        let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
-            .map(|c| c.base_combatant.clone())
-            .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
-
-        // 2. Get smart targets from targeting module
-        let mut template_action_to_resolve = template_action.clone();
-        
-        // Ensure default target type if missing
-        if template_action_to_resolve.template_options.target.is_none() {
-            let default_target = if template_name == "bane" || template_name == "hex" || template_name == "hunter's mark" || template_name == "hypnotic pattern" {
-                use crate::enums::{EnemyTarget, TargetType};
-                TargetType::Enemy(EnemyTarget::EnemyWithLeastHP)
-            } else {
-                use crate::enums::{AllyTarget, TargetType};
-                TargetType::Ally(AllyTarget::AllyWithLeastHP)
-            };
-            template_action_to_resolve.template_options.target = Some(default_target);
-        }
-
-        let target_indices = targeting::get_targets(&actor, &Action::Template(template_action_to_resolve.clone()), &allies, &enemies);
-
-        for (is_enemy, idx) in target_indices {
-            // Check for interruption
-            if context.action_interrupted {
-                break;
-            }
-
-            let target_id = if is_enemy {
-                if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
-            } else {
-                if idx < allies.len() { allies[idx].id.clone() } else { continue }
-            };
-
-            // Apply effect based on template name
-            let mut buff = Buff {
-                display_name: Some(template_action.template_options.template_name.clone()),
-                duration: crate::enums::BuffDuration::EntireEncounter,
-                ac: None,
-                to_hit: None,
-                damage: None,
-                damage_reduction: None,
-                damage_multiplier: None,
-                damage_taken_multiplier: None,
-                dc: None,
-                save: None,
-                condition: None,
-                magnitude: None,
-                source: Some(actor_id.to_string()),
-                concentration: true,
-                triggers: Vec::new(),
-                suppressed_until: None,
-            };
-
-            // Customize buff based on name
-            match template_name.as_str() {
-                "bless" => {
-                    buff.to_hit = Some(crate::model::DiceFormula::Expr("1d4".to_string()));
-                    buff.save = Some(crate::model::DiceFormula::Expr("1d4".to_string()));
-                }
-                "bane" => {
-                    buff.to_hit = Some(crate::model::DiceFormula::Expr("-1d4".to_string()));
-                    buff.save = Some(crate::model::DiceFormula::Expr("-1d4".to_string()));
-                }
-                "haste" => {
-                    buff.ac = Some(crate::model::DiceFormula::Value(2.0));
-                }
-                "shield" => {
-                    buff.ac = Some(crate::model::DiceFormula::Value(5.0));
-                    buff.duration = crate::enums::BuffDuration::OneRound;
-                    buff.concentration = false;
-                }
-                _ => {}
-            }
-
-            // Perform saving throw for debuffs (bane)
-            let mut should_apply = true;
-            if template_name == "bane" {
-                let total_save = self.roll_save(&target_id, context);
-                let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
-                
-                if total_save >= save_dc {
-                    should_apply = false;
-                    events.push(Event::SpellSaved {
-                        target_id: target_id.clone(),
-                        spell_id: template_action.template_options.template_name.clone(),
-                    });
-                }
-            }
-
-            if should_apply {
-                let effect = ActiveEffect {
-                    id: format!("{}-{}-{}", template_action.template_options.template_name, actor_id, target_id),
-                    source_id: actor_id.to_string(),
-                    target_id: target_id.clone(),
-                    effect_type: EffectType::Buff(buff),
-                    remaining_duration: 10,
-                    conditions: Vec::new(),
-                };
-
-                events.push(context.apply_effect(effect));
-            }
-        }
-
-
-        events.push(Event::Custom {
-            event_type: "TemplateActionExecuted".to_string(),
-            data: {
-                let mut data = HashMap::new();
-                data.insert("template_name".to_string(), template_action.template_options.template_name.clone());
-                data.insert("actor_id".to_string(), actor_id.to_string());
-                data
-            },
-            source_id: actor_id.to_string(),
-        });
-
-        events
-    }
 
     /// Helper to resolve reactive effects from buffs (Triggers)
     /// Helper to resolve reactive effects from buffs (Triggers)
@@ -941,7 +613,7 @@ impl ActionResolver {
     }
 
     /// Roll a saving throw for a combatant
-    fn roll_save(&self, target_id: &str, context: &mut TurnContext) -> f64 {
+    pub fn roll_save(&self, target_id: &str, context: &mut TurnContext) -> f64 {
         let mut roll = rng::roll_d20();
         
         // Apply rerolls
@@ -1013,109 +685,6 @@ impl ActionResolver {
         }
 
         (damage, damage_roll)
-    }
-
-    /// Apply effect directly to combatant through the context system
-    fn apply_effect_to_combatant(
-        &self,
-        target_id: &str,
-        effect_id: &str,
-        source_id: &str,
-        is_buff: bool,
-        context: &mut TurnContext,
-    ) {
-        use crate::context::{ActiveEffect, EffectType};
-
-        let effect_type = if is_buff {
-            // EffectType::Buff(effect_id.to_string()) // Invalid
-            panic!("Buffs must use resolve_buff directly to preserve data");
-        } else {
-            EffectType::Condition(crate::enums::CreatureCondition::Incapacitated)
-        };
-
-        let effect = ActiveEffect {
-            id: format!("{}_{}", effect_id, source_id),
-            source_id: source_id.to_string(),
-            target_id: target_id.to_string(),
-            effect_type,
-            remaining_duration: 5, // Placeholder duration
-            conditions: Vec::new(),
-        };
-
-        context.apply_effect(effect);
-    }
-}
-
-/// Trait for actions that can apply effects
-pub trait EffectAction {
-    fn base(&self) -> crate::model::ActionBase; // Changed from &crate::model::ActionBase
-    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String>; // Changed context to mut
-}
-
-impl EffectAction for BuffAction {
-    fn base(&self) -> crate::model::ActionBase {
-        self.base() // Call the struct's base method
-    }
-
-    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
-        // Use targeting module - simplified for now
-        self.get_simple_targets(context, actor_id)
-    }
-}
-
-impl EffectAction for DebuffAction {
-    fn base(&self) -> crate::model::ActionBase {
-        self.base() // Call the struct's base method
-    }
-
-    fn get_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
-        self.get_simple_targets(context, actor_id)
-    }
-}
-
-// Helper trait for simple target resolution
-trait SimpleTargeting {
-    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String>;
-}
-
-impl SimpleTargeting for BuffAction {
-    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
-        // Get actor's team (mode) - BUFFS TARGET ALLIES
-        let actor_mode = context
-            .get_combatant(actor_id)
-            .map(|c| c.base_combatant.creature.mode.clone())
-            .unwrap_or_default();
-
-        // Find allies (same team)
-        context
-            .combatants
-            .values()
-            .filter(|c| context.is_combatant_alive(&c.id)) // Must be alive
-            .filter(|c| c.base_combatant.creature.mode == actor_mode) // Same team = ally
-            .take(self.targets.max(1) as usize)
-            .map(|c| c.id.clone())
-            .collect()
-    }
-}
-
-impl SimpleTargeting for DebuffAction {
-    fn get_simple_targets(&self, context: &mut TurnContext, actor_id: &str) -> Vec<String> {
-        // Get actor's team (mode) - DEBUFFS TARGET ENEMIES
-        let actor_mode = context
-            .get_combatant(actor_id)
-            .map(|c| c.base_combatant.creature.mode.clone())
-            .unwrap_or_default();
-
-        // Find enemies (different team)
-        context
-            .combatants
-            .values()
-            .filter(|c| c.id != actor_id) // Not self
-            .filter(|c| context.is_combatant_alive(&c.id)) // Must be alive
-            .filter(|c| c.base_combatant.creature.mode != actor_mode) // Different team = enemy
-            .take(self.targets.max(1) as usize)
-            .map(|c| c.id.clone())
-            .collect()
     }
 }
 
