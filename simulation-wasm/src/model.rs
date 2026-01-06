@@ -389,6 +389,9 @@ impl Hash for EffectTrigger {
             crate::enums::TriggerCondition::BelowHpPercent { threshold } => {
                 crate::utilities::hash_f64(*threshold, state);
             }
+            crate::enums::TriggerCondition::AboveHpPercent { threshold } => {
+                crate::utilities::hash_f64(*threshold, state);
+            }
             _ => {}
         }
         self.requirements.hash(state);
@@ -836,6 +839,9 @@ impl Hash for ActionTrigger {
                 crate::utilities::hash_f64(*threshold, state);
             }
             crate::enums::TriggerCondition::BelowHpPercent { threshold } => {
+                crate::utilities::hash_f64(*threshold, state);
+            }
+            crate::enums::TriggerCondition::AboveHpPercent { threshold } => {
                 crate::utilities::hash_f64(*threshold, state);
             }
             _ => {}

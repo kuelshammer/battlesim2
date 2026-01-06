@@ -193,6 +193,8 @@ pub enum TriggerCondition {
     AttackWasMelee,
     #[serde(rename = "belowHpPercent")]
     BelowHpPercent { threshold: f64 },
+    #[serde(rename = "aboveHpPercent")]
+    AboveHpPercent { threshold: f64 },
     #[serde(rename = "hasTempHp")]
     HasTempHp,
 }
@@ -236,6 +238,11 @@ impl TriggerCondition {
             TriggerCondition::BelowHpPercent { threshold: _ } => {
                 // TODO: Requires combat state to check HP percentage
                 // Implementation: (current_hp / max_hp) * 100.0 < threshold
+                false
+            }
+            TriggerCondition::AboveHpPercent { threshold: _ } => {
+                // TODO: Requires combat state to check HP percentage
+                // Implementation: (current_hp / max_hp) * 100.0 >= threshold
                 false
             }
             TriggerCondition::HasTempHp => {

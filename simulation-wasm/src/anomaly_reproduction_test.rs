@@ -50,6 +50,9 @@ mod tests {
             class_resources: None,
             hit_dice: None,
             con_modifier: None,
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
         }
     }
 
