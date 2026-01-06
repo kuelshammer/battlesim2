@@ -345,9 +345,26 @@ impl TriggerEffect {
                 Err(format!("RestoreResource not yet implemented: {} {}", resource, amount))
             }
             TriggerEffect::SuppressBuff { buff_id, duration } => {
-                // TODO: Find buff by ID and set its suppressed_until field
-                // Requires Buff struct to have suppressed_until field
-                Err(format!("SuppressBuff not yet implemented: {} {:?}", buff_id, duration))
+                // Calculate the round when suppression should end
+                let current_round = _context.round_number;
+                let suppressed_until = match duration {
+                    BuffDuration::OneRound => Some(current_round + 1),
+                    BuffDuration::Instant => Some(current_round),
+                    _ => {
+                        // For other durations, suppress until end of current round
+                        // TODO: Implement proper duration handling for UntilNextAttackTaken, etc.
+                        Some(current_round + 1)
+                    }
+                };
+
+                // Access the target combatant's buffs and set suppressed_until
+                if let Some(combatant_state) = _context.combatants.get_mut(_target_id) {
+                    if let Some(buff) = combatant_state.base_combatant.final_state.buffs.get_mut(buff_id) {
+                        buff.suppressed_until = suppressed_until;
+                        return Ok(());
+                    }
+                }
+                Err(format!("SuppressBuff failed: buff '{}' not found on target '{}'", buff_id, _target_id))
             }
             TriggerEffect::ApplyBuff { buff, target } => {
                 // TODO: Apply buff to target (Self_, Attacker, or Target)
