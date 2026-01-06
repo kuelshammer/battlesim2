@@ -1,7 +1,7 @@
 use crate::action_resolver::ActionResolver;
 use crate::context::{CombattantState, TurnContext};
 use crate::events::Event;
-use crate::model::{Action, Combattant, LeanRunLog, LeanRoundSummary, LeanDeathEvent};
+use crate::model::{Action, Combattant};
 use crate::reactions::ReactionManager;
 use crate::validation;
 use serde::{Deserialize, Serialize};
@@ -14,16 +14,16 @@ use std::time::Instant;
 #[derive(Debug, Clone)]
 pub struct ActionExecutionEngine {
     /// Centralized state management for the current encounter
-    context: TurnContext,
+    pub(crate) context: TurnContext,
 
     /// Manages reaction templates and execution
-    reaction_manager: ReactionManager,
+    pub(crate) reaction_manager: ReactionManager,
 
     /// Resolves actions into events
-    action_resolver: ActionResolver,
+    pub(crate) action_resolver: ActionResolver,
 
     /// Pre-calculated initiative order for the encounter
-    initiative_order: Vec<String>,
+    pub(crate) initiative_order: Vec<String>,
 }
 
 /// Result of executing a single action
@@ -241,160 +241,6 @@ impl ActionExecutionEngine {
         self.generate_encounter_results(total_turns, round_snapshots, winner)
     }
 
-    /// Execute a full combat encounter with lean event collection (Tier B)
-    /// Collects only aggregate statistics per round instead of per-attack events
-    /// Memory: ~10-30 KB per run vs ~200-500 KB for full event logs
-    pub fn execute_encounter_lean(&mut self, encounter_index: usize) -> LeanRunLog {
-        #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
-        let encounter_start = Instant::now();
-
-        let mut total_turns = 0u32;
-        let mut round_summaries = Vec::new();
-        let mut death_events = Vec::new();
-        let mut tpk_encounter: Option<usize> = None;
-
-        // Main combat loop (same as execute_encounter but with lean collection)
-        const MAX_ROUNDS: u32 = 50;
-        const MAX_TURNS: u32 = 200;
-        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
-            self.context.advance_round();
-
-            let initiative_order = self.initiative_order.clone();
-            let round_number = self.context.round_number;
-
-            // Track state at start of round for death detection
-            let combatants_before_round: HashMap<String, u32> = self.context.combatants
-                .values()
-                .map(|c| (c.id.clone(), c.current_hp))
-                .collect();
-
-            for combatant_id in &initiative_order {
-                if !self.context.is_combatant_alive(&combatant_id) {
-                    continue;
-                }
-
-                total_turns += 1;
-
-                // Execute turn
-                let _turn_result = self.execute_combatant_turn(&combatant_id);
-                let _reactions = self.context.process_events();
-                self.context.update_effects();
-
-                if self.is_encounter_complete() {
-                    break;
-                }
-            }
-
-            // Collect aggregate statistics for this round
-            let mut total_damage: HashMap<String, f64> = HashMap::new();
-            let mut total_healing: HashMap<String, f64> = HashMap::new();
-            let mut deaths_this_round = Vec::new();
-            let mut survivors_this_round = Vec::new();
-
-            // Get all events from this round and aggregate them
-            let all_events = self.context.event_bus.get_all_events();
-
-            for event in all_events.iter() {
-                match event {
-                    Event::DamageTaken { target_id, damage, .. } => {
-                        *total_damage.entry(target_id.clone()).or_insert(0.0) += damage;
-                    }
-                    Event::HealingApplied { target_id, amount, .. } => {
-                        *total_healing.entry(target_id.clone()).or_insert(0.0) += amount;
-                    }
-                    _ => {}
-                }
-            }
-
-            // Check for deaths (HP went from >0 to 0)
-            for (combatant_id, hp_before) in &combatants_before_round {
-                if let Some(combatant) = self.context.get_combatant(combatant_id) {
-                    if *hp_before > 0 && combatant.current_hp == 0 {
-                        // This combatant died this round
-                        let is_player = combatant.side == 0;
-                        death_events.push(LeanDeathEvent {
-                            combatant_id: combatant_id.clone(),
-                            round: round_number,
-                            encounter_index,
-                            was_player: is_player,
-                        });
-                        deaths_this_round.push(combatant_id.clone());
-
-                        // Check for TPK (all players dead)
-                        let remaining_players: Vec<String> = self.context.combatants
-                            .values()
-                            .filter(|c| c.side == 0 && c.current_hp > 0)
-                            .map(|c| c.id.clone())
-                            .collect();
-
-                        if remaining_players.is_empty() && tpk_encounter.is_none() {
-                            tpk_encounter = Some(encounter_index);
-                        }
-                    }
-                }
-            }
-
-            // Collect survivors
-            for combatant in self.context.get_alive_combatants() {
-                survivors_this_round.push(combatant.id.clone());
-            }
-
-            round_summaries.push(LeanRoundSummary {
-                round_number,
-                encounter_index,
-                total_damage,
-                total_healing,
-                deaths_this_round,
-                survivors_this_round,
-            });
-
-            #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
-            {
-                let round_duration = encounter_start.elapsed();
-                log::debug!(
-                    "Lean Round {} completed in {:?}",
-                    round_number,
-                    round_duration
-                );
-            }
-        }
-
-        // Collect final state
-        let mut final_hp: HashMap<String, u32> = HashMap::new();
-        let mut survivors = Vec::new();
-
-        for combatant in self.context.combatants.values() {
-            final_hp.insert(combatant.id.clone(), combatant.current_hp);
-            if combatant.current_hp > 0 {
-                survivors.push(combatant.id.clone());
-            }
-        }
-        survivors.sort();
-
-        #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
-        {
-            let encounter_duration = encounter_start.elapsed();
-            log::info!(
-                "Lean encounter completed in {:?} - {} rounds, {} deaths",
-                encounter_duration,
-                self.context.round_number,
-                death_events.len()
-            );
-        }
-
-        // Note: We don't have access to seed and scores here, those are added by the caller
-        LeanRunLog {
-            seed: 0,  // Will be set by caller
-            final_score: 0.0,  // Will be set by caller
-            encounter_scores: Vec::new(),  // Will be set by caller
-            round_summaries,
-            deaths: death_events,
-            tpk_encounter,
-            final_hp,
-            survivors,
-        }
-    }
-
     /// Execute a single turn for a combatant
     pub fn execute_combatant_turn(&mut self, combatant_id: &str) -> TurnResult {
         let start_hp = self
@@ -504,9 +350,6 @@ impl ActionExecutionEngine {
                         combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
                     );
                     combatant.cumulative_spent += weight;
-
-                    // Also mark as used in this encounter (for "1/encounter" tracking if used elsewhere)
-                    // actions_used_this_encounter is not available on CombattantState, but resource deduction is sufficient.
                 }
             }
         }
@@ -518,13 +361,8 @@ impl ActionExecutionEngine {
             decision_trace: decision_trace.unwrap_or_default(),
         });
 
-        // Process action and generate events (placeholder implementation)
+        // Process action and generate events
         let events = self.process_action(&action, actor_id);
-
-        // Emit all events to context -> REMOVED because process_action now handles emission directly
-        // for event in &events {
-        //    self.context.record_event(event.clone());
-        // }
 
         // Record the action in the combatant's history for logging
         if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
@@ -551,10 +389,6 @@ impl ActionExecutionEngine {
                     _ => {}
                 }
             }
-
-            // If it's a multi-target action but no specific target events were generated yet
-            // (e.g. clean miss or no targets found), we might miss logging targets.
-            // But for now this is better than nothing.
 
             let action_record = crate::model::CombattantAction {
                 action: action.clone(),
@@ -632,14 +466,14 @@ impl ActionExecutionEngine {
     }
 
     /// Process an action and generate events using the ActionResolver
-    fn process_action(&mut self, action: &Action, actor_id: &str) -> Vec<Event> {
+    pub(crate) fn process_action(&mut self, action: &Action, actor_id: &str) -> Vec<Event> {
         // Use the ActionResolver to convert the action into events
         self.action_resolver
             .resolve_action(action, &mut self.context, actor_id)
     }
 
     /// Select actions for a combatant (basic AI implementation)
-    fn select_actions_for_combatant(&mut self, combatant_id: &str) -> (Vec<Action>, HashMap<String, f64>) {
+    pub(crate) fn select_actions_for_combatant(&mut self, combatant_id: &str) -> (Vec<Action>, HashMap<String, f64>) {
         let mut decision_trace = HashMap::new();
         // Clone the actions list to avoid borrowing self.context while iterating
         let actions = {
@@ -727,41 +561,30 @@ impl ActionExecutionEngine {
         }
 
         // Sort by original index (lowest index = highest priority)
-        // This ensures the "Strategy & Priority" order from the UI is respected.
         valid_actions.sort_by_key(|a| a.0);
 
         // Select best action per slot type
         for (_index, action, _score) in valid_actions {
             let base_slot = action.base().action_slot;
             
-            // Normalize slot: Action=0, Bonus Action=1, Reaction=4
-            // D&D 5e: Action=0, Bonus Action=1.
-            // MM monsters use 0 for their main actions.
             let slot = match base_slot {
                 None => Some(0), 
                 other => other,
             };
 
-            // Skip if we've already selected an action for this slot (e.g. already picked an Action)
             if used_slots.contains(&slot) {
                 continue;
             }
 
-            // EXTRA CHECK: Since we are sorting by index, the FIRST valid action we encounter
-            // for a slot SHOULD be the one we pick.
-
             used_slots.insert(slot);
             selected_actions.push(action);
-
-            // D&D 5e: Limit to one action per distinct slot type per turn.
-            // We continue the loop to check for other slots (like Bonus Action).
         }
 
         (selected_actions, decision_trace)
     }
 
     /// Score an action based on combat situation
-    fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
+    pub(crate) fn score_action(&self, action: &Action, combatant_id: &str) -> f64 {
         // Get combatant's team (mode)
         let Some(combatant) = self.context.get_combatant(combatant_id) else {
             return 0.0;
@@ -771,7 +594,6 @@ impl ActionExecutionEngine {
 
         match action {
             Action::Atk(atk) => {
-                // Check if there are any enemies to attack
                 let living_enemies = self
                     .context
                     .get_alive_combatants()
@@ -779,16 +601,14 @@ impl ActionExecutionEngine {
                     .any(|c| c.base_combatant.creature.mode != actor_mode);
 
                 if !living_enemies {
-                    return 0.0; // No enemies to attack
+                    return 0.0;
                 }
 
-                // Attacks are valuable
                 let base_damage = crate::dice::average(&atk.dpr);
                 let num_targets = atk.targets as f64;
-                (base_damage * num_targets * 10.0).max(1.0) // Ensure at least 1.0 if valid
+                (base_damage * num_targets * 10.0).max(1.0)
             }
             Action::Heal(heal) => {
-                // Only valuable if allies are injured
                 let allies: Vec<_> = self
                     .context
                     .get_alive_combatants()
@@ -804,44 +624,26 @@ impl ActionExecutionEngine {
                     let heal_amount = crate::dice::average(&heal.amount);
                     (heal_amount * injured_allies as f64 * 15.0).max(10.0)
                 } else {
-                    0.0 // No one needs healing
+                    0.0
                 }
             }
             Action::Buff(buff) => {
-                // Don't cast concentration buffs if already concentrating
                 if is_concentrating && buff.buff.concentration {
                     return 0.0;
                 }
 
-                // Check if any allies lack this buff
-                let _buff_name = buff.buff.display_name.as_ref().unwrap_or(&buff.name);
-                let allies = self.context.get_alive_combatants();
-                let _allies_needing_buff = allies.iter()
-                    .filter(|c| c.base_combatant.creature.mode == actor_mode)
-                    .filter(|c| !c.base_combatant.creature.actions.iter().any(|_| {
-                        // Check if combatant already has this buff
-                        // Simplified check: Does combatant have a buff with the same name?
-                        // We would need access to active_effects here or check buffs map
-                        false // Placeholder
-                    }))
-                    .count();
-                
-                // If the buff targets others, we should check if others are available
-                // For now, assume it's always valid if round is early
                 let round = self.context.round_number;
                 if round <= 2 {
-                    50.0 // High priority in early rounds
+                    50.0
                 } else {
-                    20.0 // Lower priority later
+                    20.0
                 }
             }
             Action::Debuff(debuff) => {
-                // Don't cast concentration debuffs if already concentrating
                 if is_concentrating && debuff.buff.concentration {
                     return 0.0;
                 }
 
-                // Valuable against strong enemies
                 let enemies: Vec<_> = self
                     .context
                     .get_alive_combatants()
@@ -857,13 +659,7 @@ impl ActionExecutionEngine {
                 }
             }
             Action::Template(tmpl) => {
-                // Check if template is concentration
-                // Note: We don't have easy access to template tags here without resolving
-                // But we can check for common concentration spell names or just rely on the concentration flag
-                // if it was set in the UI. 
-                // For now, use the same logic as Template score but check for concentration more carefully
                 if is_concentrating {
-                    // Check if this specific template name usually requires concentration
                     let name = &tmpl.template_options.template_name;
                     if name == "Bless" || name == "Bane" || name == "Haste" || name == "Hypnotic Pattern" {
                         return 0.0;
@@ -882,31 +678,18 @@ impl ActionExecutionEngine {
     }
 
     /// Register default reactions for combatants
-    fn register_default_reactions(&mut self, _combatants: &[Combattant]) {
-        // This is a placeholder for registering reactions from combatants
-        // In a full implementation, combatants would have reaction templates defined
-
-        // for combatant in combatants {
-        //     // Example: Add a simple defensive reaction
-        //     // This would come from combatant data in a real implementation
-        // }
+    pub(crate) fn register_default_reactions(&mut self, _combatants: &[Combattant]) {
+        // Placeholder
     }
 
     /// Check if encounter is complete (all alive combatants are on the same team)
-    fn is_encounter_complete(&self) -> bool {
+    pub(crate) fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
         
-        // If no one is alive, encounter is complete
-        if alive_combatants.is_empty() {
+        if alive_combatants.is_empty() || alive_combatants.len() == 1 {
             return true;
         }
 
-        // If only one combatant is alive, encounter is complete
-        if alive_combatants.len() == 1 {
-            return true;
-        }
-
-        // Check if all alive combatants are on the same team (side)
         let first_side = alive_combatants[0].side;
         alive_combatants
             .iter()
@@ -914,7 +697,7 @@ impl ActionExecutionEngine {
     }
 
     /// Generate final encounter results
-    fn generate_encounter_results(
+    pub(crate) fn generate_encounter_results(
         &self,
         total_turns: u32,
         round_snapshots: Vec<Vec<CombattantState>>,
@@ -939,10 +722,9 @@ impl ActionExecutionEngine {
     }
 
     /// Determine the winner of the encounter
-    fn determine_winner(&self) -> Option<String> {
+    pub(crate) fn determine_winner(&self) -> Option<String> {
         let alive_combatants = self.context.get_alive_combatants();
         
-        // Calculate total HP for each side
         let mut team1_hp = 0;
         let mut team2_hp = 0;
 
@@ -954,25 +736,17 @@ impl ActionExecutionEngine {
             }
         }
 
-        // Determine winner based on side HP sums
         if team1_hp > 0 && team2_hp == 0 {
-            // All of side 1 are dead, side 0 wins
             Some("Players".to_string())
         } else if team2_hp > 0 && team1_hp == 0 {
-            // All of side 0 are dead, side 1 wins
             Some("Monsters".to_string())
-        } else if team1_hp == 0 && team2_hp == 0 {
-            // Everyone is dead, draw
-            None
         } else {
-            // Multiple survivors on both sides - for now return None (draw)
             None
         }
     }
 
-    
     /// Calculate encounter statistics from event history
-    fn calculate_statistics(&self, events: &[Event]) -> EncounterStatistics {
+    pub(crate) fn calculate_statistics(&self, events: &[Event]) -> EncounterStatistics {
         let mut total_damage_dealt = HashMap::new();
         let mut total_healing_dealt = HashMap::new();
         let mut attacks_landed = HashMap::new();
@@ -991,10 +765,7 @@ impl ActionExecutionEngine {
                     *total_damage_dealt.entry(attacker_id.clone()).or_insert(0.0) += damage;
                     *attacks_landed.entry(attacker_id.clone()).or_insert(0) += 1;
 
-                    // Check if it was a critical hit (simplified check)
-                    // In a real implementation, this would be determined by the attack
                     if *damage > 20.0 {
-                        // Arbitrary threshold for demo
                         critical_hits += 1;
                     }
                 }
@@ -1042,488 +813,5 @@ impl ActionExecutionEngine {
     /// Get event bus statistics
     pub fn get_event_bus_stats(&self) -> crate::events::EventBusStats {
         self.context.event_bus.get_stats()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::model::{Combattant, Creature, CreatureState};
-
-    #[test]
-    fn test_action_execution_engine_creation() {
-        let creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "warrior1".to_string(),
-            name: "Test Warrior".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(),
-        };
-
-        let combatant = Combattant { team: 0,
-            id: "warrior1".to_string(),
-            creature: std::sync::Arc::new(creature),
-            initiative: 10.0,
-            initial_state: CreatureState {
-                current_hp: 30,
-                ..CreatureState::default()
-            },
-            final_state: CreatureState {
-                current_hp: 30,
-                ..CreatureState::default()
-            },
-            actions: Vec::new(),
-        };
-
-        let engine = ActionExecutionEngine::new(vec![combatant], true);
-
-        assert_eq!(engine.context.combatants.len(), 1);
-        assert_eq!(engine.context.round_number, 0);
-        assert!(engine.context.is_combatant_alive("warrior1"));
-    }
-
-    #[test]
-    fn test_encounter_completion() {
-        // Create a PLAYER creature
-        let player_creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "player1".to_string(),
-            name: "Test Player".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "player".to_string(), // PLAYER team
-        };
-
-        // Create a MONSTER creature
-        let monster_creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "monster1".to_string(),
-            name: "Test Monster".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(), // MONSTER team
-        };
-
-        let combatant1 = Combattant { team: 0,
-            id: "player1".to_string(),
-            creature: std::sync::Arc::new(player_creature),
-            initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let combatant2 = Combattant { team: 1,
-            id: "monster1".to_string(),
-            creature: std::sync::Arc::new(monster_creature),
-            initiative: 5.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let engine = ActionExecutionEngine::new(vec![combatant1, combatant2], true);
-
-        // Should NOT be complete with 2 alive combatants on DIFFERENT teams
-        assert!(!engine.is_encounter_complete());
-    }
-
-    #[test]
-    fn test_initiative_order() {
-        let creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "test".to_string(), // Added ID
-            name: "Test".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(),
-        };
-
-        let combatant1 = Combattant { team: 0,
-            id: "fast".to_string(),
-            creature: std::sync::Arc::new(creature.clone()),
-            initiative: 15.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
-            actions: Vec::new(),
-        };
-
-        let combatant2 = Combattant { team: 0,
-            id: "slow".to_string(),
-            creature: std::sync::Arc::new(creature),
-            initiative: 5.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
-            actions: Vec::new(),
-        };
-
-        let engine = ActionExecutionEngine::new(vec![combatant1, combatant2], true);
-        let order = engine.initiative_order;
-
-        assert_eq!(order.len(), 2);
-        assert_eq!(order[0], "fast"); // Higher initiative first
-        assert_eq!(order[1], "slow");
-    }
-
-    #[test]
-    fn test_execute_encounter_basic() {
-        let player_creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "player1".to_string(),
-            name: "Test Player".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "player".to_string(),
-        };
-
-        let monster_creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "monster1".to_string(),
-            name: "Test Monster".to_string(),
-            count: 1.0,
-            hp: 10,
-            ac: 12,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(),
-        };
-
-        let player = Combattant {
-            team: 0,
-            id: "player1".to_string(),
-            creature: std::sync::Arc::new(player_creature),
-            initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let monster = Combattant {
-            team: 1,
-            id: "monster1".to_string(),
-            creature: std::sync::Arc::new(monster_creature),
-            initiative: 5.0,
-            initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let mut engine = ActionExecutionEngine::new(vec![player, monster], true);
-
-        // Execute the encounter
-        let result = engine.execute_encounter();
-
-        // Verify structure
-        assert!(!result.round_snapshots.is_empty(), "Should have at least one round");
-        assert!(result.total_rounds <= 100, "Should not exceed max rounds");
-
-        // Verify combatants exist in results
-        assert_eq!(result.final_combatant_states.len(), 2, "Should have 2 combatants");
-    }
-
-    #[test]
-    fn test_empty_combatants() {
-        let mut engine = ActionExecutionEngine::new(vec![], true);
-
-        // Should complete immediately with no combatants
-        assert!(engine.is_encounter_complete());
-
-        let result = engine.execute_encounter();
-        // Empty encounter should have no rounds or very few
-        assert_eq!(result.total_rounds, 0);
-        assert_eq!(result.final_combatant_states.len(), 0);
-    }
-
-    #[test]
-    fn test_single_combatant() {
-        let creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "solo".to_string(),
-            name: "Solo".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(),
-        };
-
-        let combatant = Combattant {
-            team: 0,
-            id: "solo".to_string(),
-            creature: std::sync::Arc::new(creature),
-            initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let mut engine = ActionExecutionEngine::new(vec![combatant], true);
-
-        // Single combatant should complete immediately
-        assert!(engine.is_encounter_complete());
-
-        let result = engine.execute_encounter();
-        // Should handle gracefully - no rounds because there's nothing to fight
-        assert!(result.round_snapshots.is_empty() || result.total_rounds <= 100);
-    }
-
-    #[test]
-    fn test_get_context_stats() {
-        let creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "test".to_string(),
-            name: "Test".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "monster".to_string(),
-        };
-
-        let combatant = Combattant {
-            team: 0,
-            id: "test".to_string(),
-            creature: std::sync::Arc::new(creature),
-            initiative: 10.0,
-            initial_state: CreatureState::default(),
-            final_state: CreatureState::default(),
-            actions: Vec::new(),
-        };
-
-        let engine = ActionExecutionEngine::new(vec![combatant], true);
-
-        let stats = engine.get_context_stats();
-        assert_eq!(stats.total_combatants, 1);
-        assert_eq!(stats.round_number, 0);
-    }
-
-    #[test]
-    fn test_same_team_combatants() {
-        // Two combatants on the same team should not fight
-        let creature = Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            id: "ally".to_string(),
-            name: "Ally".to_string(),
-            count: 1.0,
-            hp: 30,
-            ac: 15,
-            speed_fly: None,
-            save_bonus: 0.0,
-            str_save_bonus: None,
-            dex_save_bonus: None,
-            con_save_bonus: None,
-            int_save_bonus: None,
-            wis_save_bonus: None,
-            cha_save_bonus: None,
-            con_save_advantage: None,
-            save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
-            initiative_advantage: false,
-            actions: Vec::new(),
-            triggers: Vec::new(),
-            spell_slots: None,
-            class_resources: None,
-            hit_dice: None,
-            con_modifier: None,
-            arrival: None,
-            mode: "player".to_string(),
-        };
-
-        let combatant1 = Combattant {
-            team: 0,
-            id: "ally1".to_string(),
-            creature: std::sync::Arc::new(creature.clone()),
-            initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let combatant2 = Combattant {
-            team: 0,
-            id: "ally2".to_string(),
-            creature: std::sync::Arc::new(creature),
-            initiative: 5.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            actions: Vec::new(),
-        };
-
-        let engine = ActionExecutionEngine::new(vec![combatant1, combatant2], true);
-
-        // Same team combatants should complete immediately (no enemies)
-        assert!(engine.is_encounter_complete());
     }
 }
