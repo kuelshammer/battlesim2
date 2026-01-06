@@ -132,6 +132,10 @@ pub enum CreatureCondition {
     SavesWithAdvantage,
     #[serde(rename = "Save with Disadvantage")]
     SaveWithDisadvantage,
+    #[serde(rename = "Is Concentrating")]
+    IsConcentrating,
+    #[serde(rename = "Is Surprised")]
+    IsSurprised,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
