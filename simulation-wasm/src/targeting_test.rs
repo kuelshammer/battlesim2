@@ -65,6 +65,7 @@ mod tests {
             con_modifier: None,
             arrival: None,
             mode: "monster".to_string(),
+
         };
 
         Combattant {

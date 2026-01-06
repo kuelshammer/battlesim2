@@ -40,6 +40,8 @@ pub enum Event {
         attack_roll: Option<RollResult>,
         damage_roll: Option<RollResult>,
         target_ac: f64,
+        #[serde(default)]
+        range: Option<crate::enums::AttackRange>,
     },
     AttackMissed {
         attacker_id: String,
@@ -390,6 +392,7 @@ impl Event {
                 attack_roll,
                 damage_roll,
                 target_ac,
+                range: _,
             } => {
                 let attack_details = if let Some(roll) = attack_roll {
                     format!(" (Roll: {} = {:.0} vs AC {:.0})", roll.formula, roll.total, target_ac)
@@ -781,6 +784,7 @@ mod tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert_eq!(event.get_source_id(), Some("attacker".to_string()));
@@ -802,6 +806,7 @@ mod tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert_eq!(event.get_type(), "AttackHit");

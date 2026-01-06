@@ -16,6 +16,13 @@ pub enum ActionSlot {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub enum AttackRange {
+    Melee,
+    Ranged,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum EnemyTarget {
     #[serde(rename = "enemy with least HP", alias = "enemy with the least HP")]
     EnemyWithLeastHP,
@@ -233,7 +240,7 @@ impl TriggerCondition {
                 matches!(event, Event::DamageTaken { .. })
             }
             TriggerCondition::AttackWasMelee => {
-                matches!(event, Event::AttackHit { .. })
+                matches!(event, Event::AttackHit { range: Some(AttackRange::Melee), .. })
             }
             TriggerCondition::BelowHpPercent { threshold: _ } => {
                 // TODO: Requires combat state to check HP percentage

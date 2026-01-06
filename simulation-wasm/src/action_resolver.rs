@@ -157,6 +157,16 @@ impl ActionResolver {
         if is_hit {
             let (damage, damage_roll) = self.calculate_damage(attack, attack_result.is_critical, context, actor_id);
 
+            // Determine range from action tags
+            use crate::resources::ActionTag;
+            let range = if attack.tags.contains(&ActionTag::Melee) {
+                Some(crate::enums::AttackRange::Melee)
+            } else if attack.tags.contains(&ActionTag::Ranged) {
+                Some(crate::enums::AttackRange::Ranged)
+            } else {
+                None
+            };
+
             let hit_event = Event::AttackHit {
                 attacker_id: actor_id.to_string(),
                 target_id: target_id.to_string(),
@@ -164,6 +174,7 @@ impl ActionResolver {
                 attack_roll: attack_result.roll_detail,
                 damage_roll,
                 target_ac,
+                range,
             };
             context.record_event(hit_event.clone());
             events.push(hit_event);

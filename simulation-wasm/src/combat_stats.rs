@@ -303,6 +303,9 @@ mod tests {
             con_modifier: None,
             arrival: None,
             mode: "monster".to_string(),
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
         }
     }
     

@@ -19,6 +19,7 @@ mod tests {
             }),
             damage_roll: None,
             target_ac: 14.0,
+            range: None,
         };
 
         let json = to_string(&event).unwrap();
