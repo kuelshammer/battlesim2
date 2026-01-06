@@ -136,6 +136,10 @@ pub enum CreatureCondition {
     IsConcentrating,
     #[serde(rename = "Is Surprised")]
     IsSurprised,
+    #[serde(rename = "Is Prone")]
+    IsProne,
+    #[serde(rename = "Is Hidden")]
+    IsHidden,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -220,6 +224,8 @@ pub enum TriggerCondition {
     AboveHpPercent { threshold: f64 },
     #[serde(rename = "hasTempHp")]
     HasTempHp,
+    #[serde(rename = "hasReactionAvailable")]
+    HasReactionAvailable,
 }
 
 impl TriggerCondition {
@@ -291,6 +297,11 @@ impl TriggerCondition {
                 // Implementation: temp_hp.unwrap_or(0) > 0
                 false
             }
+            TriggerCondition::HasReactionAvailable => {
+                // TODO: Requires combat state to check reaction usage
+                // Implementation: Check if combatant has reaction remaining this round
+                false
+            }
         }
     }
 }
@@ -341,6 +352,38 @@ pub enum TriggerEffect {
     #[serde(rename = "Chain")]
     Chain {
         effects: Vec<TriggerEffect>,
+    },
+    #[serde(rename = "AddToRoll")]
+    AddToRoll {
+        amount: String, // DiceFormula string representation
+        #[serde(rename = "rollType")]
+        roll_type: String, // "attack", "save", "abilityCheck", etc.
+    },
+    #[serde(rename = "ForceSelfReroll")]
+    ForceSelfReroll {
+        #[serde(rename = "rollType")]
+        roll_type: String, // "attack", "save", "abilityCheck", etc.
+        #[serde(rename = "mustUseSecond")]
+        must_use_second: bool, // If true, must use second roll
+    },
+    #[serde(rename = "ForceTargetReroll")]
+    ForceTargetReroll {
+        #[serde(rename = "rollType")]
+        roll_type: String, // "attack", "save", "abilityCheck", etc.
+        #[serde(rename = "mustUseSecond")]
+        must_use_second: bool, // If true, must use second roll
+    },
+    #[serde(rename = "InterruptAction")]
+    InterruptAction {
+        #[serde(rename = "actionId")]
+        action_id: String, // ID of action to interrupt
+    },
+    #[serde(rename = "GrantImmediateAction")]
+    GrantImmediateAction {
+        #[serde(rename = "actionId")]
+        action_id: String, // ID of action to grant immediately
+        #[serde(rename = "actionSlot")]
+        action_slot: String, // "bonusAction", "reaction", etc.
     },
 }
 
@@ -411,6 +454,31 @@ impl TriggerEffect {
             TriggerEffect::Chain { effects } => {
                 // TODO: Apply each effect in sequence
                 Err(format!("Chain not yet implemented: {} effects", effects.len()))
+            }
+            TriggerEffect::AddToRoll { amount, roll_type } => {
+                // TODO: Add bonus to next roll of specified type
+                // Requires tracking pending roll modifiers in combat state
+                Err(format!("AddToRoll not yet implemented: +{} to {}", amount, roll_type))
+            }
+            TriggerEffect::ForceSelfReroll { roll_type, must_use_second } => {
+                // TODO: Force the triggering combatant to reroll
+                // Requires roll modification system
+                Err(format!("ForceSelfReroll not yet implemented: {} (must_use: {})", roll_type, must_use_second))
+            }
+            TriggerEffect::ForceTargetReroll { roll_type, must_use_second } => {
+                // TODO: Force the target to reroll
+                // Requires roll modification system
+                Err(format!("ForceTargetReroll not yet implemented: {} (must_use: {})", roll_type, must_use_second))
+            }
+            TriggerEffect::InterruptAction { action_id } => {
+                // TODO: Interrupt the specified action
+                // Requires action interruption system
+                Err(format!("InterruptAction not yet implemented: {}", action_id))
+            }
+            TriggerEffect::GrantImmediateAction { action_id, action_slot } => {
+                // TODO: Grant an immediate action outside normal turn order
+                // Requires action grant system
+                Err(format!("GrantImmediateAction not yet implemented: {} ({})", action_id, action_slot))
             }
         }
     }
