@@ -147,6 +147,7 @@ fn process_defensive_triggers(
                             condition: None,
                             magnitude: None,
                             source: Some(target.id.clone()),
+                            suppressed_until: None,
                             concentration: false,
                             triggers: Vec::new(),
                         }), "Shield".to_string(), template_action.id.clone())
