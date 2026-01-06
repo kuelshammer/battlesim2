@@ -167,7 +167,7 @@ fn test_critical_hit_logic() {
     // 2d1 + 10 = 12
     let dmg_event = events.iter().find(|e| matches!(e, simulation_wasm::events::Event::DamageTaken { .. }));
     if let Some(simulation_wasm::events::Event::DamageTaken { damage, .. }) = dmg_event {
-        assert_eq!(*damage, 12.0, "Crit damage should only double dice (1d1->2d1), not constant (+10)");
+        assert_eq!(damage, &12.0, "Crit damage should only double dice (1d1->2d1), not constant (+10)");
     }
 
     // 2. Force a MISS (1)
