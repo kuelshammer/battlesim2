@@ -182,6 +182,18 @@ pub enum TriggerCondition {
     OnCriticalHit, // e.g. Divine Smite (crit fishing)
     #[serde(rename = "on being hit")]
     OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
+    #[serde(rename = "on cast spell")]
+    OnCastSpell, // e.g. Counterspell, Silvery Barbs
+    #[serde(rename = "on save failed")]
+    OnSaveFailed, // e.g. Portent, Silvery Barbs
+    #[serde(rename = "on save succeeded")]
+    OnSaveSucceeded, // e.g. Lucky, Magic Resonance
+    #[serde(rename = "on enemy moved")]
+    OnEnemyMoved, // e.g. Opportunity Attack
+    #[serde(rename = "on ability check")]
+    OnAbilityCheck, // e.g. Bardic Inspiration, Luck
+    #[serde(rename = "on concentration broken")]
+    OnConcentrationBroken, // e.g. War Caster, Concentration focus
 
     // Composite triggers
     #[serde(rename = "and")]
@@ -221,6 +233,24 @@ impl TriggerCondition {
             TriggerCondition::OnEnemyDeath => matches!(event, Event::UnitDied { .. }),
             TriggerCondition::OnCriticalHit => matches!(event, Event::AttackHit { .. }),
             TriggerCondition::OnBeingHit => matches!(event, Event::AttackHit { .. }),
+            TriggerCondition::OnCastSpell => {
+                matches!(event, Event::CastSpell { .. } | Event::SpellCast { .. })
+            }
+            TriggerCondition::OnSaveFailed => {
+                matches!(event, Event::SaveResult { succeeded: false, .. })
+            }
+            TriggerCondition::OnSaveSucceeded => {
+                matches!(event, Event::SaveResult { succeeded: true, .. })
+            }
+            TriggerCondition::OnEnemyMoved => {
+                matches!(event, Event::UnitMoved { .. })
+            }
+            TriggerCondition::OnAbilityCheck => {
+                matches!(event, Event::AbilityCheckMade { .. })
+            }
+            TriggerCondition::OnConcentrationBroken => {
+                matches!(event, Event::ConcentrationBroken { .. })
+            }
 
             // Composite triggers - recursive evaluation
             TriggerCondition::And { conditions } => {
