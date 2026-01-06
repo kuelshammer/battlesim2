@@ -123,19 +123,33 @@ export function useSimulationWorker() {
             genId
         }));
 
-        const cleanPlayers = players.map(p => ({
-            ...p,
-            actions: p.actions.map(getFinalAction)
-        }));
+        const cleanPlayers = players.map(p => {
+            // Flatten magicItems[].buffs into initialBuffs
+            const magicItemBuffs = p.magicItems?.flatMap(item => item.buffs) ?? [];
+            const mergedInitialBuffs = [...(p.initialBuffs ?? []), ...magicItemBuffs];
+
+            return {
+                ...p,
+                actions: p.actions.map(getFinalAction),
+                initialBuffs: mergedInitialBuffs
+            };
+        });
 
         const cleanTimeline = timeline.map(event => {
             if (event.type === 'combat') {
                 return {
                     ...event,
-                    monsters: event.monsters.map(m => ({
-                        ...m,
-                        actions: m.actions.map(getFinalAction)
-                    }))
+                    monsters: event.monsters.map(m => {
+                        // Flatten magicItems[].buffs into initialBuffs for monsters too
+                        const magicItemBuffs = m.magicItems?.flatMap(item => item.buffs) ?? [];
+                        const mergedInitialBuffs = [...(m.initialBuffs ?? []), ...magicItemBuffs];
+
+                        return {
+                            ...m,
+                            actions: m.actions.map(getFinalAction),
+                            initialBuffs: mergedInitialBuffs
+                        };
+                    })
                 };
             }
             return event;
@@ -171,10 +185,17 @@ export function useSimulationWorker() {
         }));
 
         // Clean data
-        const cleanPlayers = players.map(p => ({
-            ...p,
-            actions: p.actions.map(getFinalAction)
-        }));
+        const cleanPlayers = players.map(p => {
+            // Flatten magicItems[].buffs into initialBuffs
+            const magicItemBuffs = p.magicItems?.flatMap(item => item.buffs) ?? [];
+            const mergedInitialBuffs = [...(p.initialBuffs ?? []), ...magicItemBuffs];
+
+            return {
+                ...p,
+                actions: p.actions.map(getFinalAction),
+                initialBuffs: mergedInitialBuffs
+            };
+        });
 
         const cleanMonsters = monsters.map(m => ({
             ...m,
@@ -190,10 +211,17 @@ export function useSimulationWorker() {
             if (event.type === 'combat') {
                 return {
                     ...event,
-                    monsters: event.monsters.map(m => ({
-                        ...m,
-                        actions: m.actions.map(getFinalAction)
-                    }))
+                    monsters: event.monsters.map(m => {
+                        // Flatten magicItems[].buffs into initialBuffs for monsters too
+                        const magicItemBuffs = m.magicItems?.flatMap(item => item.buffs) ?? [];
+                        const mergedInitialBuffs = [...(m.initialBuffs ?? []), ...magicItemBuffs];
+
+                        return {
+                            ...m,
+                            actions: m.actions.map(getFinalAction),
+                            initialBuffs: mergedInitialBuffs
+                        };
+                    })
                 };
             }
             return event;

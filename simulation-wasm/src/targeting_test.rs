@@ -37,6 +37,9 @@ mod tests {
 
     fn create_dummy_combattant(name: &str, actions: Vec<Action>) -> Combattant {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: name.to_string(),
             name: name.to_string(),
             count: 1.0,

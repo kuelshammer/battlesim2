@@ -68,6 +68,9 @@ mod tests {
             id: id.to_string(),
             initiative: 10.0,
             creature: std::sync::Arc::new(Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
                 id: id.to_string(),
                 name: name.to_string(),
                 count: 1.0,
@@ -303,6 +306,9 @@ mod tests {
         use crate::simulation::run_single_simulation;
         
         let player = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "p1".to_string(),
             name: "Player".to_string(),
             count: 1.0,
@@ -347,6 +353,9 @@ mod tests {
         };
 
         let monster = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "m1".to_string(),
             name: "Goblin".to_string(),
             count: 1.0,
@@ -409,6 +418,9 @@ mod tests {
         
         // Player with 10 HP
         let player = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "p1".to_string(),
             name: "Victim".to_string(),
             count: 1.0,
@@ -438,6 +450,9 @@ mod tests {
 
         // Monster deals massive damage (100 dmg)
         let monster = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "m1".to_string(),
             name: "Overkiller".to_string(),
             count: 1.0,
@@ -531,6 +546,9 @@ mod tests {
         });
 
         let paladin_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "paladin_template".to_string(),
             name: "Paladin".to_string(),
             hp: 50.0,
@@ -665,6 +683,9 @@ mod tests {
         });
 
         let barbarian_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
             hp: 100,
@@ -764,6 +785,9 @@ mod tests {
         });
 
         let barbarian_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
             hp: 100,
@@ -863,6 +887,9 @@ mod tests {
 
         // Create a creature that can cast Bless
         let cleric = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "cleric".to_string(),
             name: "Cleric".to_string(),
             hp: 50.0,
@@ -892,6 +919,9 @@ mod tests {
 
         // Create a target that needs Bless
         let fighter = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "fighter_target".to_string(),
             name: "Fighter".to_string(),
             hp: 40.0,
@@ -920,6 +950,9 @@ mod tests {
         };
 
         let _paladin = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "paladin_template".to_string(),
             name: "Paladin".to_string(),
             hp: 50.0,
@@ -949,6 +982,9 @@ mod tests {
         
         // Create an attacker with a buff that adds damage
         let buffed_attacker = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "buffed_attacker".to_string(),
             name: "Buffed Attacker".to_string(),
             hp: 50.0,
@@ -994,6 +1030,9 @@ mod tests {
 
         // Create a simple enemy to target
         let goblin = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "goblin".to_string(),
             name: "Goblin".to_string(),
             hp: 20,

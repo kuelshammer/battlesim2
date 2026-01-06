@@ -149,7 +149,6 @@ fn process_defensive_triggers(
                             source: Some(target.id.clone()),
                             concentration: false,
                             triggers: Vec::new(),
-            suppressed_until: None,
                         }), "Shield".to_string(), template_action.id.clone())
                     } else {
                         (0.0, None, "".to_string(), "".to_string())
@@ -1227,7 +1226,6 @@ fn apply_single_effect(
                     condition: None,
                     magnitude: None,
                     triggers: Vec::new(),
-            suppressed_until: None,
                 };
 
                 // Configure buff based on template

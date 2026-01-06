@@ -36,6 +36,9 @@ mod tests {
         });
 
         let paladin = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "paladin_template".to_string(),
             name: "Paladin".to_string(),
             hp: 50.0,
@@ -53,6 +56,9 @@ mod tests {
 
         // Create a target that needs Bless
         let fighter = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "fighter_target".to_string(),
             name: "Fighter".to_string(),
             hp: 40.0,

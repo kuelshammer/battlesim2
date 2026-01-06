@@ -739,6 +739,9 @@ mod tests {
     #[test]
     fn test_turn_context_creation() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
@@ -758,7 +761,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -787,6 +789,9 @@ mod tests {
     #[test]
     fn test_turn_management() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
@@ -806,7 +811,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -839,6 +843,9 @@ mod tests {
     #[test]
     fn test_resource_management() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
@@ -858,7 +865,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -894,6 +900,9 @@ mod tests {
     #[test]
     fn test_effect_management() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Player 1".to_string(),
             count: 1.0,
@@ -913,7 +922,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,

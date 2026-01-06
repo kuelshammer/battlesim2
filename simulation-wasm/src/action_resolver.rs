@@ -434,7 +434,6 @@ impl ActionResolver {
                 source: Some(actor_id.to_string()),
                 concentration: true,
                 triggers: Vec::new(),
-            suppressed_until: None,
             };
 
             // Customize buff based on name
@@ -996,6 +995,9 @@ mod tests {
 
         // 1. Setup Context with Attacker and Defender
         let attacker = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "orc".to_string(),
             name: "Orc".to_string(),
             hp: 20,
@@ -1023,6 +1025,9 @@ mod tests {
             con_modifier: None,
         };
         let defender = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "warlock".to_string(),
             name: "Warlock".to_string(),
             hp: 20,
@@ -1180,6 +1185,9 @@ mod tests {
         // Damage = 5 (Fixed). 2 Hits to kill.
 
         let attacker_c = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "attacker".to_string(),
             name: "Attacker".to_string(),
             hp: 100,
@@ -1207,6 +1215,9 @@ mod tests {
             con_modifier: None,
         };
         let victim_tpl = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "victim".to_string(),
             name: "Victim".to_string(),
             hp: 4, // One hit kills

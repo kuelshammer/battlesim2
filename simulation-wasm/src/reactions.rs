@@ -707,6 +707,9 @@ mod tests {
         use crate::model::{Creature, Combattant};
 
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "test".to_string(),
             name: "Test".to_string(),
             count: 1.0,
@@ -726,7 +729,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,

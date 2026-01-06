@@ -7,6 +7,9 @@ mod tests {
 
     fn create_mock_combattant(id: &str, current_hp: u32) -> Combattant {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: id.to_string(),
             name: id.to_string(),
             count: 1.0,
@@ -129,6 +132,9 @@ mod tests {
     fn test_survivability_score_basic() {
         // Fighter: 100 HP, AC 15, no Rage
         let fighter = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "fighter".to_string(),
             name: "Fighter".to_string(),
             count: 1.0,
@@ -168,6 +174,9 @@ mod tests {
         resources.insert("Rage".to_string(), 2); // 2 Rage uses per day
 
         let barbarian = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
             count: 1.0,
@@ -204,6 +213,9 @@ mod tests {
     fn test_survivability_score_ac_10_baseline() {
         // Wizard: 40 HP, AC 10 (no armor)
         let wizard = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "wizard".to_string(),
             name: "Wizard".to_string(),
             count: 1.0,
@@ -240,6 +252,9 @@ mod tests {
     fn test_survivability_score_high_ac() {
         // Paladin: 120 HP, AC 20 (plate armor)
         let paladin = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "paladin".to_string(),
             name: "Paladin".to_string(),
             count: 1.0,
@@ -279,6 +294,9 @@ mod tests {
         resources.insert("Rage".to_string(), 2);
 
         let barbarian = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
             count: 1.0,
@@ -360,6 +378,9 @@ mod tests {
         resources.insert("Rage".to_string(), 0); // Used all Rage
 
         let barbarian = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "barbarian".to_string(),
             name: "Barbarian".to_string(),
             count: 1.0,
@@ -415,6 +436,9 @@ mod tests {
     fn test_survivability_edge_case_nat20_only() {
         // Monk with high AC (26) - only hit on nat 20
         let monk = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "monk".to_string(),
             name: "Monk".to_string(),
             count: 1.0,
@@ -452,6 +476,9 @@ mod tests {
         // Commoner with negative AC scenario (AC 4)
         // Hit on anything but nat 1
         let commoner = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "commoner".to_string(),
             name: "Commoner".to_string(),
             count: 1.0,
@@ -488,6 +515,9 @@ mod tests {
     fn test_survivability_vs_high_attack_bonus() {
         // Fighter vs high-level monster (+10 attack)
         let fighter = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "fighter".to_string(),
             name: "Fighter".to_string(),
             count: 1.0,

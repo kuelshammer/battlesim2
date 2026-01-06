@@ -1053,6 +1053,9 @@ mod tests {
     #[test]
     fn test_action_execution_engine_creation() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "warrior1".to_string(),
             name: "Test Warrior".to_string(),
             count: 1.0,
@@ -1072,7 +1075,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1107,6 +1109,9 @@ mod tests {
     fn test_encounter_completion() {
         // Create a PLAYER creature
         let player_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Test Player".to_string(),
             count: 1.0,
@@ -1126,7 +1131,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1137,6 +1141,9 @@ mod tests {
 
         // Create a MONSTER creature
         let monster_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "monster1".to_string(),
             name: "Test Monster".to_string(),
             count: 1.0,
@@ -1156,7 +1163,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1192,6 +1198,9 @@ mod tests {
     #[test]
     fn test_initiative_order() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "test".to_string(), // Added ID
             name: "Test".to_string(),
             count: 1.0,
@@ -1211,7 +1220,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1249,6 +1257,9 @@ mod tests {
     #[test]
     fn test_execute_encounter_basic() {
         let player_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "player1".to_string(),
             name: "Test Player".to_string(),
             count: 1.0,
@@ -1268,7 +1279,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1278,6 +1288,9 @@ mod tests {
         };
 
         let monster_creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "monster1".to_string(),
             name: "Test Monster".to_string(),
             count: 1.0,
@@ -1297,7 +1310,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1355,6 +1367,9 @@ mod tests {
     #[test]
     fn test_single_combatant() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "solo".to_string(),
             name: "Solo".to_string(),
             count: 1.0,
@@ -1374,7 +1389,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1406,6 +1420,9 @@ mod tests {
     #[test]
     fn test_get_context_stats() {
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "test".to_string(),
             name: "Test".to_string(),
             count: 1.0,
@@ -1425,7 +1442,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
@@ -1455,6 +1471,9 @@ mod tests {
     fn test_same_team_combatants() {
         // Two combatants on the same team should not fight
         let creature = Creature {
+            initial_buffs: vec![],
+            magic_items: vec![],
+            max_arcane_ward_hp: None,
             id: "ally".to_string(),
             name: "Ally".to_string(),
             count: 1.0,
@@ -1474,7 +1493,6 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
-            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,
