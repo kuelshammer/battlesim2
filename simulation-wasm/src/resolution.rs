@@ -285,6 +285,73 @@ fn process_offensive_triggers(
     (additional_damage, cleanup_instructions)
 }
 
+// Function to handle OnBeingHit triggers (e.g., Armor of Agathys)
+// Fires when the target is hit, after hit is confirmed but before damage
+fn process_on_being_hit_triggers(
+    attacker: &Combattant,
+    target: &mut Combattant,
+    stats: &mut HashMap<String, EncounterStats>,
+    log: &mut Vec<String>,
+    log_enabled: bool,
+) -> Vec<CleanupInstruction> {
+    let mut cleanup_instructions = Vec::new();
+
+    // Check if target has reaction available
+    let reaction_slot_id = ActionSlot::Reaction;
+    if target
+        .final_state
+        .used_actions
+        .contains(&(reaction_slot_id as i32).to_string())
+    {
+        return cleanup_instructions;
+    }
+
+    let target_triggers = target.creature.triggers.clone();
+
+    for trigger in target_triggers.iter() {
+        if trigger.condition == TriggerCondition::OnBeingHit {
+            // Note: Requirements checking (e.g., HasTempHP) is done at trigger action level
+            // or needs to be added to ActionTrigger in the future
+
+            if log_enabled {
+                log.push(format!(
+                    "          {} triggers {} on being hit!",
+                    target.creature.name,
+                    trigger.action.base().name
+                ));
+            }
+
+            // Execute the trigger action
+            match &trigger.action {
+                Action::Atk(a) => {
+                    // Retaliation damage (e.g., Armor of Agathys)
+                    let retal_damage = dice::evaluate(&a.dpr, 1);
+                    if log_enabled {
+                        log.push(format!(
+                            "             -> {} deals {:.0} damage to {}",
+                            trigger.action.base().name,
+                            retal_damage,
+                            attacker.creature.name
+                        ));
+                    }
+                    // TODO: Actually apply damage to attacker
+                    // For now, just log it
+                }
+                _ => {
+                    if log_enabled {
+                        log.push(format!(
+                            "             -> {} (not yet implemented)",
+                            trigger.action.base().name
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    cleanup_instructions
+}
+
 // Core logic to apply a single action to a single target
 fn apply_single_effect(
     attacker: &mut Combattant,
@@ -568,6 +635,18 @@ fn apply_single_effect(
             }
 
             if hits {
+                // OnBeingHit triggers (e.g., Armor of Agathys) fire after hit confirmed
+                if let Some(target) = target_opt.as_mut() {
+                    let on_hit_cleanup = process_on_being_hit_triggers(
+                        attacker,
+                        target,
+                        stats,
+                        log,
+                        log_enabled,
+                    );
+                    cleanup_instructions.extend(on_hit_cleanup);
+                }
+
                 // Calculate base damage and buff damage first
                 let mut damage = dice::evaluate(&a.dpr, if is_crit { 2 } else { 1 });
                 let mut sorted_attacker_buffs: Vec<_> = attacker.final_state.buffs.iter().collect();
