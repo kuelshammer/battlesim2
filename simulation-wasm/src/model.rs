@@ -423,6 +423,8 @@ pub struct Buff {
     pub concentration: bool,
     #[serde(default)]
     pub triggers: Vec<EffectTrigger>,
+    #[serde(rename = "suppressedUntil", default, skip_serializing_if = "Option::is_none")]
+    pub suppressed_until: Option<u32>,
 }
 
 impl Hash for Buff {
@@ -442,6 +444,7 @@ impl Hash for Buff {
         self.source.hash(state);
         self.concentration.hash(state);
         self.triggers.hash(state);
+        self.suppressed_until.hash(state);
     }
 }
 

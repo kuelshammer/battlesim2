@@ -726,6 +726,7 @@ mod tests {
             initiative_advantage: false,
             actions: Vec::new(),
             triggers: Vec::new(),
+            suppressed_until: None,
             spell_slots: None,
             class_resources: None,
             hit_dice: None,

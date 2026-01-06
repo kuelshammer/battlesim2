@@ -434,6 +434,7 @@ impl ActionResolver {
                 source: Some(actor_id.to_string()),
                 concentration: true,
                 triggers: Vec::new(),
+            suppressed_until: None,
             };
 
             // Customize buff based on name
