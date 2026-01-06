@@ -344,6 +344,53 @@ impl ActionResolver {
                                         );
                                     }
                                 }
+                                crate::enums::TriggerEffect::SetAdvantageOnNext {
+                                    roll_type,
+                                    advantage,
+                                } => {
+                                    context.roll_modifications.add(
+                                        reactor_id,
+                                        crate::context::RollModification::SetAdvantage {
+                                            roll_type: roll_type.clone(),
+                                            advantage: *advantage,
+                                        },
+                                    );
+                                }
+                                crate::enums::TriggerEffect::ConsumeReaction { target_id } => {
+                                    let target_id = match target_id.as_str() {
+                                        "self" => reactor_id,
+                                        "attacker" => triggering_actor_id.unwrap_or(""),
+                                        id => id,
+                                    };
+
+                                    if !target_id.is_empty() {
+                                        if let Some(target_mut) = context.get_combatant_mut(target_id) {
+                                            let reaction_slot_id = crate::enums::ActionSlot::Reaction as i32;
+                                            target_mut.base_combatant.final_state.used_actions.insert(reaction_slot_id.to_string());
+                                        }
+                                    }
+                                }
+                                crate::enums::TriggerEffect::RedirectAttack { new_target_id } => {
+                                    let mut data = std::collections::HashMap::new();
+                                    data.insert("new_target_id".to_string(), new_target_id.clone());
+                                    
+                                    events.push(Event::Custom {
+                                        event_type: "RedirectAttack".to_string(),
+                                        data,
+                                        source_id: reactor_id.to_string(),
+                                    });
+                                }
+                                crate::enums::TriggerEffect::SplitDamage { target_id, percent } => {
+                                    let mut data = std::collections::HashMap::new();
+                                    data.insert("target_id".to_string(), target_id.clone());
+                                    data.insert("percent".to_string(), percent.to_string());
+                                    
+                                    events.push(Event::Custom {
+                                        event_type: "SplitDamage".to_string(),
+                                        data,
+                                        source_id: reactor_id.to_string(),
+                                    });
+                                }
                                 // Implement other effects as needed
                                 _ => {}
                             }

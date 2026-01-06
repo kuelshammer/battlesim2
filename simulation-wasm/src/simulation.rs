@@ -1,378 +1,12 @@
-//! Core simulation execution functions
-//!
-//! This module contains the main simulation logic for running event-driven
-//! and lightweight simulations. These functions handle:
-//! - Single simulation execution with full event collection
-//! - Lightweight survey pass simulations for Phase 1 of Two-Pass system
-//! - Player state management across encounters
-//! - Legacy format conversion for backward compatibility
+//! Internal simulation state and conversion helpers
 
-use crate::model::{Creature, SimulationResult, Combattant, CreatureState};
-use crate::execution::ActionExecutionEngine;
+use crate::model::{Combattant, CreatureState};
 use crate::context::TurnContext;
 use crate::resources::{ResetType, ResourceType};
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-
-/// Create a CreatureState from a Creature, initializing all resources and state
-///
-/// This helper function creates a CreatureState with:
-/// - Current HP set to max HP
-/// - Empty temp HP
-/// - Empty buffs and upcoming buffs
-/// - Initialized resources (including per-action uses)
-/// - Empty action tracking sets
-/// - No concentration
-/// - No known AC values
-/// - No arcane ward
-fn create_creature_state(creature: &Creature) -> CreatureState {
-    let mut state = CreatureState {
-        current_hp: creature.hp,
-        temp_hp: None,
-        buffs: HashMap::new(),
-        resources: {
-            let mut r = crate::model::SerializableResourceLedger::from(creature.initialize_ledger());
-            // Initialize per-action resources (1/fight, 1/day, Limited, Recharge)
-            let action_uses = crate::actions::get_remaining_uses(creature, "long rest", None);
-            for (action_id, uses) in action_uses {
-                r.current.insert(action_id, uses);
-            }
-            r
-        },
-        upcoming_buffs: HashMap::new(),
-        used_actions: HashSet::new(),
-        concentrating_on: None,
-        actions_used_this_encounter: HashSet::new(),
-        bonus_action_used: false,
-        known_ac: HashMap::new(),
-        // Initialize Arcane Ward HP to max at encounter start
-        arcane_ward_hp: creature.max_arcane_ward_hp,
-        cumulative_spent: 0.0,
-    };
-
-    // Apply initial_buffs from magic items
-    for (index, buff) in creature.initial_buffs.iter().enumerate() {
-        let buff_id = buff.display_name.clone()
-            .unwrap_or_else(|| format!("initial-buff-{}", index));
-        state.buffs.insert(buff_id, buff.clone());
-    }
-
-    state
-}
-
-/// Create a player Combattant from a Creature template
-///
-/// This helper function creates a player Combattant with:
-/// - Properly formatted name (with count suffix if count > 1)
-/// - Unique ID prefixed with 'p-' to ensure uniqueness across encounters
-/// - Team 0 (players)
-/// - Initialized CreatureState
-/// - Rolled initiative
-///
-/// # Arguments
-/// * `group_idx` - Index of the player group in the players array
-/// * `i` - Instance index (0 to count-1)
-/// * `player` - The Creature template to create from
-///
-/// # Returns
-/// A fully initialized Combattant ready for simulation
-fn create_player_combatant(group_idx: usize, i: i32, player: &Creature) -> Combattant {
-    let name = if player.count > 1.0 {
-        format!("{} {}", player.name, i + 1)
-    } else {
-        player.name.clone()
-    };
-    let mut p = player.clone();
-    p.name = name;
-    p.mode = "player".to_string();
-    let id = format!("p-{}-{}-{}", group_idx, i, player.id);
-
-    let state = create_creature_state(&p);
-
-    Combattant {
-        team: 0,
-        id: id.clone(),
-        creature: Arc::new(p.clone()),
-        initiative: crate::utilities::roll_initiative(&p),
-        initial_state: state.clone(),
-        final_state: state,
-        actions: Vec::new(),
-    }
-}
-
-/// Create an enemy Combattant from a Creature template
-///
-/// This helper function creates an enemy Combattant with:
-/// - Properly formatted name (with count suffix if count > 1)
-/// - Unique ID including step index to be globally unique
-/// - Team 1 (enemies)
-/// - Initialized CreatureState
-/// - Rolled initiative
-///
-/// # Arguments
-/// * `step_idx` - Index of the timeline step (encounter)
-/// * `group_idx` - Index of the monster group in the encounter
-/// * `i` - Instance index (0 to count-1)
-/// * `monster` - The Creature template to create from
-///
-/// # Returns
-/// A fully initialized Combattant ready for simulation
-fn create_enemy_combatant(step_idx: usize, group_idx: usize, i: i32, monster: &Creature) -> Combattant {
-    let name = if monster.count > 1.0 {
-        format!("{} {}", monster.name, i + 1)
-    } else {
-        monster.name.clone()
-    };
-    let mut m = monster.clone();
-    m.name = name;
-    let id = format!("step{}-m-{}-{}-{}", step_idx, group_idx, i, monster.id);
-
-    let state = create_creature_state(&m);
-
-    Combattant {
-        team: 1,
-        id: id.clone(),
-        creature: Arc::new(m.clone()),
-        initiative: crate::utilities::roll_initiative(&m),
-        initial_state: state.clone(),
-        final_state: state,
-        actions: Vec::new(),
-    }
-}
-
-/// Initialize players with state - IDs are prefixed with 'p-' to ensure they are unique
-/// and carried over correctly across encounters.
-fn initialize_players(players: &[Creature]) -> Vec<Combattant> {
-    let mut players_with_state = Vec::new();
-    for (group_idx, player) in players.iter().enumerate() {
-        for i in 0..player.count as i32 {
-            let combattant = create_player_combatant(group_idx, i, player);
-            players_with_state.push(combattant);
-        }
-    }
-    players_with_state
-}
-
-/// Initialize enemies for a specific encounter - IDs include encounter index to be globally unique
-fn initialize_enemies(step_idx: usize, monsters: &[Creature]) -> Vec<Combattant> {
-    let mut enemies = Vec::new();
-    for (group_idx, monster) in monsters.iter().enumerate() {
-        for i in 0..monster.count as i32 {
-            let enemy_combattant = create_enemy_combatant(step_idx, group_idx, i, monster);
-            enemies.push(enemy_combattant);
-        }
-    }
-    enemies
-}
-
-/// Run a single event-driven simulation with full event collection
-///
-/// This function executes a complete timeline (combat encounters and short rests)
-/// and returns both the simulation result and all generated events.
-///
-/// # Arguments
-/// * `players` - Player creatures participating in the simulation
-/// * `timeline` - Timeline of encounters and rest steps
-/// * `_log_enabled` - Whether to enable logging (unused, kept for compatibility)
-///
-/// # Returns
-/// A tuple of (SimulationResult, Vec<Event>) containing the result and all events
-pub fn run_single_event_driven_simulation(
-    players: &[Creature],
-    timeline: &[crate::model::TimelineStep],
-    _log_enabled: bool,
-) -> (SimulationResult, Vec<crate::events::Event>) {
-    // Get the current RNG seed that was set before calling this function
-    // This ensures the seed is preserved in the result for reproducibility
-    let seed = crate::rng::get_current_seed();
-    let mut all_events = Vec::new();
-    let mut players_with_state = initialize_players(players);
-
-    let mut encounter_results = Vec::new();
-    let num_combat_encounters = timeline
-        .iter()
-        .filter(|step| matches!(step, crate::model::TimelineStep::Combat(_)))
-        .count();
-
-    for (step_idx, step) in timeline.iter().enumerate() {
-        match step {
-            crate::model::TimelineStep::Combat(encounter) => {
-                // Create enemy combatants - IDs include encounter index to be globally unique
-                let enemies = initialize_enemies(step_idx, &encounter.monsters);
-
-                // Combine all combatants for this encounter
-                let mut all_combatants = players_with_state.clone();
-                all_combatants.extend(enemies);
-
-                // Create ActionExecutionEngine
-                let mut engine = ActionExecutionEngine::new(all_combatants.clone(), true);
-
-                // Run encounter using the ActionExecutionEngine
-                let encounter_result = engine.execute_encounter();
-
-                // Collect events (raw)
-                all_events.extend(encounter_result.event_history.clone());
-
-                // Convert to old format for compatibility
-                let legacy_result = convert_to_legacy_simulation_result(
-                    &encounter_result,
-                    step_idx,
-                    encounter.target_role.clone(),
-                );
-                encounter_results.push(legacy_result);
-
-                // Update player states for next encounter (no rest here, rest is its own step)
-                players_with_state =
-                    update_player_states_for_next_encounter(&players_with_state, &encounter_result, false);
-            }
-            crate::model::TimelineStep::ShortRest(_) => {
-                // Apply standalone short rest recovery
-                players_with_state = apply_short_rest_standalone(&players_with_state, &mut all_events);
-
-                // Add an encounter result with one round snapshot to capture the state after rest
-                let after_rest_team1 = players_with_state.to_vec();
-
-                encounter_results.push(crate::model::EncounterResult {
-                    stats: HashMap::new(),
-                    rounds: vec![crate::model::Round {
-                        team1: after_rest_team1,
-                        team2: Vec::new(),
-                    }],
-                    target_role: crate::model::TargetRole::Standard,
-                });
-            }
-        }
-    }
-
-    // SimulationResult is now SimulationRunData struct
-    let mut result = SimulationResult {
-        encounters: encounter_results,
-        score: None,
-        num_combat_encounters,
-        seed,
-    };
-
-    // Calculate efficiency score
-    let score = crate::aggregation::calculate_efficiency_score(&result, &all_events);
-    result.score = Some(score);
-
-    (result, all_events)
-}
-
-/// Lightweight simulation that tracks only scores and deaths, no event collection
-///
-/// Used in Phase 1 of Two-Pass system to identify interesting runs for re-simulation.
-/// This function runs a complete simulation but without collecting events or snapshots,
-/// resulting in significantly lower memory usage.
-///
-/// # Arguments
-/// * `players` - Player creatures participating in the simulation
-/// * `timeline` - Timeline of encounters and rest steps
-/// * `seed` - RNG seed for deterministic results
-///
-/// # Returns
-/// A `LightweightRun` containing only the essential statistics
-pub fn run_single_lightweight_simulation(
-    players: &[Creature],
-    timeline: &[crate::model::TimelineStep],
-    seed: u64,
-) -> crate::model::LightweightRun {
-    // Seed RNG for deterministic results
-    crate::rng::seed_rng(seed);
-
-    let mut encounter_scores = Vec::new();
-    let mut has_death = false;
-    let mut first_death_encounter: Option<usize> = None;
-
-    let mut players_with_state = initialize_players(players);
-
-    for (step_idx, step) in timeline.iter().enumerate() {
-        match step {
-            crate::model::TimelineStep::Combat(encounter) => {
-                // Create enemy combatants - IDs include encounter index to be globally unique
-                let enemies = initialize_enemies(step_idx, &encounter.monsters);
-
-                // Combine all combatants for this encounter
-                let mut all_combatants = players_with_state.clone();
-                all_combatants.extend(enemies);
-
-                // Create ActionExecutionEngine
-                let mut engine = ActionExecutionEngine::new(all_combatants.clone(), false);
-
-                // Run encounter using the ActionExecutionEngine (NO event collection, NO snapshots)
-                let encounter_result = engine.execute_encounter();
-
-                // Track cumulative score after this combat encounter
-                let score = crate::safe_aggregation::calculate_lightweight_score(
-                    &encounter_result.final_combatant_states,
-                );
-                encounter_scores.push(score);
-
-                // Check for deaths in this encounter
-                if !has_death {
-                    for combatant in &encounter_result.final_combatant_states {
-                        if combatant.current_hp == 0 && combatant.base_combatant.team == 0 {
-                            has_death = true;
-                            first_death_encounter = Some(encounter_scores.len() - 1);
-                            break;
-                        }
-                    }
-                }
-
-                // Update player states for next encounter (no rest here, rest is its own step)
-                players_with_state = update_player_states_for_next_encounter(
-                    &players_with_state,
-                    &encounter_result,
-                    false,
-                );
-            }
-            crate::model::TimelineStep::ShortRest(_) => {
-                // Apply standalone short rest recovery (NO event collection)
-                players_with_state = apply_short_rest_standalone_no_events(&players_with_state);
-            }
-        }
-    }
-
-    // Calculate final stats from the last state of players
-    let total_survivors = players_with_state
-        .iter()
-        .filter(|p| p.final_state.current_hp > 0)
-        .count();
-
-    // final_score is the score of the last completed encounter
-    let final_score = encounter_scores.last().copied().unwrap_or(0.0);
-
-    // total_hp_lost is (Total Daily Net Worth EHP) - (Final EHP)
-    let sr_count = timeline.iter().filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_))).count();
-    let tdnw = crate::decile_analysis::calculate_tdnw_lightweight(players, sr_count);
-    let mut final_ehp = 0.0;
-    for p in &players_with_state {
-        let ledger = p.creature.initialize_ledger();
-        final_ehp += crate::intensity_calculation::calculate_serializable_ehp(
-            p.final_state.current_hp,
-            p.final_state.temp_hp.unwrap_or(0),
-            &p.final_state.resources,
-            &ledger.reset_rules,
-        );
-    }
-    let total_hp_lost = (tdnw - final_ehp).max(0.0);
-
-    // Clear the seeded RNG after simulation completes
-    crate::rng::clear_rng();
-
-    crate::model::LightweightRun {
-        seed,
-        encounter_scores,
-        final_score,
-        total_hp_lost,
-        total_survivors,
-        has_death,
-        first_death_encounter,
-    }
-}
 
 /// Short rest without event collection - used by lightweight simulation
-fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combattant> {
+pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combattant> {
     let mut updated_players = Vec::new();
 
     for player in players {
@@ -443,7 +77,7 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
         }
 
         // Update state
-        let next_state = crate::model::CreatureState {
+        let next_state = CreatureState {
             current_hp,
             temp_hp: None, // Temp HP lost on rest
             resources: resources.into(),
@@ -461,7 +95,7 @@ fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combatta
 }
 
 /// Apply short rest with event collection
-fn apply_short_rest_standalone(
+pub(crate) fn apply_short_rest_standalone(
     players: &[Combattant],
     events: &mut Vec<crate::events::Event>,
 ) -> Vec<Combattant> {
@@ -518,8 +152,6 @@ fn apply_short_rest_standalone(
 
                         // Stop if using another hit die would overflow max HP
                         if current_hp as f64 + total_avg > max_hp as f64 {
-                            // Break inner loop, but we need to check other die types? 
-                            // Usually all hit dice are same or similar, but let's be safe.
                             continue; 
                         }
 
@@ -564,7 +196,7 @@ fn apply_short_rest_standalone(
         // Get updated state back from context
         if let Some(c_state) = context.get_combatant(&player.id) {
             let mut updated_player = player.clone();
-            let next_state = crate::model::CreatureState {
+            let next_state = CreatureState {
                 current_hp: c_state.current_hp,
                 temp_hp: None, // Temp HP lost on rest
                 resources: c_state.resources.clone().into(),
@@ -584,10 +216,7 @@ fn apply_short_rest_standalone(
 }
 
 /// Update player states for the next encounter
-///
-/// Extracts final states from the encounter result and applies them to players
-/// for the next encounter in the timeline.
-fn update_player_states_for_next_encounter(
+pub(crate) fn update_player_states_for_next_encounter(
     players: &[Combattant],
     encounter_result: &crate::execution::EncounterResult,
     short_rest: bool,
@@ -624,7 +253,7 @@ fn update_player_states_for_next_encounter(
             }
 
             // Update state
-            let next_state = crate::model::CreatureState {
+            let next_state = CreatureState {
                 current_hp,
                 temp_hp: if temp_hp > 0 {
                     Some(temp_hp)
@@ -657,10 +286,7 @@ fn update_player_states_for_next_encounter(
 }
 
 /// Reconstruct actions from event history
-///
-/// Parses the event history to rebuild which actions each combatant took
-/// in each round, including target information.
-fn reconstruct_actions(
+pub(crate) fn reconstruct_actions(
     event_history: &[crate::events::Event],
 ) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
     let mut actions_by_round_actor: HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> =
@@ -744,10 +370,7 @@ fn reconstruct_actions(
 }
 
 /// Convert execution result to legacy simulation result format
-///
-/// This function converts the new ActionExecutionEngine output format
-/// to the legacy EncounterResult format for backward compatibility.
-fn convert_to_legacy_simulation_result(
+pub(crate) fn convert_to_legacy_simulation_result(
     encounter_result: &crate::execution::EncounterResult,
     _encounter_idx: usize,
     target_role: crate::model::TargetRole,
@@ -765,7 +388,7 @@ fn convert_to_legacy_simulation_result(
 
         for state in snapshot {
             // Map context::CombattantState to model::CreatureState
-            let final_creature_state = crate::model::CreatureState {
+            let final_creature_state = CreatureState {
                 current_hp: state.current_hp,
                 temp_hp: Some(state.temp_hp),
                 buffs: HashMap::new(), // TODO: Convert active effects to buffs if needed
@@ -781,7 +404,6 @@ fn convert_to_legacy_simulation_result(
             };
 
             let mut combatant = state.base_combatant.clone();
-            // combatant.creature.hp = state.current_hp; // Removed: creature.hp should remain max HP
             combatant.final_state = final_creature_state;
 
             // Populate actions for this round
@@ -822,7 +444,7 @@ fn convert_to_legacy_simulation_result(
         let mut team2 = Vec::new();
 
         for state in &encounter_result.final_combatant_states {
-            let final_creature_state = crate::model::CreatureState {
+            let final_creature_state = CreatureState {
                 current_hp: state.current_hp,
                 temp_hp: Some(state.temp_hp),
                 buffs: HashMap::new(),
@@ -838,7 +460,6 @@ fn convert_to_legacy_simulation_result(
             };
 
             let mut combatant = state.base_combatant.clone();
-            // combatant.creature.hp = state.current_hp; // Removed: creature.hp should remain max HP
             combatant.final_state = final_creature_state;
 
             let is_player = state.side == 0;
@@ -857,47 +478,4 @@ fn convert_to_legacy_simulation_result(
         rounds,
         target_role,
     }
-}
-
-/// Phase 1: Survey pass - runs all iterations with lightweight simulation (no event collection)
-///
-/// Returns all `LightweightRun` results (~323 KB for 10,100 iterations with 1% granularity).
-/// This is the main entry point for Phase 1 of the Two-Pass system.
-///
-/// # Arguments
-/// * `players` - Player creatures participating in the simulation
-/// * `timeline` - Timeline of encounters and rest steps
-/// * `iterations` - Number of iterations to run
-/// * `base_seed` - Optional base seed for deterministic results
-///
-/// # Returns
-/// Vector of `LightweightRun` results with scores and death tracking
-pub fn run_survey_pass(
-    players: Vec<Creature>,
-    timeline: Vec<crate::model::TimelineStep>,
-    iterations: usize,
-    base_seed: Option<u64>,
-) -> Vec<crate::model::LightweightRun> {
-    let mut all_runs = Vec::with_capacity(iterations);
-    let scenario_hash = crate::cache::get_scenario_hash(&players, &timeline);
-
-    for i in 0..iterations {
-        // Use base_seed + i as the seed for this iteration
-        let seed = base_seed.unwrap_or(i as u64).wrapping_add(i as u64);
-
-        // Check cache first
-        if let Some(cached_run) = crate::cache::get_cached_run(scenario_hash, seed) {
-            all_runs.push(cached_run);
-            continue;
-        }
-
-        let lightweight_run = run_single_lightweight_simulation(&players, &timeline, seed);
-
-        // Store in cache
-        crate::cache::insert_cached_run(scenario_hash, seed, lightweight_run.clone());
-
-        all_runs.push(lightweight_run);
-    }
-
-    all_runs
 }

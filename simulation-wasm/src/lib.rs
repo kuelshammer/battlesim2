@@ -5,6 +5,7 @@ pub mod targeting;
 pub mod enums;
 pub mod model;
 pub mod resolvers;
+pub mod api;
 pub mod aggregation;
 pub mod cleanup;
 pub mod resolution;
@@ -55,7 +56,7 @@ pub mod wasm_api; // WASM bindings and JavaScript interface
 pub mod anomaly_reproduction_test;
 
 // Re-export commonly used functions for external access
-pub use simulation::{run_single_event_driven_simulation, run_single_lightweight_simulation, run_survey_pass};
+pub use api::runner::{run_single_event_driven_simulation, run_single_lightweight_simulation, run_survey_pass};
 pub use seed_selection::select_interesting_seeds_with_tiers;
 pub use two_pass::{run_simulation_with_rolling_stats, run_simulation_with_three_tier};
 

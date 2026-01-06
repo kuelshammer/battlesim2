@@ -2,7 +2,7 @@
 mod tests {
     use crate::model::*;
     use crate::safe_aggregation::aggregate_results_safe;
-    use crate::simulation::run_single_event_driven_simulation;
+    use crate::run_single_event_driven_simulation;
     use crate::enums::EnemyTarget;
 
     fn create_fighter(id: &str, initiative: f64) -> Creature {

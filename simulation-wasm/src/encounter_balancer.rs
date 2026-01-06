@@ -75,7 +75,7 @@ pub fn project_encounter_metrics(
     party: &[crate::model::Creature],
     iterations: usize,
 ) -> EncounterMetrics {
-    use crate::simulation::run_single_lightweight_simulation;
+    use crate::run_single_lightweight_simulation;
     let iterations = iterations.max(100);
 
     // Create a single-encounter timeline

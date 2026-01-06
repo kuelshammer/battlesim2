@@ -50,7 +50,6 @@ pub fn resolve(
     events
 }
 
-/// Helper to resolve a single hit of an attack
 pub fn resolve_single_attack_hit(
     resolver: &ActionResolver,
     attack: &AtkAction,
@@ -59,9 +58,11 @@ pub fn resolve_single_attack_hit(
     target_id: &str,
     events: &mut Vec<Event>,
 ) {
-    // 1. Trigger "OnBeingAttacked" reactions (e.g. Cutting Words, adding to the roll modifications)
+    let mut current_target_id = target_id.to_string();
+
+    // 1. Trigger "OnBeingAttacked" reactions
     let pre_roll_triggers = resolver.trigger_reactions_internal(
-        target_id,
+        &current_target_id,
         crate::enums::TriggerCondition::OnBeingAttacked,
         context,
         Some(actor_id),
@@ -69,9 +70,20 @@ pub fn resolve_single_attack_hit(
     );
     events.extend(pre_roll_triggers);
 
-    // 2. Perform attack roll (will consume any modifications added above)
-    let mut attack_result = roll_attack(attack, context, actor_id, target_id);
-    let mut target_ac = get_target_ac(target_id, context);
+    // Check for RedirectAttack among the events
+    for event in events.iter() {
+        if let Event::Custom { event_type, data, .. } = event {
+            if event_type == "RedirectAttack" {
+                if let Some(new_target) = data.get("new_target_id") {
+                    current_target_id = new_target.clone();
+                }
+            }
+        }
+    }
+
+    // 2. Perform attack roll
+    let mut attack_result = roll_attack(attack, context, actor_id, &current_target_id);
+    let mut target_ac = get_target_ac(&current_target_id, context);
 
     // 3. Check for hit
     let mut is_hit = !attack_result.is_miss
@@ -79,7 +91,7 @@ pub fn resolve_single_attack_hit(
 
     // 4. Defensive Reactions (Shield)
     if is_hit && !attack_result.is_critical {
-        let (new_ac, reaction_events) = resolve_defensive_reactions(resolver, target_id, context, attack_result.total, target_ac);
+        let (new_ac, reaction_events) = resolve_defensive_reactions(resolver, &current_target_id, context, attack_result.total, target_ac);
         if !reaction_events.is_empty() {
             events.extend(reaction_events);
             target_ac = new_ac;
@@ -89,20 +101,19 @@ pub fn resolve_single_attack_hit(
         }
     }
 
-    // 5. Accuracy Reactions (e.g. Precision Attack on a miss)
+    // 5. Accuracy Reactions
     if !is_hit && !attack_result.is_miss && !attack_result.is_critical {
         let accuracy_triggers = resolver.trigger_reactions_internal(
             actor_id,
             crate::enums::TriggerCondition::OnMiss,
             context,
-            Some(target_id),
+            Some(&current_target_id),
             None,
         );
         
         if !accuracy_triggers.is_empty() {
             events.extend(accuracy_triggers);
             
-            // Apply any new modifications added by OnMiss triggers
             let mods = context.roll_modifications.take_all(actor_id);
             for modif in mods {
                 match modif {
@@ -116,11 +127,10 @@ pub fn resolve_single_attack_hit(
                             detail.total += bonus;
                         }
                     }
-                    _ => {} // Rerolls typically happen during the roll process
+                    _ => {}
                 }
             }
             
-            // Re-evaluate hit
             is_hit = attack_result.total >= target_ac;
         }
     }
@@ -128,7 +138,6 @@ pub fn resolve_single_attack_hit(
     if is_hit {
         let (damage, damage_roll) = calculate_damage(attack, attack_result.is_critical, context, actor_id);
 
-        // Determine range from action tags
         use crate::resources::ActionTag;
         let range = if attack.tags.contains(&ActionTag::Melee) {
             Some(crate::enums::AttackRange::Melee)
@@ -140,7 +149,7 @@ pub fn resolve_single_attack_hit(
 
         let hit_event = Event::AttackHit {
             attacker_id: actor_id.to_string(),
-            target_id: target_id.to_string(),
+            target_id: current_target_id.clone(),
             damage,
             attack_roll: attack_result.roll_detail,
             damage_roll,
@@ -151,7 +160,7 @@ pub fn resolve_single_attack_hit(
         events.push(hit_event);
 
         let trigger_events = resolver.trigger_reactions_internal(
-            target_id,
+            &current_target_id,
             crate::enums::TriggerCondition::OnBeingHit,
             context,
             Some(actor_id),
@@ -159,12 +168,38 @@ pub fn resolve_single_attack_hit(
         );
         events.extend(trigger_events);
 
-        let damage_events = context.apply_damage(target_id, damage, "Physical", actor_id);
+        // Check for SplitDamage
+        let mut actual_damage = damage;
+        let mut split_target_id = None;
+        let mut split_percent = 0.0;
+
+        for event in events.iter() {
+            if let Event::Custom { event_type, data, .. } = event {
+                if event_type == "SplitDamage" {
+                    if let (Some(target), Some(percent_str)) = (data.get("target_id"), data.get("percent")) {
+                        if let Ok(p) = percent_str.parse::<f64>() {
+                            split_target_id = Some(target.clone());
+                            split_percent = p / 100.0;
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(tid) = split_target_id {
+            let split_amount = actual_damage * split_percent;
+            actual_damage -= split_amount;
+            
+            let split_events = context.apply_damage(&tid, split_amount, "Shared", actor_id);
+            events.extend(split_events);
+        }
+
+        let damage_events = context.apply_damage(&current_target_id, actual_damage, "Physical", actor_id);
         events.extend(damage_events);
     } else {
         let miss_event = Event::AttackMissed {
             attacker_id: actor_id.to_string(),
-            target_id: target_id.to_string(),
+            target_id: current_target_id,
             attack_roll: attack_result.roll_detail,
             target_ac,
         };

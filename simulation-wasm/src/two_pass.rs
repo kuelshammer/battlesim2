@@ -49,7 +49,7 @@ pub fn run_simulation_with_rolling_stats(
 
     // Phase 1: Survey pass - lightweight simulation for all iterations
     let base_seed = seed.unwrap_or(0);
-    let lightweight_runs = crate::simulation::run_survey_pass(
+    let lightweight_runs = crate::run_survey_pass(
         players.clone(),
         timeline.clone(),
         iterations,
@@ -68,7 +68,7 @@ pub fn run_simulation_with_rolling_stats(
     for seed in &interesting_seeds {
         crate::rng::seed_rng(*seed);
         let (result, events) =
-            crate::simulation::run_single_event_driven_simulation(&players, &timeline, false);
+            crate::run_single_event_driven_simulation(&players, &timeline, false);
         sample_runs.push(crate::model::SimulationRun { result, events });
     }
 
@@ -166,7 +166,7 @@ pub fn run_simulation_with_three_tier(
 
     // Phase 1: Survey pass - lightweight simulation for all iterations
     let base_seed = seed.unwrap_or(0);
-    let lightweight_runs = crate::simulation::run_survey_pass(
+    let lightweight_runs = crate::run_survey_pass(
         players.clone(),
         timeline.clone(),
         iterations,
@@ -186,7 +186,7 @@ pub fn run_simulation_with_three_tier(
             crate::model::InterestingSeedTier::TierA => {
                 // Full events for decile logs
                 let (result, events) =
-                    crate::simulation::run_single_event_driven_simulation(&players, &timeline, false);
+                    crate::run_single_event_driven_simulation(&players, &timeline, false);
                 sample_runs.push(crate::model::SimulationRun { result, events });
             }
             crate::model::InterestingSeedTier::TierB => {
@@ -194,7 +194,7 @@ pub fn run_simulation_with_three_tier(
                 // TODO: For now, we run full events but store fewer runs
                 // In a future update, we'd use execute_encounter_lean() for true lean collection
                 let (result, events) =
-                    crate::simulation::run_single_event_driven_simulation(&players, &timeline, false);
+                    crate::run_single_event_driven_simulation(&players, &timeline, false);
                 sample_runs.push(crate::model::SimulationRun { result, events });
             }
             crate::model::InterestingSeedTier::TierC => {

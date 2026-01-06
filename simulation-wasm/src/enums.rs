@@ -319,7 +319,7 @@ pub enum TriggerRequirement {
     ActionTag(String),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum TriggerEffect {
     #[serde(rename = "Damage")]
@@ -385,6 +385,89 @@ pub enum TriggerEffect {
         #[serde(rename = "actionSlot")]
         action_slot: String, // "bonusAction", "reaction", etc.
     },
+    #[serde(rename = "RedirectAttack")]
+    RedirectAttack {
+        #[serde(rename = "newTargetId")]
+        new_target_id: String,
+    },
+    #[serde(rename = "SplitDamage")]
+    SplitDamage {
+        #[serde(rename = "targetId")]
+        target_id: String,
+        #[serde(rename = "percent")]
+        percent: f64,
+    },
+    #[serde(rename = "SetAdvantageOnNext")]
+    SetAdvantageOnNext {
+        #[serde(rename = "rollType")]
+        roll_type: String,
+        #[serde(rename = "advantage")]
+        advantage: bool,
+    },
+    #[serde(rename = "ConsumeReaction")]
+    ConsumeReaction {
+        #[serde(rename = "targetId")]
+        target_id: String,
+    },
+}
+
+impl std::hash::Hash for TriggerEffect {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state);
+        match self {
+            TriggerEffect::DealDamage { amount, damage_type } => {
+                amount.hash(state);
+                damage_type.hash(state);
+            }
+            TriggerEffect::ReduceDamage { amount } => amount.hash(state),
+            TriggerEffect::RestoreResource { resource, amount } => {
+                resource.hash(state);
+                amount.hash(state);
+            }
+            TriggerEffect::SuppressBuff { buff_id, duration } => {
+                buff_id.hash(state);
+                duration.hash(state);
+            }
+            TriggerEffect::ApplyBuff { buff, target } => {
+                buff.hash(state);
+                target.hash(state);
+            }
+            TriggerEffect::RemoveBuff { buff_id, target } => {
+                buff_id.hash(state);
+                target.hash(state);
+            }
+            TriggerEffect::Chain { effects } => {
+                effects.hash(state);
+            }
+            TriggerEffect::AddToRoll { amount, roll_type } => {
+                amount.hash(state);
+                roll_type.hash(state);
+            }
+            TriggerEffect::ForceSelfReroll { roll_type, must_use_second } => {
+                roll_type.hash(state);
+                must_use_second.hash(state);
+            }
+            TriggerEffect::ForceTargetReroll { roll_type, must_use_second } => {
+                roll_type.hash(state);
+                must_use_second.hash(state);
+            }
+            TriggerEffect::InterruptAction { action_id } => action_id.hash(state),
+            TriggerEffect::GrantImmediateAction { action_id, action_slot } => {
+                action_id.hash(state);
+                action_slot.hash(state);
+            }
+            TriggerEffect::RedirectAttack { new_target_id } => new_target_id.hash(state),
+            TriggerEffect::SplitDamage { target_id, percent } => {
+                target_id.hash(state);
+                crate::utilities::hash_f64(*percent, state);
+            }
+            TriggerEffect::SetAdvantageOnNext { roll_type, advantage } => {
+                roll_type.hash(state);
+                advantage.hash(state);
+            }
+            TriggerEffect::ConsumeReaction { target_id } => target_id.hash(state),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -479,6 +562,18 @@ impl TriggerEffect {
                 // TODO: Grant an immediate action outside normal turn order
                 // Requires action grant system
                 Err(format!("GrantImmediateAction not yet implemented: {} ({})", action_id, action_slot))
+            }
+            TriggerEffect::RedirectAttack { new_target_id } => {
+                Err(format!("RedirectAttack not yet implemented: {}", new_target_id))
+            }
+            TriggerEffect::SplitDamage { target_id, percent } => {
+                Err(format!("SplitDamage not yet implemented: {} ({}%)", target_id, percent))
+            }
+            TriggerEffect::SetAdvantageOnNext { roll_type, advantage } => {
+                Err(format!("SetAdvantageOnNext not yet implemented: {} ({})", roll_type, advantage))
+            }
+            TriggerEffect::ConsumeReaction { target_id } => {
+                Err(format!("ConsumeReaction not yet implemented: {}", target_id))
             }
         }
     }

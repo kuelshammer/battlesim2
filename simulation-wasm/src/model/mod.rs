@@ -16,3 +16,4 @@ pub use simulation::*;
 
 // Explicitly re-export from enums as per original model.rs
 pub use crate::enums::ActionCondition;
+pub use crate::execution::engine::ActionExecutionEngine;
