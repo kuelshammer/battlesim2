@@ -58,6 +58,12 @@ pub enum Event {
     },
 
     // Spell Events
+    CastSpell {
+        caster_id: String,
+        spell_name: String,
+        target_ids: Vec<String>,
+        spell_level: u8,
+    },
     SpellCast {
         caster_id: String,
         spell_id: String,
@@ -73,7 +79,8 @@ pub enum Event {
         reason: String,
     },
     ConcentrationBroken {
-        caster_id: String,
+        creature_id: String,
+        spell_name: String,
         reason: String,
     },
     ConcentrationMaintained {
@@ -105,6 +112,20 @@ pub enum Event {
         target_id: String,
         condition: CreatureCondition,
         source_id: String,
+    },
+
+    // Save Events
+    SaveAttempted {
+        creature_id: String,
+        save_type: String,
+        dc: u8,
+        modifier: i32,
+    },
+    SaveResult {
+        creature_id: String,
+        save_type: String,
+        succeeded: bool,
+        roll_total: u8,
     },
 
     // Healing Events
@@ -152,6 +173,12 @@ pub enum Event {
     },
 
     // Movement Events (future extensibility)
+    UnitMoved {
+        creature_id: String,
+        from_position: Option<(i32, i32)>,
+        to_position: Option<(i32, i32)>,
+        distance: u32,
+    },
     MovementStarted {
         unit_id: String,
         from_position: String,
@@ -168,6 +195,13 @@ pub enum Event {
     },
 
     // Resource Events
+    AbilityCheckMade {
+        creature_id: String,
+        ability: String,
+        dc: u8,
+        roll_total: u8,
+        succeeded: bool,
+    },
     ResourceConsumed {
         unit_id: String,
         resource_type: String,
@@ -199,7 +233,9 @@ impl Event {
             Event::ActionSkipped { actor_id, .. } => Some(actor_id.clone()),
             Event::AttackHit { attacker_id, .. } => Some(attacker_id.clone()),
             Event::AttackMissed { attacker_id, .. } => Some(attacker_id.clone()),
+            Event::CastSpell { caster_id, .. } => Some(caster_id.clone()),
             Event::SpellCast { caster_id, .. } => Some(caster_id.clone()),
+            Event::ConcentrationBroken { creature_id, .. } => Some(creature_id.clone()),
             Event::BuffApplied { source_id, .. } => Some(source_id.clone()),
             Event::ConditionAdded { source_id, .. } => Some(source_id.clone()),
             Event::HealingApplied { source_id, .. } => Some(source_id.clone()),
@@ -234,6 +270,10 @@ impl Event {
             Event::MovementStarted { unit_id, .. } => Some(unit_id.clone()),
             Event::MovementInterrupted { unit_id, .. } => Some(unit_id.clone()),
             Event::OpportunityAttack { target_id, .. } => Some(target_id.clone()),
+            Event::SaveAttempted { creature_id, .. } => Some(creature_id.clone()),
+            Event::SaveResult { creature_id, .. } => Some(creature_id.clone()),
+            Event::UnitMoved { creature_id, .. } => Some(creature_id.clone()),
+            Event::AbilityCheckMade { creature_id, .. } => Some(creature_id.clone()),
             Event::ResourceConsumed { unit_id, .. } => Some(unit_id.clone()),
             Event::ResourceRestored { unit_id, .. } => Some(unit_id.clone()),
             Event::ResourceDepleted { unit_id, .. } => Some(unit_id.clone()),
@@ -261,6 +301,7 @@ impl Event {
             Event::AttackMissed { .. } => "AttackMissed",
             Event::DamageTaken { .. } => "DamageTaken",
             Event::DamagePrevented { .. } => "DamagePrevented",
+            Event::CastSpell { .. } => "CastSpell",
             Event::SpellCast { .. } => "SpellCast",
             Event::SpellSaved { .. } => "SpellSaved",
             Event::SpellFailed { .. } => "SpellFailed",
@@ -287,6 +328,10 @@ impl Event {
             Event::ResourceConsumed { .. } => "ResourceConsumed",
             Event::ResourceRestored { .. } => "ResourceRestored",
             Event::ResourceDepleted { .. } => "ResourceDepleted",
+            Event::SaveAttempted { .. } => "SaveAttempted",
+            Event::SaveResult { .. } => "SaveResult",
+            Event::UnitMoved { .. } => "UnitMoved",
+            Event::AbilityCheckMade { .. } => "AbilityCheckMade",
             Event::Custom { .. } => "Custom",
         }
     }
