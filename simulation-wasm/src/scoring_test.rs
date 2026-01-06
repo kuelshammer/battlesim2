@@ -342,6 +342,7 @@ mod tests {
             source: Some("barbarian".to_string()),
             concentration: false,
             triggers: vec![],
+            suppressed_until: None,
         });
 
         let mut rage_resources = HashMap::new();

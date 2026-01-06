@@ -8,6 +8,16 @@ use crate::rng;
 use rand::Rng; // Import Rng trait for gen_range
 use std::collections::HashMap;
 
+/// Check if a buff is currently suppressed (e.g., Cloak of Displacement after being hit)
+fn is_buff_suppressed(buff: &Buff, current_round: u32) -> bool {
+    if let Some(until_round) = buff.suppressed_until {
+        if current_round < until_round {
+            return true; // Buff is suppressed
+        }
+    }
+    false
+}
+
 // Helper to update encounter stats
 pub fn update_stats(
     stats: &mut HashMap<String, EncounterStats>,
@@ -495,6 +505,8 @@ fn apply_single_effect(
             let (target_ac, target_buff_ac) = if let Some(t) = &target_opt {
                 let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
                 sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                // TODO: Filter out suppressed buffs when round_number is available
+                // sorted_buffs.retain(|(_, b)| !is_buff_suppressed(b, round_number));
                 (
                     t.creature.ac,
                     sorted_buffs.iter()
@@ -684,6 +696,7 @@ fn apply_single_effect(
                 if let Some(t) = target_opt.as_ref() {
                     let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
                     sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                    // TODO: Filter out suppressed buffs when round_number is available
                     for (_, b) in sorted_buffs {
                         if let Some(reduction_formula) = &b.damage_reduction {
                             let val = dice::evaluate(reduction_formula, 1);
@@ -705,6 +718,7 @@ fn apply_single_effect(
                 if let Some(t) = target_opt.as_ref() {
                     let mut sorted_buffs: Vec<_> = t.final_state.buffs.iter().collect();
                     sorted_buffs.sort_by(|a, b| a.0.cmp(b.0));
+                    // TODO: Filter out suppressed buffs when round_number is available
                     for (_, b) in sorted_buffs {
                         if let Some(mult) = b.damage_taken_multiplier {
                             total_multiplier *= mult;

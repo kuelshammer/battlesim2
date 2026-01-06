@@ -427,12 +427,6 @@ mod tests {
     fn create_test_encounter(cr: f64, count: f64) -> Encounter {
         Encounter {
             monsters: vec![Creature {
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
-            initial_buffs: vec![],
-            magic_items: vec![],
-            max_arcane_ward_hp: None,
                 id: "test_monster".to_string(),
                 arrival: None,
                 mode: "monster".to_string(),

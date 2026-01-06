@@ -1113,6 +1113,7 @@ mod tests {
                     damage_type: "Cold".to_string(),
                 },
             }],
+            suppressed_until: None,
         };
 
         use crate::context::{ActiveEffect, EffectType};
