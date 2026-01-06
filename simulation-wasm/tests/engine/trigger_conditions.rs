@@ -22,6 +22,7 @@ mod composite_trigger_tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert!(and_condition.evaluate(&hit_event));
@@ -44,6 +45,7 @@ mod composite_trigger_tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert!(!and_condition.evaluate(&hit_event));
@@ -66,6 +68,7 @@ mod composite_trigger_tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert!(or_condition.evaluate(&hit_event));
@@ -124,6 +127,7 @@ mod composite_trigger_tests {
             attack_roll: None,
             damage_roll: None,
             target_ac: 15.0,
+            range: None,
         };
 
         assert!(!not_condition.evaluate(&hit_event));

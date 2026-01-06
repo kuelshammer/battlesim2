@@ -13,6 +13,7 @@ fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &
     Creature {
         magic_items: vec![],
         max_arcane_ward_hp: None,
+        initial_buffs: vec![],
         id: name.to_string(),
         name: name.to_string(),
         hp,

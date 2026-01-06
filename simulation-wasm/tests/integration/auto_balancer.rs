@@ -12,7 +12,7 @@ fn test_black_dragon_auto_balance() {
         ac: 18,
         count: 2.0,
         arrival: None,
-        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
+        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![],
         speed_fly: None,
         save_bonus: 3.0,
         str_save_bonus: None,
@@ -59,7 +59,7 @@ fn test_black_dragon_auto_balance() {
         ac: 19,
         count: 1.0,
         arrival: None,
-        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
+        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![],
         speed_fly: Some(80.0),
         save_bonus: 5.0,
         str_save_bonus: None,
@@ -168,7 +168,7 @@ fn test_smart_balance_burst_vs_slog() {
     // Low HP but high spell slot value.
     let wizard = Creature {
         id: "wizard".to_string(), name: "Wizard".to_string(), hp: 20, ac: 12, count: 1.0,
-        arrival: None, mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None, speed_fly: None, save_bonus: 2.0,
+        arrival: None, mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![], speed_fly: None, save_bonus: 2.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
         int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
         con_save_advantage: None, save_advantage: None,
@@ -192,7 +192,7 @@ fn test_smart_balance_burst_vs_slog() {
     // 2. Setup: High Damage Monster (Boss)
     let glass_boss = Creature {
         id: "boss".to_string(), name: "Glass Boss".to_string(), hp: 100, ac: 15, count: 1.0,
-        arrival: None, mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None, speed_fly: None, save_bonus: 4.0,
+        arrival: None, mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![], speed_fly: None, save_bonus: 4.0,
         str_save_bonus: None, dex_save_bonus: None, con_save_bonus: None,
         int_save_bonus: None, wis_save_bonus: None, cha_save_bonus: None,
         con_save_advantage: None, save_advantage: None,

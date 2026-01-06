@@ -9,6 +9,7 @@ use rand::Rng; // Import Rng trait for gen_range
 use std::collections::HashMap;
 
 /// Check if a buff is currently suppressed (e.g., Cloak of Displacement after being hit)
+#[allow(dead_code)]
 fn is_buff_suppressed(buff: &Buff, current_round: u32) -> bool {
     if let Some(until_round) = buff.suppressed_until {
         if current_round < until_round {
@@ -301,11 +302,11 @@ fn process_offensive_triggers(
 fn process_on_being_hit_triggers(
     attacker: &Combattant,
     target: &mut Combattant,
-    stats: &mut HashMap<String, EncounterStats>,
+    _stats: &mut HashMap<String, EncounterStats>,
     log: &mut Vec<String>,
     log_enabled: bool,
 ) -> Vec<CleanupInstruction> {
-    let mut cleanup_instructions = Vec::new();
+    let cleanup_instructions = Vec::new();
 
     // Check if target has reaction available
     let reaction_slot_id = ActionSlot::Reaction;

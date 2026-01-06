@@ -33,6 +33,7 @@ fn create_simple_creature(id: &str, name: &str, hp: u32, ac: u32, team: u32) -> 
         max_arcane_ward_hp: None,
         arrival: None,
         mode: if team == 0 { "player".to_string() } else { "monster".to_string() },
+        initial_buffs: vec![],
     };
 
     let arc_creature = Arc::new(creature);

@@ -56,10 +56,9 @@ fn create_minimal_creature(id: String, hp: u32, ac: u32, damage_dice: &str) -> C
         triggers: vec![],
         spell_slots: None,
         class_resources: None,
+        hit_dice: None,
         con_modifier: None,
         initial_buffs: vec![],
-        magic_items: vec![],
-        max_arcane_ward_hp: None,
     }
 }
 
