@@ -30,6 +30,52 @@ pub struct TurnContext {
     pub battlefield_conditions: Vec<String>, // Simplified to string for now
     pub weather: Option<String>,             // Simplified to string for now
     pub terrain: String,                     // Simplified to string for now
+
+    // Roll Manipulation System
+    pub roll_modifications: RollModificationQueue, // Per-combatant pending roll mods
+    
+    // Interrupt System
+    pub action_interrupted: bool, // Flag to signal that current action should stop
+}
+
+/// A queue of pending modifications to be applied to rolls
+#[derive(Debug, Clone, Default)]
+pub struct RollModificationQueue {
+    pub modifications: HashMap<String, Vec<RollModification>>,
+}
+
+impl RollModificationQueue {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add(&mut self, unit_id: &str, modification: RollModification) {
+        self.modifications
+            .entry(unit_id.to_string())
+            .or_default()
+            .push(modification);
+    }
+
+    pub fn take_all(&mut self, unit_id: &str) -> Vec<RollModification> {
+        self.modifications.remove(unit_id).unwrap_or_default()
+    }
+}
+
+/// A pending modification to be applied to a roll
+#[derive(Debug, Clone, PartialEq)]
+pub enum RollModification {
+    /// Add a bonus to the roll (e.g., Bardic Inspiration)
+    AddBonus { amount: String }, // DiceFormula string
+    /// Force a reroll (e.g., Lucky, Portent)
+    Reroll {
+        roll_type: String, // "attack", "save", "abilityCheck"
+        must_use_second: bool,
+    },
+    /// Apply advantage/disadvantage
+    SetAdvantage {
+        roll_type: String,
+        advantage: bool, // true = advantage, false = disadvantage
+    },
 }
 
 /// State of a combatant within the current encounter
@@ -136,11 +182,16 @@ impl TurnContext {
             battlefield_conditions,
             weather,
             terrain,
+            roll_modifications: RollModificationQueue::new(),
+            action_interrupted: false,
         }
     }
 
     /// Start a new turn for the specified unit
     pub fn start_new_turn(&mut self, unit_id: String) {
+        // Reset interrupt flag at start of turn
+        self.action_interrupted = false;
+
         // Emit turn start event
         self.event_bus.emit_event(Event::TurnStarted {
             unit_id: unit_id.clone(),

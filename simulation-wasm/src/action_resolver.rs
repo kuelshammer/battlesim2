@@ -106,6 +106,11 @@ impl ActionResolver {
         let count = attack.targets.max(1) as usize;
         
         for _ in 0..count {
+            // Check if action was interrupted by a reaction
+            if context.action_interrupted {
+                break;
+            }
+
             // Refresh alive enemies for every hit to support dynamic strategies (Most HP, Highest Survivability)
             let all_alive = context.get_alive_combatants();
             let enemies: Vec<_> = all_alive.into_iter()
@@ -231,6 +236,11 @@ impl ActionResolver {
         let is_temp_hp = heal.temp_hp.unwrap_or(false);
 
         for (is_enemy, idx) in target_indices {
+            // Check for interruption
+            if context.action_interrupted {
+                break;
+            }
+
             let target_id = if is_enemy {
                 if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
             } else {
@@ -258,6 +268,11 @@ impl ActionResolver {
         let targets = effect_action.get_targets(context, actor_id);
 
         for target_id in targets {
+            // Check for interruption
+            if context.action_interrupted {
+                break;
+            }
+
             let effect_id = effect_action.base().id.clone();
 
             // Note: Event emission is handled by apply_effect_to_combatant -> context.apply_effect
@@ -296,6 +311,11 @@ impl ActionResolver {
         let target_indices = targeting::get_targets(&actor, &Action::Buff(buff_action.clone()), &allies, &enemies);
 
         for (is_enemy, idx) in target_indices {
+            // Check for interruption
+            if context.action_interrupted {
+                break;
+            }
+
             let target_id = if is_enemy {
                 if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
             } else {
@@ -316,6 +336,7 @@ impl ActionResolver {
 
         events
     }
+
 
     /// Resolve debuff actions
     pub fn resolve_debuff(
@@ -343,6 +364,11 @@ impl ActionResolver {
         let target_indices = targeting::get_targets(&actor, &Action::Debuff(debuff_action.clone()), &allies, &enemies);
 
         for (is_enemy, idx) in target_indices {
+            // Check for interruption
+            if context.action_interrupted {
+                break;
+            }
+
             let target_id = if is_enemy {
                 if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
             } else {
@@ -350,9 +376,7 @@ impl ActionResolver {
             };
 
             // 1. Perform saving throw
-            let roll = rng::roll_d20() as f64;
-            let save_bonus = self.get_save_bonus(&target_id, context);
-            let total_save = roll + save_bonus;
+            let total_save = self.roll_save(&target_id, context);
 
             if total_save < debuff_action.save_dc {
                 // Save failed! Apply buff
@@ -422,6 +446,11 @@ impl ActionResolver {
         let target_indices = targeting::get_targets(&actor, &Action::Template(template_action_to_resolve.clone()), &allies, &enemies);
 
         for (is_enemy, idx) in target_indices {
+            // Check for interruption
+            if context.action_interrupted {
+                break;
+            }
+
             let target_id = if is_enemy {
                 if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
             } else {
@@ -472,11 +501,10 @@ impl ActionResolver {
             // Perform saving throw for debuffs (bane)
             let mut should_apply = true;
             if template_name == "bane" {
-                let roll = rng::roll_d20() as f64;
-                let save_bonus = self.get_save_bonus(&target_id, context);
+                let total_save = self.roll_save(&target_id, context);
                 let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
                 
-                if roll + save_bonus >= save_dc {
+                if total_save >= save_dc {
                     should_apply = false;
                     events.push(Event::SpellSaved {
                         target_id: target_id.clone(),
@@ -498,6 +526,7 @@ impl ActionResolver {
                 events.push(context.apply_effect(effect));
             }
         }
+
 
         events.push(Event::Custom {
             event_type: "TemplateActionExecuted".to_string(),
@@ -575,6 +604,72 @@ impl ActionResolver {
                                             reactor_id,
                                         );
                                         events.extend(dmg_events);
+                                    }
+                                }
+                                crate::enums::TriggerEffect::GrantImmediateAction {
+                                    action_id,
+                                    action_slot: _,
+                                } => {
+                                    // Grant an immediate action outside normal turn order
+                                    if let Some(combatant) = context.get_combatant(reactor_id) {
+                                        // Look for the action in the combatant's known actions
+                                        let action = combatant.base_combatant.creature.actions.iter()
+                                            .find(|a| a.base().id == *action_id)
+                                            .cloned();
+
+                                        if let Some(action) = action {
+                                            // Emit action start event for the granted action
+                                            context.record_event(crate::events::Event::ActionStarted {
+                                                actor_id: reactor_id.to_string(),
+                                                action_id: action_id.clone(),
+                                                decision_trace: std::collections::HashMap::new(),
+                                            });
+
+                                            // Resolve the granted action recursively
+                                            let nested_events = self.resolve_action(&action, context, reactor_id);
+                                            events.extend(nested_events);
+                                        }
+                                    }
+                                }
+                                crate::enums::TriggerEffect::InterruptAction { action_id: _ } => {
+                                    // Set the interrupt flag to stop the current action sequence
+                                    context.action_interrupted = true;
+                                }
+                                crate::enums::TriggerEffect::AddToRoll { amount, roll_type: _ } => {
+                                    // Add a pending roll bonus
+                                    context.roll_modifications.add(
+                                        reactor_id,
+                                        crate::context::RollModification::AddBonus {
+                                            amount: amount.clone(),
+                                        },
+                                    );
+                                }
+                                crate::enums::TriggerEffect::ForceSelfReroll {
+                                    roll_type,
+                                    must_use_second,
+                                } => {
+                                    // Force a reroll for the reactor
+                                    context.roll_modifications.add(
+                                        reactor_id,
+                                        crate::context::RollModification::Reroll {
+                                            roll_type: roll_type.clone(),
+                                            must_use_second: *must_use_second,
+                                        },
+                                    );
+                                }
+                                crate::enums::TriggerEffect::ForceTargetReroll {
+                                    roll_type,
+                                    must_use_second,
+                                } => {
+                                    // Force a reroll for the triggering actor
+                                    if let Some(target_id) = triggering_actor_id {
+                                        context.roll_modifications.add(
+                                            target_id,
+                                            crate::context::RollModification::Reroll {
+                                                roll_type: roll_type.clone(),
+                                                must_use_second: *must_use_second,
+                                            },
+                                        );
                                     }
                                 }
                                 // Implement other effects as needed
@@ -696,7 +791,7 @@ impl ActionResolver {
 
 
     /// Roll attack value
-    fn roll_attack(&self, attack: &AtkAction, context: &TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
+    fn roll_attack(&self, attack: &AtkAction, context: &mut TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
         // 1. Determine Advantage/Disadvantage
         let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
             || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
@@ -712,7 +807,23 @@ impl ActionResolver {
         let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv);
 
         // 2. Perform Roll
-        let roll1 = rng::roll_d20();
+        let mut roll1 = rng::roll_d20();
+        
+        // Apply rerolls before calculating natural_roll
+        let mods = context.roll_modifications.take_all(actor_id);
+        for modif in &mods {
+            if let crate::context::RollModification::Reroll { roll_type, must_use_second } = modif {
+                if roll_type == "attack" {
+                    let roll2 = rng::roll_d20();
+                    if *must_use_second {
+                        roll1 = roll2;
+                    } else {
+                        roll1 = roll1.max(roll2);
+                    }
+                }
+            }
+        }
+
         let natural_roll: u32;
         
         if final_triple_adv {
@@ -737,6 +848,16 @@ impl ActionResolver {
         };
 
         let mut total = natural_roll as f64 + modifier_total;
+
+        // Apply bonus modifications
+        for modif in &mods {
+            if let crate::context::RollModification::AddBonus { amount } = modif {
+                // Simplified bonus evaluation
+                let formula = crate::model::DiceFormula::Expr(amount.clone());
+                total += dice::evaluate(&formula, 1);
+            }
+        }
+
         
         // Check for accuracy-altering buffs in active effects
         let mut final_roll_detail = roll_detail;
@@ -817,6 +938,39 @@ impl ActionResolver {
         }
 
         bonus
+    }
+
+    /// Roll a saving throw for a combatant
+    fn roll_save(&self, target_id: &str, context: &mut TurnContext) -> f64 {
+        let mut roll = rng::roll_d20();
+        
+        // Apply rerolls
+        let mods = context.roll_modifications.take_all(target_id);
+        for modif in &mods {
+            if let crate::context::RollModification::Reroll { roll_type, must_use_second } = modif {
+                if roll_type == "save" {
+                    let roll2 = rng::roll_d20();
+                    if *must_use_second {
+                        roll = roll2;
+                    } else {
+                        roll = roll.max(roll2);
+                    }
+                }
+            }
+        }
+
+        let mut total = roll as f64 + self.get_save_bonus(target_id, context);
+
+        // Apply bonus modifications
+        for modif in &mods {
+            if let crate::context::RollModification::AddBonus { amount } = modif {
+                // Simplified bonus evaluation
+                let formula = crate::model::DiceFormula::Expr(amount.clone());
+                total += dice::evaluate(&formula, 1);
+            }
+        }
+
+        total
     }
 
     /// Calculate damage from attack
