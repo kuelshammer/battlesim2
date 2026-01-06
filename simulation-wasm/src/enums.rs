@@ -279,6 +279,29 @@ pub enum TriggerEffect {
         buff_id: String,
         duration: BuffDuration,
     },
+    #[serde(rename = "ApplyBuff")]
+    ApplyBuff {
+        buff: String, // buff ID to apply
+        target: TriggerTarget,
+    },
+    #[serde(rename = "RemoveBuff")]
+    RemoveBuff {
+        #[serde(rename = "buffId")]
+        buff_id: String,
+        target: TriggerTarget,
+    },
+    #[serde(rename = "Chain")]
+    Chain {
+        effects: Vec<TriggerEffect>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TriggerTarget {
+    Self_,
+    Attacker,
+    Target,
 }
 
 impl TriggerEffect {
@@ -311,6 +334,18 @@ impl TriggerEffect {
                 // TODO: Find buff by ID and set its suppressed_until field
                 // Requires Buff struct to have suppressed_until field
                 Err(format!("SuppressBuff not yet implemented: {} {:?}", buff_id, duration))
+            }
+            TriggerEffect::ApplyBuff { buff, target } => {
+                // TODO: Apply buff to target (Self_, Attacker, or Target)
+                Err(format!("ApplyBuff not yet implemented: {} {:?}", buff, target))
+            }
+            TriggerEffect::RemoveBuff { buff_id, target } => {
+                // TODO: Remove buff from target
+                Err(format!("RemoveBuff not yet implemented: {} {:?}", buff_id, target))
+            }
+            TriggerEffect::Chain { effects } => {
+                // TODO: Apply each effect in sequence
+                Err(format!("Chain not yet implemented: {} effects", effects.len()))
             }
         }
     }
