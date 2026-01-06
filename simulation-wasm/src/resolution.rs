@@ -1227,6 +1227,7 @@ fn apply_single_effect(
                     condition: None,
                     magnitude: None,
                     triggers: Vec::new(),
+                    suppressed_until: None,
                 };
 
                 // Configure buff based on template
