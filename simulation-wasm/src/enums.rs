@@ -346,7 +346,6 @@ impl TriggerCondition {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", content = "value")]
 pub enum TriggerRequirement {
     #[serde(rename = "damageType")]
     DamageType(String),
