@@ -96,7 +96,7 @@ jobs:
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run Rust tests
-        run: cargo test --all
+        run: STRESS_TIME_SECS=60 STRESS_COUNT=1000 cargo test --all
 
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
