@@ -142,6 +142,7 @@ pub struct Vitals {
     pub attrition_score: f64, // % of daily budget burned (0.0 - 1.0)
     pub volatility_index: f64, // Difference between P10 and P50 cost
     pub doom_horizon: f64,    // Projected encounters until failure
+    pub deaths_door_index: f64, // Average rounds spent at <25% HP (Thrilling metric)
     pub difficulty_grade: DifficultyGrade,
     pub is_volatile: bool,
 }
@@ -313,6 +314,7 @@ fn calculate_vitals(
             attrition_score: 0.0,
             volatility_index: 0.0,
             doom_horizon: 0.0,
+            deaths_door_index: 0.0,
             difficulty_grade: DifficultyGrade::S,
             is_volatile: false,
         };
@@ -322,6 +324,7 @@ fn calculate_vitals(
     let mut ko_count = 0;
     let mut tpk_count = 0;
     let mut crisis_count = 0;
+    let mut total_deaths_door_rounds = 0;
 
     for &run in results {
         let encounters = if let Some(idx) = encounter_idx {
@@ -335,6 +338,17 @@ fn calculate_vitals(
         let mut run_has_crisis = false;
 
         for enc in encounters {
+            // Check Death's Door (rounds with survivor < 25% HP)
+            for round in &enc.rounds {
+                let any_at_deaths_door = round.team1.iter().any(|c| {
+                    let hp_pct = if c.creature.hp > 0 { c.final_state.current_hp as f64 / c.creature.hp as f64 } else { 0.0 };
+                    c.final_state.current_hp > 0 && hp_pct < 0.25
+                });
+                if any_at_deaths_door {
+                    total_deaths_door_rounds += 1;
+                }
+            }
+
             if let Some(last_round) = enc.rounds.last() {
                 let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count();
                 if survivors < party_size { run_has_ko = true; }
@@ -354,6 +368,7 @@ fn calculate_vitals(
     let lethality_index = ko_count as f64 / total_runs as f64;
     let tpk_risk = tpk_count as f64 / total_runs as f64;
     let crisis_risk = crisis_count as f64 / total_runs as f64;
+    let deaths_door_index = total_deaths_door_rounds as f64 / total_runs as f64;
 
     // 2. Attrition and Volatility
     // Sort results by score to find P10 and P50
@@ -409,6 +424,7 @@ fn calculate_vitals(
         attrition_score,
         volatility_index,
         doom_horizon,
+        deaths_door_index,
         difficulty_grade,
         is_volatile,
     }

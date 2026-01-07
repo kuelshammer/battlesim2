@@ -620,6 +620,7 @@ export const VitalsSchema = z.object({
     attritionScore: z.number(),
     volatilityIndex: z.number(),
     doomHorizon: z.number(),
+    deathsDoorIndex: z.number(),
     difficultyGrade: DifficultyGradeSchema,
     isVolatile: z.boolean(),
 })
