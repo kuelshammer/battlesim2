@@ -1,4 +1,106 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
+use serde::de::{Error, Visitor, MapAccess};
+
+// Custom deserializer for TriggerRequirement to handle both string and object formats
+mod trigger_requirement_serde {
+    use super::*;
+
+    struct TriggerRequirementVisitor;
+
+    impl<'de> Visitor<'de> for TriggerRequirementVisitor {
+        type Value = super::TriggerRequirement;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            formatter.write_str("a string or object representing TriggerRequirement")
+        }
+
+        // Handle string format: "hasTempHP", "damageType:fire", "range:5"
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            match value {
+                "hasTempHP" => Ok(super::TriggerRequirement::HasTempHP),
+                s if s.starts_with("damageType:") => {
+                    let dtype = s.strip_prefix("damageType:").unwrap_or("");
+                    Ok(super::TriggerRequirement::DamageType(dtype.to_string()))
+                }
+                s if s.starts_with("range:") => {
+                    let range_str = s.strip_prefix("range:").unwrap_or("");
+                    let range = range_str.parse().unwrap_or(0);
+                    Ok(super::TriggerRequirement::Range(range))
+                }
+                s if s.starts_with("actionTag:") => {
+                    let tag = s.strip_prefix("actionTag:").unwrap_or("");
+                    Ok(super::TriggerRequirement::ActionTag(tag.to_string()))
+                }
+                s if s.starts_with("withinRange:") => {
+                    let dist_str = s.strip_prefix("withinRange:").unwrap_or("");
+                    let dist = dist_str.parse().unwrap_or(0.0);
+                    Ok(super::TriggerRequirement::WithinRange { max_distance: dist })
+                }
+                _ => Err(Error::custom(format!("unknown TriggerRequirement: {}", value))),
+            }
+        }
+
+        // Handle object format: {"hasTempHP": true}, {"damageType": "fire"}
+        fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+        where
+            A: MapAccess<'de>,
+        {
+            while let Some(k) = map.next_key::<String>()? {
+                match k.as_str() {
+                    "hasTempHP" => {
+                        let _v: Option<bool> = map.next_value()?;
+                        return Ok(super::TriggerRequirement::HasTempHP);
+                    }
+                    "damageType" => {
+                        let damage_type = map.next_value()?;
+                        return Ok(super::TriggerRequirement::DamageType(damage_type));
+                    }
+                    "range" => {
+                        let range = map.next_value()?;
+                        return Ok(super::TriggerRequirement::Range(range));
+                    }
+                    "actionTag" => {
+                        let action_tag = map.next_value()?;
+                        return Ok(super::TriggerRequirement::ActionTag(action_tag));
+                    }
+                    "max_distance" => {
+                        let max_distance = map.next_value()?;
+                        return Ok(super::TriggerRequirement::WithinRange { max_distance });
+                    }
+                    _ => {
+                        let _v: Option<serde::de::IgnoredAny> = map.next_value()?;
+                    }
+                }
+            }
+
+            Err(Error::custom("invalid TriggerRequirement format"))
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<super::TriggerRequirement, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TriggerRequirementVisitor)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub enum TriggerRequirement {
+    #[serde(rename = "damageType")]
+    DamageType(String),
+    #[serde(rename = "range")]
+    Range(i32),
+    #[serde(rename = "hasTempHP")]
+    HasTempHP,
+    #[serde(rename = "actionTag")]
+    ActionTag(String),
+    #[serde(rename = "withinRange")]
+    WithinRange { max_distance: f64 },
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActionSlot {
@@ -345,20 +447,6 @@ impl TriggerCondition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum TriggerRequirement {
-    #[serde(rename = "damageType")]
-    DamageType(String),
-    #[serde(rename = "range")]
-    Range(i32),
-    #[serde(rename = "hasTempHP")]
-    HasTempHP,
-    #[serde(rename = "actionTag")]
-    ActionTag(String),
-    #[serde(rename = "withinRange")]
-    WithinRange { max_distance: f64 },
-}
-
 impl std::hash::Hash for TriggerRequirement {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         use std::mem::discriminant;
@@ -383,6 +471,16 @@ impl std::hash::Hash for TriggerRequirement {
                 crate::utilities::hash_f64(*max_distance, state);
             }
         }
+    }
+}
+
+// Manual Deserialize implementation for TriggerRequirement to handle both string and object formats
+impl<'de> Deserialize<'de> for TriggerRequirement {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        trigger_requirement_serde::deserialize(deserializer)
     }
 }
 
