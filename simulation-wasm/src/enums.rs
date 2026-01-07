@@ -198,6 +198,10 @@ pub enum TriggerCondition {
     OnSaveSucceeded, // e.g. Lucky, Magic Resonance
     #[serde(rename = "on enemy moved")]
     OnEnemyMoved, // e.g. Opportunity Attack
+    #[serde(rename = "enemy entered reach")]
+    EnemyEnteredReach, // e.g. Polearm Master - enemy moved from >5ft to <=5ft
+    #[serde(rename = "enemy left reach")]
+    EnemyLeftReach, // e.g. Opportunity Attack - enemy moved from <=5ft to >5ft
     #[serde(rename = "on ability check")]
     OnAbilityCheck, // e.g. Bardic Inspiration, Luck
     #[serde(rename = "on concentration broken")]
@@ -255,6 +259,41 @@ impl TriggerCondition {
             TriggerCondition::OnEnemyMoved => {
                 matches!(event, Event::UnitMoved { .. })
             }
+            TriggerCondition::EnemyEnteredReach => {
+                // Check if enemy moved from >5ft to <=5ft (for Polearm Master)
+                if let Event::UnitMoved { from_position, to_position, .. } = event {
+                    // Calculate distances from origin (0,0) - 5ft reach in D&D is one 5ft square
+                    // In grid terms, adjacent squares are 5ft apart (Manhattan-like distance)
+                    let from_dist = from_position
+                        .map(|(x, y)| (x.abs() + y.abs()) as f64 * 5.0)
+                        .unwrap_or(f64::MAX);
+                    let to_dist = to_position
+                        .map(|(x, y)| (x.abs() + y.abs()) as f64 * 5.0)
+                        .unwrap_or(f64::MAX);
+
+                    // Was outside reach (>5ft) and now within reach (<=5ft)
+                    from_dist > 5.0 && to_dist <= 5.0
+                } else {
+                    false
+                }
+            }
+            TriggerCondition::EnemyLeftReach => {
+                // Check if enemy moved from <=5ft to >5ft (for Opportunity Attack)
+                if let Event::UnitMoved { from_position, to_position, .. } = event {
+                    // Calculate distances from origin (0,0)
+                    let from_dist = from_position
+                        .map(|(x, y)| (x.abs() + y.abs()) as f64 * 5.0)
+                        .unwrap_or(f64::MAX);
+                    let to_dist = to_position
+                        .map(|(x, y)| (x.abs() + y.abs()) as f64 * 5.0)
+                        .unwrap_or(f64::MAX);
+
+                    // Was within reach (<=5ft) and now outside reach (>5ft)
+                    from_dist <= 5.0 && to_dist > 5.0
+                } else {
+                    false
+                }
+            }
             TriggerCondition::OnAbilityCheck => {
                 matches!(event, Event::AbilityCheckMade { .. })
             }
@@ -306,7 +345,7 @@ impl TriggerCondition {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", content = "value")]
 pub enum TriggerRequirement {
     #[serde(rename = "damageType")]
@@ -317,6 +356,35 @@ pub enum TriggerRequirement {
     HasTempHP,
     #[serde(rename = "actionTag")]
     ActionTag(String),
+    #[serde(rename = "withinRange")]
+    WithinRange { max_distance: f64 },
+}
+
+impl std::hash::Hash for TriggerRequirement {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        use std::mem::discriminant;
+        match self {
+            TriggerRequirement::DamageType(s) => {
+                discriminant(self).hash(state);
+                s.hash(state);
+            }
+            TriggerRequirement::Range(i) => {
+                discriminant(self).hash(state);
+                i.hash(state);
+            }
+            TriggerRequirement::HasTempHP => {
+                discriminant(self).hash(state);
+            }
+            TriggerRequirement::ActionTag(s) => {
+                discriminant(self).hash(state);
+                s.hash(state);
+            }
+            TriggerRequirement::WithinRange { max_distance } => {
+                discriminant(self).hash(state);
+                crate::utilities::hash_f64(*max_distance, state);
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
