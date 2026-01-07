@@ -89,7 +89,7 @@ const CrosshairLine: React.FC<CrosshairLineProps> = memo(({
     }, [render]);
 
     return (
-        <div className={`${styles.crosshairOverlay} ${className || ''}`}>
+        <div className={`${styles.crosshairOverlay} ${className || ''}`} data-testid="crosshair-line">
             <canvas
                 ref={canvasRef}
                 width={width}
@@ -187,6 +187,7 @@ export const CrosshairTooltip: React.FC = memo(() => {
             className={styles.tooltip}
             style={style}
             role="tooltip"
+            data-testid="crosshair-tooltip"
         >
             <div className={styles.tooltipHeader}>
                 <span className={styles.percentile}>Percentile {bucket.percentile}</span>
@@ -264,7 +265,7 @@ export const CrosshairTooltip: React.FC = memo(() => {
                                             <div className={styles.breakdownRow}>
                                                 <span className={styles.breakdownLabel}>EHP:</span>
                                                 <span className={styles.breakdownValue}>
-                                                    {breakdown.totalEhp.toFixed(0)}/{breakdown.maxEhp}
+                                                    {breakdown.totalEhp}/{breakdown.maxEhp}
                                                 </span>
                                             </div>
                                         )}

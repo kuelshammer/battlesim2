@@ -46,9 +46,9 @@ pub struct ResourceBreakdown {
     /// Max hit dice
     pub hit_dice_max: f64,
     /// Total weighted EHP value (for debugging)
-    pub total_ehp: f64,
+    pub total_ehp: i32,
     /// Max weighted EHP value (for percentage)
-    pub max_ehp: f64,
+    pub max_ehp: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -368,8 +368,8 @@ fn extract_resource_breakdown(
         long_rest_features,
         hit_dice,
         hit_dice_max,
-        total_ehp,
-        max_ehp,
+        total_ehp: total_ehp as i32,
+        max_ehp: max_ehp as i32,
     }
 }
 

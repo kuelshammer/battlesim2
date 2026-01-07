@@ -72,8 +72,8 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                     const avgHp = hpValues.length > 0 ? hpValues.reduce((sum, hp) => sum + hp, 0) / hpValues.length : 0
 
                     const displayName = playerNames?.get(slot.playerId) || slot.playerId || `Player ${playerIdx + 1}`
-                    const ehpValue = Math.round(slot.survivabilityScore)
-                    const displayEHP = isNaN(ehpValue) ? '---' : ehpValue
+                    const ehpValue = slot.survivabilityScore
+                    const displayEHP = (ehpValue === undefined || ehpValue === null || isNaN(ehpValue)) ? '---' : ehpValue
 
                     return (
                         <div 

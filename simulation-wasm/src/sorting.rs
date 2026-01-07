@@ -14,7 +14,7 @@ pub struct PlayerSlot {
     /// Player ID from creature definition
     pub player_id: String,
     /// Survivability score used for ordering (higher = more tanky)
-    pub survivability_score: f64,
+    pub survivability_score: i32,
 }
 
 /// Extract all attack bonuses from a creature's actions
@@ -116,7 +116,7 @@ pub fn assign_party_slots(players: &[Creature], avg_attack_bonus: i32) -> Vec<Pl
         .map(|(position, (player_id, score))| PlayerSlot {
             position,
             player_id,
-            survivability_score: score,
+            survivability_score: score as i32,
         })
         .collect()
 }
