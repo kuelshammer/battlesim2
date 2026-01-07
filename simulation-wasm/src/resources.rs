@@ -227,6 +227,7 @@ impl Hash for ActionCost {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(untagged)]
 pub enum CombatCondition {
     EnemyInRange(f64),
     IsSurprised,
