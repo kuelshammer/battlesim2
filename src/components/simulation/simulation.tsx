@@ -99,6 +99,11 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [runTour, setRunTour] = useState(false)
     const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
 
+    // Expose for E2E tests
+    useEffect(() => {
+        (window as any).simulationWasm = true;
+    }, []);
+
     // Web Worker Simulation
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
@@ -335,6 +340,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 aria-valuemin={0}
                                 aria-valuemax={100}
                                 aria-label="Simulation progress"
+                                data-testid="simulation-loading"
                             >
                                 <div 
                                     className={styles.progressFill} 
@@ -417,115 +423,123 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 <AssistantSummary 
                                     pacingData={pacingData} 
                                 />
-
-                                {/* Overall Day Summary - Prioritized */}
-                                {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
-                                    <div className={styles.overallSummary}>
-                                        <PartyOverview
-                                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                            playerNames={combatantNames}
-                                        />
-                                        <PlayerGraphs
-                                            skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                            partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                            playerNames={combatantNames}
-                                        />
-                                    </div>
-                                )}
-
-                                <CrosshairTooltip />
                             </>
                         )}
 
-                                            {timeline.map((item, index) => {
-                                                // Find index within combat-only array for pacingData
-                                                const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
-                                                const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
-                                                const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
-                                                const actualPercent = pacingData?.actualCosts[combatIndex];
-                                                const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
+                        {timeline.map((item, index) => {
+                            // Find index within combat-only array for pacingData
+                            const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
+                            const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
+                            const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
+                            const actualPercent = pacingData?.actualCosts[combatIndex];
+                            const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
 
-                                                return (
-                                                    <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
-                                                        {item.type === 'combat' ? (
-                                                            <div className="monster-form-section">
-                                                                <EncounterForm
-                                                                mode='monster'
-                                                                encounter={item}
-                                                                onUpdate={(newValue) => updateTimelineItem(index, newValue)}
-                                                                onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
-                                                                onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
-                                                                onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
-                                                                onEditingChange={setIsEditing}
-                                                                onAutoAdjust={() => {
-                                                                    setSelectedEncounterIndex(index);
-                                                                    worker.autoAdjustEncounter(players, item.monsters, timeline, index);
-                                                                }}
-                                                                autoAdjustDisabled={worker.isRunning}
-                                                            />
-                                                            </div>
-                                                    ) : (
-                                                        <div className={styles.restCard}>
-                                                            <div className={styles.restHeader}>
-                                                                <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
-                                                                <div className={styles.restControls}>
-                                                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
-                                                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
-                                                                    <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
-                                                                </div>
-                                                            </div>
-                                                            <div className={styles.restBody}>
-                                                                Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    
-                                                    {(worker.analysis?.encounters?.[index] ? (
-                                                        <EncounterResult
-                                                            value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
-                                                            analysis={worker.analysis.encounters[index]}
-                                                            fullAnalysis={worker.analysis} 
-                                                            playerNames={combatantNames}
-                                                            isStale={isStale}
-                                                            isPreliminary={worker.isRunning && worker.progress < 100}
-                                                            targetPercent={item.type === 'combat' ? targetPercent : undefined}
-                                                            actualPercent={item.type === 'combat' ? actualPercent : undefined}
-                                                                                                                    cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
-                                                                                                                    isShortRest={item.type === 'shortRest'}
-                                                                                                                    targetRole={item.type === 'combat' ? item.targetRole : undefined}
-                                                                                                                />                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
-                                                        <EncounterResult
-                                                            value={simulationResults[index]}
-                                                            analysis={null}
-                                                            fullAnalysis={worker.analysis} 
-                                                            playerNames={combatantNames}
-                                                            isStale={isStale}
-                                                            isPreliminary={worker.isRunning && worker.progress < 100}
-                                                            targetPercent={targetPercent}
-                                                                                                                    actualPercent={actualPercent}
-                                                                                                                    cumulativeDrift={cumulativeDrift}
-                                                                                                                    targetRole={item.targetRole}
-                                                                                                                />                                                    ) : null))}
-                                                    
-                                                    {item.type === 'combat' && (
-                                                        <div className={styles.buttonGroup}>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setSelectedEncounterIndex(index);
-                                                                    setSelectedDecileIndex(5); // Reset to Median
-                                                                    setShowLogModal(true);
-                                                                }}
-                                                                className={styles.showLogButton}>
-                                                                <FontAwesomeIcon icon={faEye} />
-                                                                Show Log
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )
-                                        })}
-                    </CrosshairProvider>
+                            return (
+                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
+                                    {item.type === 'combat' ? (
+                                        <div className="monster-form-section">
+                                            <EncounterForm
+                                            mode='monster'
+                                            encounter={item}
+                                            onUpdate={(newValue) => updateTimelineItem(index, newValue)}
+                                            onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
+                                            onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
+                                            onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
+                                            onEditingChange={setIsEditing}
+                                            onAutoAdjust={() => {
+                                                setSelectedEncounterIndex(index);
+                                                worker.autoAdjustEncounter(players, item.monsters, timeline, index);
+                                            }}
+                                            autoAdjustDisabled={worker.isRunning}
+                                        />
+                                        </div>
+                                ) : (
+                                    <div className={styles.restCard}>
+                                        <div className={styles.restHeader}>
+                                            <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
+                                            <div className={styles.restControls}>
+                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
+                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
+                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                            </div>
+                                        </div>
+                                        <div className={styles.restBody}>
+                                            Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {(worker.analysis?.encounters?.[index] ? (
+                                    <EncounterResult
+                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
+                                        analysis={worker.analysis.encounters[index]}
+                                        fullAnalysis={worker.analysis} 
+                                        playerNames={combatantNames}
+                                        isStale={isStale}
+                                        isPreliminary={worker.isRunning && worker.progress < 100}
+                                        targetPercent={item.type === 'combat' ? targetPercent : undefined}
+                                        actualPercent={item.type === 'combat' ? actualPercent : undefined}
+                                                                                                cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
+                                                                                                isShortRest={item.type === 'shortRest'}
+                                                                                                targetRole={item.type === 'combat' ? item.targetRole : undefined}
+                                                                                            />                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
+                                    <EncounterResult
+                                        value={simulationResults[index]}
+                                        analysis={null}
+                                        fullAnalysis={worker.analysis} 
+                                        playerNames={combatantNames}
+                                        isStale={isStale}
+                                        isPreliminary={worker.isRunning && worker.progress < 100}
+                                        targetPercent={targetPercent}
+                                                                                                actualPercent={actualPercent}
+                                                                                                cumulativeDrift={cumulativeDrift}
+                                                                                                targetRole={item.targetRole}
+                                                                                            />                                                    ) : null))}
+                                
+                                {item.type === 'combat' && (
+                                    <div className={styles.buttonGroup}>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedEncounterIndex(index);
+                                                setSelectedDecileIndex(5); // Reset to Median
+                                                setShowLogModal(true);
+                                            }}
+                                            className={styles.showLogButton}>
+                                            <FontAwesomeIcon icon={faEye} />
+                                            Show Log
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+
+                    {/* Overall Day Summary - Moved to bottom and labeled */}
+                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                        <div className={styles.overallSummary} data-testid="overall-summary">
+                            <div className={styles.summaryDivider}>
+                                <div className={styles.dividerLine} />
+                                <h3 className={styles.summaryTitle}>
+                                    <FontAwesomeIcon icon={faChartLine} /> Projected Day Outcome Summary
+                                </h3>
+                                <div className={styles.dividerLine} />
+                            </div>
+                            <PartyOverview
+                                skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                playerNames={combatantNames}
+                                className="overall-party-overview"
+                            />
+                            <PlayerGraphs
+                                skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                playerNames={combatantNames}
+                            />
+                        </div>
+                    )}
+
+                    <CrosshairTooltip />
+                </CrosshairProvider>
                     
                                         <div className={styles.addButtons}>
                                             <button
