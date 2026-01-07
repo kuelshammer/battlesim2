@@ -48,6 +48,7 @@ fn create_test_combatant(name: &str, hp: f64, current_hp: f64, team: u32) -> Com
         upcoming_buffs: std::collections::HashMap::new(),
         used_actions: std::collections::HashSet::new(),
         concentrating_on: None,
+        position: simulation_wasm::model::Position::default(),
         actions_used_this_encounter: std::collections::HashSet::new(),
         bonus_action_used: false,
         known_ac: std::collections::HashMap::new(),

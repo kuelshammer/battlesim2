@@ -81,6 +81,7 @@ pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> V
             current_hp,
             temp_hp: None, // Temp HP lost on rest
             resources: resources.into(),
+            position: player.final_state.position,
             cumulative_spent,
             ..player.final_state.clone()
         };
@@ -200,6 +201,7 @@ pub(crate) fn apply_short_rest_standalone(
                 current_hp: c_state.current_hp,
                 temp_hp: None, // Temp HP lost on rest
                 resources: c_state.resources.clone().into(),
+                position: c_state.position,
                 cumulative_spent: c_state.cumulative_spent,
                 ..player.final_state.clone()
             };
@@ -265,6 +267,7 @@ pub(crate) fn update_player_states_for_next_encounter(
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: final_state.concentration.clone(),
+                position: crate::model::Position::default(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
                 known_ac: final_state.known_ac.clone(),
@@ -396,6 +399,7 @@ pub(crate) fn convert_to_legacy_simulation_result(
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: state.concentration.clone(),
+                position: crate::model::Position::default(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
                 known_ac: HashMap::new(),
@@ -452,6 +456,7 @@ pub(crate) fn convert_to_legacy_simulation_result(
                 upcoming_buffs: HashMap::new(),
                 used_actions: HashSet::new(),
                 concentrating_on: state.concentration.clone(),
+                position: crate::model::Position::default(),
                 actions_used_this_encounter: HashSet::new(),
                 bonus_action_used: false,
                 known_ac: HashMap::new(),

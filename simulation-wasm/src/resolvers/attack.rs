@@ -209,6 +209,9 @@ pub fn resolve_single_attack_hit(
 }
 
 pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
+    // Take any pending roll modifications
+    let mods = context.roll_modifications.take_all(actor_id);
+
     // 1. Determine Advantage/Disadvantage
     let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
         || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
@@ -219,15 +222,29 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
         || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndSavesWithDisadvantage);
     let target_grants_dis = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithDisadvantage);
 
-    let final_triple_adv = attacker_has_triple_adv && !(attacker_has_dis || target_grants_dis);
-    let final_adv = (attacker_has_adv || target_grants_adv) && !(attacker_has_dis || target_grants_dis) && !final_triple_adv;
-    let final_dis = (attacker_has_dis || target_grants_dis) && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv);
+    // Check modifications for advantage/disadvantage
+    let mut mod_adv = false;
+    let mut mod_dis = false;
+    for modif in &mods {
+        if let crate::context::RollModification::SetAdvantage { roll_type, advantage } = modif {
+            if roll_type == "attack" {
+                if *advantage {
+                    mod_adv = true;
+                } else {
+                    mod_dis = true;
+                }
+            }
+        }
+    }
+
+    let final_triple_adv = attacker_has_triple_adv && !(attacker_has_dis || target_grants_dis || mod_dis);
+    let final_adv = (attacker_has_adv || target_grants_adv || mod_adv) && !(attacker_has_dis || target_grants_dis || mod_dis) && !final_triple_adv;
+    let final_dis = (attacker_has_dis || target_grants_dis || mod_dis) && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv || mod_adv);
 
     // 2. Perform Roll
     let mut roll1 = rng::roll_d20();
     
     // Apply rerolls before calculating natural_roll
-    let mods = context.roll_modifications.take_all(actor_id);
     for modif in &mods {
         if let crate::context::RollModification::Reroll { roll_type, must_use_second } = modif {
             if roll_type == "attack" {

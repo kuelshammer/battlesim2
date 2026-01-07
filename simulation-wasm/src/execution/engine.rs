@@ -2,7 +2,8 @@ use crate::action_resolver::ActionResolver;
 use crate::context::{CombattantState, TurnContext};
 use crate::events::Event;
 use crate::model::{Action, Combattant};
-use crate::reactions::ReactionManager;
+use crate::reactions::{ReactionManager, ReactionTemplate};
+use crate::enums::TriggerCondition;
 use crate::validation;
 use crate::execution::results::*;
 use std::collections::HashMap;
@@ -14,7 +15,7 @@ use std::time::Instant;
 #[derive(Debug, Clone)]
 pub struct ActionExecutionEngine {
     /// Centralized state management for the current encounter
-    pub(crate) context: TurnContext,
+    pub context: TurnContext,
 
     /// Manages reaction templates and execution
     pub(crate) reaction_manager: ReactionManager,
@@ -39,7 +40,7 @@ impl ActionExecutionEngine {
         );
 
         // Pre-calculate initiative order
-        let mut sorted_combatants = combatants;
+        let mut sorted_combatants = combatants.clone();
         sorted_combatants.sort_by(|a, b| {
             b.initiative
                 .partial_cmp(&a.initiative)
@@ -55,8 +56,8 @@ impl ActionExecutionEngine {
             initiative_order,
         };
 
-        // Register reactions from combatants (placeholder for now)
-        engine.register_default_reactions(&[]); // combatants consumed by map above
+        // Register reactions from combatants
+        engine.register_default_reactions(&combatants);
 
         engine
     }
@@ -306,7 +307,26 @@ impl ActionExecutionEngine {
         });
 
         // Process action and generate events
-        let events = self.process_action(&action, actor_id);
+        let mut events = self.process_action(&action, actor_id);
+
+        // SYNC: Ensure all events from pay_costs and process_action are in history
+        self.context.process_events();
+        
+        // Re-collect events from history that were generated during this entire sequence
+        // (including ResourceConsumed, UnitMoved, etc.)
+        let all_events_in_bus = self.context.event_bus.get_all_events();
+        // Since we want to support reactions to ResourceConsumed/UnitMoved, 
+        // we should really be processing reactions for everything new in the bus.
+        // For now, let's at least include the events returned by process_action 
+        // plus any UnitMoved events we find in the bus for this actor.
+        
+        for event in all_events_in_bus.iter().rev().take(10) { // Look at last 10 events
+            if let Event::UnitMoved { creature_id, .. } = event {
+                if creature_id == actor_id && !events.contains(event) {
+                    events.push(event.clone());
+                }
+            }
+        }
 
         // Record the action in the combatant's history for logging
         if let Some(combatant) = self.context.get_combatant_mut(actor_id) {
@@ -385,12 +405,22 @@ impl ActionExecutionEngine {
                 &reaction,
                 &mut self.context,
             ) {
-                Ok(()) => {
+                Ok(action) => {
+                    // Record the reaction action
+                    self.context.record_event(Event::ActionStarted {
+                        actor_id: combatant_id.to_string(),
+                        action_id: reaction.id.clone(),
+                        decision_trace: HashMap::new(),
+                    });
+
+                    // Resolve the reaction action properly using ActionResolver
+                    let events = self.action_resolver.resolve_action(&action, &mut self.context, &combatant_id);
+
                     results.push(ReactionResult {
                         combatant_id: combatant_id.clone(),
                         reaction_id: reaction.id.clone(),
                         success: true,
-                        events_generated: self.context.event_bus.get_recent_events(5).to_vec(),
+                        events_generated: events,
                         error: None,
                     });
                 }
@@ -622,8 +652,44 @@ impl ActionExecutionEngine {
     }
 
     /// Register default reactions for combatants
-    pub(crate) fn register_default_reactions(&mut self, _combatants: &[Combattant]) {
-        // Placeholder
+    pub(crate) fn register_default_reactions(&mut self, combatants: &[Combattant]) {
+        for combatant in combatants {
+            for trigger in &combatant.creature.triggers {
+                let trigger_event_type = match trigger.condition {
+                    TriggerCondition::OnHit => "AttackHit",
+                    TriggerCondition::OnBeingAttacked => "AttackHit",
+                    TriggerCondition::OnMiss => "AttackMissed",
+                    TriggerCondition::OnBeingDamaged => "DamageTaken",
+                    TriggerCondition::OnAllyAttacked => "AttackHit",
+                    TriggerCondition::OnEnemyDeath => "UnitDied",
+                    TriggerCondition::OnCriticalHit => "AttackHit",
+                    TriggerCondition::OnBeingHit => "AttackHit",
+                    TriggerCondition::OnCastSpell => "CastSpell",
+                    TriggerCondition::OnSaveFailed => "SaveResult",
+                    TriggerCondition::OnSaveSucceeded => "SaveResult",
+                    TriggerCondition::OnEnemyMoved => "UnitMoved",
+                    TriggerCondition::OnAbilityCheck => "AbilityCheckMade",
+                    TriggerCondition::OnConcentrationBroken => "ConcentrationBroken",
+                    _ => "Custom",
+                };
+
+                let template = ReactionTemplate {
+                    id: trigger.id.clone(),
+                    name: trigger.action.base().name.clone(),
+                    description: format!("Triggered by {:?}", trigger.condition),
+                    trigger_event_type: trigger_event_type.to_string(),
+                    trigger_condition: trigger.condition.clone(),
+                    response_action: trigger.action.clone(),
+                    cost: vec![], // Reaction cost handled by consumes_reaction flag
+                    requirements: vec![],
+                    priority: 0,
+                    uses_per_round: Some(1),
+                    uses_per_encounter: None,
+                    consumes_reaction: trigger.cost == Some(4),
+                };
+                self.reaction_manager.register_reaction(combatant.id.clone(), template);
+            }
+        }
     }
 
     /// Check if encounter is complete (all alive combatants are on the same team)

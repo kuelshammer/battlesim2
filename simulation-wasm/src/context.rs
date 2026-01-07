@@ -88,7 +88,7 @@ pub struct CombattantState {
     pub temp_hp: u32,
     pub conditions: Vec<CreatureCondition>,
     pub concentration: Option<String>, // ID of spell/concentration source
-    pub position: Option<String>,      // Simplified position for future expansion
+    pub position: crate::model::Position,
     pub resources: ResourceLedger,     // Per-combatant resource tracking
     #[serde(default)]
     pub arcane_ward_hp: Option<u32>,
@@ -153,7 +153,7 @@ impl TurnContext {
                     temp_hp: c.initial_state.temp_hp.unwrap_or(0),
                     conditions: Vec::new(),
                     concentration: c.initial_state.concentrating_on.clone(),
-                    position: None,
+                    position: crate::model::Position::default(),
                     base_combatant: c.clone(),
                     resources,
                     // Reset Arcane Ward HP to max at the start of each encounter
@@ -171,13 +171,34 @@ impl TurnContext {
             })
             .collect();
 
+        let mut active_effects = HashMap::new();
+        for (unit_id, state) in &combatant_states {
+            for (buff_id, buff) in &state.base_combatant.initial_state.buffs {
+                active_effects.insert(
+                    format!("{}_{}", buff_id, unit_id),
+                    ActiveEffect {
+                        id: format!("{}_{}", buff_id, unit_id),
+                        source_id: unit_id.clone(), // Assume self-sourced for initial buffs
+                        target_id: unit_id.clone(),
+                        effect_type: EffectType::Buff(buff.clone()),
+                        remaining_duration: match buff.duration {
+                            crate::enums::BuffDuration::EntireEncounter => 100,
+                            crate::enums::BuffDuration::OneRound => 1,
+                            _ => 10,
+                        },
+                        conditions: Vec::new(),
+                    },
+                );
+            }
+        }
+
         Self {
             event_bus: EventBus::new(if log_enabled { 1000 } else { 0 }, log_enabled), // Keep last 1000 events ONLY if logging is enabled
             round_number: 0,
             current_turn_owner: None,
             log_enabled,
             combatants: combatant_states,
-            active_effects: HashMap::new(),
+            active_effects,
             combat_stats_cache: CombatStatsCache::new(),
             battlefield_conditions,
             weather,
@@ -308,6 +329,18 @@ impl TurnContext {
                         amount: *amount,
                     });
 
+                    // If it's a movement resource, also emit UnitMoved
+                    if matches!(resource_type, crate::resources::ResourceType::Movement) {
+                        let current_pos = combatant.position;
+
+                        self.event_bus.emit_event(Event::UnitMoved {
+                            creature_id: unit_id.to_string(),
+                            from_position: Some((current_pos.x as i32, current_pos.y as i32)),
+                            to_position: Some((current_pos.x as i32, current_pos.y as i32)), // Position doesn't change yet in pay_costs
+                            distance: *amount as u32,
+                        });
+                    }
+
                     // Track cumulative expenditure
                     let key = resource_type.to_key(resource_val.as_deref());
                     let weight = crate::intensity_calculation::get_resource_weight(
@@ -337,6 +370,18 @@ impl TurnContext {
                         resource_type: resource_type.to_key(resource_val.as_deref()),
                         amount: *max,
                     });
+
+                    // If it's a movement resource, also emit UnitMoved
+                    if matches!(resource_type, crate::resources::ResourceType::Movement) {
+                        let current_pos = combatant.position;
+
+                        self.event_bus.emit_event(Event::UnitMoved {
+                            creature_id: unit_id.to_string(),
+                            from_position: Some((current_pos.x as i32, current_pos.y as i32)),
+                            to_position: Some((current_pos.x as i32, current_pos.y as i32)), // Position doesn't change yet in pay_costs
+                            distance: *max as u32,
+                        });
+                    }
 
                     // Track cumulative expenditure
                     let key = resource_type.to_key(resource_val.as_deref());

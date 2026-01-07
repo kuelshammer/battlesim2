@@ -267,6 +267,7 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
         upcoming_buffs: HashMap::new(),
         used_actions: HashSet::new(),
         concentrating_on: None,
+        position: crate::model::Position::default(),
         actions_used_this_encounter: HashSet::new(),
         bonus_action_used: false,
         known_ac: HashMap::new(),

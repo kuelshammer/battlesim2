@@ -369,6 +369,8 @@ pub struct CreatureState {
     pub used_actions: HashSet<String>,
     #[serde(rename = "concentratingOn")]
     pub concentrating_on: Option<String>,
+    #[serde(default)]
+    pub position: crate::model::Position,
     pub actions_used_this_encounter: HashSet<String>,
     #[serde(rename = "bonusActionUsed")]
     pub bonus_action_used: bool,
@@ -398,6 +400,7 @@ impl Default for CreatureState {
             upcoming_buffs: HashMap::new(),
             used_actions: HashSet::new(),
             concentrating_on: None,
+            position: crate::model::Position::default(),
             actions_used_this_encounter: HashSet::new(),
             bonus_action_used: false,
             known_ac: HashMap::new(),

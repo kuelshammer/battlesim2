@@ -1,4 +1,4 @@
-use crate::context::{ActiveEffect, EffectType, TurnContext};
+use crate::context::TurnContext;
 use crate::enums::TriggerCondition;
 use crate::events::Event;
 use crate::model::Action;
@@ -248,7 +248,7 @@ impl ReactionManager {
         combatant_id: &str,
         reaction: &ReactionTemplate,
         context: &mut TurnContext,
-    ) -> Result<(), String> {
+    ) -> Result<Action, String> {
         // Pay the costs
         context.pay_costs(&reaction.cost, combatant_id)?;
 
@@ -265,17 +265,7 @@ impl ReactionManager {
         // Mark as used
         self.mark_reaction_used(combatant_id, &reaction.id);
 
-        // Record the reaction action
-        context.record_event(Event::ActionStarted {
-            actor_id: combatant_id.to_string(),
-            action_id: reaction.id.clone(),
-            decision_trace: HashMap::new(),
-        });
-
-        // Execute the action (simplified - in a full implementation, this would go through the action resolver)
-        self.execute_action(&reaction.response_action, context, combatant_id)?;
-
-        Ok(())
+        Ok(reaction.response_action.clone())
     }
 
     /// Mark a reaction as used
@@ -288,82 +278,6 @@ impl ReactionManager {
 
         // Mark as used this encounter if it has encounter limits
         // This would be tracked when we know which reactions have encounter limits
-    }
-
-    /// Execute the reaction action (placeholder implementation)
-    fn execute_action(
-        &self,
-        action: &Action,
-        context: &mut TurnContext,
-        _actor_id: &str,
-    ) -> Result<(), String> {
-        match action {
-            Action::Template(_template_action) => {
-                // In a full implementation, this would resolve the template
-                // and execute the action through the action system
-                context.record_event(Event::Custom {
-                    event_type: "ReactionAction".to_string(),
-                    data: {
-                        let mut data = HashMap::new();
-                        data.insert("action_type".to_string(), "Template".to_string());
-                        data
-                    },
-                    source_id: "ReactionManager".to_string(),
-                });
-                Ok(())
-            }
-            Action::Atk(atk_action) => {
-                // Record attack action
-                context.record_event(Event::Custom {
-                    event_type: "ReactionAttack".to_string(),
-                    data: {
-                        let mut data = HashMap::new();
-                        data.insert("damage".to_string(), format!("{:?}", atk_action.dpr));
-                        data
-                    },
-                    source_id: atk_action.base().id.clone(),
-                });
-                Ok(())
-            }
-            Action::Heal(heal_action) => {
-                // Record healing action
-                let heal_amount = crate::dice::average(&heal_action.amount);
-                context.record_event(Event::HealingApplied {
-                    target_id: "TODO".to_string(), // Would need to extract from action
-                    amount: heal_amount,
-                    source_id: heal_action.base().id.clone(),
-                });
-                Ok(())
-            }
-            Action::Buff(buff_action) => {
-                // Apply buff effect
-                let effect = ActiveEffect {
-                    id: format!("{}_{}", buff_action.base().id, "reaction_effect"), // Simple ID without chrono
-                    source_id: buff_action.base().id.clone(),
-                    target_id: "TODO".to_string(), // Would need to extract from action
-                    effect_type: EffectType::Buff(buff_action.buff.clone()),
-                    remaining_duration: 1, // Placeholder
-                    conditions: Vec::new(),
-                };
-                context.apply_effect(effect);
-                Ok(())
-            }
-            Action::Debuff(debuff_action) => {
-                // Apply debuff effect
-                let effect = ActiveEffect {
-                    id: format!("{}_{}", debuff_action.base().id, "reaction_effect"), // Simple ID without chrono
-                    source_id: debuff_action.base().id.clone(),
-                    target_id: "TODO".to_string(), // Would need to extract from action
-                    effect_type: EffectType::Condition(
-                        crate::enums::CreatureCondition::Incapacitated,
-                    ), // Placeholder
-                    remaining_duration: 1,         // Placeholder
-                    conditions: Vec::new(),
-                };
-                context.apply_effect(effect);
-                Ok(())
-            }
-        }
     }
 
     /// Advance to the next round (clear round-based usage tracking)

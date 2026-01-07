@@ -315,6 +315,14 @@ impl ActionResolver {
                                             amount: amount.clone(),
                                         },
                                     );
+
+                                    let mut data = std::collections::HashMap::new();
+                                    data.insert("amount".to_string(), amount.clone());
+                                    events.push(Event::Custom {
+                                        event_type: "AddToRoll".to_string(),
+                                        data,
+                                        source_id: reactor_id.to_string(),
+                                    });
                                 }
                                 crate::enums::TriggerEffect::ForceSelfReroll {
                                     roll_type,
@@ -328,6 +336,14 @@ impl ActionResolver {
                                             must_use_second: *must_use_second,
                                         },
                                     );
+
+                                    let mut data = std::collections::HashMap::new();
+                                    data.insert("roll_type".to_string(), roll_type.clone());
+                                    events.push(Event::Custom {
+                                        event_type: "ForceSelfReroll".to_string(),
+                                        data,
+                                        source_id: reactor_id.to_string(),
+                                    });
                                 }
                                 crate::enums::TriggerEffect::ForceTargetReroll {
                                     roll_type,
@@ -342,6 +358,14 @@ impl ActionResolver {
                                                 must_use_second: *must_use_second,
                                             },
                                         );
+
+                                        let mut data = std::collections::HashMap::new();
+                                        data.insert("roll_type".to_string(), roll_type.clone());
+                                        events.push(Event::Custom {
+                                            event_type: "ForceTargetReroll".to_string(),
+                                            data,
+                                            source_id: reactor_id.to_string(),
+                                        });
                                     }
                                 }
                                 crate::enums::TriggerEffect::SetAdvantageOnNext {
@@ -355,18 +379,35 @@ impl ActionResolver {
                                             advantage: *advantage,
                                         },
                                     );
+
+                                    let mut data = std::collections::HashMap::new();
+                                    data.insert("roll_type".to_string(), roll_type.clone());
+                                    data.insert("advantage".to_string(), advantage.to_string());
+                                    events.push(Event::Custom {
+                                        event_type: "SetAdvantageOnNext".to_string(),
+                                        data,
+                                        source_id: reactor_id.to_string(),
+                                    });
                                 }
                                 crate::enums::TriggerEffect::ConsumeReaction { target_id } => {
-                                    let target_id = match target_id.as_str() {
+                                    let target_id_resolved = match target_id.as_str() {
                                         "self" => reactor_id,
                                         "attacker" => triggering_actor_id.unwrap_or(""),
                                         id => id,
                                     };
 
-                                    if !target_id.is_empty() {
-                                        if let Some(target_mut) = context.get_combatant_mut(target_id) {
+                                    if !target_id_resolved.is_empty() {
+                                        if let Some(target_mut) = context.get_combatant_mut(target_id_resolved) {
                                             let reaction_slot_id = crate::enums::ActionSlot::Reaction as i32;
                                             target_mut.base_combatant.final_state.used_actions.insert(reaction_slot_id.to_string());
+                                            
+                                            let mut data = std::collections::HashMap::new();
+                                            data.insert("target_id".to_string(), target_id_resolved.to_string());
+                                            events.push(Event::Custom {
+                                                event_type: "ConsumeReaction".to_string(),
+                                                data,
+                                                source_id: reactor_id.to_string(),
+                                            });
                                         }
                                     }
                                 }
