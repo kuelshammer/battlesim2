@@ -268,6 +268,10 @@ static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
 #[wasm_bindgen]
 pub fn run_event_driven_simulation(players: JsValue, timeline: JsValue, iterations: usize) -> Result<JsValue, JsValue> {
     let iterations = iterations.max(100);
+
+    // Debug: Log incoming players JSON to browser console
+    web_sys::console::log_1(&players);
+
     let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
     let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
