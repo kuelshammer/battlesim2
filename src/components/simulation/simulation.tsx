@@ -514,6 +514,21 @@ const Simulation: FC<PropType> = memo(({ }) => {
                         )
                     })}
 
+                    <div className={styles.addButtons}>
+                        <button
+                            onClick={createCombat}
+                            className={styles.addEncounterBtn}>
+                            <FontAwesomeIcon icon={faPlus} />
+                            Add Combat
+                        </button>
+                        <button
+                            onClick={createShortRest}
+                            className={`${styles.addEncounterBtn} ${styles.restBtn}`}>
+                            <FontAwesomeIcon icon={faBed} />
+                            Add Short Rest
+                        </button>
+                    </div>
+
                     {/* Overall Day Summary - Moved to bottom and labeled */}
                     {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
                         <div className={styles.overallSummary} data-testid="overall-summary">
@@ -540,21 +555,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
 
                     <CrosshairTooltip />
                 </CrosshairProvider>
-                    
-                                        <div className={styles.addButtons}>
-                                            <button
-                                                onClick={createCombat}
-                                                className={styles.addEncounterBtn}>
-                                                <FontAwesomeIcon icon={faPlus} />
-                                                Add Combat
-                                            </button>
-                                            <button
-                                                onClick={createShortRest}
-                                                className={`${styles.addEncounterBtn} ${styles.restBtn}`}>
-                                                <FontAwesomeIcon icon={faBed} />
-                                                Add Short Rest
-                                            </button>
-                                        </div>
 
                     {/* Event Log Modal */}
                     {showLogModal && selectedEncounterIndex !== null && (
