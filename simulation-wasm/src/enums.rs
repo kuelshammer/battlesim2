@@ -279,63 +279,37 @@ pub enum BuffDuration {
 // Re-insert TriggerCondition here
 // Note: No Eq/Hash due to f64 in DamageExceedsPercent (f64 doesn't implement Eq/Hash)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum TriggerCondition {
-    #[serde(rename = "on hit")]
     OnHit, // e.g. Divine Smite
-    #[serde(rename = "on being attacked")]
     OnBeingAttacked, // e.g. Shield Spell, Cutting Words
-    #[serde(rename = "on miss")]
     OnMiss, // e.g. Precision Attack
-    #[serde(rename = "on being damaged")]
     OnBeingDamaged, // e.g. Hellish Rebuke
-    #[serde(rename = "on ally attacked")]
     OnAllyAttacked, // e.g. Sentinel
-    #[serde(rename = "on enemy death")]
     OnEnemyDeath, // e.g. Great Weapon Master, Dark One's Blessing
-    #[serde(rename = "on critical hit")]
     OnCriticalHit, // e.g. Divine Smite (crit fishing)
-    #[serde(rename = "on being hit")]
     OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
-    #[serde(rename = "on cast spell")]
     OnCastSpell, // e.g. Counterspell, Silvery Barbs
-    #[serde(rename = "on save failed")]
     OnSaveFailed, // e.g. Portent, Silvery Barbs
-    #[serde(rename = "on save succeeded")]
     OnSaveSucceeded, // e.g. Lucky, Magic Resonance
-    #[serde(rename = "on enemy moved")]
     OnEnemyMoved, // e.g. Opportunity Attack
-    #[serde(rename = "enemy entered reach")]
     EnemyEnteredReach, // e.g. Polearm Master - enemy moved from >5ft to <=5ft
-    #[serde(rename = "enemy left reach")]
     EnemyLeftReach, // e.g. Opportunity Attack - enemy moved from <=5ft to >5ft
-    #[serde(rename = "on ability check")]
     OnAbilityCheck, // e.g. Bardic Inspiration, Luck
-    #[serde(rename = "on concentration broken")]
     OnConcentrationBroken, // e.g. War Caster, Concentration focus
 
     // Composite triggers
-    #[serde(rename = "and")]
     And { conditions: Vec<TriggerCondition> },
-    #[serde(rename = "or")]
     Or { conditions: Vec<TriggerCondition> },
-    #[serde(rename = "not")]
     Not { condition: Box<TriggerCondition> },
 
     // State conditions
-    #[serde(rename = "enemyCountAtLeast")]
     EnemyCountAtLeast { count: i32 },
-    #[serde(rename = "damageExceedsPercent")]
     DamageExceedsPercent { threshold: f64 },
-    #[serde(rename = "attackWasMelee")]
     AttackWasMelee,
-    #[serde(rename = "belowHpPercent")]
     BelowHpPercent { threshold: f64 },
-    #[serde(rename = "aboveHpPercent")]
     AboveHpPercent { threshold: f64 },
-    #[serde(rename = "hasTempHp")]
     HasTempHp,
-    #[serde(rename = "hasReactionAvailable")]
     HasReactionAvailable,
 }
 
