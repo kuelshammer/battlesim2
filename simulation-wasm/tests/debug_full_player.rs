@@ -22,7 +22,7 @@ mod debug_full_player_tests {
                 "actionSlot": 0,
                 "type": "atk",
                 "freq": "at will",
-                "condition": "Default",
+                "condition": "default",
                 "dpr": "1d8+3",
                 "toHit": 5,
                 "target": "enemy with least HP",

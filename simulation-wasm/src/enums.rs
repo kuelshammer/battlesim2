@@ -171,7 +171,7 @@ pub enum TargetType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub enum ActionCondition {
     Default,
     #[serde(rename = "ally at 0 HP")]
