@@ -42,6 +42,15 @@ export const ActionCostSchema = z.discriminatedUnion('type', [
 ])
 export type ActionCost = z.infer<typeof ActionCostSchema>
 
+// CombatCondition must match Rust's externally-tagged enum serialization
+// Rust: pub enum CombatCondition { EnemyInRange(f64), IsSurprised, HasTempHP }
+// Serializes to: { "EnemyInRange": 5.0 } or "IsSurprised" or "HasTempHP"
+const CombatConditionSchema = z.union([
+    z.object({ EnemyInRange: z.number() }),
+    z.literal('IsSurprised'),
+    z.literal('HasTempHP'),
+])
+
 export const ActionRequirementSchema = z.discriminatedUnion('type', [
     z.object({
         type: z.literal('ResourceAvailable'),
@@ -51,8 +60,7 @@ export const ActionRequirementSchema = z.discriminatedUnion('type', [
     }),
     z.object({
         type: z.literal('CombatState'),
-        condition: z.enum(['EnemyInRange', 'IsSurprised', 'HasTempHP']),
-        value: z.number().optional(),
+        condition: CombatConditionSchema,
     }),
     z.object({
         type: z.literal('StatusEffect'),
