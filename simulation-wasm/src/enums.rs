@@ -171,7 +171,7 @@ pub enum TargetType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum ActionCondition {
     Default,
     #[serde(rename = "ally at 0 HP")]
@@ -466,89 +466,73 @@ impl<'de> Deserialize<'de> for TriggerRequirement {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum TriggerEffect {
-    #[serde(rename = "Damage")]
     DealDamage {
         amount: String, // DiceFormula string representation
         #[serde(rename = "damageType")]
         damage_type: String,
     },
-    #[serde(rename = "ReduceDamage")]
     ReduceDamage { amount: String },
-    #[serde(rename = "RestoreResource")]
     RestoreResource { resource: String, amount: String },
-    #[serde(rename = "SuppressBuff")]
     SuppressBuff {
         #[serde(rename = "buffId")]
         buff_id: String,
         duration: BuffDuration,
     },
-    #[serde(rename = "ApplyBuff")]
     ApplyBuff {
         buff: String, // buff ID to apply
         target: TriggerTarget,
     },
-    #[serde(rename = "RemoveBuff")]
     RemoveBuff {
         #[serde(rename = "buffId")]
         buff_id: String,
         target: TriggerTarget,
     },
-    #[serde(rename = "Chain")]
     Chain {
         effects: Vec<TriggerEffect>,
     },
-    #[serde(rename = "AddToRoll")]
     AddToRoll {
         amount: String, // DiceFormula string representation
         #[serde(rename = "rollType")]
         roll_type: String, // "attack", "save", "abilityCheck", etc.
     },
-    #[serde(rename = "ForceSelfReroll")]
     ForceSelfReroll {
         #[serde(rename = "rollType")]
         roll_type: String, // "attack", "save", "abilityCheck", etc.
         #[serde(rename = "mustUseSecond")]
         must_use_second: bool, // If true, must use second roll
     },
-    #[serde(rename = "ForceTargetReroll")]
     ForceTargetReroll {
         #[serde(rename = "rollType")]
         roll_type: String, // "attack", "save", "abilityCheck", etc.
         #[serde(rename = "mustUseSecond")]
         must_use_second: bool, // If true, must use second roll
     },
-    #[serde(rename = "InterruptAction")]
     InterruptAction {
         #[serde(rename = "actionId")]
         action_id: String, // ID of action to interrupt
     },
-    #[serde(rename = "GrantImmediateAction")]
     GrantImmediateAction {
         #[serde(rename = "actionId")]
         action_id: String, // ID of action to grant immediately
         #[serde(rename = "actionSlot")]
         action_slot: String, // "bonusAction", "reaction", etc.
     },
-    #[serde(rename = "RedirectAttack")]
     RedirectAttack {
         #[serde(rename = "newTargetId")]
         new_target_id: String,
     },
-    #[serde(rename = "SplitDamage")]
     SplitDamage {
         #[serde(rename = "targetId")]
         target_id: String,
         #[serde(rename = "percent")]
         percent: f64,
     },
-    #[serde(rename = "SetAdvantageOnNext")]
     SetAdvantageOnNext {
         #[serde(rename = "rollType")]
         roll_type: String,
         #[serde(rename = "advantage")]
         advantage: bool,
     },
-    #[serde(rename = "ConsumeReaction")]
     ConsumeReaction {
         #[serde(rename = "targetId")]
         target_id: String,
