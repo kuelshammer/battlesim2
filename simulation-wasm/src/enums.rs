@@ -14,28 +14,33 @@ mod trigger_requirement_serde {
             formatter.write_str("a string or object representing TriggerRequirement")
         }
 
-        // Handle string format: "hasTempHP", "damageType:fire", "range:5"
+        // Handle string format: "HasTempHP", "damageType:fire", "range:5"
         fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
         where
             E: Error,
         {
-            match value {
-                "hasTempHP" => Ok(super::TriggerRequirement::HasTempHP),
-                s if s.starts_with("damageType:") => {
-                    let dtype = s.strip_prefix("damageType:").unwrap_or("");
+            // Case-insensitive matching for compatibility with TypeScript
+            match value.to_lowercase().as_str() {
+                "hastemphp" => Ok(super::TriggerRequirement::HasTempHP),
+                s if s.to_lowercase().starts_with("damagetype:") => {
+                    let prefix_len = "damageType:".len();
+                    let dtype = &value[prefix_len..];
                     Ok(super::TriggerRequirement::DamageType(dtype.to_string()))
                 }
-                s if s.starts_with("range:") => {
-                    let range_str = s.strip_prefix("range:").unwrap_or("");
+                s if s.to_lowercase().starts_with("range:") => {
+                    let prefix_len = "range:".len();
+                    let range_str = &value[prefix_len..];
                     let range = range_str.parse().unwrap_or(0);
                     Ok(super::TriggerRequirement::Range(range))
                 }
-                s if s.starts_with("actionTag:") => {
-                    let tag = s.strip_prefix("actionTag:").unwrap_or("");
+                s if s.to_lowercase().starts_with("actiontag:") => {
+                    let prefix_len = "actionTag:".len();
+                    let tag = &value[prefix_len..];
                     Ok(super::TriggerRequirement::ActionTag(tag.to_string()))
                 }
-                s if s.starts_with("withinRange:") => {
-                    let dist_str = s.strip_prefix("withinRange:").unwrap_or("");
+                s if s.to_lowercase().starts_with("withinrange:") => {
+                    let prefix_len = "withinRange:".len();
+                    let dist_str = &value[prefix_len..];
                     let dist = dist_str.parse().unwrap_or(0.0);
                     Ok(super::TriggerRequirement::WithinRange { max_distance: dist })
                 }
