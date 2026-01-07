@@ -257,14 +257,14 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
         natural_roll = roll1;
     }
 
-    let (modifier_total, roll_detail) = if context.log_enabled {
-        let detail = dice::evaluate_detailed(&attack.to_hit, 1);
+    let (mut total, roll_detail) = if context.log_enabled {
+        let mut detail = dice::evaluate_detailed(&attack.to_hit, 1);
+        detail.modifiers.insert(0, ("Natural Roll".to_string(), natural_roll as f64));
+        detail.total += natural_roll as f64;
         (detail.total, Some(detail))
     } else {
-        (dice::evaluate(&attack.to_hit, 1), None)
+        (natural_roll as f64 + dice::evaluate(&attack.to_hit, 1), None)
     };
-
-    let mut total = natural_roll as f64 + modifier_total;
 
     // Apply bonus modifications
     for modif in &mods {

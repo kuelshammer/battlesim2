@@ -38,6 +38,10 @@ pub struct ChunkedSimulationRunner {
 impl ChunkedSimulationRunner {
     #[wasm_bindgen(constructor)]
     pub fn new(players: JsValue, timeline: JsValue, seed: Option<u64>) -> Result<ChunkedSimulationRunner, JsValue> {
+        // Debug: Log incoming players JSON to browser console
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&players);
+
         let players: Vec<Creature> = serde_wasm_bindgen::from_value(players)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse players: {}", e)))?;
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline)
