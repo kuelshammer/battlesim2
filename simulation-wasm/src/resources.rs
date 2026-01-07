@@ -293,6 +293,7 @@ impl Hash for ActionRequirement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(from = "String", into = "String")]
 pub enum ActionTag {
     // Damage types
     Melee,
@@ -348,6 +349,102 @@ pub enum ActionTag {
 
     // Custom tags
     Custom(String),
+}
+
+impl From<String> for ActionTag {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "Melee" => ActionTag::Melee,
+            "Ranged" => ActionTag::Ranged,
+            "Spell" => ActionTag::Spell,
+            "Weapon" => ActionTag::Weapon,
+            "Fire" => ActionTag::Fire,
+            "Cold" => ActionTag::Cold,
+            "Lightning" => ActionTag::Lightning,
+            "Poison" => ActionTag::Poison,
+            "Acid" => ActionTag::Acid,
+            "Thunder" => ActionTag::Thunder,
+            "Necrotic" => ActionTag::Necrotic,
+            "Radiant" => ActionTag::Radiant,
+            "Psychic" => ActionTag::Psychic,
+            "Force" => ActionTag::Force,
+            "AoE" => ActionTag::AoE,
+            "Concentration" => ActionTag::Concentration,
+            "RequiresSomatic" => ActionTag::RequiresSomatic,
+            "RequiresVerbal" => ActionTag::RequiresVerbal,
+            "RequiresMaterial" => ActionTag::RequiresMaterial,
+            "Abjuration" => ActionTag::Abjuration,
+            "Conjuration" => ActionTag::Conjuration,
+            "Divination" => ActionTag::Divination,
+            "Enchantment" => ActionTag::Enchantment,
+            "Evocation" => ActionTag::Evocation,
+            "Illusion" => ActionTag::Illusion,
+            "Necromancy" => ActionTag::Necromancy,
+            "Transmutation" => ActionTag::Transmutation,
+            "Healing" => ActionTag::Healing,
+            "TempHP" => ActionTag::TempHP,
+            "Utility" => ActionTag::Utility,
+            "Movement" => ActionTag::Movement,
+            "Social" => ActionTag::Social,
+            "Attack" => ActionTag::Attack,
+            "Defense" => ActionTag::Defense,
+            "Support" => ActionTag::Support,
+            "Control" => ActionTag::Control,
+            "Buff" => ActionTag::Buff,
+            "Damage" => ActionTag::Damage,
+            "GWM" => ActionTag::GWM,
+            "Sharpshooter" => ActionTag::Sharpshooter,
+            _ => ActionTag::Custom(s),
+        }
+    }
+}
+
+impl From<ActionTag> for String {
+    fn from(tag: ActionTag) -> Self {
+        match tag {
+            ActionTag::Melee => "Melee".to_string(),
+            ActionTag::Ranged => "Ranged".to_string(),
+            ActionTag::Spell => "Spell".to_string(),
+            ActionTag::Weapon => "Weapon".to_string(),
+            ActionTag::Fire => "Fire".to_string(),
+            ActionTag::Cold => "Cold".to_string(),
+            ActionTag::Lightning => "Lightning".to_string(),
+            ActionTag::Poison => "Poison".to_string(),
+            ActionTag::Acid => "Acid".to_string(),
+            ActionTag::Thunder => "Thunder".to_string(),
+            ActionTag::Necrotic => "Necrotic".to_string(),
+            ActionTag::Radiant => "Radiant".to_string(),
+            ActionTag::Psychic => "Psychic".to_string(),
+            ActionTag::Force => "Force".to_string(),
+            ActionTag::AoE => "AoE".to_string(),
+            ActionTag::Concentration => "Concentration".to_string(),
+            ActionTag::RequiresSomatic => "RequiresSomatic".to_string(),
+            ActionTag::RequiresVerbal => "RequiresVerbal".to_string(),
+            ActionTag::RequiresMaterial => "RequiresMaterial".to_string(),
+            ActionTag::Abjuration => "Abjuration".to_string(),
+            ActionTag::Conjuration => "Conjuration".to_string(),
+            ActionTag::Divination => "Divination".to_string(),
+            ActionTag::Enchantment => "Enchantment".to_string(),
+            ActionTag::Evocation => "Evocation".to_string(),
+            ActionTag::Illusion => "Illusion".to_string(),
+            ActionTag::Necromancy => "Necromancy".to_string(),
+            ActionTag::Transmutation => "Transmutation".to_string(),
+            ActionTag::Healing => "Healing".to_string(),
+            ActionTag::TempHP => "TempHP".to_string(),
+            ActionTag::Utility => "Utility".to_string(),
+            ActionTag::Movement => "Movement".to_string(),
+            ActionTag::Social => "Social".to_string(),
+            ActionTag::Attack => "Attack".to_string(),
+            ActionTag::Defense => "Defense".to_string(),
+            ActionTag::Support => "Support".to_string(),
+            ActionTag::Control => "Control".to_string(),
+            ActionTag::Buff => "Buff".to_string(),
+            ActionTag::Damage => "Damage".to_string(),
+            ActionTag::GWM => "GWM".to_string(),
+            ActionTag::Sharpshooter => "Sharpshooter".to_string(),
+            ActionTag::Custom(s) => s,
+        }
+    }
 }
 
 #[cfg(test)]
