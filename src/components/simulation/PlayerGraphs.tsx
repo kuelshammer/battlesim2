@@ -5,7 +5,6 @@ import styles from './PlayerGraphs.module.scss'
 import { useCrosshair } from './CrosshairContext'
 
 interface PlayerGraphsProps {
-// ... props same ...
     skyline: SkylineAnalysis
     partySlots: PlayerSlot[]
     playerNames?: Map<string, string>
@@ -30,7 +29,6 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                     const isHovered = crosshairState.hoveredCharacterId === slot.playerId;
 
                     // Create a list of buckets with this specific player's data attached
-// ... mapping and sorting same ...
                     const playerBuckets = skyline.buckets.map((bucket) => {
                         const character = findCharacterInBucket(bucket.characters, slot.playerId, playerIdx)
                         return { percentile: bucket.percentile, character: character || null }
@@ -83,7 +81,6 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                             onMouseLeave={() => setHoveredCharacter(null)}
                         >
                             <div className={styles.cardHeader}>
-// ... rest same ...
                                 <div className={styles.playerInfo}>
                                     <h5 className={styles.playerName}>{displayName}</h5>
                                     <div className={styles.survivabilityBadge}>EHP: {displayEHP}</div>
