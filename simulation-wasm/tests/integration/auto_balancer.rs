@@ -132,7 +132,7 @@ fn test_black_dragon_auto_balance() {
 
     println!("Initial Dragon Breath: {:?}", dragon.actions[0]);
     println!("Optimized Dragon Breath: {:?}", optimized_monsters[0].actions[0]);
-    println!("Final Safety Grade: {:?}", final_analysis.safety_grade);
+    println!("Final Archetype: {:?}", final_analysis.vitals.as_ref().map(|v| v.archetype.clone()));
     println!("Final Intensity Tier: {:?}", final_analysis.intensity_tier);
 
     // Assertions
@@ -151,10 +151,11 @@ fn test_black_dragon_auto_balance() {
         }
     }
 
-    // 2. Safety grade should be at least C (it was likely F initially)
+    // 2. TPK Risk should be low (it was likely high initially)
+    let vitals = final_analysis.vitals.as_ref().unwrap();
     assert!(
-        matches!(final_analysis.safety_grade, simulation_wasm::decile_analysis::SafetyGrade::A | simulation_wasm::decile_analysis::SafetyGrade::B | simulation_wasm::decile_analysis::SafetyGrade::C),
-        "Expected Grade A, B or C, got {:?}", final_analysis.safety_grade
+        vitals.tpk_risk < 0.2,
+        "Expected low TPK Risk after optimization, got {}", vitals.tpk_risk
     );
 }
 

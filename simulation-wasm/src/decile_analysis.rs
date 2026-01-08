@@ -4,22 +4,30 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum SafetyGrade {
-    A, // Secure
-    B, // Fair
-    C, // Risky
-    D, // Unstable
-    F, // Broken
+pub enum EncounterArchetype {
+    Trivial,
+    Skirmish,
+    Standard,
+    TheGrind,
+    EliteChallenge,
+    BossFight,
+    MeatGrinder,
+    NovaTrap,
+    Broken,
 }
 
-impl std::fmt::Display for SafetyGrade {
+impl std::fmt::Display for EncounterArchetype {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SafetyGrade::A => write!(f, "A (Secure)"),
-            SafetyGrade::B => write!(f, "B (Fair)"),
-            SafetyGrade::C => write!(f, "C (Risky)"),
-            SafetyGrade::D => write!(f, "D (Unstable)"),
-            SafetyGrade::F => write!(f, "F (Broken)"),
+            EncounterArchetype::Trivial => write!(f, "Trivial"),
+            EncounterArchetype::Skirmish => write!(f, "Skirmish"),
+            EncounterArchetype::Standard => write!(f, "Standard"),
+            EncounterArchetype::TheGrind => write!(f, "The Grind"),
+            EncounterArchetype::EliteChallenge => write!(f, "Elite Challenge"),
+            EncounterArchetype::BossFight => write!(f, "Boss Fight"),
+            EncounterArchetype::MeatGrinder => write!(f, "Meat Grinder"),
+            EncounterArchetype::NovaTrap => write!(f, "Nova Trap"),
+            EncounterArchetype::Broken => write!(f, "Broken"),
         }
     }
 }
@@ -47,11 +55,11 @@ impl std::fmt::Display for IntensityTier {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum EncounterLabel {
-    EpicChallenge,    // Grade B + Tier 4
-    TacticalGrinder,  // Grade A + Tier 3
-    ActionMovie,      // Grade B + Tier 2
-    TheTrap,          // Grade C + Tier 2
-    TheSlog,          // Grade A + Tier 5
+    EpicChallenge,    
+    TacticalGrinder,  
+    ActionMovie,      
+    TheTrap,          
+    TheSlog,          
     Standard,
     TrivialMinions,
     TPKRisk,
@@ -111,29 +119,6 @@ pub struct TimelineRange {
     pub p75: Vec<f64>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum DifficultyGrade {
-    S, // Trivial
-    A, // Easy
-    B, // Medium
-    C, // Hard
-    D, // Deadly
-    F, // Impossible
-}
-
-impl std::fmt::Display for DifficultyGrade {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DifficultyGrade::S => write!(f, "S (Trivial)"),
-            DifficultyGrade::A => write!(f, "A (Easy)"),
-            DifficultyGrade::B => write!(f, "B (Medium)"),
-            DifficultyGrade::C => write!(f, "C (Hard)"),
-            DifficultyGrade::D => write!(f, "D (Deadly)"),
-            DifficultyGrade::F => write!(f, "F (Impossible)"),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Vitals {
@@ -143,7 +128,7 @@ pub struct Vitals {
     pub volatility_index: f64, // Difference between P10 and P50 cost
     pub doom_horizon: f64,    // Projected encounters until failure
     pub deaths_door_index: f64, // Average rounds spent at <25% HP (Thrilling metric)
-    pub difficulty_grade: DifficultyGrade,
+    pub archetype: EncounterArchetype,
     pub is_volatile: bool,
 }
 
@@ -168,7 +153,6 @@ pub struct AggregateOutput {
     pub power_range: Option<TimelineRange>,
     pub decile_logs: Vec<Vec<crate::events::Event>>, // 11 logs: [P5, P15, ..., P50, ..., P95]
     pub battle_duration_rounds: usize,
-    pub safety_grade: SafetyGrade,
     pub intensity_tier: IntensityTier,
     pub encounter_label: EncounterLabel,
     pub analysis_summary: String,
@@ -247,68 +231,63 @@ fn extract_combatant_visualization_partial(result: &SimulationResult, encounter_
     (combatants, battle_duration)
 }
 
-fn assess_safety_grade(deciles: &[DecileStats], global_median: &Option<DecileStats>) -> SafetyGrade {
-    if deciles.is_empty() { return SafetyGrade::A; }
+fn assess_archetype(vitals: &Vitals) -> EncounterArchetype {
+    if vitals.tpk_risk > 0.5 { return EncounterArchetype::Broken; }
+    if vitals.tpk_risk > 0.1 { return EncounterArchetype::MeatGrinder; }
     
-    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
-    let disaster = &deciles[0];
-    let struggle = deciles.get(deciles.len() / 4).unwrap_or(&deciles[0]);
+    if vitals.lethality_index > 0.5 { return EncounterArchetype::MeatGrinder; }
+    
+    if vitals.lethality_index > 0.3 {
+        if vitals.attrition_score < 0.2 { return EncounterArchetype::NovaTrap; }
+        return EncounterArchetype::BossFight;
+    }
 
-    if typical.median_survivors == 0 { return SafetyGrade::F; }
-    if struggle.median_survivors == 0 { return SafetyGrade::D; }
-    if disaster.median_survivors == 0 { return SafetyGrade::C; }
+    if vitals.lethality_index > 0.15 {
+        if vitals.attrition_score > 0.4 { return EncounterArchetype::TheGrind; }
+        return EncounterArchetype::EliteChallenge;
+    }
 
-    let disaster_lowest_hp = disaster.median_run_visualization
-        .iter()
-        .filter(|c| c.is_player && !c.is_dead)
-        .map(|c| c.hp_percentage)
-        .fold(100.0_f64, |acc, hp| acc.min(hp));
+    if vitals.lethality_index > 0.05 {
+        if vitals.attrition_score > 0.3 { return EncounterArchetype::TheGrind; }
+        return EncounterArchetype::Standard;
+    }
 
-    if disaster_lowest_hp > 10.0 {
-        SafetyGrade::A
-    } else {
-        SafetyGrade::B
+    if vitals.attrition_score > 0.1 {
+        return EncounterArchetype::Skirmish;
+    }
+
+    EncounterArchetype::Trivial
+}
+
+fn get_encounter_label(archetype: &EncounterArchetype) -> EncounterLabel {
+    match archetype {
+        EncounterArchetype::Broken => EncounterLabel::Broken,
+        EncounterArchetype::MeatGrinder => EncounterLabel::TPKRisk,
+        EncounterArchetype::BossFight => EncounterLabel::EpicChallenge,
+        EncounterArchetype::EliteChallenge => EncounterLabel::TacticalGrinder,
+        EncounterArchetype::TheGrind => EncounterLabel::TheSlog,
+        EncounterArchetype::NovaTrap => EncounterLabel::TheTrap,
+        EncounterArchetype::Skirmish => EncounterLabel::ActionMovie,
+        EncounterArchetype::Trivial => EncounterLabel::TrivialMinions,
+        EncounterArchetype::Standard => EncounterLabel::Standard,
     }
 }
 
-fn get_encounter_label(grade: &SafetyGrade, tier: &IntensityTier) -> EncounterLabel {
-    match (grade, tier) {
-        (SafetyGrade::B, IntensityTier::Tier4) => EncounterLabel::EpicChallenge,
-        (SafetyGrade::A, IntensityTier::Tier3) => EncounterLabel::TacticalGrinder,
-        (SafetyGrade::B, IntensityTier::Tier2) => EncounterLabel::ActionMovie,
-        (SafetyGrade::C, IntensityTier::Tier2) => EncounterLabel::TheTrap,
-        (SafetyGrade::A, IntensityTier::Tier5) => EncounterLabel::TheSlog,
-        (SafetyGrade::F, _) => EncounterLabel::Broken,
-        (SafetyGrade::D, _) => EncounterLabel::TPKRisk,
-        (SafetyGrade::A, IntensityTier::Tier1) => EncounterLabel::TrivialMinions,
-        (SafetyGrade::A, IntensityTier::Tier2) => EncounterLabel::Standard,
-        _ => EncounterLabel::Standard,
-    }
-}
-
-fn generate_analysis_summary(grade: &SafetyGrade, tier: &IntensityTier, deciles: &[DecileStats], global_median: &Option<DecileStats>) -> String {
-    if deciles.is_empty() { return "Insufficient data".to_string(); }
-    
-    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
-
-    let safety_desc = match grade {
-        SafetyGrade::A => "Party is secure even with terrible luck.",
-        SafetyGrade::B => "Bad luck hurts, but the party typically survives.",
-        SafetyGrade::C => "Bottom 10% of scenarios result in a TPK.",
-        SafetyGrade::D => "High risk of failure. Bottom 25% are TPKs.",
-        SafetyGrade::F => "Mathematically impossible for the party to win consistently.",
+fn generate_analysis_summary(archetype: &EncounterArchetype, vitals: &Vitals, typical: &DecileStats) -> String {
+    let archetype_desc = match archetype {
+        EncounterArchetype::Trivial => "Negligible challenge.",
+        EncounterArchetype::Skirmish => "A light warm-up.",
+        EncounterArchetype::Standard => "Balanced and fair.",
+        EncounterArchetype::TheGrind => "High resource drain, low risk.",
+        EncounterArchetype::EliteChallenge => "Tactical and demanding.",
+        EncounterArchetype::BossFight => "Significant risk of casualty.",
+        EncounterArchetype::MeatGrinder => "High TPK potential.",
+        EncounterArchetype::NovaTrap => "Burst damage threat.",
+        EncounterArchetype::Broken => "Mathematically impossible.",
     };
 
-    let intensity_desc = match tier {
-        IntensityTier::Tier1 => "Negligible resource drain.",
-        IntensityTier::Tier2 => "A light warm-up fight.",
-        IntensityTier::Tier3 => "A solid, balanced challenge.",
-        IntensityTier::Tier4 => "Resource intensive and tense.",
-        IntensityTier::Tier5 => "Players will end with empty tanks.",
-    };
-
-    format!("Grade {}: {} | {}: {} | Typical Survivors: {}/{}",
-        grade, safety_desc, tier, intensity_desc, typical.median_survivors, typical.party_size)
+    format!("{}: {} | Attrition: {}% | Typical Survivors: {}/{}",
+        archetype, archetype_desc, (vitals.attrition_score * 100.0).round(), typical.median_survivors, typical.party_size)
 }
 
 fn calculate_vitals(
@@ -326,7 +305,7 @@ fn calculate_vitals(
             volatility_index: 0.0,
             doom_horizon: 0.0,
             deaths_door_index: 0.0,
-            difficulty_grade: DifficultyGrade::S,
+            archetype: EncounterArchetype::Trivial,
             is_volatile: false,
         };
     }
@@ -378,7 +357,7 @@ fn calculate_vitals(
 
     let lethality_index = ko_count as f64 / total_runs as f64;
     let tpk_risk = tpk_count as f64 / total_runs as f64;
-    let crisis_risk = crisis_count as f64 / total_runs as f64;
+    let _crisis_risk = crisis_count as f64 / total_runs as f64;
     let deaths_door_index = total_deaths_door_rounds as f64 / total_runs as f64;
 
     // 2. Attrition and Volatility
@@ -394,11 +373,6 @@ fn calculate_vitals(
         burned / tdnw
     };
 
-    // Note: results are sorted Worst to Best performance.
-    // Worst performance (lowest score) is at idx 0.
-    // So P10 (Bad Luck) is at idx total_runs * 0.1.
-    // P50 (Median) is at idx total_runs * 0.5.
-    
     let p10_cost = get_cost(p10_idx);
     let p50_cost = get_cost(p50_idx);
     
@@ -406,39 +380,27 @@ fn calculate_vitals(
     let volatility_index = (p10_cost - p50_cost).max(0.0);
     let is_volatile = volatility_index > 0.20;
 
-    // 3. Difficulty Grading
-    let difficulty_grade = if tpk_risk > 0.5 {
-        DifficultyGrade::F
-    } else if tpk_risk > 0.1 || lethality_index > 0.5 {
-        DifficultyGrade::D
-    } else if lethality_index > 0.3 {
-        DifficultyGrade::C
-    } else if lethality_index > 0.15 {
-        DifficultyGrade::B
-    } else if lethality_index > 0.05 || crisis_risk > 0.1 {
-        DifficultyGrade::A
-    } else {
-        DifficultyGrade::S
+    // 3. Archetype Determination
+    let mut temp_vitals = Vitals {
+        lethality_index,
+        tpk_risk,
+        attrition_score,
+        volatility_index,
+        doom_horizon: 0.0,
+        deaths_door_index,
+        archetype: EncounterArchetype::Standard,
+        is_volatile,
     };
+    temp_vitals.archetype = assess_archetype(&temp_vitals);
 
     // 4. Doom Horizon
-    // If attrition is 20% (0.2), we can survive 5 encounters (1.0 / 0.2)
-    let doom_horizon = if attrition_score > 0.01 {
+    temp_vitals.doom_horizon = if attrition_score > 0.01 {
         1.0 / attrition_score
     } else {
         10.0 // Practically infinite
     };
 
-    Vitals {
-        lethality_index,
-        tpk_risk,
-        attrition_score,
-        volatility_index,
-        doom_horizon,
-        deaths_door_index,
-        difficulty_grade,
-        is_volatile,
-    }
+    temp_vitals
 }
 
 fn calculate_run_stats_partial(run: &SimulationResult, encounter_idx: Option<usize>, party_size: usize, tdnw: f64, sr_count: usize) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
@@ -651,20 +613,34 @@ pub fn run_encounter_analysis_with_logs(runs: &mut [crate::model::SimulationRun]
     output
 }
 
-fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _deciles: &[DecileStats]) -> Vec<String> {
-    let mut suggestions = Vec::new();
-    match grade {
-        SafetyGrade::C => suggestions.push("Risky floor. Consider lowering monster burst damage.".to_string()),
-        SafetyGrade::D => suggestions.push("Unstable. Reduce number of monsters or lower their damage stats.".to_string()),
-        SafetyGrade::F => suggestions.push("Impossible. Major rebalance needed - monsters are too strong.".to_string()),
-        _ => {}
+fn slice_events_for_encounter(events: &[crate::events::Event], encounter_idx: usize) -> Vec<crate::events::Event> {
+    let mut sliced = Vec::new();
+    let mut current_encounter = 0;
+    let mut recording = false;
+
+    for event in events {
+        if let crate::events::Event::EncounterStarted { .. } = event {
+            if recording {
+                // We reached a new encounter without seeing EncounterEnded for the previous one
+                break;
+            }
+            if current_encounter == encounter_idx {
+                recording = true;
+            }
+            current_encounter += 1;
+        }
+        
+        if recording {
+            sliced.push(event.clone());
+        }
+
+        if let crate::events::Event::EncounterEnded { .. } = event {
+            if recording {
+                break;
+            }
+        }
     }
-    match tier {
-        IntensityTier::Tier1 => suggestions.push("Under-tuned. Increase monster HP or count for more impact.".to_string()),
-        IntensityTier::Tier5 => suggestions.push("Resource slog. Ensure players have a rest opportunity after this.".to_string()),
-        _ => {}
-    }
-    suggestions
+    sliced
 }
 
 fn calculate_day_pacing(
@@ -757,7 +733,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
                     power_range: None,
                     decile_logs: Vec::new(),
                     battle_duration_rounds: 0,
-                    safety_grade: SafetyGrade::A, intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
+                    intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
             analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
             tdnw: 0.0,
             num_encounters: 0,
@@ -828,12 +804,9 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
     };
 
     let total_runs = results.len();
-    let is_perfect = total_runs > 0 && (total_runs - 1).is_multiple_of(10);
-    let slice_size = if is_perfect { (total_runs - 1) / 10 } else { (total_runs / 10).max(1) };
-
-    let mut deciles = Vec::with_capacity(10);
     let mut global_median = None;
     let mut decile_logs = Vec::new();
+    let mut deciles = Vec::with_capacity(10);
 
     // Extract 11 logs if runs are provided
     if let Some(all_runs) = runs {
@@ -876,87 +849,46 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         }
     }
 
-    if is_perfect && total_runs >= 11 {
-        let median_idx = total_runs / 2;
-        let median_run = results[median_idx];
+    // Always calculate 10 deciles for backward compatibility and granular UI data
+    let decile_size = total_runs as f64 / 10.0;
+    for i in 0..10 {
+        let start_idx = (i as f64 * decile_size).floor() as usize;
+        let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
+        let slice = &results[start_idx..end_idx.min(total_runs)];
+        if !slice.is_empty() {
+            deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count));
+        }
+    }
+
+    let median_idx = total_runs / 2;
+    if let Some(&median_run) = results.get(median_idx) {
         let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
         let (visualization_data, _) = extract_combatant_visualization_partial(median_run, encounter_idx);
         
         global_median = Some(DecileStats {
             decile: 0,
             label: "Global Median".to_string(),
-            median_survivors: survivors,
-            party_size,
-            total_hp_lost: hp_lost,
-            hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
-            win_rate: if survivors > 0 { 100.0 } else { 0.0 },
-            median_run_visualization: visualization_data,
+                        median_survivors: survivors,
+                        party_size,
+                        total_hp_lost: hp_lost,
+                        hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
+                        win_rate: if survivors > 0 { 100.0 } else { 0.0 },                median_run_visualization: visualization_data,
             median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
             battle_duration_rounds: duration,
             resource_timeline: timeline,
             vitality_timeline: vit_timeline,
             power_timeline: pow_timeline,
         });
-
-        for i in 0..10 {
-            let start_idx = if i < 5 { i * slice_size } else { i * slice_size + 1 };
-            let end_idx = start_idx + slice_size;
-            if start_idx < total_runs && end_idx <= total_runs {
-                let slice = &results[start_idx..end_idx];
-                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count));
-            }
-        }
-    } else {
-        let decile_size = total_runs as f64 / 10.0;
-        for i in 0..10 {
-            let start_idx = (i as f64 * decile_size).floor() as usize;
-            let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
-            let slice = &results[start_idx..end_idx.min(total_runs)];
-            if !slice.is_empty() {
-                deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count));
-            }
-        }
-        
-        let median_idx = total_runs / 2;
-        if let Some(&median_run) = results.get(median_idx) {
-            let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
-            let (visualization_data, _) = extract_combatant_visualization_partial(median_run, encounter_idx);
-            
-            global_median = Some(DecileStats {
-                decile: 0,
-                label: "Global Median".to_string(),
-                            median_survivors: survivors,
-                            party_size,
-                            total_hp_lost: hp_lost,
-                            hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
-                            win_rate: if survivors > 0 { 100.0 } else { 0.0 },                median_run_visualization: visualization_data,
-                median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
-                battle_duration_rounds: duration,
-                resource_timeline: timeline,
-                vitality_timeline: vit_timeline,
-                power_timeline: pow_timeline,
-            });
-        }
     }
 
-    let safety_grade = assess_safety_grade(&deciles, &global_median);
-    let intensity_tier = assess_intensity_tier_dynamic(&deciles, &global_median, tdnw, total_day_weight, current_encounter_weight);
-    let encounter_label = get_encounter_label(&safety_grade, &intensity_tier);
-    let analysis_summary = generate_analysis_summary(&safety_grade, &intensity_tier, &deciles, &global_median);
-    let tuning_suggestions = generate_tuning_suggestions(&safety_grade, &intensity_tier, &deciles);
+    let vitals_val = vitals.as_ref().unwrap();
+    let encounter_label = get_encounter_label(&vitals_val.archetype);
+    let analysis_summary = generate_analysis_summary(&vitals_val.archetype, vitals_val, global_median.as_ref().unwrap());
+    let tuning_suggestions = generate_tuning_suggestions(&vitals_val.archetype);
     
-    // Safety Acceptance: A and B are good, C/D/F are bad.
-    let safety_ok = matches!(safety_grade, SafetyGrade::A | SafetyGrade::B);
-    
-    // Intensity Stars: Tier 4 = 3, Tier 3/5 = 2, Tier 2 = 1, Tier 1 = 0
-    let stars = match intensity_tier {
-        IntensityTier::Tier4 => 3,
-        IntensityTier::Tier3 | IntensityTier::Tier5 => 2,
-        IntensityTier::Tier2 => 1,
-        IntensityTier::Tier1 => 0,
-    };
-
-    let is_good_design = safety_ok && stars >= 2;
+    // Design quality based on balance between risk and reward
+    let is_good_design = vitals_val.lethality_index < 0.4 && vitals_val.attrition_score > 0.1;
+    let stars = if is_good_design { 3 } else if vitals_val.lethality_index < 0.6 { 2 } else { 1 };
 
     let battle_duration_rounds = global_median.as_ref().map(|m| m.battle_duration_rounds).unwrap_or(0);
 
@@ -965,62 +897,14 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         vitality_range, power_range,
         decile_logs,
         battle_duration_rounds,
-        safety_grade, intensity_tier, encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
+        intensity_tier: assess_intensity_tier_dynamic(results, tdnw, total_day_weight, current_encounter_weight),
+        encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
         tdnw,
         num_encounters,
         skyline,
         vitals,
         pacing,
     }
-}
-
-fn slice_events_for_encounter(events: &[crate::events::Event], encounter_idx: usize) -> Vec<crate::events::Event> {
-    let mut sliced = Vec::new();
-    let mut current_encounter = 0;
-    let mut recording = false;
-
-    for event in events {
-        if let crate::events::Event::EncounterStarted { .. } = event {
-            if recording {
-                // We reached a new encounter without seeing EncounterEnded for the previous one
-                break;
-            }
-            if current_encounter == encounter_idx {
-                recording = true;
-            }
-            current_encounter += 1;
-        }
-        
-        if recording {
-            sliced.push(event.clone());
-        }
-
-        if let crate::events::Event::EncounterEnded { .. } = event {
-            if recording {
-                break;
-            }
-        }
-    }
-    sliced
-}
-
-fn assess_intensity_tier_dynamic(deciles: &[DecileStats], global_median: &Option<DecileStats>, tdnw: f64, total_weight: f64, encounter_weight: f64) -> IntensityTier {
-    if deciles.is_empty() || tdnw <= 0.0 { return IntensityTier::Tier1; }
-    
-    let typical = global_median.as_ref().or_else(|| deciles.get(deciles.len() / 2)).unwrap_or(&deciles[0]);
-    
-    // Cost % relative to TDNW
-    let cost_percent = typical.total_hp_lost / tdnw; 
-    
-    // Target Drain = Weight / Total Weight
-    let total_w = if total_weight <= 0.0 { 1.0 } else { total_weight };
-    let target = encounter_weight / total_w;
-
-    if cost_percent < (0.2 * target) { IntensityTier::Tier1 }
-    else if cost_percent < (0.6 * target) { IntensityTier::Tier2 }
-    else if cost_percent < (1.3 * target) { IntensityTier::Tier3 }
-    else if cost_percent < (2.0 * target) { IntensityTier::Tier4 }
-    else { IntensityTier::Tier5 }
 }
 
 fn calculate_decile_stats_internal(slice: &[&SimulationResult], encounter_idx: Option<usize>, decile_num: usize, party_size: usize, tdnw: f64, sr_count: usize) -> DecileStats {
@@ -1093,4 +977,37 @@ fn calculate_decile_stats_internal(slice: &[&SimulationResult], encounter_idx: O
         vitality_timeline: avg_vitality_timeline,
         power_timeline: avg_power_timeline,
     }
+}
+
+fn generate_tuning_suggestions(archetype: &EncounterArchetype) -> Vec<String> {
+    let mut suggestions = Vec::new();
+    match archetype {
+        EncounterArchetype::Broken => suggestions.push("Mathematically impossible. Reduce monster damage or count.".to_string()),
+        EncounterArchetype::MeatGrinder => suggestions.push("Extremely lethal. High chance of TPK.".to_string()),
+        EncounterArchetype::NovaTrap => suggestions.push("Burst damage threat. Consider smoothing out damage across rounds.".to_string()),
+        EncounterArchetype::Trivial => suggestions.push("Under-tuned. Increase monster stats for more impact.".to_string()),
+        _ => {}
+    }
+    suggestions
+}
+
+fn assess_intensity_tier_dynamic(results: &[&SimulationResult], tdnw: f64, total_weight: f64, encounter_weight: f64) -> IntensityTier {
+    if results.is_empty() || tdnw <= 0.0 { return IntensityTier::Tier1; }
+    
+    let total_runs = results.len();
+    let typical = results[total_runs / 2];
+    let (hp_lost, _, _, _, _, _, _) = calculate_run_stats_partial(typical, None, 0, tdnw, 0);
+    
+    // Cost % relative to TDNW
+    let cost_percent = hp_lost / tdnw; 
+    
+    // Target Drain = Weight / Total Weight
+    let total_w = if total_weight <= 0.0 { 1.0 } else { total_weight };
+    let target = encounter_weight / total_w;
+
+    if cost_percent < (0.2 * target) { IntensityTier::Tier1 }
+    else if cost_percent < (0.6 * target) { IntensityTier::Tier2 }
+    else if cost_percent < (1.3 * target) { IntensityTier::Tier3 }
+    else if cost_percent < (2.0 * target) { IntensityTier::Tier4 }
+    else { IntensityTier::Tier5 }
 }

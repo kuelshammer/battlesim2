@@ -1,6 +1,6 @@
 use crate::model::{Creature, TimelineStep, MonsterRole};
 use crate::creature_adjustment::{detect_role, adjust_hp, adjust_damage, adjust_dc};
-use crate::decile_analysis::{SafetyGrade, IntensityTier, AggregateOutput};
+use crate::decile_analysis::{EncounterArchetype, IntensityTier, AggregateOutput};
 use crate::run_event_driven_simulation_rust;
 
 
@@ -26,7 +26,7 @@ impl AutoBalancer {
     ) -> (Vec<Creature>, AggregateOutput) {
         // 1. Initial Simulation with full context
         let mut analysis = self.run_analysis(&players, &monsters, &full_day_timeline, encounter_index);
-        let initial_grade = analysis.safety_grade.clone();
+        let initial_archetype = analysis.vitals.as_ref().map(|v| v.archetype.clone()).unwrap_or(EncounterArchetype::Standard);
 
         // 2. Role Detection for each monster
         let total_hp: f64 = monsters.iter().map(|m| m.hp as f64 * m.count).sum();
@@ -42,7 +42,7 @@ impl AutoBalancer {
 
         // 3. Optimization Loop
         for _ in 0..self.max_iterations {
-            if self.is_balanced(&analysis, &initial_grade) {
+            if self.is_balanced(&analysis, &initial_archetype) {
                 break;
             }
 
@@ -54,7 +54,7 @@ impl AutoBalancer {
 
             if self.is_too_deadly(&analysis) {
                 // Safety Clamp (Nerf)
-                let step = if analysis.safety_grade == SafetyGrade::F { -0.15 } else { -0.05 };
+                let step = if analysis.vitals.as_ref().map(|v| v.archetype == EncounterArchetype::Broken).unwrap_or(false) { -0.15 } else { -0.05 };
                 self.apply_adjustment(&mut monsters, &roles, step, true, vitality, power);
             } else if self.is_too_easy(&analysis) {
                 // Intensity Pump (Buff)
@@ -105,19 +105,29 @@ impl AutoBalancer {
         crate::decile_analysis::run_encounter_analysis(&raw_results, encounter_index, "Auto-Balance", players.len(), sr_count)
     }
 
-    fn is_balanced(&self, analysis: &AggregateOutput, initial_grade: &SafetyGrade) -> bool {
-        let safety_ok = if *initial_grade == SafetyGrade::F {
-            matches!(analysis.safety_grade, SafetyGrade::A)
+    fn is_balanced(&self, analysis: &AggregateOutput, initial_archetype: &EncounterArchetype) -> bool {
+        let vitals = match &analysis.vitals {
+            Some(v) => v,
+            None => return true,
+        };
+
+        let safety_ok = if *initial_archetype == EncounterArchetype::Broken {
+            vitals.archetype != EncounterArchetype::Broken && vitals.tpk_risk < 0.2
         } else {
-            matches!(analysis.safety_grade, SafetyGrade::A | SafetyGrade::B)
+            vitals.tpk_risk < 0.1
         };
 
         safety_ok && matches!(analysis.intensity_tier, IntensityTier::Tier3)
     }
 
     fn is_too_deadly(&self, analysis: &AggregateOutput) -> bool {
-        // Too deadly if grade is bad OR if it's Tier 4/5 (should be Tier 3)
-        matches!(analysis.safety_grade, SafetyGrade::C | SafetyGrade::D | SafetyGrade::F) ||
+        let vitals = match &analysis.vitals {
+            Some(v) => v,
+            None => return false,
+        };
+
+        // Too deadly if archetype is Broken/MeatGrinder OR if it's Tier 4/5 (should be Tier 3)
+        matches!(vitals.archetype, EncounterArchetype::Broken | EncounterArchetype::MeatGrinder) ||
         matches!(analysis.intensity_tier, IntensityTier::Tier4 | IntensityTier::Tier5)
     }
 

@@ -610,9 +610,9 @@ export const TimelineRangeSchema = z.object({
     p75: z.array(z.number()),
 })
 
-export const DifficultyGradeList = ['S', 'A', 'B', 'C', 'D', 'F'] as const
-export const DifficultyGradeSchema = z.enum(DifficultyGradeList)
-export type DifficultyGrade = z.infer<typeof DifficultyGradeSchema>
+export const EncounterArchetypeList = ['Trivial', 'Skirmish', 'Standard', 'TheGrind', 'EliteChallenge', 'BossFight', 'MeatGrinder', 'NovaTrap', 'Broken'] as const
+export const EncounterArchetypeSchema = z.enum(EncounterArchetypeList)
+export type EncounterArchetype = z.infer<typeof EncounterArchetypeSchema>
 
 export const VitalsSchema = z.object({
     lethalityIndex: z.number(),
@@ -621,7 +621,7 @@ export const VitalsSchema = z.object({
     volatilityIndex: z.number(),
     doomHorizon: z.number(),
     deathsDoorIndex: z.number(),
-    difficultyGrade: DifficultyGradeSchema,
+    archetype: EncounterArchetypeSchema,
     isVolatile: z.boolean(),
 })
 export type Vitals = z.infer<typeof VitalsSchema>
@@ -644,6 +644,11 @@ export const AggregateOutputSchema = z.object({
     powerRange: TimelineRangeSchema.optional().nullable(),
     decileLogs: z.array(z.array(EventSchema)).default([]),
     battleDurationRounds: z.number(),
+    intensityTier: z.string(), // Tier1...Tier5
+    encounterLabel: z.string(),
+    analysisSummary: z.string(),
+    tuningSuggestions: z.array(z.string()),
+    isGoodDesign: z.boolean(),
     stars: z.number().optional().default(0),
     tdnw: z.number().optional().default(0),
     numEncounters: z.number().optional().default(0),

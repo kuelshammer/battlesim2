@@ -197,10 +197,10 @@ fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
         println!("\n--- Individual Encounter Breakdown ---");
         for i in 0..num_encounters {
             let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size, sr_count);
-            println!("Encounter {}: {:<20} | Grade: {:<10} | Tier: {:<15} | {}", 
+            println!("Encounter {}: {:<20} | Archetype: {:<15} | Tier: {:<15} | {}", 
                 i + 1, 
                 format!("{}", enc_analysis.encounter_label),
-                format!("{}", enc_analysis.safety_grade),
+                format!("{}", enc_analysis.vitals.as_ref().map(|v| v.archetype.to_string()).unwrap_or("Unknown".to_string())),
                 format!("{}", enc_analysis.intensity_tier),
                 if enc_analysis.is_good_design { "✅ Good" } else { "⚠️ Review" }
             );
@@ -214,10 +214,10 @@ fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
     // Output summary and rating
     println!("OVERALL ADVENTURING DAY RATING: {}", output.scenario_name);
     println!("=====================================");
-    println!("Combined Label: {} ({})", output.encounter_label, output.safety_grade);
+    println!("Archetype:      {}", output.vitals.as_ref().map(|v| v.archetype.to_string()).unwrap_or("Unknown".to_string()));
     println!("Intensity:      {}", output.intensity_tier);
     println!("Description:    {}", output.analysis_summary);
-    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY (B/Tier 5 or A/Tier 3-4)" } else if output.safety_grade == simulation_wasm::decile_analysis::SafetyGrade::B && output.intensity_tier == simulation_wasm::decile_analysis::IntensityTier::Tier5 { "🏆 PERFECT DAY (B/Tier 5)" } else { "⚠️ Imbalanced" });
+    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY" } else { "⚠️ Imbalanced" });
     println!("=====================================\n");
 
     // Output table format
