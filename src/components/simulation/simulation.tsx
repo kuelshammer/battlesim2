@@ -23,6 +23,7 @@ import { VitalsDashboard, ValidationNotice } from "./AnalysisComponents"
 import { calculatePacingData } from "./pacingUtils"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
+import HeartbeatGraph from "./HeartbeatGraph"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 import { CrosshairProvider } from "./CrosshairContext"
 import { CrosshairTooltip } from "./CrosshairLine"
@@ -539,12 +540,32 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </h3>
                                 <div className={styles.dividerLine} />
                             </div>
-                            <PartyOverview
-                                skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                playerNames={combatantNames}
-                                className="overall-party-overview"
-                            />
+
+                            {worker.analysis.overall.pacing && (
+                                <div className={styles.pacingHeader}>
+                                    <div className={styles.archetypeBadge}>
+                                        {worker.analysis.overall.pacing.archetype}
+                                    </div>
+                                    <div className={styles.directorScore}>
+                                        DIRECTOR'S SCORE: {Math.round(worker.analysis.overall.pacing.directorScore)}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className={styles.summaryGrid}>
+                                <HeartbeatGraph 
+                                    encounters={worker.analysis.encounters} 
+                                    className={styles.tensionArc} 
+                                />
+                                
+                                <PartyOverview
+                                    skyline={worker.analysis.overall.skyline as SkylineAnalysis}
+                                    partySlots={worker.analysis.partySlots as PlayerSlot[]}
+                                    playerNames={combatantNames}
+                                    className="overall-party-overview"
+                                />
+                            </div>
+
                             <PlayerGraphs
                                 skyline={worker.analysis.overall.skyline as SkylineAnalysis}
                                 partySlots={worker.analysis.partySlots as PlayerSlot[]}
