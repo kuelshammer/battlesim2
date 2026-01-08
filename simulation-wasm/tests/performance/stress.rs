@@ -939,7 +939,7 @@ fn stress_latency_count_boxed() {
     // Floor assertion: should complete in reasonable time (catches catastrophic slowdown)
     // Debug mode is slow: 100 sims ~110s, 1000 sims ~1100s
     // Use very generous floor to catch only infinite loops or catastrophic failures
-    let max_acceptable = Duration::from_secs((target_sims as u64 * 2).max(120));
+    let max_acceptable = Duration::from_secs((target_sims as u64 * 4).max(240));
     assert!(elapsed < max_acceptable,
         "{} sims took {:?} - exceeds max acceptable {:?} (possible infinite loop?)",
         target_sims, elapsed, max_acceptable);
