@@ -3,18 +3,26 @@
 <!-- AI AGENT INSTRUCTION: BEFORE STARTING WORK, YOU MUST READ AGENTS.md FOR BEHAVIORAL PROTOCOLS AND TASK MANAGEMENT RULES. -->
 <!-- THIS REPO USES THE BEADS ISSUE TRACKER (bd command) FOR TASK MANAGEMENT. -->
 
-This is a simple 5e encounter simulator. It is showcased in the following Youtube video: https://www.youtube.com/watch?v=A8FNVkFuhXI
+This is a **Narrative-First** 5e encounter simulator. It goes beyond simple win/loss probabilities to analyze the *dramatic structure* of your battles.
 
-## How it works
-The simulator uses a high-fidelity **Deterministic Statistics** engine. Unlike many simulators that use static probabilities, BattleSim executes thousands of discrete combat runs using a seeded Random Number Generator (RNG) to build a precise statistical model of combat outcomes.
+## The Director's Cut
+BattleSim doesn't just tell you if the party survives; it tells you **how it felt**. Using a high-fidelity deterministic engine, it measures:
 
-Key features of the engine:
-* **High-Fidelity Rules:** Uses actual d20 rolls, damage dice, and critical hit logic (doubling only dice, per 5e rules).
-* **Advantage/Disadvantage:** Implements full 5e cancellation rules and special features like Triple Advantage (Elven Accuracy).
-* **Deterministic Re-simulation:** Every single run can be perfectly recreated using its unique seed, enabling deep-dive analysis of specific "lucky" or "disastrous" scenarios.
-* **Resource-Aware:** Tracks spell slots, class features, and Hit Die consumption across multiple encounters.
+*   **Narrative Arc:** Visualized via the "Heartbeat Graph," showing the emotional pacing of the fight.
+*   **Director's Score:** A metric (0-100) rating the dramatic tension. Is it a boring slog (low score) or a nail-biting thriller (high score)?
+*   **Archetype Classification:** Instead of generic grades, encounters are classified by their narrative role:
+    *   *The Meat Grinder* (High Lethality, Low Variance)
+    *   *The Cakewalk* (Low Lethality, Low Resource Cost)
+    *   *The Coin Flip* (High Volatility)
+*   **Doom Horizon:** Predicts exactly when the party will run out of steam across a full adventuring day.
 
-This approach ensures that the "average" result is backed by thousands of real combat sequences, capturing the true "swinginess" of D&D 5e combat that a purely probability-based model would miss.
+## Key Features
+*   **High-Fidelity Rules:** Actual d20 rolls, crits, and complex mechanics (e.g., Triple Advantage/Elven Accuracy).
+*   **Magic Item Support:** Native support for complex items like *Cloak of Displacement*, *Armor of Agathys*, *Bracers of Defense*, and *Ring/Cloak of Protection*.
+*   **Resource Tracking:** Tracks spell slots, Hit Dice, and class features across multi-encounter days.
+*   **Deterministic Re-simulation:** Every run is seeded and reproducible. You can replay the exact "1 in 100" disaster scenario to see what went wrong.
+
+---
 
 ## Two-Pass Simulation System
 
@@ -120,6 +128,7 @@ P1-2   │█████████│  [101 runs → 1 median]
 
 ## Directory Structure
 * `public`: images to be displayed on the website
+* `simulation-wasm`: The Rust-based high-performance simulation engine.
 * `src`
   * `components`: UI elements
     * `creatureForm`: the dialog which is shown when clicking adding/updating a creature
