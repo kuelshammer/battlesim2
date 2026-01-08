@@ -84,6 +84,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
     const RUNS_COUNT = 100
     const BAND_HEIGHT = 60
     const LABEL_HEIGHT = 20
+    const TOTAL_HEIGHT = (BAND_HEIGHT * 2) + LABEL_HEIGHT
     const bucketGap = 1
     
     // Effective width of a bucket including its gap (except for the last one)
