@@ -149,6 +149,16 @@ pub struct Vitals {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct DayPacing {
+    pub archetype: String,
+    pub director_score: f64,
+    pub rhythm_score: f64,
+    pub attrition_score: f64,
+    pub recovery_score: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AggregateOutput {
     pub scenario_name: String,
     pub total_runs: usize,
@@ -169,6 +179,7 @@ pub struct AggregateOutput {
     pub num_encounters: usize,
     pub skyline: Option<crate::percentile_analysis::SkylineAnalysis>,
     pub vitals: Option<Vitals>,
+    pub pacing: Option<DayPacing>,
 }
 
 fn extract_combatant_visualization_partial(result: &SimulationResult, encounter_idx: Option<usize>) -> (Vec<CombatantVisualization>, usize) {
@@ -656,6 +667,85 @@ fn generate_tuning_suggestions(grade: &SafetyGrade, tier: &IntensityTier, _decil
     suggestions
 }
 
+fn calculate_day_pacing(
+    results: &[&SimulationResult],
+    encounter_idx: Option<usize>,
+    tdnw: f64,
+    sr_count: usize,
+) -> Option<DayPacing> {
+    if encounter_idx.is_some() || results.is_empty() {
+        return None; // Only for overall day analysis
+    }
+
+    let total_runs = results.len();
+    let median_idx = total_runs / 2;
+    let median_run = results[median_idx];
+
+    // 1. Attrition Score (Efficiency)
+    // Ideal end state is 10-30% resources.
+    let (burned, _, _, _, _, _, _) = calculate_run_stats_partial(median_run, None, 0, tdnw, sr_count);
+    let end_res_pct = if tdnw > 0.0 {
+        ((tdnw - burned) / tdnw) * 100.0
+    } else {
+        100.0
+    };
+
+    let attrition_score = if end_res_pct < 0.0 {
+        20.0 // TPK/Total Exhaustion
+    } else if end_res_pct < 10.0 {
+        70.0 // Tense, maybe too much
+    } else if end_res_pct < 35.0 {
+        100.0 // Sweet spot
+    } else if end_res_pct < 60.0 {
+        60.0 // A bit easy
+    } else {
+        30.0 // Boring
+    };
+
+    // 2. Rhythm Score (Difficulty Escalation)
+    let mut rhythm_score = 100.0;
+    let mut max_weight = 0.0;
+    let mut reversals = 0;
+    
+    for enc in &median_run.encounters {
+        let w = enc.target_role.weight();
+        if w < max_weight {
+            reversals += 1;
+        }
+        max_weight = max_weight.max(w);
+    }
+    
+    if median_run.encounters.len() > 1 {
+        rhythm_score = (100.0 - (reversals as f64 * 30.0)).max(0.0);
+    }
+
+    // 3. Recovery Score (Placeholder for now)
+    let recovery_score = 100.0;
+
+    // 4. Archetype Determination
+    let archetype = if rhythm_score >= 80.0 && attrition_score >= 80.0 {
+        "The Hero's Journey".to_string()
+    } else if end_res_pct > 60.0 {
+        "The Slow Burn".to_string()
+    } else if reversals > 1 {
+        "The Nova Trap".to_string()
+    } else if end_res_pct < 10.0 {
+        "The Meat Grinder".to_string()
+    } else {
+        "The Gritty Adventure".to_string()
+    };
+
+    let director_score = rhythm_score * 0.4 + attrition_score * 0.4 + recovery_score * 0.2;
+
+    Some(DayPacing {
+        archetype,
+        director_score,
+        rhythm_score,
+        attrition_score,
+        recovery_score,
+    })
+}
+
 fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option<usize>, scenario_name: &str, party_size: usize, runs: Option<&[crate::model::SimulationRun]>, sr_count: usize) -> AggregateOutput {
     if results.is_empty() {
                 return AggregateOutput {
@@ -673,6 +763,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
             num_encounters: 0,
             skyline: None,
             vitals: None,
+            pacing: None,
         };
     }
 
@@ -681,6 +772,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
     
     // Compute vitals
     let vitals = Some(calculate_vitals(results, encounter_idx, party_size, tdnw));
+    let pacing = calculate_day_pacing(results, encounter_idx, tdnw, sr_count);
 
     // Compute skyline analysis (100 buckets)
     // results are already sorted by overall score
@@ -878,6 +970,7 @@ fn analyze_results_internal(results: &[&SimulationResult], encounter_idx: Option
         num_encounters,
         skyline,
         vitals,
+        pacing,
     }
 }
 

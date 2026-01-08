@@ -626,6 +626,15 @@ export const VitalsSchema = z.object({
 })
 export type Vitals = z.infer<typeof VitalsSchema>
 
+export const DayPacingSchema = z.object({
+    archetype: z.string(),
+    directorScore: z.number(),
+    rhythmScore: z.number(),
+    attritionScore: z.number(),
+    recoveryScore: z.number(),
+})
+export type DayPacing = z.infer<typeof DayPacingSchema>
+
 export const AggregateOutputSchema = z.object({
     scenarioName: z.string(),
     totalRuns: z.number(),
@@ -640,6 +649,7 @@ export const AggregateOutputSchema = z.object({
     numEncounters: z.number().optional().default(0),
     skyline: SkylineAnalysisSchema.optional().nullable(),
     vitals: VitalsSchema.optional().nullable(),
+    pacing: DayPacingSchema.optional().nullable(),
 }).passthrough()
 
 export const AutoAdjustmentResultSchema = z.object({
