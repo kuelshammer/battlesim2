@@ -415,18 +415,6 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     </div>
 
                     <CrosshairProvider>
-                        {worker.analysis && pacingData && (
-                            <>
-                                <VitalsDashboard analysis={worker.analysis.overall} isPreliminary={worker.isRunning} />
-                                
-                                <ValidationNotice analysis={worker.analysis.overall} isDaySummary={true} />
-
-                                <AssistantSummary 
-                                    pacingData={pacingData} 
-                                />
-                            </>
-                        )}
-
                         {timeline.map((item, index) => {
                             // Find index within combat-only array for pacingData
                             const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
@@ -531,7 +519,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                     </div>
 
                     {/* Overall Day Summary - Moved to bottom and labeled */}
-                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && (
+                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && pacingData && (
                         <div className={styles.overallSummary} data-testid="overall-summary">
                             <div className={styles.summaryDivider}>
                                 <div className={styles.dividerLine} />
@@ -540,6 +528,14 @@ const Simulation: FC<PropType> = memo(({ }) => {
                                 </h3>
                                 <div className={styles.dividerLine} />
                             </div>
+
+                            <VitalsDashboard analysis={worker.analysis.overall} isPreliminary={worker.isRunning} />
+                                
+                            <ValidationNotice analysis={worker.analysis.overall} isDaySummary={true} />
+
+                            <AssistantSummary 
+                                pacingData={pacingData} 
+                            />
 
                             {worker.analysis.overall.pacing && (
                                 <div className={styles.pacingHeader}>
