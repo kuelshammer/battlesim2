@@ -85,7 +85,7 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
     if (!analysis || !analysis.vitals) return null;
 
     const { vitals } = analysis;
-    const { lethalityIndex, attritionScore, doomHorizon, difficultyGrade, isVolatile, tpkRisk } = vitals;
+    const { lethalityIndex, attritionScore, doomHorizon, difficultyGrade, tpkRisk, deathsDoorIndex } = vitals;
 
     const getGradeColor = (grade: string) => {
         switch (grade) {
@@ -114,6 +114,14 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
         if (score < 0.45) return "Taxing";
         if (score < 0.60) return "Heavy";
         return "Nova";
+    };
+
+    const getThrillingText = (index: number) => {
+        if (index === 0) return "Boring";
+        if (index < 0.5) return "Chilled";
+        if (index < 1.5) return "Tense";
+        if (index < 3.0) return "Thrilling";
+        return "Adrenaline";
     };
 
     return (
@@ -155,7 +163,20 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                     <div className={styles.subtext}>Of Daily Budget</div>
                 </div>
 
-                {/* 3. Forecast Section */}
+                {/* 3. Thrilling Section */}
+                <div className={styles.vitalsCard}>
+                    <div className={styles.cardHeader}>
+                        <FontAwesomeIcon icon={faBolt} className={styles.iconThrilling} />
+                        <span>Thrilling</span>
+                    </div>
+                    <div className={styles.cardValue}>
+                        {deathsDoorIndex.toFixed(1)}
+                    </div>
+                    <div className={styles.cardLabel}>{getThrillingText(deathsDoorIndex)}</div>
+                    <div className={styles.subtext}>Rounds at Death's Door</div>
+                </div>
+
+                {/* 4. Forecast Section */}
                 <div className={styles.vitalsCard}>
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faCompass} className={styles.iconForecast} />
@@ -166,18 +187,6 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                     </div>
                     <div className={styles.cardLabel}>Encounters</div>
                     <div className={styles.subtext}>Until Failure</div>
-                </div>
-
-                {/* 4. Grade & Tags Section */}
-                <div className={`${styles.vitalsCard} ${styles.gradeCard}`} style={{ borderColor: getGradeColor(difficultyGrade) }}>
-                    <div className={styles.gradeCircle} style={{ backgroundColor: getGradeColor(difficultyGrade) }}>
-                        {difficultyGrade}
-                    </div>
-                    <div className={styles.tagsContainer}>
-                        <span className={styles.tagBase}>{getAttritionText(attritionScore)}</span>
-                        {isVolatile && <span className={styles.tagVolatile}>Volatile</span>}
-                        {!isVolatile && attritionScore > 0.2 && <span className={styles.tagStable}>Stable</span>}
-                    </div>
                 </div>
             </div>
         </div>
@@ -190,7 +199,7 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     const ratingInfo = useMemo(() => {
         if (!analysis || !analysis.deciles?.length) return null;
 
-        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign, stars = 0 } = analysis as any;
+        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign, pacing } = analysis as any;
         
         const getGradeColor = (grade: string) => {
             if (isShortRest) return "#2c5282"; // Blue for short rest
@@ -202,15 +211,14 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
         let displayLabel = isShortRest ? "SHORT REST" : formatLabel(encounterLabel);
         let statusIcon = null;
 
-        if (isDaySummary) {
+        if (isDaySummary && pacing) {
+            displayLabel = pacing.archetype.toUpperCase();
             if (safetyGrade === 'A' && intensityTier === 'Tier4') {
-                displayLabel = "🌟 A+++ PERFECT DAY 🌟";
                 statusIcon = faTrophy;
             } else if (isGoodDesign) {
-                displayLabel = "✅ WELL BALANCED DAY";
                 statusIcon = faCheckCircle;
-            } else {
-                displayLabel = "❌ IMBALANCED DAY";
+            }
+            else {
                 statusIcon = faExclamationTriangle;
             }
         }
@@ -219,7 +227,6 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
 
         return {
             title: displayLabel,
-            grade: safetyGrade || "A",
             tier: formatTier(intensityTier || "Tier1"),
             summary: analysisSummary,
             color: getGradeColor(String(safetyGrade || 'A')),
@@ -253,8 +260,6 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
             
             {!isShortRest && (
                 <div className={styles.ratingSubline}>
-                    <span>Grade {ratingInfo.grade}</span>
-                    <span className={styles.separator}>|</span>
                     <span>{ratingInfo.tier}</span>
                 </div>
             )}
