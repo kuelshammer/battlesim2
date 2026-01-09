@@ -495,8 +495,10 @@ pub fn run_skyline_analysis_wasm(
     }
 
     // Run skyline analysis
+    // Convert Vec<SimulationResult> to &[&SimulationResult] to avoid cloning
+    let result_refs: Vec<&SimulationResult> = results.iter().collect();
     let analysis = crate::percentile_analysis::run_skyline_analysis(
-        &results,
+        &result_refs,
         party_size,
         encounter_index,
     );

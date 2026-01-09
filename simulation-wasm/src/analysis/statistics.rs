@@ -36,7 +36,7 @@ pub fn calculate_run_stats_partial(
     party_size: usize,
     tdnw: f64,
     sr_count: usize,
-) -> (f64, f64, usize, usize, Vec<f64>, Vec<f64>, Vec<f64>) {
+) -> RunMetrics {
     let score = crate::aggregation::calculate_score(run);
 
     // 1. Count survivors
@@ -64,7 +64,6 @@ pub fn calculate_run_stats_partial(
     let mut timeline = Vec::new();
     let mut vitality_timeline = Vec::new();
     let mut power_timeline = Vec::new();
-    let mut run_party_max_hp = 0.0;
 
     // Determine slice of encounters to analyze
     let encounters_slice = if let Some(idx) = encounter_idx {
@@ -90,7 +89,6 @@ pub fn calculate_run_stats_partial(
 
             for c in &first_round.team1 {
                 p_count += 1.0;
-                run_party_max_hp += c.creature.hp as f64;
                 let ledger = c.creature.initialize_ledger();
 
                 let budget = calculate_daily_budget(&c.creature, sr_count);
@@ -175,15 +173,23 @@ pub fn calculate_run_stats_partial(
 
     let duration = encounters_slice.iter().map(|e| e.rounds.len()).sum::<usize>();
 
-    (burned_resources, run_party_max_hp, survivors, duration, timeline, vitality_timeline, power_timeline)
+    RunMetrics {
+        burned: burned_resources,
+        survivors,
+        duration,
+        ehp_timeline: timeline,
+        vitality_timeline,
+        power_timeline,
+    }
 }
 
-/// Calculate vitals (lethality, TPK risk, attrition, etc.)
-pub fn calculate_vitals(
+/// Calculate vitals (lethality, TPK risk, attrition, etc.) with custom config
+pub fn calculate_vitals_with_config(
     results: &[&SimulationResult],
     encounter_idx: Option<usize>,
     party_size: usize,
     tdnw: f64,
+    config: &GameBalance,
 ) -> Vitals {
     let total_runs = results.len();
     if total_runs == 0 {
@@ -198,6 +204,33 @@ pub fn calculate_vitals(
             is_volatile: false,
         };
     }
+
+    // VALIDATION: Verify party_size matches actual team size
+    // Get the actual team size from the first valid encounter
+    let actual_party_size = results.iter().find_map(|&run| {
+        let encounters = if let Some(idx) = encounter_idx {
+            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+        } else {
+            &run.encounters[..]
+        };
+
+        encounters.iter()
+            .filter_map(|enc| enc.rounds.first())
+            .map(|round| round.team1.len())
+            .next()
+    });
+
+    if let Some(actual_size) = actual_party_size {
+        if actual_size != party_size {
+            eprintln!("WARNING: calculate_vitals - party_size parameter ({}) does not match actual team size ({}). Using actual team size for calculations.",
+                     party_size, actual_size);
+        }
+    } else {
+        eprintln!("WARNING: calculate_vitals - Could not determine actual team size from results. Using provided party_size: {}", party_size);
+    }
+
+    // Use the validated party size (actual if available, otherwise provided)
+    let validated_party_size = actual_party_size.unwrap_or(party_size);
 
     // 1. Calculate Lethality and TPK Risk (Probabilities)
     let mut ko_count = 0;
@@ -230,7 +263,7 @@ pub fn calculate_vitals(
 
             if let Some(last_round) = enc.rounds.last() {
                 let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count();
-                if survivors < party_size { run_has_ko = true; }
+                if survivors < validated_party_size { run_has_ko = true; }
                 if survivors == 0 { run_is_tpk = true; }
 
                 if last_round.team1.iter().any(|c| (c.final_state.current_hp as f64 / c.creature.hp as f64) < 0.1) {
@@ -255,8 +288,8 @@ pub fn calculate_vitals(
 
     let get_cost = |idx: usize| -> f64 {
         if idx >= total_runs || tdnw <= 0.0 { return 0.0; }
-        let (burned, _, _, _, _, _, _) = calculate_run_stats_partial(results[idx], encounter_idx, party_size, tdnw, 0);
-        burned / tdnw
+        let metrics = calculate_run_stats_partial(results[idx], encounter_idx, party_size, tdnw, 0);
+        metrics.burned / tdnw
     };
 
     let p10_cost = get_cost(p10_idx);
@@ -264,7 +297,7 @@ pub fn calculate_vitals(
 
     let attrition_score = p50_cost;
     let volatility_index = (p10_cost - p50_cost).max(0.0);
-    let is_volatile = volatility_index > 0.20;
+    let is_volatile = volatility_index > config.is_volatile_threshold;
 
     // 3. Archetype Determination
     let mut temp_vitals = Vitals {
@@ -277,7 +310,7 @@ pub fn calculate_vitals(
         archetype: EncounterArchetype::Standard,
         is_volatile,
     };
-    temp_vitals.archetype = super::narrative::assess_archetype(&temp_vitals);
+    temp_vitals.archetype = super::narrative::assess_archetype_with_config(&temp_vitals, config);
 
     // 4. Doom Horizon
     temp_vitals.doom_horizon = if attrition_score > 0.01 {
@@ -287,6 +320,18 @@ pub fn calculate_vitals(
     };
 
     temp_vitals
+}
+
+/// Calculate vitals (lethality, TPK risk, attrition, etc.)
+///
+/// Uses default game balance configuration.
+pub fn calculate_vitals(
+    results: &[&SimulationResult],
+    encounter_idx: Option<usize>,
+    party_size: usize,
+    tdnw: f64,
+) -> Vitals {
+    calculate_vitals_with_config(results, encounter_idx, party_size, tdnw, &GameBalance::default())
 }
 
 /// Calculate statistics for a decile slice
@@ -308,14 +353,14 @@ pub fn calculate_decile_stats_internal(
     let mut power_timelines = Vec::new();
 
     for &run in slice {
-        let (hp_lost, _max_hp, survivors, duration, timeline, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
-        if survivors > 0 { total_wins += 1.0; }
-        total_survivors += survivors;
-        total_hp_lost += hp_lost;
-        total_duration += duration;
-        timelines.push(timeline);
-        vitality_timelines.push(vit);
-        power_timelines.push(pow);
+        let metrics = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
+        if metrics.survivors > 0 { total_wins += 1.0; }
+        total_survivors += metrics.survivors;
+        total_hp_lost += metrics.burned;
+        total_duration += metrics.duration;
+        timelines.push(metrics.ehp_timeline);
+        vitality_timelines.push(metrics.vitality_timeline);
+        power_timelines.push(metrics.power_timeline);
     }
 
     let count = slice.len() as f64;
@@ -405,19 +450,28 @@ pub fn analyze_results_internal(
 
     // Compute vitals
     let vitals = Some(calculate_vitals(results, encounter_idx, party_size, tdnw));
-    let pacing = super::narrative::calculate_day_pacing(results, encounter_idx, tdnw, sr_count, calculate_run_stats_partial);
+
+    // Compute pacing using pre-computed metrics for median run
+    let pacing = if encounter_idx.is_none() && !results.is_empty() {
+        let median_idx = results.len() / 2;
+        let median_run = results[median_idx];
+        let median_metrics = calculate_run_stats_partial(median_run, None, party_size, tdnw, sr_count);
+        super::narrative::calculate_day_pacing(median_run, &median_metrics, tdnw)
+    } else {
+        None
+    };
 
     // Compute skyline analysis (100 buckets)
-    let owned_results: Vec<SimulationResult> = results.iter().map(|&r| r.clone()).collect();
-    let skyline = Some(crate::percentile_analysis::run_skyline_analysis(&owned_results, party_size, encounter_idx));
+    // Pass references directly - no need to clone SimulationResults
+    let skyline = Some(crate::percentile_analysis::run_skyline_analysis(results, party_size, encounter_idx));
 
     // Collect all timelines for independent percentile calculation
     let mut all_vits = Vec::with_capacity(results.len());
     let mut all_pows = Vec::with_capacity(results.len());
     for &run in results {
-        let (_, _, _, _, _, vit, pow) = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
-        all_vits.push(vit);
-        all_pows.push(pow);
+        let metrics = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
+        all_vits.push(metrics.vitality_timeline);
+        all_pows.push(metrics.power_timeline);
     }
 
     let num_steps = if !all_vits.is_empty() { all_vits[0].len() } else { 0 };
@@ -515,23 +569,23 @@ pub fn analyze_results_internal(
 
     let median_idx = total_runs / 2;
     if let Some(&median_run) = results.get(median_idx) {
-        let (hp_lost, _max_hp, survivors, duration, timeline, vit_timeline, pow_timeline) = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
+        let metrics = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
         let (visualization_data, _) = extract_vis_fn(median_run, encounter_idx);
 
         global_median = Some(DecileStats {
             decile: 0,
             label: "Global Median".to_string(),
-            median_survivors: survivors,
+            median_survivors: metrics.survivors,
             party_size,
-            total_hp_lost: hp_lost,
-            hp_lost_percent: if tdnw > 0.0 { (hp_lost / tdnw) * 100.0 } else { 0.0 },
-            win_rate: if survivors > 0 { 100.0 } else { 0.0 },
+            total_hp_lost: metrics.burned,
+            hp_lost_percent: if tdnw > 0.0 { (metrics.burned / tdnw) * 100.0 } else { 0.0 },
+            win_rate: if metrics.survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
             median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
-            battle_duration_rounds: duration,
-            resource_timeline: timeline,
-            vitality_timeline: vit_timeline,
-            power_timeline: pow_timeline,
+            battle_duration_rounds: metrics.duration,
+            resource_timeline: metrics.ehp_timeline,
+            vitality_timeline: metrics.vitality_timeline,
+            power_timeline: metrics.power_timeline,
         });
     }
 
@@ -550,7 +604,20 @@ pub fn analyze_results_internal(
         vitality_range, power_range,
         decile_logs,
         battle_duration_rounds,
-        intensity_tier: super::narrative::assess_intensity_tier_dynamic(results, tdnw, total_day_weight, current_encounter_weight, calculate_run_stats_partial),
+        intensity_tier: {
+            // Compute metrics for median run to assess intensity tier
+            let typical_metrics = if !results.is_empty() {
+                let typical_idx = results.len() / 2;
+                Some(calculate_run_stats_partial(results[typical_idx], encounter_idx, party_size, tdnw, sr_count))
+            } else {
+                None
+            };
+            if let Some(ref metrics) = typical_metrics {
+                super::narrative::assess_intensity_tier_dynamic(metrics, tdnw, total_day_weight, current_encounter_weight)
+            } else {
+                IntensityTier::Tier1
+            }
+        },
         encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
         tdnw,
         num_encounters,

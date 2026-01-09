@@ -173,3 +173,165 @@ pub struct AggregateOutput {
     pub vitals: Option<Vitals>,
     pub pacing: Option<DayPacing>,
 }
+
+/// Metrics calculated from a single simulation run
+/// Replaces the 7-tuple return type with named, self-documenting fields
+#[derive(Debug, Clone)]
+pub struct RunMetrics {
+    /// Resources burned (EHP consumed)
+    pub burned: f64,
+    /// Number of surviving combatants
+    pub survivors: usize,
+    /// Battle duration in rounds
+    pub duration: usize,
+    /// EHP percentage timeline (per encounter step)
+    pub ehp_timeline: Vec<f64>,
+    /// Vitality percentage timeline (per encounter step)
+    pub vitality_timeline: Vec<f64>,
+    /// Strategic power percentage timeline (per encounter step)
+    pub power_timeline: Vec<f64>,
+}
+
+impl RunMetrics {
+    /// Create empty/default metrics
+    pub fn empty() -> Self {
+        Self {
+            burned: 0.0,
+            survivors: 0,
+            duration: 0,
+            ehp_timeline: Vec::new(),
+            vitality_timeline: Vec::new(),
+            power_timeline: Vec::new(),
+        }
+    }
+}
+
+/// Game balance configuration constants
+///
+/// These thresholds control encounter classification and pacing assessment.
+/// Extracted to enable A/B testing and tuning without code changes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameBalance {
+    // === Archetype Assessment Thresholds ===
+
+    /// TPK risk threshold for "Broken" archetype
+    pub tpk_broken_threshold: f64,
+
+    /// Volatility index threshold for detecting high volatility
+    pub volatility_high_threshold: f64,
+
+    /// Lethality index threshold for Coin Flip detection
+    pub coin_flip_lethality_threshold: f64,
+
+    /// TPK risk threshold for "Meat Grinder" archetype
+    pub tpk_meat_grinder_threshold: f64,
+
+    // Lethality thresholds for various archetypes
+    pub lethality_boss_threshold: f64,
+    pub lethality_elite_threshold: f64,
+    pub lethality_standard_threshold: f64,
+    pub lethality_skirmish_threshold: f64,
+
+    // Attrition thresholds for archetype differentiation
+    pub attrition_nova_trap_threshold: f64,
+    pub attrition_grind_high_threshold: f64,
+    pub attrition_grind_low_threshold: f64,
+    pub attrition_standard_threshold: f64,
+    pub attrition_skirmish_threshold: f64,
+
+    // === Pacing/Attrition Scoring Thresholds ===
+
+    /// Resource percentage considered "TPK/Total Exhaustion"
+    pub pacing_exhaustion_pct: f64,
+
+    /// Resource percentage considered "Tense but acceptable"
+    pub pacing_tense_pct: f64,
+
+    /// Resource percentage upper bound for "Sweet spot"
+    pub pacing_sweet_spot_high_pct: f64,
+
+    /// Resource percentage lower bound for "Sweet spot"
+    pub pacing_sweet_spot_low_pct: f64,
+
+    /// Resource percentage considered "A bit easy"
+    pub pacing_easy_pct: f64,
+
+    // === Rhythm/Difficulty Escalation ===
+
+    /// Tolerance factor for detecting "dips" in difficulty (0.0-1.0)
+    /// A dip is when weight < max_weight_so_far * dip_tolerance
+    pub dip_tolerance: f64,
+
+    /// Score penalty per "excess" dip (beyond the allowed breather)
+    pub dip_penalty: f64,
+
+    // === Volatility Detection ===
+
+    /// Volatility index threshold for marking an encounter as "volatile"
+    pub is_volatile_threshold: f64,
+
+    // === Scoring Weights ===
+
+    /// Weight for rhythm score in Director's Score calculation
+    pub director_rhythm_weight: f64,
+
+    /// Weight for attrition score in Director's Score calculation
+    pub director_attrition_weight: f64,
+
+    /// Weight for recovery score in Director's Score calculation
+    pub director_recovery_weight: f64,
+
+    // === Intensity Tier Thresholds ===
+
+    /// Multipliers for intensity tier boundaries
+    pub intensity_tier1_multiplier: f64,  // < 0.2 * target
+    pub intensity_tier2_multiplier: f64,  // < 0.6 * target
+    pub intensity_tier3_multiplier: f64,  // < 1.3 * target
+    pub intensity_tier4_multiplier: f64,  // < 2.0 * target
+}
+
+impl Default for GameBalance {
+    fn default() -> Self {
+        Self {
+            // Archetype thresholds - based on original code values
+            tpk_broken_threshold: 0.5,
+            volatility_high_threshold: 0.15,
+            coin_flip_lethality_threshold: 0.05,
+            tpk_meat_grinder_threshold: 0.1,
+            lethality_boss_threshold: 0.5,
+            lethality_elite_threshold: 0.3,
+            lethality_standard_threshold: 0.15,
+            lethality_skirmish_threshold: 0.05,
+            attrition_nova_trap_threshold: 0.2,
+            attrition_grind_high_threshold: 0.4,
+            attrition_grind_low_threshold: 0.3,
+            attrition_standard_threshold: 0.3,
+            attrition_skirmish_threshold: 0.1,
+
+            // Pacing thresholds
+            pacing_exhaustion_pct: 0.0,
+            pacing_tense_pct: 10.0,
+            pacing_sweet_spot_high_pct: 35.0,
+            pacing_sweet_spot_low_pct: 10.0,
+            pacing_easy_pct: 60.0,
+
+            // Rhythm thresholds
+            dip_tolerance: 0.9,
+            dip_penalty: 30.0,
+
+            // Volatility detection
+            is_volatile_threshold: 0.20,
+
+            // Director's Score weights
+            director_rhythm_weight: 0.4,
+            director_attrition_weight: 0.4,
+            director_recovery_weight: 0.2,
+
+            // Intensity tier multipliers
+            intensity_tier1_multiplier: 0.2,
+            intensity_tier2_multiplier: 0.6,
+            intensity_tier3_multiplier: 1.3,
+            intensity_tier4_multiplier: 2.0,
+        }
+    }
+}

@@ -120,7 +120,7 @@ impl SkylineAnalysis {
 /// # Returns
 /// `SkylineAnalysis` with 100 buckets containing per-character data
 pub fn run_skyline_analysis(
-    results: &[SimulationResult],
+    results: &[&SimulationResult],
     party_size: usize,
     encounter_index: Option<usize>,
 ) -> SkylineAnalysis {
@@ -420,7 +420,7 @@ pub fn run_skyline_analysis_sorted(
         });
     }
 
-    run_skyline_analysis(&results, party_size, encounter_index)
+    run_skyline_analysis(&results.iter().collect::<Vec<_>>(), party_size, encounter_index)
 }
 
 #[cfg(test)]
