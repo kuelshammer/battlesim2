@@ -149,7 +149,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
     const hasRounds = value && value.rounds.length > 0
 
     return (
-        <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`}>
+        <div className={`${styles.encounterResult} ${isStale ? styles.stale : ''}`} data-testid="results-panel">
             {isStale && <div className={styles.staleBadge}>Out of Date</div>}
             
             {(targetPercent !== undefined && actualPercent !== undefined) && (
@@ -167,6 +167,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                         skyline={analysis.skyline}
                         partySlots={fullAnalysis.partySlots}
                         playerNames={playerNames}
+                        className="encounter-party-overview"
                     />
                 </div>
             )}

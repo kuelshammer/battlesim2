@@ -1,0 +1,594 @@
+warning: empty lines after doc comment
+   --> src/action_resolver.rs:133:5
+    |
+133 | /     /// Helper to resolve a single hit of an attack
+134 | |
+135 | |     /// Resolve healing actions with proper event emission
+136 | |
+    | |_^
+137 |       /// Trigger reactions for all alive combatants based on a condition
+138 |       fn trigger_global_reactions(
+    |       --------------------------- the comment documents this function
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#empty_line_after_doc_comments
+    = note: `#[warn(clippy::empty_line_after_doc_comments)]` on by default
+    = help: if the empty lines are unintentional, remove them
+help: if the documentation should include the empty lines include them in the comment
+    |
+134 +     ///
+135 |     /// Resolve healing actions with proper event emission
+136 +     ///
+    |
+
+warning: variable does not need to be mutable
+   --> src/resolvers/attack.rs:260:21
+    |
+260 |     let (mut total, mut roll_detail) = if context.log_enabled {
+    |                     ----^^^^^^^^^^^
+    |                     |
+    |                     help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: initializer for `thread_local` value can be made `const`
+  --> src/rng.rs:12:43
+   |
+12 |     static RNG: RefCell<Option<StdRng>> = RefCell::new(None);
+   |                                           ^^^^^^^^^^^^^^^^^^ help: replace with: `const { RefCell::new(None) }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#missing_const_for_thread_local
+   = note: `#[warn(clippy::missing_const_for_thread_local)]` on by default
+
+warning: initializer for `thread_local` value can be made `const`
+  --> src/rng.rs:13:41
+   |
+13 |     static CURRENT_SEED: RefCell<u64> = RefCell::new(0);
+   |                                         ^^^^^^^^^^^^^^^ help: replace with: `const { RefCell::new(0) }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#missing_const_for_thread_local
+
+warning: initializer for `thread_local` value can be made `const`
+  --> src/rng.rs:14:58
+   |
+14 |     static FORCED_ROLLS: RefCell<VecDeque<(u32, u32)>> = RefCell::new(VecDeque::new()); // (sides, value)
+   |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: replace with: `const { RefCell::new(VecDeque::new()) }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#missing_const_for_thread_local
+
+warning: using `clone` on type `EnemyTarget` which implements the `Copy` trait
+  --> src/targeting.rs:36:59
+   |
+36 |                 if let Some(idx) = select_enemy_target(c, a.target.clone(), enemies, &[], None) {
+   |                                                           ^^^^^^^^^^^^^^^^ help: try removing the `clone` call: `a.target`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#clone_on_copy
+   = note: `#[warn(clippy::clone_on_copy)]` on by default
+
+warning: using `clone` on type `EnemyTarget` which implements the `Copy` trait
+   --> src/targeting.rs:139:44
+    |
+139 |                     select_enemy_target(c, a.target.clone(), enemies, &targets, Some(&a.base().id))
+    |                                            ^^^^^^^^^^^^^^^^ help: try removing the `clone` call: `a.target`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#clone_on_copy
+
+warning: using `clone` on type `EnemyTarget` which implements the `Copy` trait
+   --> src/targeting.rs:180:29
+    |
+180 | ...                   enemy_strategy.clone(),
+    |                       ^^^^^^^^^^^^^^^^^^^^^^ help: try dereferencing it: `*enemy_strategy`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#clone_on_copy
+
+warning: this `else { if .. }` block can be collapsed
+  --> src/resolvers/heal.rs:41:16
+   |
+41 |           } else {
+   |  ________________^
+42 | |             if idx < allies.len() { allies[idx].id.clone() } else { continue }
+43 | |         };
+   | |_________^ help: collapse nested if block: `if idx < allies.len() { allies[idx].id.clone() } else { continue }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_else_if
+   = note: `#[warn(clippy::collapsible_else_if)]` on by default
+
+warning: this `else { if .. }` block can be collapsed
+  --> src/resolvers/effect.rs:38:16
+   |
+38 |           } else {
+   |  ________________^
+39 | |             if idx < allies.len() { allies[idx].id.clone() } else { continue }
+40 | |         };
+   | |_________^ help: collapse nested if block: `if idx < allies.len() { allies[idx].id.clone() } else { continue }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_else_if
+
+warning: this `else { if .. }` block can be collapsed
+  --> src/resolvers/effect.rs:89:16
+   |
+89 |           } else {
+   |  ________________^
+90 | |             if idx < allies.len() { allies[idx].id.clone() } else { continue }
+91 | |         };
+   | |_________^ help: collapse nested if block: `if idx < allies.len() { allies[idx].id.clone() } else { continue }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_else_if
+
+warning: this `else { if .. }` block can be collapsed
+  --> src/resolvers/template.rs:57:16
+   |
+57 |           } else {
+   |  ________________^
+58 | |             if idx < allies.len() { allies[idx].id.clone() } else { continue }
+59 | |         };
+   | |_________^ help: collapse nested if block: `if idx < allies.len() { allies[idx].id.clone() } else { continue }`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_else_if
+
+warning: using `clone` on type `EnemyTarget` which implements the `Copy` trait
+  --> src/resolvers/attack.rs:40:24
+   |
+40 |         let strategy = attack.target.clone();
+   |                        ^^^^^^^^^^^^^^^^^^^^^ help: try removing the `clone` call: `attack.target`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#clone_on_copy
+
+warning: you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+   --> src/resolvers/attack.rs:119:17
+    |
+119 | /                 match modif {
+120 | |                     crate::context::RollModification::AddBonus { amount } => {
+121 | |                         let formula = crate::model::DiceFormula::Expr(amount);
+122 | |                         let bonus = dice::evaluate(&formula, 1);
+...   |
+130 | |                     _ => {}
+131 | |                 }
+    | |_________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#single_match
+    = note: `#[warn(clippy::single_match)]` on by default
+help: try
+    |
+119 ~                 if let crate::context::RollModification::AddBonus { amount } = modif {
+120 +                     let formula = crate::model::DiceFormula::Expr(amount);
+121 +                     let bonus = dice::evaluate(&formula, 1);
+122 +                     attack_result.total += bonus;
+123 +                     
+124 +                     if let Some(detail) = &mut attack_result.roll_detail {
+125 +                         detail.modifiers.push(("Post-Roll Bonus".to_string(), bonus));
+126 +                         detail.total += bonus;
+127 +                     }
+128 +                 }
+    |
+
+warning: using `clone` on type `EnemyTarget` which implements the `Copy` trait
+    --> src/resolution.rs:1397:25
+     |
+1397 |                         atk_action.target.clone(),
+     |                         ^^^^^^^^^^^^^^^^^^^^^^^^^ help: try removing the `clone` call: `atk_action.target`
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#clone_on_copy
+
+warning: match expression looks like `matches!` macro
+   --> src/resources.rs:150:32
+    |
+150 |               let should_reset = match (rule, &reset_type) {
+    |  ________________________________^
+151 | |                 (ResetType::ShortRest, ResetType::ShortRest) |
+152 | |                 (ResetType::ShortRest, ResetType::LongRest) => true,
+...   |
+171 | |                 _ => false,
+172 | |             };
+    | |_____________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#match_like_matches_macro
+    = note: `#[warn(clippy::match_like_matches_macro)]` on by default
+help: try
+    |
+150 ~             let should_reset = matches!((rule, &reset_type), (ResetType::ShortRest, ResetType::ShortRest) |
+151 +                 (ResetType::ShortRest, ResetType::LongRest) | (ResetType::LongRest, ResetType::LongRest) | (ResetType::Turn, ResetType::Turn) |
+152 +                 (ResetType::Turn, ResetType::Round) |
+153 +                 (ResetType::Turn, ResetType::Encounter) |
+154 +                 (ResetType::Turn, ResetType::ShortRest) |
+155 +                 (ResetType::Turn, ResetType::LongRest) | (ResetType::Round, ResetType::Round) |
+156 +                 (ResetType::Round, ResetType::Encounter) |
+157 +                 (ResetType::Round, ResetType::ShortRest) |
+158 +                 (ResetType::Round, ResetType::LongRest) | (ResetType::Encounter, ResetType::Encounter) |
+159 +                 (ResetType::Encounter, ResetType::ShortRest) |
+160 ~                 (ResetType::Encounter, ResetType::LongRest));
+    |
+
+warning: large size difference between variants
+   --> src/context.rs:115:1
+    |
+115 | /  pub enum EffectType {
+116 | |      Buff(crate::model::Buff), // Store full Buff object
+    | |      ------------------------ the largest variant contains at least 280 bytes
+117 | |/     DamageOverTime {
+118 | ||         damage_per_round: f64,
+119 | ||         damage_type: String,
+120 | ||     },
+    | ||_____- the second-largest variant contains at least 32 bytes
+...   |
+125 | |      Custom(String),
+126 | |  }
+    | |__^ the entire enum is at least 280 bytes
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#large_enum_variant
+    = note: `#[warn(clippy::large_enum_variant)]` on by default
+help: consider boxing the large fields or introducing indirection in some other way to reduce the total size of the enum
+    |
+116 -     Buff(crate::model::Buff), // Store full Buff object
+116 +     Buff(Box<crate::model::Buff>), // Store full Buff object
+    |
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/execution/engine.rs:100:53
+    |
+100 |                 if !self.context.is_combatant_alive(&combatant_id) {
+    |                                                     ^^^^^^^^^^^^^ help: change this to: `combatant_id`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_borrow
+    = note: `#[warn(clippy::needless_borrow)]` on by default
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/execution/engine.rs:107:63
+    |
+107 |                 let turn_result = self.execute_combatant_turn(&combatant_id);
+    |                                                               ^^^^^^^^^^^^^ help: change this to: `combatant_id`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_borrow
+
+warning: you are using an explicit closure for cloning elements
+   --> src/execution/engine.rs:149:60
+    |
+149 |               let mut final_snapshot: Vec<CombattantState> = self.context.combatants
+    |  ____________________________________________________________^
+150 | |                 .values()
+151 | |                 .map(|state| state.clone())
+    | |___________________________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#map_clone
+    = note: `#[warn(clippy::map_clone)]` on by default
+help: consider calling the dedicated `cloned` method
+    |
+149 ~             let mut final_snapshot: Vec<CombattantState> = self.context.combatants
+150 +                 .values().cloned()
+    |
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+  --> src/execution/lean.rs:38:53
+   |
+38 |                 if !self.context.is_combatant_alive(&combatant_id) {
+   |                                                     ^^^^^^^^^^^^^ help: change this to: `combatant_id`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_borrow
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+  --> src/execution/lean.rs:45:64
+   |
+45 |                 let _turn_result = self.execute_combatant_turn(&combatant_id);
+   |                                                                ^^^^^^^^^^^^^ help: change this to: `combatant_id`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_borrow
+
+warning: casting to the same type is unnecessary (`f64` -> `f64`)
+   --> src/decile_analysis.rs:579:86
+    |
+579 |         total += crate::intensity_calculation::calculate_daily_budget(p, sr_count) * (p.count as f64);
+    |                                                                                      ^^^^^^^^^^^^^^^^ help: try: `p.count`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#unnecessary_cast
+    = note: `#[warn(clippy::unnecessary_cast)]` on by default
+
+warning: this `else { if .. }` block can be collapsed
+   --> src/decile_analysis.rs:714:12
+    |
+714 |       } else {
+    |  ____________^
+715 | |         if results[0].encounters.len() == 1 {
+716 | |             results[0].encounters[0].target_role.weight()
+717 | |         } else {
+...   |
+720 | |     };
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_else_if
+help: collapse nested if block
+    |
+714 ~     } else if results[0].encounters.len() == 1 {
+715 +         results[0].encounters[0].target_role.weight()
+716 +     } else {
+717 +         results[0].encounters.get(0).map(|e| e.target_role.weight()).unwrap_or(2.0)
+718 ~     };
+    |
+
+warning: accessing first element with `results[0].encounters.get(0)`
+   --> src/decile_analysis.rs:718:13
+    |
+718 |             results[0].encounters.get(0).map(|e| e.target_role.weight()).unwrap_or(2.0)
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `results[0].encounters.first()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#get_first
+    = note: `#[warn(clippy::get_first)]` on by default
+
+warning: accessing first element with `median_run.encounters.get(0)`
+   --> src/decile_analysis.rs:786:114
+    |
+786 | ...ers.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `median_run.encounters.first()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#get_first
+
+warning: accessing first element with `median_run.encounters.get(0)`
+   --> src/decile_analysis.rs:825:118
+    |
+825 | ...ers.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `median_run.encounters.first()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#get_first
+
+warning: accessing first element with `median_run.encounters.get(0)`
+   --> src/decile_analysis.rs:981:110
+    |
+981 | ...ers.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: try: `median_run.encounters.first()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#get_first
+
+warning: you should consider adding a `Default` implementation for `AutoBalancer`
+  --> src/auto_balancer.rs:13:5
+   |
+13 | /     pub fn new() -> Self {
+14 | |         Self {
+15 | |             max_iterations: 30,
+16 | |             target_simulations: 503,
+17 | |         }
+18 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#new_without_default
+   = note: `#[warn(clippy::new_without_default)]` on by default
+help: try adding this
+   |
+12 + impl Default for AutoBalancer {
+13 +     fn default() -> Self {
+14 +         Self::new()
+15 +     }
+16 + }
+   |
+
+warning: the method `run_analysis` doesn't need a mutable reference
+  --> src/auto_balancer.rs:72:52
+   |
+72 |             analysis = self.run_analysis(&players, &mut monsters, &full_day_timeline, encounter_index);
+   |                                                    ^^^^^^^^^^^^^ help: remove this `mut`: `&monsters`
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#unnecessary_mut_passed
+   = note: `#[warn(clippy::unnecessary_mut_passed)]` on by default
+
+warning: this `if let` can be collapsed into the outer `if let`
+  --> src/auto_balancer.rs:88:13
+   |
+88 | /             if let TimelineStep::Combat(enc) = step {
+89 | |                 enc.monsters = monsters.to_vec();
+90 | |             }
+   | |_____________^
+   |
+help: the outer pattern can be modified to include the inner pattern
+  --> src/auto_balancer.rs:87:21
+   |
+87 |         if let Some(step) = modified_timeline.get_mut(encounter_index) {
+   |                     ^^^^ replace this binding
+88 |             if let TimelineStep::Combat(enc) = step {
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^ with this pattern
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#collapsible_match
+   = note: `#[warn(clippy::collapsible_match)]` on by default
+
+warning: writing `&mut Vec` instead of `&mut [_]` involves a new object where a slice will do
+   --> src/auto_balancer.rs:130:19
+    |
+130 |         monsters: &mut Vec<Creature>, 
+    |                   ^^^^^^^^^^^^^^^^^^ help: change this to: `&mut [Creature]`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#ptr_arg
+    = note: `#[warn(clippy::ptr_arg)]` on by default
+
+warning: this operation has no effect
+   --> src/encounter_balancer.rs:104:36
+    |
+104 |     let deaths_p99 = death_counts[(death_counts.len() * 1 / 100).min(death_counts.len() - 1)];
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^ help: consider reducing it to: `death_counts.len()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#identity_op
+    = note: `#[warn(clippy::identity_op)]` on by default
+
+warning: you should consider adding a `Default` implementation for `SimulationMetrics`
+  --> src/monitoring.rs:23:5
+   |
+23 | /     pub fn new() -> Self {
+24 | |         let now = std::time::SystemTime::now()
+25 | |             .duration_since(std::time::UNIX_EPOCH)
+26 | |             .unwrap_or_default()
+...  |
+40 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#new_without_default
+help: try adding this
+   |
+22 + impl Default for SimulationMetrics {
+23 +     fn default() -> Self {
+24 +         Self::new()
+25 +     }
+26 + }
+   |
+
+warning: you should consider adding a `Default` implementation for `BackgroundSimulationId`
+  --> src/background_simulation.rs:19:5
+   |
+19 | /     pub fn new() -> Self {
+20 | |         Self(format!("sim_{}", SystemTime::now()
+21 | |             .duration_since(UNIX_EPOCH)
+22 | |             .unwrap_or_default()
+23 | |             .as_nanos()))
+24 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#new_without_default
+help: try adding this
+   |
+18 + impl Default for BackgroundSimulationId {
+19 +     fn default() -> Self {
+20 +         Self::new()
+21 +     }
+22 + }
+   |
+
+warning: this `impl` can be derived
+  --> src/background_simulation.rs:44:1
+   |
+44 | / impl Default for SimulationPriority {
+45 | |     fn default() -> Self {
+46 | |         SimulationPriority::Normal
+47 | |     }
+48 | | }
+   | |_^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#derivable_impls
+   = note: `#[warn(clippy::derivable_impls)]` on by default
+help: replace the manual implementation with a derive attribute and mark the default variant
+   |
+37 + #[derive(Default)]
+38 ~ pub enum SimulationPriority {
+39 |     Low = 0,
+40 ~     #[default]
+41 ~     Normal = 1,
+   |
+
+warning: manual implementation of `ok`
+   --> src/background_simulation.rs:353:13
+    |
+353 | /             match receiver.try_recv() {
+354 | |                 Ok(result) => Some(result),
+355 | |                 Err(_) => None,
+356 | |             }
+    | |_____________^ help: replace with: `receiver.try_recv().ok()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#manual_ok_err
+    = note: `#[warn(clippy::manual_ok_err)]` on by default
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+   --> src/progress_communication.rs:168:24
+    |
+168 |     pub custom_filter: Option<Box<dyn Fn(&ProgressUpdate) -> bool + Send + Sync>>,
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#type_complexity
+    = note: `#[warn(clippy::type_complexity)]` on by default
+
+warning: this `impl` can be derived
+  --> src/display_manager.rs:38:1
+   |
+38 | / impl Default for DisplayMode {
+39 | |     fn default() -> Self {
+40 | |         DisplayMode::ShowNewest
+41 | |     }
+42 | | }
+   | |_^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#derivable_impls
+help: replace the manual implementation with a derive attribute and mark the default variant
+   |
+13 + #[derive(Default)]
+14 ~ pub enum DisplayMode {
+15 |     /// Always show the newest simulation results
+16 ~     #[default]
+17 ~     ShowNewest,
+   |
+
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> src/display_manager.rs:173:48
+    |
+173 |             .map(|last| !self.parameters_equal(&last, &parameters))
+    |                                                ^^^^^ help: change this to: `last`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#needless_borrow
+
+warning: this `impl` can be derived
+  --> src/config.rs:20:1
+   |
+20 | / impl Default for UserPreferences {
+21 | |     fn default() -> Self {
+22 | |         Self {
+23 | |             display: DisplayPreferences::default(),
+...  |
+30 | | }
+   | |_^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#derivable_impls
+help: replace the manual implementation with a derive attribute
+   |
+ 7 + #[derive(Default)]
+ 8 ~ pub struct UserPreferences {
+   |
+
+warning: you should consider adding a `Default` implementation for `ConfigManager`
+   --> src/config.rs:267:5
+    |
+267 | /     pub fn new() -> Self {
+268 | |         Self {
+269 | |             preferences: UserPreferences::default(),
+270 | |             dirty: false,
+271 | |         }
+272 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#new_without_default
+help: try adding this
+    |
+265 + impl Default for ConfigManager {
+266 +     fn default() -> Self {
+267 +         Self::new()
+268 +     }
+269 + }
+    |
+
+warning: you should consider adding a `Default` implementation for `ConfigManagerWrapper`
+   --> src/config.rs:410:5
+    |
+410 | /     pub fn new() -> ConfigManagerWrapper {
+411 | |         ConfigManagerWrapper {
+412 | |             inner: ConfigManager::new(),
+413 | |         }
+414 | |     }
+    | |_____^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#new_without_default
+help: try adding this
+    |
+408 + impl Default for ConfigManagerWrapper {
+409 +     fn default() -> Self {
+410 +         Self::new()
+411 +     }
+412 + }
+    |
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+   --> src/simulation.rs:294:6
+    |
+294 | ) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
+    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#type_complexity
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+   --> src/simulation.rs:295:37
+    |
+295 |     let mut actions_by_round_actor: HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> =
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.91.0/index.html#type_complexity
+
+warning: `simulation-wasm` (lib) generated 45 warnings (run `cargo clippy --fix --lib -p simulation-wasm` to apply 37 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s

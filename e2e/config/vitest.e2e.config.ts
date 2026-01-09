@@ -12,19 +12,14 @@ export default defineConfig({
     testTimeout: 30000,
     hookTimeout: 60000,
     teardownTimeout: 30000,
-    reporter: ['verbose', 'json', 'html'],
+    reporter: ['default'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: ['e2e/', 'node_modules/', 'src/pages/api/'],
     },
     // E2E specific settings
-    pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true, // Run E2E tests sequentially
-      },
-    },
+    fileParallelism: false, // Run E2E tests sequentially
     // Integration with Puppeteer via custom matchers
     benchmark: {
       includeSamples: false,

@@ -123,10 +123,16 @@ export class SimulationPage extends BasePage {
   }
 
   /**
-   * Run the simulation
+   * Run the simulation (or wait for auto-simulation to complete)
    */
   async runSimulation(): Promise<void> {
-    await this.click(this.selectors.runSimulationBtn);
+    // Wait for loading to start or just wait for it to finish if it already started
+    try {
+      await this.page.waitForSelector('[data-testid="simulation-loading"]', { timeout: 2000 });
+    } catch (e) {
+      // Might have already finished or not started yet
+    }
+
     // Wait for loading to complete
     await this.page.waitForFunction(
       () => {

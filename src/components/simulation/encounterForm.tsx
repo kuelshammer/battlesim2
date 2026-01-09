@@ -91,10 +91,10 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                 </h2>
 
                 <div className={styles.formBody}>
-                    <div className={styles.creatures}>
+                    <div className={styles.creatures} data-testid="creature-list">
                         {encounter.monsters.map((creature, index) => (
-                            <div key={creature.id} className={styles.creature}>
-                                <span className={styles.name}>{creature.name}</span>
+                            <div key={creature.id} className={styles.creature} data-testid="creature-item">
+                                <span className={styles.name} data-testid="creature-name">{creature.name}</span>
                                 <span className={styles.inlineInput}>
                                     <label htmlFor={`count-${creature.id}`} className={styles.countLabel}>Count:</label>
                                     <input
@@ -148,7 +148,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                 </div>
 
                 <div className={styles.formFooter}>
-                    <button className={styles.addCreatureBtn} onClick={() => handleSetCreating(true)}>
+                    <button className={styles.addCreatureBtn} onClick={() => handleSetCreating(true)} data-testid="add-creature-btn">
                         <FontAwesomeIcon icon={faPlus} />
                         Add {(mode === 'player') ? 'Player Character' : 'Enemy'}
                     </button>

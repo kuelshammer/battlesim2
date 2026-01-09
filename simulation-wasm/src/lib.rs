@@ -8,7 +8,6 @@ pub mod resolvers;
 pub mod api;
 pub mod aggregation;
 pub mod cleanup;
-pub mod resolution;
 pub mod resources;
 pub mod events;
 pub mod context;
@@ -18,7 +17,11 @@ pub mod execution;
 pub mod action_resolver;
 pub mod validation; // New module for requirement validation
 pub mod utilities;
-pub mod decile_analysis;
+pub mod analysis;
+// Re-export decile_analysis for backward compatibility
+pub mod decile_analysis {
+    pub use crate::analysis::*;
+}
 pub mod combat_stats;
 pub mod scoring_test;
 pub mod creature_adjustment;

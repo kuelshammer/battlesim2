@@ -329,6 +329,12 @@
             gap: 1.5rem;
             align-items: start;
 
+            // CRITICAL: Prevent grid children from expanding beyond their flex-basis
+            // and breaking width calculations for sub-components (like canvas).
+            > * {
+                min-width: 0;
+            }
+
             @media (max-width: 1000px) {
                 grid-template-columns: 1fr;
             }

@@ -87,6 +87,13 @@ export class BasePage {
   }
 
   /**
+   * Reload the page
+   */
+  async reload(): Promise<void> {
+    await this.page.reload({ waitUntil: 'networkidle0' });
+  }
+
+  /**
    * Screenshot helper
    */
   async screenshot(name: string): Promise<void> {
@@ -97,7 +104,7 @@ export class BasePage {
   /**
    * Evaluate JavaScript in the browser context
    */
-  async evaluate<T>(fn: () => T): Promise<T> {
-    return await this.page.evaluate(fn);
+  async evaluate<T, Args extends any[]>(fn: (...args: Args) => T, ...args: Args): Promise<T> {
+    return await this.page.evaluate(fn, ...args);
   }
 }
