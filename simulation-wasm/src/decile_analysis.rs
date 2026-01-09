@@ -14,6 +14,7 @@ pub enum EncounterArchetype {
     MeatGrinder,
     NovaTrap,
     Broken,
+    CoinFlip,
 }
 
 impl std::fmt::Display for EncounterArchetype {
@@ -28,6 +29,7 @@ impl std::fmt::Display for EncounterArchetype {
             EncounterArchetype::MeatGrinder => write!(f, "Meat Grinder"),
             EncounterArchetype::NovaTrap => write!(f, "Nova Trap"),
             EncounterArchetype::Broken => write!(f, "Broken"),
+            EncounterArchetype::CoinFlip => write!(f, "Coin Flip"),
         }
     }
 }
@@ -233,6 +235,14 @@ fn extract_combatant_visualization_partial(result: &SimulationResult, encounter_
 
 fn assess_archetype(vitals: &Vitals) -> EncounterArchetype {
     if vitals.tpk_risk > 0.5 { return EncounterArchetype::Broken; }
+    
+    // Check for High Volatility (Coin Flip)
+    // High chance of death/failure, but not necessarily a guaranteed grind.
+    // Volatility index > 0.15 means P10 and P50 are very different.
+    if vitals.volatility_index > 0.15 && vitals.lethality_index > 0.05 {
+        return EncounterArchetype::CoinFlip;
+    }
+
     if vitals.tpk_risk > 0.1 { return EncounterArchetype::MeatGrinder; }
     
     if vitals.lethality_index > 0.5 { return EncounterArchetype::MeatGrinder; }
@@ -270,6 +280,7 @@ fn get_encounter_label(archetype: &EncounterArchetype) -> EncounterLabel {
         EncounterArchetype::Skirmish => EncounterLabel::ActionMovie,
         EncounterArchetype::Trivial => EncounterLabel::TrivialMinions,
         EncounterArchetype::Standard => EncounterLabel::Standard,
+        EncounterArchetype::CoinFlip => EncounterLabel::TPKRisk,
     }
 }
 
@@ -284,6 +295,7 @@ fn generate_analysis_summary(archetype: &EncounterArchetype, vitals: &Vitals, ty
         EncounterArchetype::MeatGrinder => "High TPK potential.",
         EncounterArchetype::NovaTrap => "Burst damage threat.",
         EncounterArchetype::Broken => "Mathematically impossible.",
+        EncounterArchetype::CoinFlip => "High volatility. Swingy.",
     };
 
     format!("{}: {} | Attrition: {}% | Typical Survivors: {}/{}",
@@ -679,20 +691,28 @@ fn calculate_day_pacing(
     };
 
     // 2. Rhythm Score (Difficulty Escalation)
+    // Logic: Allow 1 "Breather" (Dip in difficulty). Penalize 2+ dips.
+    // "Dip" is defined as weight < 0.9 * max_weight_so_far.
     let mut rhythm_score = 100.0;
-    let mut max_weight = 0.0;
-    let mut reversals = 0;
+    let mut max_weight_so_far = 0.0;
+    let mut dips = 0;
     
     for enc in &median_run.encounters {
         let w = enc.target_role.weight();
-        if w < max_weight {
-            reversals += 1;
+        
+        // Check for dip with 10% tolerance (wiggle room)
+        if w < max_weight_so_far * 0.9 {
+            dips += 1;
         }
-        max_weight = max_weight.max(w);
+        
+        max_weight_so_far = max_weight_so_far.max(w);
     }
     
+    // Penalize only if we have more than 1 dip (allow 1 breather)
+    let penalty_dips = if dips > 1 { dips - 1 } else { 0 };
+    
     if median_run.encounters.len() > 1 {
-        rhythm_score = (100.0 - (reversals as f64 * 30.0)).max(0.0);
+        rhythm_score = (100.0 - (penalty_dips as f64 * 30.0)).max(0.0);
     }
 
     // 3. Recovery Score (Placeholder for now)
@@ -703,8 +723,8 @@ fn calculate_day_pacing(
         "The Hero's Journey".to_string()
     } else if end_res_pct > 60.0 {
         "The Slow Burn".to_string()
-    } else if reversals > 1 {
-        "The Nova Trap".to_string()
+    } else if penalty_dips > 0 {
+        "The Rollercoaster".to_string()
     } else if end_res_pct < 10.0 {
         "The Meat Grinder".to_string()
     } else {

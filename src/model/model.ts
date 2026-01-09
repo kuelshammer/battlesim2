@@ -610,7 +610,7 @@ export const TimelineRangeSchema = z.object({
     p75: z.array(z.number()),
 })
 
-export const EncounterArchetypeList = ['Trivial', 'Skirmish', 'Standard', 'TheGrind', 'EliteChallenge', 'BossFight', 'MeatGrinder', 'NovaTrap', 'Broken'] as const
+export const EncounterArchetypeList = ['Trivial', 'Skirmish', 'Standard', 'TheGrind', 'EliteChallenge', 'BossFight', 'MeatGrinder', 'NovaTrap', 'Broken', 'CoinFlip'] as const
 export const EncounterArchetypeSchema = z.enum(EncounterArchetypeList)
 export type EncounterArchetype = z.infer<typeof EncounterArchetypeSchema>
 

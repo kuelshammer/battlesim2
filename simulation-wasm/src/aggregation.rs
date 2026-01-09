@@ -204,30 +204,32 @@ pub fn calculate_encounter_score(encounter: &EncounterResult) -> f64 {
 
     let player_hp: f64 = last_round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
     let monster_hp: f64 = last_round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
+    
     let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count() as f64;
-
-    (survivors * 1_000_000.0) + player_hp - monster_hp
+    
+    // Calculate total max HP of the party to weight the survivors
+    let party_max_hp: f64 = last_round.team1.iter().map(|c| c.creature.hp as f64).sum();
+    
+    // NEW SCORING FORMULA:
+    // 1. Survivors are still paramount. Weight them by the Party's total HP pool. 
+    //    This means 1 survivor is worth "1 party of HP".
+    // 2. Add actual remaining HP.
+    // 3. Subtract Monster HP * 2 to prioritize finishing the fight.
+    
+    let survival_weight = if party_max_hp > 0.0 { party_max_hp } else { 100.0 };
+    
+    (survivors * survival_weight * 1000.0) + player_hp - (monster_hp * 2.0)
 }
 
 /// Calculate efficiency-aware score based on survival and resource consumption
 pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::events::Event]) -> f64 {
-    // 1. Base Survival Score (matches calculate_score_safe logic)
+    // 1. Base Survival Score
     let last_encounter = match result.encounters.last() {
         Some(e) => e,
         None => return -1_000_000.0,
     };
     
-    let last_round = match last_encounter.rounds.last() {
-        Some(r) => r,
-        None => return -1_000_000.0,
-    };
-
-    let player_hp: f64 = last_round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
-    let monster_hp: f64 = last_round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
-    let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count() as f64;
-
-    // Life value is 1,000,000 to ensure survival is always top priority
-    let base_score = (survivors * 1_000_000.0) + player_hp - monster_hp;
+    let base_score = calculate_encounter_score(last_encounter);
 
     // 2. Resource Penalty Calculation
     let mut resource_penalty = 0.0;
