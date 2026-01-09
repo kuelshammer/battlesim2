@@ -134,6 +134,13 @@ pub struct Vitals {
     pub volatility_index: f64, // Difference between P10 and P50 cost
     pub doom_horizon: f64,    // Projected encounters until failure
     pub deaths_door_index: f64, // Average rounds spent at <25% HP (Thrilling metric)
+
+    // NEW: Experience-based metrics
+    pub near_death_survivors: f64, // Average characters ending at 1-10 HP (0.0 - party_size)
+    pub crisis_participation_rate: f64, // % of party who hit <25% HP at some point (0.0 - 1.0)
+    pub min_hp_threshold: f64, // Lowest HP % anyone reached during fight (0.0 - 1.0)
+    pub avg_unconscious_rounds: f64, // Average rounds per player at 0 HP (agency loss measure)
+
     pub archetype: EncounterArchetype,
     pub is_volatile: bool,
 }

@@ -200,6 +200,10 @@ pub fn calculate_vitals_with_config(
             volatility_index: 0.0,
             doom_horizon: 0.0,
             deaths_door_index: 0.0,
+            near_death_survivors: 0.0,
+            crisis_participation_rate: 0.0,
+            min_hp_threshold: 1.0,
+            avg_unconscious_rounds: 0.0,
             archetype: EncounterArchetype::Trivial,
             is_volatile: false,
         };
@@ -299,6 +303,93 @@ pub fn calculate_vitals_with_config(
     let volatility_index = (p10_cost - p50_cost).max(0.0);
     let is_volatile = volatility_index > config.is_volatile_threshold;
 
+    // 2.5. Experience-based metrics
+    let mut total_near_death_survivors = 0.0_f64;
+    let mut total_crisis_participants = 0.0_f64;
+    let mut total_min_hp_threshold = 1.0_f64;
+    let mut total_unconscious_rounds = 0.0_f64;
+
+    for &run in results {
+        let encounters = if let Some(idx) = encounter_idx {
+            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+        } else {
+            &run.encounters[..]
+        };
+
+        let mut run_near_death_count = 0;
+        let mut run_crisis_participants = 0;
+        let mut run_min_hp = 1.0_f64;
+        let mut run_unconscious_rounds = 0;
+
+        for enc in encounters {
+            // Track per-character metrics across all rounds
+            let mut char_min_hp: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
+            let mut char_crisis_hit: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
+            let mut char_unconscious_rounds: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+
+            for round in &enc.rounds {
+                for c in &round.team1 {
+                    let char_id = &c.id;
+                    let max_hp = c.creature.hp as f64;
+                    let current_hp = c.final_state.current_hp as f64;
+                    let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
+
+                    // Track minimum HP for each character
+                    let entry = char_min_hp.entry(char_id.clone()).or_insert(1.0);
+                    *entry = (*entry).min(hp_pct);
+
+                    // Track if character hit crisis (<25% HP)
+                    if hp_pct < 0.25 && hp_pct > 0.0 {
+                        char_crisis_hit.insert(char_id.clone(), true);
+                    }
+
+                    // Track unconscious rounds (0 HP)
+                    if current_hp == 0.0 {
+                        *char_unconscious_rounds.entry(char_id.clone()).or_insert(0) += 1;
+                    }
+                }
+            }
+
+            // Update run-level metrics
+            for (_id, min_hp) in &char_min_hp {
+                run_min_hp = run_min_hp.min(*min_hp);
+            }
+            run_crisis_participants += char_crisis_hit.len();
+            run_unconscious_rounds += char_unconscious_rounds.values().sum::<usize>();
+
+            // Check final state for near-death survivors (1-10 HP)
+            if let Some(last_round) = enc.rounds.last() {
+                for c in &last_round.team1 {
+                    let max_hp = c.creature.hp as f64;
+                    let current_hp = c.final_state.current_hp as f64;
+                    let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
+
+                    // Near-death: 1-10% HP (not unconscious, but very low)
+                    if hp_pct >= 0.01 && hp_pct <= 0.10 {
+                        run_near_death_count += 1;
+                    }
+                }
+            }
+        }
+
+        total_near_death_survivors += run_near_death_count as f64;
+        total_crisis_participants += run_crisis_participants as f64;
+        total_min_hp_threshold = total_min_hp_threshold.min(run_min_hp);
+        total_unconscious_rounds += run_unconscious_rounds as f64;
+    }
+
+    let near_death_survivors = total_near_death_survivors / total_runs as f64;
+    let crisis_participation_rate = if validated_party_size > 0 {
+        total_crisis_participants / (total_runs as f64 * validated_party_size as f64)
+    } else {
+        0.0
+    };
+    let avg_unconscious_rounds = if validated_party_size > 0 {
+        total_unconscious_rounds / (total_runs as f64 * validated_party_size as f64)
+    } else {
+        0.0
+    };
+
     // 3. Archetype Determination
     let mut temp_vitals = Vitals {
         lethality_index,
@@ -307,6 +398,10 @@ pub fn calculate_vitals_with_config(
         volatility_index,
         doom_horizon: 0.0,
         deaths_door_index,
+        near_death_survivors,
+        crisis_participation_rate,
+        min_hp_threshold: total_min_hp_threshold,
+        avg_unconscious_rounds,
         archetype: EncounterArchetype::Standard,
         is_volatile,
     };
