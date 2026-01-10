@@ -1,6 +1,7 @@
 import { FC, useState, memo, useMemo } from "react"
 import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula, AggregateOutput, FullAnalysisOutput, PlayerSlot } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
+import ActionEconomyDisplay from "./ActionEconomyDisplay"
 import styles from './encounterResult.module.scss'
 import { Round } from "@/model/model"
 import { clone } from "@/model/utils"
@@ -206,6 +207,7 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                     <div className={styles.detailsContent}>
                         <div className={styles.round}>
                             <h3>Final State</h3>
+                            <ActionEconomyDisplay round={lastRound} />
                             <div className={styles.lifebars}>
                                 <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
                                 <hr />

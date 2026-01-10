@@ -48,6 +48,10 @@ const ConditionOptions: Options<ActionCondition> = [
     { value: 'not used yet', label: 'This action has not been used yet this encounter' },
     { value: 'enemy count one', label: 'There is only one enemy' },
     { value: 'enemy count multiple', label: 'There are at least two enemies' },
+    // Action economy conditions - for strategic ability triggers
+    { value: 'enemy advantage', label: '⚔️ Enemy Advantage (Nova!) - Monsters have more actions/DPR' },
+    { value: 'player advantage', label: '🛡️ Player Advantage (Conserve) - Players have more actions/DPR' },
+    { value: 'even action economy', label: '⚖️ Even - Balanced action economy' },
 ]
 
 const TypeOptions: Options<ActionType> = [

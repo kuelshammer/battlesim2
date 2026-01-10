@@ -57,6 +57,10 @@ export const ActionConditionList = [
     'enemy count multiple',
     'buff not active',
     'not concentrating',
+    // Action economy conditions - for strategic ability triggers
+    'enemy advantage',
+    'player advantage',
+    'even action economy',
 ] as const
 export const ActionConditionSchema = z.enum(ActionConditionList)
 export type ActionCondition = z.infer<typeof ActionConditionSchema>
