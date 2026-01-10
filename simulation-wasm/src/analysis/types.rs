@@ -143,6 +143,9 @@ pub struct Vitals {
 
     pub archetype: EncounterArchetype,
     pub is_volatile: bool,
+    pub difficulty_grade: String,
+    pub safety_grade: String,
+    pub pacing_label: String,
 }
 
 /// Pacing analysis for multi-encounter days

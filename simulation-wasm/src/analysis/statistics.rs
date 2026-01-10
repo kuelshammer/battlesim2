@@ -206,11 +206,13 @@ pub fn calculate_vitals_with_config(
             avg_unconscious_rounds: 0.0,
             archetype: EncounterArchetype::Trivial,
             is_volatile: false,
+            difficulty_grade: "S".to_string(),
+            safety_grade: "A".to_string(),
+            pacing_label: "Breezy".to_string(),
         };
     }
 
     // VALIDATION: Verify party_size matches actual team size
-    // Get the actual team size from the first valid encounter
     let actual_party_size = results.iter().find_map(|&run| {
         let encounters = if let Some(idx) = encounter_idx {
             if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
@@ -224,22 +226,12 @@ pub fn calculate_vitals_with_config(
             .next()
     });
 
-    if let Some(actual_size) = actual_party_size {
-        if actual_size != party_size {
-            eprintln!("WARNING: calculate_vitals - party_size parameter ({}) does not match actual team size ({}). Using actual team size for calculations.",
-                     party_size, actual_size);
-        }
-    } else {
-        eprintln!("WARNING: calculate_vitals - Could not determine actual team size from results. Using provided party_size: {}", party_size);
-    }
-
-    // Use the validated party size (actual if available, otherwise provided)
     let validated_party_size = actual_party_size.unwrap_or(party_size);
 
-    // 1. Calculate Lethality and TPK Risk (Probabilities)
+    // 1. Calculate Lethality and TPK Risk
     let mut ko_count = 0;
     let mut tpk_count = 0;
-    let mut crisis_count = 0;
+    let mut _crisis_count = 0;
     let mut total_deaths_door_rounds = 0;
 
     for &run in results {
@@ -254,7 +246,6 @@ pub fn calculate_vitals_with_config(
         let mut run_has_crisis = false;
 
         for enc in encounters {
-            // Check Death's Door (rounds with survivor < 25% HP)
             for round in &enc.rounds {
                 let any_at_deaths_door = round.team1.iter().any(|c| {
                     let hp_pct = if c.creature.hp > 0 { c.final_state.current_hp as f64 / c.creature.hp as f64 } else { 0.0 };
@@ -278,12 +269,11 @@ pub fn calculate_vitals_with_config(
 
         if run_has_ko { ko_count += 1; }
         if run_is_tpk { tpk_count += 1; }
-        if run_has_crisis { crisis_count += 1; }
+        if run_has_crisis { _crisis_count += 1; }
     }
 
     let lethality_index = ko_count as f64 / total_runs as f64;
     let tpk_risk = tpk_count as f64 / total_runs as f64;
-    let _crisis_risk = crisis_count as f64 / total_runs as f64;
     let deaths_door_index = total_deaths_door_rounds as f64 / total_runs as f64;
 
     // 2. Attrition and Volatility
@@ -304,10 +294,10 @@ pub fn calculate_vitals_with_config(
     let is_volatile = volatility_index > config.is_volatile_threshold;
 
     // 2.5. Experience-based metrics
-    let mut total_near_death_survivors = 0.0_f64;
-    let mut total_crisis_participants = 0.0_f64;
-    let mut total_min_hp_threshold = 1.0_f64;
-    let mut total_unconscious_rounds = 0.0_f64;
+    let mut total_near_death_survivors = 0.0;
+    let mut total_crisis_participants = 0.0;
+    let mut total_min_hp_threshold: f64 = 1.0;
+    let mut total_unconscious_rounds = 0.0;
 
     for &run in results {
         let encounters = if let Some(idx) = encounter_idx {
@@ -318,14 +308,13 @@ pub fn calculate_vitals_with_config(
 
         let mut run_near_death_count = 0;
         let mut run_crisis_participants = 0;
-        let mut run_min_hp = 1.0_f64;
+        let mut run_min_hp: f64 = 1.0;
         let mut run_unconscious_rounds = 0;
 
         for enc in encounters {
-            // Track per-character metrics across all rounds
-            let mut char_min_hp: std::collections::HashMap<String, f64> = std::collections::HashMap::new();
-            let mut char_crisis_hit: std::collections::HashMap<String, bool> = std::collections::HashMap::new();
-            let mut char_unconscious_rounds: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+            let mut char_min_hp: HashMap<String, f64> = HashMap::new();
+            let mut char_crisis_hit: HashMap<String, bool> = HashMap::new();
+            let mut char_unconscious_rounds: HashMap<String, usize> = HashMap::new();
 
             for round in &enc.rounds {
                 for c in &round.team1 {
@@ -334,37 +323,31 @@ pub fn calculate_vitals_with_config(
                     let current_hp = c.final_state.current_hp as f64;
                     let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
 
-                    // Track minimum HP for each character
                     let entry = char_min_hp.entry(char_id.clone()).or_insert(1.0);
                     *entry = (*entry).min(hp_pct);
 
-                    // Track if character hit crisis (<25% HP)
                     if hp_pct < 0.25 && hp_pct > 0.0 {
                         char_crisis_hit.insert(char_id.clone(), true);
                     }
 
-                    // Track unconscious rounds (0 HP)
                     if current_hp == 0.0 {
                         *char_unconscious_rounds.entry(char_id.clone()).or_insert(0) += 1;
                     }
                 }
             }
 
-            // Update run-level metrics
             for (_id, min_hp) in &char_min_hp {
                 run_min_hp = run_min_hp.min(*min_hp);
             }
             run_crisis_participants += char_crisis_hit.len();
             run_unconscious_rounds += char_unconscious_rounds.values().sum::<usize>();
 
-            // Check final state for near-death survivors (1-10 HP)
             if let Some(last_round) = enc.rounds.last() {
                 for c in &last_round.team1 {
                     let max_hp = c.creature.hp as f64;
                     let current_hp = c.final_state.current_hp as f64;
                     let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
 
-                    // Near-death: 1-10% HP (not unconscious, but very low)
                     if hp_pct >= 0.01 && hp_pct <= 0.10 {
                         run_near_death_count += 1;
                     }
@@ -404,8 +387,14 @@ pub fn calculate_vitals_with_config(
         avg_unconscious_rounds,
         archetype: EncounterArchetype::Standard,
         is_volatile,
+        difficulty_grade: "".to_string(),
+        safety_grade: "".to_string(),
+        pacing_label: "".to_string(),
     };
     temp_vitals.archetype = super::narrative::assess_archetype_with_config(&temp_vitals, config);
+    temp_vitals.difficulty_grade = super::narrative::calculate_difficulty_grade(temp_vitals.lethality_index);
+    temp_vitals.safety_grade = super::narrative::calculate_safety_grade(&temp_vitals);
+    temp_vitals.pacing_label = super::narrative::generate_pacing_label(&temp_vitals);
 
     // 4. Doom Horizon
     temp_vitals.doom_horizon = if attrition_score > 0.01 {
@@ -418,8 +407,6 @@ pub fn calculate_vitals_with_config(
 }
 
 /// Calculate vitals (lethality, TPK risk, attrition, etc.)
-///
-/// Uses default game balance configuration.
 pub fn calculate_vitals(
     results: &[&SimulationResult],
     encounter_idx: Option<usize>,
@@ -557,7 +544,6 @@ pub fn analyze_results_internal(
     };
 
     // Compute skyline analysis (100 buckets)
-    // Pass references directly - no need to clone SimulationResults
     let skyline = Some(crate::percentile_analysis::run_skyline_analysis(results, party_size, encounter_idx));
 
     // Collect all timelines for independent percentile calculation
@@ -614,36 +600,19 @@ pub fn analyze_results_internal(
 
     // Extract 11 logs if runs are provided
     if let Some(all_runs) = runs {
-        let log_indices = if total_runs >= 11 && (total_runs - 1).is_multiple_of(10) {
-            let n = (total_runs - 1) / 10;
-            vec![
-                n / 2,
-                n + n / 2,
-                2 * n + n / 2,
-                3 * n + n / 2,
-                4 * n + n / 2,
-                5 * n,
-                5 * n + n / 2 + 1,
-                6 * n + n / 2 + 1,
-                7 * n + n / 2 + 1,
-                8 * n + n / 2 + 1,
-                9 * n + n / 2 + 1,
-            ]
-        } else {
-            vec![
-                (total_runs as f64 * 0.05) as usize,
-                (total_runs as f64 * 0.15) as usize,
-                (total_runs as f64 * 0.25) as usize,
-                (total_runs as f64 * 0.35) as usize,
-                (total_runs as f64 * 0.45) as usize,
-                (total_runs as f64 * 0.50) as usize,
-                (total_runs as f64 * 0.55) as usize,
-                (total_runs as f64 * 0.65) as usize,
-                (total_runs as f64 * 0.75) as usize,
-                (total_runs as f64 * 0.85) as usize,
-                (total_runs as f64 * 0.95) as usize,
-            ]
-        };
+        let log_indices = vec![
+            (total_runs as f64 * 0.05) as usize,
+            (total_runs as f64 * 0.15) as usize,
+            (total_runs as f64 * 0.25) as usize,
+            (total_runs as f64 * 0.35) as usize,
+            (total_runs as f64 * 0.45) as usize,
+            (total_runs as f64 * 0.50) as usize,
+            (total_runs as f64 * 0.55) as usize,
+            (total_runs as f64 * 0.65) as usize,
+            (total_runs as f64 * 0.75) as usize,
+            (total_runs as f64 * 0.85) as usize,
+            (total_runs as f64 * 0.95) as usize,
+        ];
 
         for idx in log_indices {
             let safe_idx = idx.min(total_runs - 1);
@@ -651,7 +620,7 @@ pub fn analyze_results_internal(
         }
     }
 
-    // Always calculate 10 deciles for backward compatibility and granular UI data
+    // Always calculate 10 deciles
     let decile_size = total_runs as f64 / 10.0;
     for i in 0..10 {
         let start_idx = (i as f64 * decile_size).floor() as usize;
@@ -700,7 +669,6 @@ pub fn analyze_results_internal(
         decile_logs,
         battle_duration_rounds,
         intensity_tier: {
-            // Compute metrics for median run to assess intensity tier
             let typical_metrics = if !results.is_empty() {
                 let typical_idx = results.len() / 2;
                 Some(calculate_run_stats_partial(results[typical_idx], encounter_idx, party_size, tdnw, sr_count))

@@ -623,6 +623,13 @@ export const VitalsSchema = z.object({
     deathsDoorIndex: z.number(),
     archetype: EncounterArchetypeSchema,
     isVolatile: z.boolean(),
+    difficultyGrade: z.string(),
+    safetyGrade: z.string(),
+    pacingLabel: z.string(),
+    nearDeathSurvivors: z.number().optional(),
+    crisisParticipationRate: z.number().optional(),
+    minHpThreshold: z.number().optional(),
+    avgUnconsciousRounds: z.number().optional(),
 })
 export type Vitals = z.infer<typeof VitalsSchema>
 

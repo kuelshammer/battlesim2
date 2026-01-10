@@ -12,7 +12,7 @@ type Props = {
 }
 
 const RequirementTypes = ['ResourceAvailable', 'CombatState', 'StatusEffect', 'Custom'] as const
-const CombatConditions = ['EnemyInRange', 'IsSurprised'] as const
+const CombatConditionOptions = ['EnemyInRange', 'IsSurprised', 'HasTempHP'] as const
 
 const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
     const addReq = () => {
@@ -41,7 +41,7 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
                 newReq = { type, resourceType: 'Action', amount: 1 }
                 break
             case 'CombatState':
-                newReq = { type, condition: 'EnemyInRange', value: 5 }
+                newReq = { type, condition: { EnemyInRange: 5 } }
                 break
             case 'StatusEffect':
                 newReq = { type, effect: '' }
@@ -106,17 +106,25 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
                     {req.type === 'CombatState' && (
                         <>
                             <Select
-                                value={req.condition}
-                                options={CombatConditions.map(c => ({ value: c, label: c }))}
-                                onChange={c => updateReq(index, { ...req, condition: c })}
+                                value={typeof req.condition === 'string' ? req.condition : Object.keys(req.condition)[0]}
+                                options={CombatConditionOptions.map(c => ({ value: c, label: c }))}
+                                onChange={c => {
+                                    if (c === 'EnemyInRange') {
+                                        updateReq(index, { ...req, condition: { EnemyInRange: 5 } })
+                                    } else {
+                                        updateReq(index, { ...req, condition: c as 'IsSurprised' | 'HasTempHP' })
+                                    }
+                                }}
                             />
-                            <input
-                                type="number"
-                                value={req.value || 0}
-                                onChange={e => updateReq(index, { ...req, value: Number(e.target.value) })}
-                                placeholder="Val"
-                                style={{ width: '45px' }}
-                            />
+                            {typeof req.condition !== 'string' && 'EnemyInRange' in req.condition && (
+                                <input
+                                    type="number"
+                                    value={req.condition.EnemyInRange}
+                                    onChange={e => updateReq(index, { ...req, condition: { EnemyInRange: Number(e.target.value) } })}
+                                    placeholder="Dist"
+                                    style={{ width: '45px' }}
+                                />
+                            )}
                         </>
                     )}
 

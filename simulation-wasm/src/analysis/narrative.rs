@@ -226,3 +226,38 @@ pub fn assess_intensity_tier_dynamic(
 ) -> IntensityTier {
     assess_intensity_tier_dynamic_with_config(typical_metrics, tdnw, total_weight, encounter_weight, &GameBalance::default())
 }
+
+/// Calculate difficulty grade (S-F) for backward compatibility and coloring
+pub fn calculate_difficulty_grade(lethality_index: f64) -> String {
+    if lethality_index < 0.05 { "S".to_string() }
+    else if lethality_index < 0.15 { "A".to_string() }
+    else if lethality_index < 0.30 { "B".to_string() }
+    else if lethality_index < 0.50 { "C".to_string() }
+    else if lethality_index < 0.70 { "D".to_string() }
+    else { "F".to_string() }
+}
+
+/// Calculate safety grade (A-D) for banner coloring
+pub fn calculate_safety_grade(vitals: &Vitals) -> String {
+    if vitals.tpk_risk > 0.1 { "D".to_string() }
+    else if vitals.lethality_index > 0.3 { "C".to_string() }
+    else if vitals.lethality_index > 0.1 { "B".to_string() }
+    else { "A".to_string() }
+}
+
+/// Generate narrative pacing label
+pub fn generate_pacing_label(vitals: &Vitals) -> String {
+    if vitals.volatility_index > 0.2 {
+        "Chaotic".to_string()
+    } else if vitals.lethality_index > 0.4 && vitals.attrition_score < 0.2 {
+        "Sudden Death".to_string()
+    } else if vitals.lethality_index < 0.1 && vitals.attrition_score > 0.4 {
+        "War of Attrition".to_string()
+    } else if vitals.lethality_index > 0.3 && vitals.attrition_score > 0.3 {
+        "Epic".to_string()
+    } else if vitals.lethality_index < 0.05 && vitals.attrition_score < 0.1 {
+        "Breezy".to_string()
+    } else {
+        "Steady".to_string()
+    }
+}

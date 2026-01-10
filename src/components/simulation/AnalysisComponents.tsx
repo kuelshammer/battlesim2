@@ -1,5 +1,5 @@
 import { FC, memo, useMemo } from "react"
-import { AggregateOutput, DecileStats, CombatantVisualization } from "@/model/model"
+import { AggregateOutput, DecileStats, CombatantVisualization, Vitals } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { 
@@ -85,7 +85,7 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
     if (!analysis || !analysis.vitals) return null;
 
     const { vitals } = analysis;
-    const { lethalityIndex, attritionScore, doomHorizon, difficultyGrade, tpkRisk, deathsDoorIndex } = vitals;
+    const { lethalityIndex, attritionScore, doomHorizon, difficultyGrade, tpkRisk, deathsDoorIndex, pacingLabel, crisisParticipationRate, nearDeathSurvivors } = vitals;
 
     const getGradeColor = (grade: string) => {
         switch (grade) {
@@ -176,11 +176,24 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                     <div className={styles.subtext}>Rounds at Death's Door</div>
                 </div>
 
-                {/* 4. Forecast Section */}
+                {/* 4. Experience Section */}
+                <div className={styles.vitalsCard}>
+                    <div className={styles.cardHeader}>
+                        <FontAwesomeIcon icon={faBrain} className={styles.iconExperience} />
+                        <span>Experience</span>
+                    </div>
+                    <div className={styles.cardValue}>
+                        {crisisParticipationRate ? Math.round(crisisParticipationRate * 100) : 0}%
+                    </div>
+                    <div className={styles.cardLabel}>Engagement</div>
+                    <div className={styles.subtext}>{nearDeathSurvivors ? nearDeathSurvivors.toFixed(1) : 0} Near-Death</div>
+                </div>
+
+                {/* 5. Forecast Section */}
                 <div className={styles.vitalsCard}>
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faCompass} className={styles.iconForecast} />
-                        <span>Forecast</span>
+                        <span>Forecast ({pacingLabel})</span>
                     </div>
                     <div className={styles.cardValue}>
                         {doomHorizon > 10 ? '∞' : doomHorizon.toFixed(1)}
@@ -199,12 +212,13 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     const ratingInfo = useMemo(() => {
         if (!analysis || !analysis.deciles?.length) return null;
 
-        const { encounterLabel, safetyGrade, intensityTier, analysisSummary, isGoodDesign, pacing } = analysis as any;
+        const { encounterLabel, intensityTier, analysisSummary, isGoodDesign, pacing, vitals } = analysis as any;
+        const safetyGrade = vitals?.safetyGrade || (analysis as any).safetyGrade;
         
         const getGradeColor = (grade: string) => {
             if (isShortRest) return "#2c5282"; // Blue for short rest
-            if (grade.startsWith('A')) return "#28a745"; // Green
-            if (grade.startsWith('B')) return "#fd7e14"; // Orange
+            if (grade?.startsWith('A')) return "#28a745"; // Green
+            if (grade?.startsWith('B')) return "#fd7e14"; // Orange
             return "#dc3545"; // Red for C, D, F
         };
 
@@ -298,60 +312,52 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
             ? totalSegments - greenCount 
             : Math.floor((Math.max(0, startHp - currentHp) / maxHp) * totalSegments);
         
-        const greyCount = isDaySummary ? 0 : Math.max(0, totalSegments - greenCount - redCount);
-        
-        const segments = [];
-        for (let i = 0; i < greenCount; i++) segments.push(<span key={`g-${i}`} className={styles.segmentGreen}>█</span>);
-        for (let i = 0; i < redCount; i++) segments.push(<span key={`r-${i}`} className={styles.segmentRed}>█</span>);
-        for (let i = 0; i < greyCount; i++) segments.push(<span key={`gr-${i}`} className={styles.segmentGrey}>░</span>);
-        
-        while (segments.length < totalSegments) segments.push(<span key={`f-${segments.length}`} className={isDaySummary ? styles.segmentRed : styles.segmentGrey}>
-            {isDaySummary ? '█' : '░'}
-        </span>);
-        return segments.slice(0, totalSegments);
+        const greyCount = totalSegments - greenCount - redCount;
+
+        return [
+            ...Array(greenCount).fill('green'),
+            ...Array(redCount).fill('red'),
+            ...Array(greyCount).fill('grey')
+        ];
     };
-
-    const avgFinalHp = medianDecile.medianRunVisualization
-        ? (medianDecile.medianRunVisualization.reduce((sum, c) => sum + c.hpPercentage, 0) / medianDecile.medianRunVisualization.length).toFixed(1)
-        : '0.0';
-
-    const filteredCombatants = isDaySummary 
-        ? (medianDecile.medianRunVisualization || []).filter(c => c.isPlayer)
-        : (medianDecile.medianRunVisualization || []);
 
     return (
         <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
-            <h4>📊 {medianDecile.label === "Global Median" ? "True Global Median" : "Median Performance"} {isPreliminary && <small>(Updating...)</small>}</h4>
+            <h4>
+                {isDaySummary ? 'TYPICAL DAY END STATE' : 'TYPICAL ENCOUNTER END STATE'}
+                {isPreliminary && <small>(REFINE IN PROGRESS...)</small>}
+            </h4>
+            
             <div className={styles.bestDecileHeader}>
-                <span className={styles.survivorsBadge}>
-                    ✅ {medianDecile.medianSurvivors}/{medianDecile.partySize} Survivors
-                </span>
-                <span className={styles.winRateBadge}>
-                    {(medianDecile.winRate || 0).toFixed(1)}% Win Rate
-                </span>
+                <div className={styles.survivorsBadge}>
+                    {medianDecile.medianSurvivors} / {medianDecile.partySize} Survivors
+                </div>
+                <div className={styles.winRateBadge}>
+                    {Math.round(medianDecile.winRate)}% Survival Rate
+                </div>
             </div>
 
             <div className={styles.bestDecileCombatants}>
-                {filteredCombatants.length === 0 ? (
-                    <div className={styles.emptyCombatants}>No combatants to display</div>
-                ) : filteredCombatants.map((combatant, index) => (
-                    <div key={index} className={styles.bestDecileCombatant}>
+                {medianDecile.medianRunVisualization.map((c, i) => (
+                    <div key={i} className={styles.bestDecileCombatant}>
                         <div className={styles.combatantName}>
-                            {combatant.name}
-                            {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
-                            {!combatant.isPlayer && <span className={styles.monsterLabel}> (Monster)</span>}
+                            {c.name} {c.isDead && <span className={styles.deathIndicator}>(KO)</span>}
                         </div>
                         <div className={styles.hpBar}>
-                            <span className={getHpBarColor(combatant.hpPercentage, combatant.isDead)}>
-                                <div className={styles.hpBarContainer}>
-                                    <div className={styles.hpBarVisual}>
-                                        [{renderHpBar(combatant.currentHp, combatant.startHp, combatant.maxHp)}]
-                                    </div>
-                                    <span className={styles.hpText}>
-                                        {combatant.currentHp}/{combatant.maxHp} HP ({combatant.hpPercentage.toFixed(0)}%)
-                                    </span>
+                            <div className={styles.hpBarContainer}>
+                                <div className={styles.hpBarVisual}>
+                                    {renderHpBar(c.currentHp, c.startHp, c.maxHp).map((color, idx) => (
+                                        <span key={idx} className={
+                                            color === 'green' ? styles.segmentGreen :
+                                            color === 'red' ? styles.segmentRed :
+                                            styles.segmentGrey
+                                        }>█</span>
+                                    ))}
                                 </div>
-                            </span>
+                                <div className={styles.hpText}>
+                                    {c.currentHp} / {c.maxHp} HP
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -359,10 +365,10 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
 
             <div className={styles.bestDecileMetrics}>
                 <div className={styles.metric}>
-                    <strong>Average Final HP:</strong> {avgFinalHp}%
+                    Cost: <strong>{Math.round(medianDecile.hpLostPercent)}%</strong> daily budget
                 </div>
                 <div className={styles.metric}>
-                    <strong>Combat Duration:</strong> {medianDecile.battleDurationRounds} rounds
+                    Duration: <strong>{medianDecile.battleDurationRounds}</strong> rounds
                 </div>
             </div>
         </div>
