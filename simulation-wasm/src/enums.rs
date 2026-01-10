@@ -206,6 +206,13 @@ pub enum ActionCondition {
     BuffNotActive,
     #[serde(rename = "not concentrating")]
     NotConcentrating,
+    // Action economy conditions - for strategic ability triggers
+    #[serde(rename = "enemy advantage")]
+    EnemyAdvantage,
+    #[serde(rename = "player advantage")]
+    PlayerAdvantage,
+    #[serde(rename = "even action economy")]
+    EvenActionEconomy,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

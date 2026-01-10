@@ -73,6 +73,19 @@ pub fn check_action_condition(
             }
         }
         ActionCondition::NotConcentrating => actor.final_state.concentrating_on.is_none(),
+        // Action economy conditions - calculate current action economy state
+        // We calculate once and match against the result for efficiency
+        ActionCondition::EnemyAdvantage | ActionCondition::PlayerAdvantage | ActionCondition::EvenActionEconomy => {
+            let allies_refs: Vec<&Combattant> = allies.iter().collect();
+            let enemies_refs: Vec<&Combattant> = enemies.iter().collect();
+            let state = crate::strategic_assessment::calculate_action_economy(&allies_refs, &enemies_refs);
+            match &action.base().condition {
+                ActionCondition::EnemyAdvantage => state.state == crate::strategic_assessment::ActionEconomyState::EnemyAdvantage,
+                ActionCondition::PlayerAdvantage => state.state == crate::strategic_assessment::ActionEconomyState::PlayerAdvantage,
+                ActionCondition::EvenActionEconomy => state.state == crate::strategic_assessment::ActionEconomyState::Even,
+                _ => unreachable!(),
+            }
+        }
     }
 }
 
