@@ -23,6 +23,7 @@ pub mod decile_analysis {
     pub use crate::analysis::*;
 }
 pub mod combat_stats;
+pub mod strategic_assessment;
 pub mod scoring_test;
 pub mod creature_adjustment;
 pub mod adjustment_test;
