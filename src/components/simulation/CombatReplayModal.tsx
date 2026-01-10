@@ -1,4 +1,4 @@
-import { FC, useState } from 'react'
+import { FC, useState, useRef, useEffect } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -20,9 +20,11 @@ import {
   faCrosshairs,
   faGavel,
   faExchangeAlt,
-  faUserFriends
+  faUserFriends,
+  faList,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons'
-import { useCombatPlayback } from '@/hooks/useCombatPlayback'
+import { useCombatPlayback, type FlattenedAction } from '@/hooks/useCombatPlayback'
 import type { Replay } from '@/model/replayTypes'
 import type { Event } from '@/model/model'
 
@@ -166,6 +168,201 @@ const SubEventCard: FC<{ event: Event; index: number }> = ({ event, index }) => 
         <span className="text-[10px] text-slate-500 font-mono self-start">#{index + 1}</span>
       </div>
     </motion.div>
+  )
+}
+
+/**
+ * Generate a brief summary for an action's sub-events
+ */
+const getActionSummary = (subEvents: Event[]): string => {
+  if (!subEvents || subEvents.length === 0) return 'No events'
+
+  const types = subEvents.map(e => e.type)
+
+  if (types.includes('AttackHit')) {
+    const hit = subEvents.find(e => e.type === 'AttackHit')
+    const target = (hit as any)?.target_id || 'unknown'
+    const damage = subEvents.find(e => e.type === 'DamageTaken')
+    const amount = damage ? (damage as any).damage : 0
+    return `Hit ${target} for ${amount} damage`
+  }
+
+  if (types.includes('AttackMissed')) {
+    const miss = subEvents.find(e => e.type === 'AttackMissed')
+    const target = (miss as any)?.target_id || 'unknown'
+    return `Missed ${target}`
+  }
+
+  if (types.includes('HealingApplied')) {
+    const heal = subEvents.find(e => e.type === 'HealingApplied')
+    const amount = (heal as any)?.amount || 0
+    return `Healed for ${amount}`
+  }
+
+  if (types.includes('BuffApplied')) {
+    const buff = subEvents.find(e => e.type === 'BuffApplied')
+    const buffId = (buff as any)?.buff_id || 'buff'
+    return `Applied ${buffId}`
+  }
+
+  if (types.includes('ConditionAdded')) {
+    const cond = subEvents.find(e => e.type === 'ConditionAdded')
+    const condition = (cond as any)?.condition || 'condition'
+    return `Added ${condition}`
+  }
+
+  if (types.includes('SpellCast')) {
+    const spell = subEvents.find(e => e.type === 'SpellCast')
+    const spellId = (spell as any)?.spell_id || 'spell'
+    return `Cast ${spellId}`
+  }
+
+  return `${subEvents.length} events`
+}
+
+/**
+ * SyncLogPanel - Synchronized event log for combat replay
+ *
+ * Displays all actions in a scrollable list with:
+ * - Current action highlighting
+ * - Click-to-seek functionality
+ * - Auto-scroll during playback
+ */
+interface SyncLogPanelProps {
+  /** Flattened actions to display */
+  actions: readonly FlattenedAction[]
+  /** Current action index */
+  currentIndex: number
+  /** Seek callback when user clicks an action */
+  onSeek: (index: number) => void
+  /** Whether playback is active (for auto-scroll) */
+  isPlaying: boolean
+}
+
+const SyncLogPanel: FC<SyncLogPanelProps> = ({
+  actions,
+  currentIndex,
+  onSeek,
+  isPlaying
+}) => {
+  const listRef = useRef<HTMLDivElement>(null)
+  const activeItemRef = useRef<HTMLButtonElement>(null)
+
+  // Auto-scroll to current action during playback
+  useEffect(() => {
+    if (isPlaying && activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      })
+    }
+  }, [currentIndex, isPlaying])
+
+  // Group actions by round for display
+  const groupedActions = actions.reduce((acc, action) => {
+    if (!acc[action.roundNumber]) {
+      acc[action.roundNumber] = []
+    }
+    acc[action.roundNumber].push(action)
+    return acc
+  }, {} as Record<number, FlattenedAction[]>)
+
+  return (
+    <div className="h-full flex flex-col bg-slate-900/40 border-r border-slate-800/50">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/50 bg-slate-900/60">
+        <FontAwesomeIcon icon={faList} className="text-purple-400 text-xs" />
+        <h3 className="text-sm font-medium text-slate-300">Sync Log</h3>
+        <span className="text-xs text-slate-500">({actions.length})</span>
+      </div>
+
+      {/* Scrollable List */}
+      <div ref={listRef} className="flex-1 overflow-auto overflow-x-hidden">
+        <div className="p-2 space-y-1">
+          {Object.entries(groupedActions).map(([roundNum, roundActions]) => (
+            <div key={roundNum}>
+              {/* Round Header */}
+              <div className="sticky top-0 z-10 px-2 py-1 bg-slate-800/80 backdrop-blur-sm border-b border-slate-700/50 mb-1">
+                <span className="text-xs font-mono text-purple-400 font-semibold">
+                  Round {roundNum}
+                </span>
+              </div>
+
+              {/* Actions in this round */}
+              {roundActions.map((action) => {
+                const isActive = action.index === currentIndex
+                const actor = action.unitId
+                const actionId = action.action.actionId
+                const summary = getActionSummary(action.action.subEvents)
+
+                return (
+                  <motion.button
+                    key={action.index}
+                    ref={isActive ? activeItemRef : null}
+                    whileHover={{ scale: 1.02, x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onSeek(action.index)}
+                    className={`w-full text-left px-3 py-2 rounded-lg border transition-all text-xs ${
+                      isActive
+                        ? 'bg-gradient-to-r from-purple-600/30 to-purple-500/20 border-purple-500/50 shadow-lg shadow-purple-500/10'
+                        : 'bg-slate-800/30 border-slate-700/30 hover:bg-slate-700/40 hover:border-slate-600/40'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {/* Action number badge */}
+                        <span
+                          className={`flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-semibold ${
+                            isActive
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-slate-700 text-slate-400'
+                          }`}
+                        >
+                          {action.index + 1}
+                        </span>
+
+                        {/* Action details */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`font-medium truncate ${
+                              isActive ? 'text-white' : 'text-slate-300'
+                            }`}>
+                              {actor}
+                            </span>
+                            <span className="text-slate-600">•</span>
+                            <span className={`font-mono text-[10px] uppercase ${
+                              isActive ? 'text-purple-300' : 'text-slate-500'
+                            }`}>
+                              {actionId}
+                            </span>
+                          </div>
+                          <p className={`text-[10px] mt-0.5 truncate ${
+                            isActive ? 'text-slate-300' : 'text-slate-500'
+                          }`}>
+                            {summary}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Active indicator */}
+                      {isActive && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="flex-shrink-0"
+                        >
+                          <FontAwesomeIcon icon={faCheck} className="text-purple-400 text-xs" />
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -363,8 +560,18 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
                   </div>
                 </div>
 
-                {/* Body - Focus Stage */}
-                <div className="flex-1 overflow-auto p-6">
+                {/* Body - Side-by-side Layout */}
+                <div className="flex-1 flex overflow-hidden">
+                  {/* Sync Log Panel - Left (40%) */}
+                  <SyncLogPanel
+                    actions={playback.actions}
+                    currentIndex={currentAction?.index ?? -1}
+                    onSeek={playback.seek}
+                    isPlaying={isPlaying}
+                  />
+
+                  {/* Focus Stage - Right (60%) */}
+                  <div className="flex-1 overflow-auto p-6">
                   {currentAction ? (
                     <div className="h-full flex flex-col gap-4">
                       {/* Action Header - Actor vs Target */}
@@ -537,6 +744,7 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
                       </motion.div>
                     </div>
                   )}
+                </div>
                 </div>
 
                 {/* Footer - Round Navigator */}
