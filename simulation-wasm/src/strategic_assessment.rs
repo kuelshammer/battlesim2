@@ -612,4 +612,281 @@ mod tests {
         assert!(formatted.contains("6.1"));
         assert!(formatted.contains("13.6"));
     }
+
+    // Helper function to create a basic combatant
+    fn create_combatant(
+        id: String,
+        name: String,
+        hp: u32,
+        ac: u32,
+        team: u32,
+        dpr: f64,
+        to_hit: f64,
+    ) -> Combattant {
+        let mut actions = vec![];
+        if dpr > 0.0 {
+            actions.push(Action::Atk(AtkAction {
+                id: format!("attack_{}", id),
+                name: "Attack".to_string(),
+                action_slot: None,
+                cost: vec![],
+                requirements: vec![],
+                tags: vec![],
+                freq: Frequency::Static("at will".to_string()),
+                condition: crate::enums::ActionCondition::Default,
+                targets: 1,
+                dpr: DiceFormula::Value(dpr),
+                to_hit: DiceFormula::Value(to_hit),
+                target: EnemyTarget::EnemyWithLeastHP,
+                use_saves: None,
+                half_on_save: None,
+                rider_effect: None,
+            }));
+        }
+
+        Combattant {
+            id: id.clone(),
+            team,
+            creature: std::sync::Arc::new(Creature {
+                id,
+                name,
+                hp,
+                ac,
+                arrival: None,
+                mode: if team == 0 { "player" } else { "monster" }.to_string(),
+                count: 1.0,
+                speed_fly: None,
+                save_bonus: 0.0,
+                str_save_bonus: None,
+                dex_save_bonus: None,
+                con_save_bonus: None,
+                int_save_bonus: None,
+                wis_save_bonus: None,
+                cha_save_bonus: None,
+                con_save_advantage: None,
+                save_advantage: None,
+                initiative_bonus: DiceFormula::Value(0.0),
+                initiative_advantage: false,
+                actions,
+                triggers: vec![],
+                spell_slots: None,
+                class_resources: None,
+                hit_dice: None,
+                con_modifier: None,
+                magic_items: vec![],
+                max_arcane_ward_hp: None,
+                initial_buffs: vec![],
+            }),
+            initiative: 10.0,
+            initial_state: crate::model::CreatureState {
+                current_hp: hp,
+                ..Default::default()
+            },
+            final_state: crate::model::CreatureState {
+                current_hp: hp,
+                ..Default::default()
+            },
+            actions: vec![],
+        }
+    }
+
+    #[test]
+    fn test_20_goblins_vs_2_fighters() {
+        // Task case 1: 20 goblins vs 2 lvl 10 fighters
+        // Many weak monsters vs few strong players
+        // Due to AC differences (fighters AC 20, goblins AC 15) and to-hit chances,
+        // fighters have significant advantage despite action count
+
+        let mut players: Vec<Combattant> = (0..2).map(|i| {
+            // Lvl 10 fighter: 120 HP, AC 20, ~40 DPR (multiple attacks)
+            create_combatant(
+                format!("fighter_{}", i),
+                format!("Fighter {}", i),
+                120,
+                20,
+                0,
+                40.0,
+                10.0,
+            )
+        }).collect();
+
+        let mut monsters: Vec<Combattant> = (0..20).map(|i| {
+            // Goblin: 7 HP, AC 15, ~8 DPR
+            create_combatant(
+                format!("goblin_{}", i),
+                format!("Goblin {}", i),
+                7,
+                15,
+                1,
+                8.0,
+                4.0,
+            )
+        }).collect();
+
+        let player_refs: Vec<&Combattant> = players.iter().collect();
+        let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+
+        let result = calculate_action_economy(&player_refs, &monster_refs);
+
+        // 20 goblins with ~160 total DPR vs 2 fighters with ~80 DPR
+        // But goblins have low to-hit (4.0) vs fighters' high AC (20)
+        // While fighters have good to-hit (10.0) vs goblins' low AC (15)
+        // Result favors players due to accuracy advantage
+        assert_eq!(result.player_count, 2);
+        assert_eq!(result.monster_count, 20);
+
+        // Should be PlayerAdvantage - fighters are much more accurate
+        assert_eq!(result.state, ActionEconomyState::PlayerAdvantage);
+    }
+
+    #[test]
+    fn test_1_dragon_vs_4_commoners() {
+        // Task case 2: 1 ancient dragon vs 4 lvl 1 commoners
+        // One very strong monster vs many very weak players
+        // Expected: Enemy Advantage (single monster too powerful)
+
+        let mut players: Vec<Combattant> = (0..4).map(|i| {
+            // Lvl 1 commoner: 8 HP, AC 10, ~4 DPR
+            create_combatant(
+                format!("commoner_{}", i),
+                format!("Commoner {}", i),
+                8,
+                10,
+                0,
+                4.0,
+                2.0,
+            )
+        }).collect();
+
+        let mut monsters: Vec<Combattant> = vec![
+            // Ancient dragon: 400 HP, AC 22, ~120 DPR (breath + multiple attacks)
+            create_combatant(
+                "ancient_dragon".to_string(),
+                "Ancient Red Dragon".to_string(),
+                400,
+                22,
+                1,
+                120.0,
+                15.0,
+            )
+        ];
+
+        let player_refs: Vec<&Combattant> = players.iter().collect();
+        let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+
+        let result = calculate_action_economy(&player_refs, &monster_refs);
+
+        assert_eq!(result.player_count, 4);
+        assert_eq!(result.monster_count, 1);
+
+        // Dragon is overwhelmingly powerful
+        assert_eq!(result.state, ActionEconomyState::EnemyAdvantage);
+    }
+
+    #[test]
+    fn test_4_vs_4_even_match() {
+        // Task case 3: 4 vs 4 balanced match
+        // Expected: Even state (balanced action economy and damage)
+
+        let mut players: Vec<Combattant> = (0..4).map(|i| {
+            // Balanced player: 50 HP, AC 16, ~15 DPR
+            create_combatant(
+                format!("player_{}", i),
+                format!("Player {}", i),
+                50,
+                16,
+                0,
+                15.0,
+                7.0,
+            )
+        }).collect();
+
+        let mut monsters: Vec<Combattant> = (0..4).map(|i| {
+            // Balanced monster: 50 HP, AC 15, ~15 DPR
+            create_combatant(
+                format!("monster_{}", i),
+                format!("Monster {}", i),
+                50,
+                15,
+                1,
+                15.0,
+                6.0,
+            )
+        }).collect();
+
+        let player_refs: Vec<&Combattant> = players.iter().collect();
+        let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+
+        let result = calculate_action_economy(&player_refs, &monster_refs);
+
+        assert_eq!(result.player_count, 4);
+        assert_eq!(result.monster_count, 4);
+
+        // Should be roughly Even
+        assert_eq!(result.state, ActionEconomyState::Even);
+    }
+
+    #[test]
+    fn test_threshold_boundaries() {
+        // Test the exact threshold boundaries (0.6 and 1.5)
+        // time_ratio = (monster_hp / player_dpr) / (player_hp / monster_dpr)
+
+        // Helper to create creatures with specific HP/DPR to hit exact ratios
+        let create_test_scenario = |player_hp: u32, player_dpr: f64, monster_hp: u32, monster_dpr: f64| {
+            let players = vec![create_combatant(
+                "player1".to_string(),
+                "Player 1".to_string(),
+                player_hp,
+                15,
+                0,
+                player_dpr,
+                5.0,
+            )];
+
+            let monsters = vec![create_combatant(
+                "monster1".to_string(),
+                "Monster 1".to_string(),
+                monster_hp,
+                15,
+                1,
+                monster_dpr,
+                5.0,
+            )];
+
+            let player_refs: Vec<&Combattant> = players.iter().collect();
+            let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+
+            calculate_action_economy(&player_refs, &monster_refs)
+        };
+
+        // Test Player Advantage threshold (< 0.6)
+        // time_ratio = (50/100) / (100/100) = 0.5 (players much faster)
+        let result = create_test_scenario(100, 100.0, 50, 100.0);
+        assert!(result.combined_ratio < 0.6, "combined_ratio should be < 0.6, got {}", result.combined_ratio);
+        assert_eq!(result.state, ActionEconomyState::PlayerAdvantage);
+
+        // Test Even lower boundary (~0.6)
+        // time_ratio = (60/100) / (100/100) = 0.6
+        let result = create_test_scenario(100, 100.0, 60, 100.0);
+        assert!(result.combined_ratio >= 0.6, "combined_ratio should be >= 0.6, got {}", result.combined_ratio);
+        assert!(result.state == ActionEconomyState::Even || result.state == ActionEconomyState::PlayerAdvantage);
+
+        // Test Even range (0.6 - 1.5)
+        // time_ratio = (100/100) / (100/100) = 1.0 (balanced)
+        let result = create_test_scenario(100, 100.0, 100, 100.0);
+        assert!(result.combined_ratio >= 0.6 && result.combined_ratio <= 1.5);
+        assert_eq!(result.state, ActionEconomyState::Even);
+
+        // Test Enemy Advantage threshold (> 1.5)
+        // time_ratio = (150/100) / (100/100) = 1.5 (monsters faster)
+        let result = create_test_scenario(100, 100.0, 150, 100.0);
+        assert!(result.combined_ratio >= 1.5, "combined_ratio should be >= 1.5, got {}", result.combined_ratio);
+        assert!(result.state == ActionEconomyState::Even || result.state == ActionEconomyState::EnemyAdvantage);
+
+        // Test clearly Enemy Advantage (> 1.5)
+        // time_ratio = (200/100) / (100/100) = 2.0 (monsters much faster)
+        let result = create_test_scenario(100, 100.0, 200, 100.0);
+        assert!(result.combined_ratio > 1.5, "combined_ratio should be > 1.5, got {}", result.combined_ratio);
+        assert_eq!(result.state, ActionEconomyState::EnemyAdvantage);
+    }
 }
