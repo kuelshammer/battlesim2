@@ -233,32 +233,34 @@ pub fn calculate_action_economy(
     };
 
     // Calculate ratios
-    // action_ratio: player_count / monster_count
-    //   > 1.0 = more player actions (advantage)
-    //   < 1.0 = more monster actions (disadvantage)
     // time_ratio: rounds_to_kill_monsters / rounds_to_kill_players
     //   < 1.0 = players finish first (advantage)
     //   > 1.0 = monsters finish first (disadvantage)
+    //
+    // Note: Action count is already factored into time_ratio through DPR:
+    // - More players = higher player_dpr = fewer rounds to kill monsters
+    // - More monsters = higher monster_dpr = fewer rounds to kill players
+    // So time_ratio already captures the action economy effect
     let action_ratio = player_count as f64 / monster_count as f64;
     let time_ratio = rounds_to_kill_monsters / rounds_to_kill_players;
 
-    // Combined: time_ratio normalized by action_count
-    // - If players are winning (time_ratio < 1.0) but outnumbered (action_ratio < 1.0),
-    //   dividing by action_ratio reduces the penalty for being outnumbered
-    // - If players are winning (time_ratio < 1.0) with more actions (action_ratio > 1.0),
-    //   dividing by action_ratio increases the advantage
-    // - If monsters are winning (time_ratio > 1.0) and players outnumber them (action_ratio > 1.0),
-    //   dividing by action_ratio reduces the player advantage
-    let combined_ratio = time_ratio / action_ratio;
+    // Use time_ratio directly as combined_ratio
+    // The DPR estimation is already conservative (75th percentile for players, 25th for monsters)
+    // so no additional factors needed
+    let combined_ratio = time_ratio;
 
     // Determine state based on combined ratio
-    // < 0.6 = Enemy Advantage
-    // 0.6 - 1.5 = Even
-    // > 1.5 = Player Advantage
+    // time_ratio < 1.0 = players finish first = Player Advantage
+    // time_ratio > 1.0 = monsters finish first = Enemy Advantage
+    //
+    // Thresholds:
+    // < 0.6 = Player Advantage (players clearly winning, >1.6x faster)
+    // 0.6 - 1.5 = Even (roughly balanced, 0.67x to 1.5x speed difference)
+    // > 1.5 = Enemy Advantage (monsters clearly winning, >1.5x faster)
     let state = if combined_ratio < 0.6 {
-        ActionEconomyState::EnemyAdvantage
-    } else if combined_ratio > 1.5 {
         ActionEconomyState::PlayerAdvantage
+    } else if combined_ratio > 1.5 {
+        ActionEconomyState::EnemyAdvantage
     } else {
         ActionEconomyState::Even
     };
