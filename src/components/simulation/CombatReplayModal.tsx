@@ -17,7 +17,10 @@ import {
   faMagic,
   faBolt,
   faUser,
-  faCrosshairs
+  faCrosshairs,
+  faGavel,
+  faExchangeAlt,
+  faUserFriends
 } from '@fortawesome/free-solid-svg-icons'
 import { useCombatPlayback } from '@/hooks/useCombatPlayback'
 import type { Replay } from '@/model/replayTypes'
@@ -30,6 +33,44 @@ interface CombatReplayModalProps {
   open: boolean
   /** Callback when modal open state changes */
   onOpenChange: (open: boolean) => void
+}
+
+/**
+ * Extract target ID from sub-events
+ */
+const extractTargetId = (subEvents: Event[]): string | null => {
+  if (!subEvents || subEvents.length === 0) return null
+
+  // Priority order: AttackHit > AttackMissed > DamageTaken > HealingApplied > BuffApplied > ConditionAdded
+  const targetEvent = subEvents.find(event => {
+    return event.type === 'AttackHit' ||
+           event.type === 'AttackMissed' ||
+           event.type === 'DamageTaken' ||
+           event.type === 'HealingApplied' ||
+           event.type === 'BuffApplied' ||
+           event.type === 'ConditionAdded'
+  })
+
+  if (targetEvent) {
+    if ('target_id' in targetEvent) return targetEvent.target_id as string
+  }
+
+  return null
+}
+
+/**
+ * Extract interaction type between actor and target
+ */
+const getInteractionType = (subEvents: Event[]): 'attack' | 'heal' | 'buff' | 'self' | null => {
+  if (!subEvents || subEvents.length === 0) return null
+
+  const types = subEvents.map(e => e.type)
+
+  if (types.includes('AttackHit') || types.includes('AttackMissed')) return 'attack'
+  if (types.includes('HealingApplied')) return 'heal'
+  if (types.includes('BuffApplied') || types.includes('ConditionAdded')) return 'buff'
+
+  return null
 }
 
 /**
@@ -326,36 +367,128 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
                 <div className="flex-1 overflow-auto p-6">
                   {currentAction ? (
                     <div className="h-full flex flex-col gap-4">
-                      {/* Action Header */}
+                      {/* Action Header - Actor vs Target */}
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/20 via-slate-900/50 to-blue-900/20 backdrop-blur-sm p-6"
+                        className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/20 via-slate-900/50 to-blue-900/20 backdrop-blur-sm"
                       >
-                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-blue-500" />
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className="w-10 h-10 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center">
-                                <FontAwesomeIcon icon={faUser} className="text-purple-400" />
-                              </div>
-                              <div>
-                                <p className="text-xs text-purple-400 font-mono uppercase tracking-wider">Actor</p>
-                                <p className="text-lg font-semibold text-white">{currentAction.unitId}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 mt-4">
-                              <FontAwesomeIcon icon={faCrosshairs} className="text-slate-500 text-sm" />
-                              <span className="text-sm text-slate-300">Action: </span>
-                              <span className="text-sm font-mono text-purple-300">{currentAction.action.actionId}</span>
+                        {/* Top border accent */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-purple-400 to-blue-500" />
+
+                        <div className="p-6">
+                          {/* Round & Turn Badge */}
+                          <div className="absolute top-4 right-4 flex flex-col items-end">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/60 border border-purple-500/30">
+                              <FontAwesomeIcon icon={faClock} className="text-purple-400 text-xs" />
+                              <span className="text-sm font-mono text-purple-300">
+                                R{currentAction.roundNumber} • T{currentAction.turnIndex + 1}
+                              </span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs text-slate-400 font-mono">Round</p>
-                            <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
-                              {currentAction.roundNumber}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">Turn {currentAction.turnIndex + 1}</p>
+
+                          {/* Actor vs Target Layout */}
+                          <div className="relative flex items-stretch gap-6">
+                            {/* Actor Panel */}
+                            <motion.div
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: 0.1 }}
+                              className="relative z-10 flex-1 bg-gradient-to-br from-purple-900/40 to-purple-800/20 border-2 border-purple-500/40 rounded-xl p-5"
+                            >
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-12 h-12 rounded-lg bg-purple-600/30 border border-purple-500/50 flex items-center justify-center">
+                                  <FontAwesomeIcon icon={faUser} className="text-purple-400 text-lg" />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-purple-400 font-mono uppercase tracking-wider">Actor</p>
+                                  <p className="text-lg font-semibold text-white">{currentAction.unitId}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FontAwesomeIcon icon={faGavel} className="text-purple-400/70 text-sm" />
+                                <span className="text-sm text-slate-300">Action: </span>
+                                <span className="text-sm font-mono text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
+                                  {currentAction.action.actionId}
+                                </span>
+                              </div>
+                            </motion.div>
+
+                            {/* Interaction Arrow */}
+                            {(() => {
+                              const targetId = extractTargetId(currentAction.action.subEvents)
+                              const interactionType = getInteractionType(currentAction.action.subEvents)
+
+                              if (!targetId || !interactionType) return null
+
+                              const arrowColor = interactionType === 'attack' ? 'text-red-400' :
+                                                  interactionType === 'heal' ? 'text-emerald-400' :
+                                                  interactionType === 'buff' ? 'text-amber-400' : 'text-purple-400'
+
+                              return (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.5 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: 0.2 }}
+                                  className="relative z-20 flex-shrink-0 flex items-center justify-center self-center"
+                                >
+                                  <div className={`w-14 h-14 rounded-full bg-slate-900/80 border-2 ${arrowColor.replace('text', 'border')} flex items-center justify-center shadow-lg`}>
+                                    <FontAwesomeIcon
+                                      icon={interactionType === 'attack' ? faBolt :
+                                             interactionType === 'heal' ? faHeart :
+                                             interactionType === 'buff' ? faMagic : faExchangeAlt}
+                                      className={`${arrowColor} text-lg`}
+                                    />
+                                  </div>
+                                </motion.div>
+                              )
+                            })()}
+
+                            {/* Target Panel */}
+                            {(() => {
+                              const targetId = extractTargetId(currentAction.action.subEvents)
+                              const interactionType = getInteractionType(currentAction.action.subEvents)
+
+                              if (!targetId || !interactionType) return null
+
+                              const borderColor = interactionType === 'attack' ? 'border-red-500/40' :
+                                                  interactionType === 'heal' ? 'border-emerald-500/40' :
+                                                  interactionType === 'buff' ? 'border-amber-500/40' : 'border-purple-500/40'
+
+                              const bgGradient = interactionType === 'attack' ? 'from-red-900/40 to-rose-800/20' :
+                                                interactionType === 'heal' ? 'from-emerald-900/40 to-green-800/20' :
+                                                interactionType === 'buff' ? 'from-amber-900/40 to-yellow-800/20' : 'from-purple-900/40 to-purple-800/20'
+
+                              const iconColor = interactionType === 'attack' ? 'text-red-400' :
+                                              interactionType === 'heal' ? 'text-emerald-400' :
+                                              interactionType === 'buff' ? 'text-amber-400' : 'text-purple-400'
+
+                              return (
+                                <motion.div
+                                  initial={{ opacity: 0, x: 20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.15 }}
+                                  className={`relative z-10 flex-1 bg-gradient-to-br ${bgGradient} border-2 ${borderColor} rounded-xl p-5`}
+                                >
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <div className={`w-12 h-12 rounded-lg bg-slate-900/40 border ${borderColor.replace('/40', '/50')} flex items-center justify-center`}>
+                                      <FontAwesomeIcon icon={faUserFriends} className={`${iconColor} text-lg`} />
+                                    </div>
+                                    <div>
+                                      <p className={`text-xs font-mono uppercase tracking-wider ${iconColor}`}>Target</p>
+                                      <p className="text-lg font-semibold text-white">{targetId}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <FontAwesomeIcon icon={faCrosshairs} className={`${iconColor.replace('400', '400/70')} text-sm`} />
+                                    <span className="text-sm text-slate-300">Interaction: </span>
+                                    <span className={`text-sm font-medium capitalize ${iconColor}`}>
+                                      {interactionType}
+                                    </span>
+                                  </div>
+                                </motion.div>
+                              )
+                            })()}
                           </div>
                         </div>
                       </motion.div>
