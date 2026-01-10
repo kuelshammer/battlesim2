@@ -234,15 +234,22 @@ pub fn calculate_action_economy(
 
     // Calculate ratios
     // action_ratio: player_count / monster_count
+    //   > 1.0 = more player actions (advantage)
+    //   < 1.0 = more monster actions (disadvantage)
     // time_ratio: rounds_to_kill_monsters / rounds_to_kill_players
-    //   < 1.0 = players finish first (good)
-    //   > 1.0 = monsters finish first (bad)
+    //   < 1.0 = players finish first (advantage)
+    //   > 1.0 = monsters finish first (disadvantage)
     let action_ratio = player_count as f64 / monster_count as f64;
     let time_ratio = rounds_to_kill_monsters / rounds_to_kill_players;
 
-    // Combined: geometric mean of action and time ratios
-    // Balances "current tactical situation" with "who wins long-term"
-    let combined_ratio = (action_ratio * time_ratio).sqrt();
+    // Combined: time_ratio normalized by action_count
+    // - If players are winning (time_ratio < 1.0) but outnumbered (action_ratio < 1.0),
+    //   dividing by action_ratio reduces the penalty for being outnumbered
+    // - If players are winning (time_ratio < 1.0) with more actions (action_ratio > 1.0),
+    //   dividing by action_ratio increases the advantage
+    // - If monsters are winning (time_ratio > 1.0) and players outnumber them (action_ratio > 1.0),
+    //   dividing by action_ratio reduces the player advantage
+    let combined_ratio = time_ratio / action_ratio;
 
     // Determine state based on combined ratio
     // < 0.6 = Enemy Advantage
@@ -447,6 +454,127 @@ mod tests {
         // (This would be used when a monster attacks the players)
         // For now just verify it runs and returns a value
         let _dpr_vs_25th = estimate_dpr_vs_opponents(&player, &monster_refs, ConservativeMode::MonsterVsPlayers);
+    }
+
+    #[test]
+    fn test_action_economy_outnumbered_but_winning() {
+        // Test case where players are outnumbered but winning the damage race
+        // Players: 4, Monsters: 8
+        // Players kill monsters in 6 rounds, monsters kill players in 13 rounds
+        // Expected: Even or PlayerAdvantage (NOT EnemyAdvantage!)
+
+        let mut players: Vec<Combattant> = (0..4).map(|i| {
+            let creature = Creature {
+                id: format!("player_{}", i),
+                name: format!("Player {}", i),
+                hp: 50,
+                ac: 16,
+                arrival: None,
+                mode: "player".to_string(),
+                count: 1.0,
+                speed_fly: None,
+                save_bonus: 0.0,
+                str_save_bonus: None,
+                dex_save_bonus: None,
+                con_save_bonus: None,
+                int_save_bonus: None,
+                wis_save_bonus: None,
+                cha_save_bonus: None,
+                con_save_advantage: None,
+                save_advantage: None,
+                initiative_bonus: DiceFormula::Value(0.0),
+                initiative_advantage: false,
+                actions: vec![],
+                triggers: vec![],
+                spell_slots: None,
+                class_resources: None,
+                hit_dice: None,
+                con_modifier: None,
+                magic_items: vec![],
+                max_arcane_ward_hp: None,
+                initial_buffs: vec![],
+            };
+            Combattant {
+                id: format!("player_{}", i),
+                team: 0,
+                creature: std::sync::Arc::new(creature),
+                initiative: 10.0,
+                initial_state: crate::model::CreatureState {
+                    current_hp: 50,
+                    ..Default::default()
+                },
+                final_state: crate::model::CreatureState {
+                    current_hp: 50,
+                    ..Default::default()
+                },
+                actions: vec![],
+            }
+        }).collect();
+
+        let mut monsters: Vec<Combattant> = (0..8).map(|i| {
+            let creature = Creature {
+                id: format!("monster_{}", i),
+                name: format!("Monster {}", i),
+                hp: 30,
+                ac: 13,
+                arrival: None,
+                mode: "monster".to_string(),
+                count: 1.0,
+                speed_fly: None,
+                save_bonus: 0.0,
+                str_save_bonus: None,
+                dex_save_bonus: None,
+                con_save_bonus: None,
+                int_save_bonus: None,
+                wis_save_bonus: None,
+                cha_save_bonus: None,
+                con_save_advantage: None,
+                save_advantage: None,
+                initiative_bonus: DiceFormula::Value(0.0),
+                initiative_advantage: false,
+                actions: vec![],
+                triggers: vec![],
+                spell_slots: None,
+                class_resources: None,
+                hit_dice: None,
+                con_modifier: None,
+                magic_items: vec![],
+                max_arcane_ward_hp: None,
+                initial_buffs: vec![],
+            };
+            Combattant {
+                id: format!("monster_{}", i),
+                team: 1,
+                creature: std::sync::Arc::new(creature),
+                initiative: 10.0,
+                initial_state: crate::model::CreatureState {
+                    current_hp: 30,
+                    ..Default::default()
+                },
+                final_state: crate::model::CreatureState {
+                    current_hp: 30,
+                    ..Default::default()
+                },
+                actions: vec![],
+            }
+        }).collect();
+
+        let player_refs: Vec<&Combattant> = players.iter().collect();
+        let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+
+        let result = calculate_action_economy(&player_refs, &monster_refs);
+
+        // Players are outnumbered (4 vs 8) but winning the race
+        // Should NOT be EnemyAdvantage!
+        assert_ne!(result.state, ActionEconomyState::EnemyAdvantage,
+            "Players should not be at disadvantage when they're winning the race (6.1 vs 13.6 rounds)");
+
+        // The state should be Even or PlayerAdvantage
+        // (Even makes sense given they're outnumbered but winning)
+        assert!(
+            result.state == ActionEconomyState::Even || result.state == ActionEconomyState::PlayerAdvantage,
+            "Expected Even or PlayerAdvantage, got {:?}", result.state
+        );
     }
 
     #[test]
