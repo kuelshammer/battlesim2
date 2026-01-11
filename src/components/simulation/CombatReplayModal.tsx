@@ -1,4 +1,4 @@
-import { FC, useState, useRef, useEffect } from 'react'
+import { FC, useState, useRef, useEffect, useMemo } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -22,11 +22,15 @@ import {
   faExchangeAlt,
   faUserFriends,
   faList,
-  faCheck
+  faCheck,
+  faHand,
+  faChevronDown,
+  faFire
 } from '@fortawesome/free-solid-svg-icons'
 import { useCombatPlayback, type FlattenedAction } from '@/hooks/useCombatPlayback'
-import type { Replay } from '@/model/replayTypes'
+import type { Replay, ReplayAction } from '@/model/replayTypes'
 import type { Event } from '@/model/model'
+import { PlayerTemplates } from '@/data/data'
 
 interface CombatReplayModalProps {
   /** The replay data to visualize */
@@ -221,15 +225,387 @@ const getActionSummary = (subEvents: Event[]): string => {
 }
 
 /**
- * SyncLogPanel - Synchronized event log for combat replay
+ * Get action icon based on action type or sub-events
+ */
+const getActionIcon = (actionId: string, subEvents: Event[]) => {
+  // Check action ID first
+  if (actionId.toLowerCase().includes('attack')) return faBolt
+  if (actionId.toLowerCase().includes('spell') || actionId.toLowerCase().includes('cast')) return faMagic
+  if (actionId.toLowerCase().includes('dodge')) return faShieldAlt
+  if (actionId.toLowerCase().includes('dash')) return faClock
+  if (actionId.toLowerCase().includes('heal')) return faHeart
+  if (actionId.toLowerCase().includes('help')) return faHand
+
+  // Check sub-events
+  const types = subEvents.map(e => e.type)
+  if (types.includes('AttackHit') || types.includes('AttackMissed')) return faBolt
+  if (types.includes('HealingApplied')) return faHeart
+  if (types.includes('BuffApplied') || types.includes('ConditionAdded')) return faShieldAlt
+  if (types.includes('SpellCast')) return faMagic
+
+  return faGavel // Default action icon
+}
+
+/**
+ * Calculate damage dealt, taken, and healing for an action
+ */
+const calculateActionStats = (actorId: string, subEvents: Event[]) => {
+  let damageDealt = 0
+  let damageTaken = 0
+  let healingDone = 0
+
+  for (const event of subEvents) {
+    if (event.type === 'DamageTaken') {
+      const evt = event as any
+      if (evt.target_id === actorId) {
+        damageTaken += evt.damage || 0
+      } else {
+        damageDealt += evt.damage || 0
+      }
+    }
+    if (event.type === 'HealingApplied') {
+      const evt = event as any
+      if (evt.target_id === actorId) {
+        healingDone += evt.amount || 0
+      } else {
+        healingDone += evt.amount || 0
+      }
+    }
+  }
+
+  return { damageDealt, damageTaken, healingDone }
+}
+
+/**
+ * Calculate stats for all actions in a turn
+ */
+const calculateTurnStats = (actorId: string, actions: ReplayAction[]) => {
+  let totalDamageDealt = 0
+  let totalDamageTaken = 0
+  let totalHealingDone = 0
+
+  for (const action of actions) {
+    const stats = calculateActionStats(actorId, action.subEvents)
+    totalDamageDealt += stats.damageDealt
+    totalDamageTaken += stats.damageTaken
+    totalHealingDone += stats.healingDone
+  }
+
+  return { totalDamageDealt, totalDamageTaken, totalHealingDone }
+}
+
+/**
+ * Determine faction (PC vs Enemy) based on unitId
+ * Checks if unitId matches any PlayerTemplate key
+ */
+const getUnitFaction = (unitId: string): 'pc' | 'enemy' | 'neutral' => {
+  // Check if unitId matches any PlayerTemplate name
+  const templateNames = Object.keys(PlayerTemplates)
+  const isPc = templateNames.some(name =>
+    name.toLowerCase() === unitId.toLowerCase() ||
+    unitId.toLowerCase().includes(name.toLowerCase())
+  )
+
+  if (isPc) return 'pc'
+
+  // Common enemy patterns
+  const enemyPatterns = ['goblin', 'orc', 'dragon', 'zombie', 'skeleton', 'bandit', 'wolf', 'bear']
+  const isEnemy = enemyPatterns.some(pattern => unitId.toLowerCase().includes(pattern))
+
+  return isEnemy ? 'enemy' : 'neutral'
+}
+
+/**
+ * Get color classes for faction
+ */
+const getFactionColors = (faction: 'pc' | 'enemy' | 'neutral', isActive: boolean) => {
+  if (isActive) {
+    return {
+      border: 'border-purple-500/50',
+      background: 'from-purple-900/30 to-purple-800/10',
+      text: 'text-purple-300',
+      icon: 'text-purple-400'
+    }
+  }
+
+  switch (faction) {
+    case 'pc':
+      return {
+        border: 'border-cyan-500/30',
+        background: 'from-cyan-900/20 to-cyan-800/10',
+        text: 'text-cyan-300',
+        icon: 'text-cyan-400'
+      }
+    case 'enemy':
+      return {
+        border: 'border-red-500/30',
+        background: 'from-red-900/20 to-red-800/10',
+        text: 'text-red-300',
+        icon: 'text-red-400'
+      }
+    default:
+      return {
+        border: 'border-slate-600/30',
+        background: 'from-slate-800/20 to-slate-700/10',
+        text: 'text-slate-300',
+        icon: 'text-slate-400'
+      }
+  }
+}
+
+/**
+ * Get compact action result text
+ */
+const getActionResultText = (subEvents: Event[]): string => {
+  const types = subEvents.map(e => e.type)
+
+  if (types.includes('AttackHit')) {
+    const hit = subEvents.find(e => e.type === 'AttackHit') as any
+    const target = hit?.target_id || 'unknown'
+    const damage = subEvents.find(e => e.type === 'DamageTaken') as any
+    const amount = damage?.damage || 0
+    return `→ ${target} Hit ${amount}dmg`
+  }
+
+  if (types.includes('AttackMissed')) {
+    const miss = subEvents.find(e => e.type === 'AttackMissed') as any
+    const target = miss?.target_id || 'unknown'
+    return `→ ${target} Missed`
+  }
+
+  if (types.includes('HealingApplied')) {
+    const heal = subEvents.find(e => e.type === 'HealingApplied') as any
+    const amount = heal?.amount || 0
+    return `Heal ${amount}hp`
+  }
+
+  if (types.includes('BuffApplied')) {
+    const buff = subEvents.find(e => e.type === 'BuffApplied') as any
+    return `Applied ${buff?.buff_id || 'buff'}`
+  }
+
+  if (types.includes('ConditionAdded')) {
+    const cond = subEvents.find(e => e.type === 'ConditionAdded') as any
+    return `Added ${cond?.condition || 'condition'}`
+  }
+
+  return ''
+}
+
+/**
+ * ActionCard - Individual action within a turn card
+ */
+interface ActionCardProps {
+  action: ReplayAction
+  actorId: string
+  actionIndex: number // Flattened index for seeking
+  isActive: boolean
+  onSeek: (index: number) => void
+}
+
+const ActionCard: FC<ActionCardProps> = ({ action, actorId, actionIndex, isActive, onSeek }) => {
+  const icon = getActionIcon(action.actionId, action.subEvents)
+  const resultText = getActionResultText(action.subEvents)
+
+  return (
+    <motion.button
+      layout
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ scale: 1.01, x: 2 }}
+      whileTap={{ scale: 0.99 }}
+      onClick={() => onSeek(actionIndex)}
+      className={`w-full text-left px-3 py-2 rounded-lg border transition-all text-xs ${
+        isActive
+          ? 'bg-purple-600/20 border-purple-500/40'
+          : 'bg-slate-800/30 border-slate-700/30 hover:bg-slate-700/40'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <FontAwesomeIcon icon={icon} className={`text-xs ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
+        <span className={`font-medium truncate ${isActive ? 'text-white' : 'text-slate-300'}`}>
+          {action.actionId}
+        </span>
+        {resultText && (
+          <span className={`text-[10px] font-mono truncate ml-auto ${isActive ? 'text-purple-300' : 'text-slate-500'}`}>
+            {resultText}
+          </span>
+        )}
+      </div>
+    </motion.button>
+  )
+}
+
+/**
+ * TurnCard - Collapsible card for a single turn
+ */
+interface TurnCardProps {
+  id?: string // Optional id for scroll-into-view
+  roundNumber: number
+  turnIndex: number
+  unitId: string
+  actions: ReplayAction[]
+  firstActionIndex: number // Flattened index for seeking to turn start
+  isExpanded: boolean
+  isActive: boolean
+  onToggleExpand: () => void
+  onSeek: (index: number) => void
+}
+
+const TurnCard: FC<TurnCardProps> = ({
+  id,
+  roundNumber,
+  turnIndex,
+  unitId,
+  actions,
+  firstActionIndex,
+  isExpanded,
+  isActive,
+  onToggleExpand,
+  onSeek
+}) => {
+  const faction = getUnitFaction(unitId)
+  const colors = getFactionColors(faction, isActive)
+  const stats = calculateTurnStats(unitId, actions)
+
+  return (
+    <motion.div
+      id={id}
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`relative overflow-hidden rounded-xl border-l-4 ${colors.border} bg-gradient-to-br ${colors.background} backdrop-blur-sm`}
+    >
+      {/* Pulse animation for active turn */}
+      {isActive && (
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          animate={{
+            boxShadow: [
+              '0 0 0 0px rgba(168, 85, 247, 0.4)',
+              '0 0 0 8px rgba(168, 85, 247, 0)'
+            ]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+
+      {/* Header - Always visible */}
+      <motion.button
+        layout
+        whileHover={{ scale: isExpanded ? 1 : 1.01, x: isExpanded ? 0 : 2 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => isExpanded ? onToggleExpand() : onSeek(firstActionIndex)}
+        className="w-full px-4 py-3 flex items-center justify-between"
+      >
+        {/* Left: Round/Turn badge + Unit name */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Round/Turn badge */}
+          <span className={`flex-shrink-0 px-2 py-1 rounded text-[10px] font-mono font-semibold ${
+            isActive
+              ? 'bg-purple-500 text-white'
+              : 'bg-slate-700 text-slate-400'
+          }`}>
+            R{roundNumber} • T{turnIndex + 1}
+          </span>
+
+          {/* Unit name with faction color */}
+          <span className={`font-medium truncate ${colors.text}`}>
+            {unitId}
+          </span>
+
+          {/* Faction badge */}
+          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase ${
+            faction === 'pc' ? 'bg-cyan-500/20 text-cyan-400' :
+            faction === 'enemy' ? 'bg-red-500/20 text-red-400' :
+            'bg-slate-500/20 text-slate-400'
+          }`}>
+            {faction === 'pc' ? 'PC' : faction === 'enemy' ? 'NPC' : '?'}
+          </span>
+        </div>
+
+        {/* Right: Expand/collapse indicator */}
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="flex-shrink-0 ml-2"
+        >
+          <FontAwesomeIcon icon={faChevronDown} className={`text-xs ${isActive ? 'text-purple-400' : 'text-slate-500'}`} />
+        </motion.div>
+      </motion.button>
+
+      {/* Expanded content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            layout
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          >
+            {/* Action list */}
+            <div className="px-3 pb-2 space-y-1">
+              {actions.map((action, idx) => (
+                <ActionCard
+                  key={idx}
+                  action={action}
+                  actorId={unitId}
+                  actionIndex={firstActionIndex + idx}
+                  isActive={false}
+                  onSeek={onSeek}
+                />
+              ))}
+            </div>
+
+            {/* Footer stats */}
+            <div className="px-3 pb-3 pt-2 border-t border-slate-700/30">
+              <div className="flex items-center justify-center gap-4 text-[10px]">
+                {stats.totalDamageDealt > 0 && (
+                  <div className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faFire} className="text-red-400" />
+                    <span className="text-slate-300">{stats.totalDamageDealt}</span>
+                  </div>
+                )}
+                {stats.totalDamageTaken > 0 && (
+                  <div className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faShieldAlt} className="text-amber-400" />
+                    <span className="text-slate-300">{stats.totalDamageTaken}</span>
+                  </div>
+                )}
+                {stats.totalHealingDone > 0 && (
+                  <div className="flex items-center gap-1">
+                    <FontAwesomeIcon icon={faHeart} className="text-emerald-400" />
+                    <span className="text-slate-300">{stats.totalHealingDone}</span>
+                  </div>
+                )}
+                {stats.totalDamageDealt === 0 && stats.totalDamageTaken === 0 && stats.totalHealingDone === 0 && (
+                  <span className="text-slate-500 italic">No damage/healing</span>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  )
+}
+
+/**
+ * SyncLogPanel - Card-based turn-by-turn combat log
  *
- * Displays all actions in a scrollable list with:
- * - Current action highlighting
+ * Displays turns as collapsible cards with:
+ * - Round/Turn information
+ * - Unit identification with faction coloring
+ * - Action list (when expanded)
+ * - Damage/healing summary
  * - Click-to-seek functionality
- * - Auto-scroll during playback
+ * - Auto-expand for active turn during playback
  */
 interface SyncLogPanelProps {
-  /** Flattened actions to display */
+  /** Replay data */
+  replay: Replay | null
+  /** Flattened actions for seeking */
   actions: readonly FlattenedAction[]
   /** Current action index */
   currentIndex: number
@@ -240,122 +616,119 @@ interface SyncLogPanelProps {
 }
 
 const SyncLogPanel: FC<SyncLogPanelProps> = ({
+  replay,
   actions,
   currentIndex,
   onSeek,
   isPlaying
 }) => {
   const listRef = useRef<HTMLDivElement>(null)
-  const activeItemRef = useRef<HTMLButtonElement>(null)
 
-  // Auto-scroll to current action during playback
+  // Expansion state: Set of turn keys (roundNumber-turnIndex) that are expanded
+  const [expandedTurns, setExpandedTurns] = useState<Set<string>>(new Set())
+
+  // Auto-expand current turn during playback
   useEffect(() => {
-    if (isPlaying && activeItemRef.current) {
-      activeItemRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
-      })
+    if (actions.length > 0 && currentIndex >= 0 && currentIndex < actions.length) {
+      const currentAction = actions[currentIndex]
+      const turnKey = `${currentAction.roundNumber}-${currentAction.turnIndex}`
+      setExpandedTurns(prev => new Set([...prev, turnKey]))
     }
-  }, [currentIndex, isPlaying])
+  }, [currentIndex, actions])
 
-  // Group actions by round for display
-  const groupedActions = actions.reduce((acc, action) => {
-    if (!acc[action.roundNumber]) {
-      acc[action.roundNumber] = []
+  // Auto-scroll to current turn during playback
+  useEffect(() => {
+    if (isPlaying && actions.length > 0 && currentIndex >= 0) {
+      const currentAction = actions[currentIndex]
+      const turnKey = `turn-${currentAction.roundNumber}-${currentAction.turnIndex}`
+      const element = document.getElementById(turnKey)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
     }
-    acc[action.roundNumber].push(action)
-    return acc
-  }, {} as Record<number, FlattenedAction[]>)
+  }, [currentIndex, isPlaying, actions])
+
+  const toggleTurn = (turnKey: string) => {
+    setExpandedTurns(prev => {
+      const next = new Set(prev)
+      if (next.has(turnKey)) {
+        next.delete(turnKey)
+      } else {
+        next.add(turnKey)
+      }
+      return next
+    })
+  }
+
+  // Build a lookup map: actionIndex → FlattenedAction
+  const actionMap = useMemo(() => {
+    const map = new Map<number, FlattenedAction>()
+    actions.forEach(a => map.set(a.index, a))
+    return map
+  }, [actions])
+
+  // Get current action info for highlighting
+  const currentAction = actions.length > 0 && currentIndex >= 0 && currentIndex < actions.length
+    ? actions[currentIndex]
+    : null
+
+  if (!replay) {
+    return (
+      <div className="h-full flex flex-col bg-slate-900/40 border-r border-slate-800/50">
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/50 bg-slate-900/60">
+          <FontAwesomeIcon icon={faList} className="text-purple-400 text-xs" />
+          <h3 className="text-sm font-medium text-slate-300">Sync Log</h3>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-slate-500 text-sm">No replay data</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full flex flex-col bg-slate-900/40 border-r border-slate-800/50">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/50 bg-slate-900/60">
         <FontAwesomeIcon icon={faList} className="text-purple-400 text-xs" />
-        <h3 className="text-sm font-medium text-slate-300">Sync Log</h3>
-        <span className="text-xs text-slate-500">({actions.length})</span>
+        <h3 className="text-sm font-medium text-slate-300">Combat Log</h3>
+        <span className="text-xs text-slate-500">({replay.rounds.length} rounds)</span>
       </div>
 
-      {/* Scrollable List */}
+      {/* Scrollable Turn Cards */}
       <div ref={listRef} className="flex-1 overflow-auto overflow-x-hidden">
-        <div className="p-2 space-y-1">
-          {Object.entries(groupedActions).map(([roundNum, roundActions]) => (
-            <div key={roundNum}>
-              {/* Round Header */}
-              <div className="sticky top-0 z-10 px-2 py-1 bg-slate-800/80 backdrop-blur-sm border-b border-slate-700/50 mb-1">
-                <span className="text-xs font-mono text-purple-400 font-semibold">
-                  Round {roundNum}
-                </span>
-              </div>
+        <div className="p-3 space-y-2">
+          {replay.rounds.map((round) => (
+            <div key={round.roundNumber}>
+              {round.turns.map((turn, turnIdx) => {
+                const turnKey = `${round.roundNumber}-${turnIdx}`
+                const isExpanded = expandedTurns.has(turnKey)
 
-              {/* Actions in this round */}
-              {roundActions.map((action) => {
-                const isActive = action.index === currentIndex
-                const actor = action.unitId
-                const actionId = action.action.actionId
-                const summary = getActionSummary(action.action.subEvents)
+                // Check if this turn contains the current action
+                const isActive = currentAction &&
+                  currentAction.roundNumber === round.roundNumber &&
+                  currentAction.turnIndex === turnIdx
+
+                // Find the first action index for this turn
+                const firstAction = actions.find(a =>
+                  a.roundNumber === round.roundNumber && a.turnIndex === turnIdx
+                )
+                const firstActionIndex = firstAction?.index ?? 0
 
                 return (
-                  <motion.button
-                    key={action.index}
-                    ref={isActive ? activeItemRef : null}
-                    whileHover={{ scale: 1.02, x: 2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => onSeek(action.index)}
-                    className={`w-full text-left px-3 py-2 rounded-lg border transition-all text-xs ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-600/30 to-purple-500/20 border-purple-500/50 shadow-lg shadow-purple-500/10'
-                        : 'bg-slate-800/30 border-slate-700/30 hover:bg-slate-700/40 hover:border-slate-600/40'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {/* Action number badge */}
-                        <span
-                          className={`flex-shrink-0 w-5 h-5 rounded flex items-center justify-center text-[10px] font-mono font-semibold ${
-                            isActive
-                              ? 'bg-purple-500 text-white'
-                              : 'bg-slate-700 text-slate-400'
-                          }`}
-                        >
-                          {action.index + 1}
-                        </span>
-
-                        {/* Action details */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className={`font-medium truncate ${
-                              isActive ? 'text-white' : 'text-slate-300'
-                            }`}>
-                              {actor}
-                            </span>
-                            <span className="text-slate-600">•</span>
-                            <span className={`font-mono text-[10px] uppercase ${
-                              isActive ? 'text-purple-300' : 'text-slate-500'
-                            }`}>
-                              {actionId}
-                            </span>
-                          </div>
-                          <p className={`text-[10px] mt-0.5 truncate ${
-                            isActive ? 'text-slate-300' : 'text-slate-500'
-                          }`}>
-                            {summary}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Active indicator */}
-                      {isActive && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="flex-shrink-0"
-                        >
-                          <FontAwesomeIcon icon={faCheck} className="text-purple-400 text-xs" />
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.button>
+                  <TurnCard
+                    key={turnKey}
+                    id={`turn-${round.roundNumber}-${turnIdx}`}
+                    roundNumber={round.roundNumber}
+                    turnIndex={turnIdx}
+                    unitId={turn.unitId}
+                    actions={turn.actions}
+                    firstActionIndex={firstActionIndex}
+                    isExpanded={isExpanded}
+                    isActive={isActive ?? false}
+                    onToggleExpand={() => toggleTurn(turnKey)}
+                    onSeek={onSeek}
+                  />
                 )
               })}
             </div>
@@ -564,6 +937,7 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
                 <div className="flex-1 flex overflow-hidden">
                   {/* Sync Log Panel - Left (40%) */}
                   <SyncLogPanel
+                    replay={replay}
                     actions={playback.actions}
                     currentIndex={currentAction?.index ?? -1}
                     onSeek={playback.seek}
