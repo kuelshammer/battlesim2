@@ -60,6 +60,9 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
 
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
       - name: Cache Cargo registry
         uses: actions/cache@v4
         with:
@@ -102,6 +105,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
@@ -149,6 +155,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
