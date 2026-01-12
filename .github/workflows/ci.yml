@@ -33,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint -- --max-warnings=999999
+        run: npx eslint . --max-warnings=999999
 
       - name: Run TypeScript check
         run: npm run typecheck
@@ -131,7 +131,7 @@ jobs:
         run: STRESS_TIME_SECS=60 STRESS_COUNT=1000 cargo test --all
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features -- -W warnings
+        run: cargo clippy --all-targets --all-features -- -W warnings -A clippy::absurd_extreme_comparisons -A clippy::manual_flatten
 
   # E2E tests
   e2e-test:

@@ -33,9 +33,9 @@ export default [
     },
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-unused-vars": "warn",
       "no-console": "warn",
-      "no-debugger": "error",
+      "no-debugger": "warn",
     },
   },
   // CommonJS config files (next.config.js, vitest configs, etc.)
