@@ -40,7 +40,7 @@ export default [
   },
   // CommonJS config files (next.config.js, vitest configs, etc.)
   {
-    files: ["next.config.js", "vitest.config.ts", "**/*.config.js", "**/*.config.ts", "simulation-wasm/**/*.js"],
+    files: ["next.config.js", "vitest.config.ts", "**/*.config.js", "**/*.config.ts", "simulation-wasm/**/*.js", "scripts/**/*.js"],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: "commonjs",
@@ -59,7 +59,7 @@ export default [
   },
   // Other JS files (use module)
   {
-    files: ["**/*.js", "!**/*.config.js", "!next.config.js"],
+    files: ["**/*.js", "!**/*.config.js", "!next.config.js", "!scripts/**/*.js", "!simulation-wasm/**/*.js"],
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: "module",
