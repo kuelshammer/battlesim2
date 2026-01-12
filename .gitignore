@@ -7,4 +7,4 @@ simulation-wasm/pkg
 out
 public/main.js
 dist
-.DS_Store
+.DS_Storetsconfig.tsbuildinfo
