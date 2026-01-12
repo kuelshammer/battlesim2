@@ -402,10 +402,12 @@ pub fn calculate_lightweight_score(final_states: &[crate::context::CombattantSta
     let mut player_hp: f64 = 0.0;
     let mut monster_hp: f64 = 0.0;
     let mut survivors: f64 = 0.0;
+    let mut party_max_hp: f64 = 0.0;
 
     for state in final_states {
         if state.side == 0 {
             player_hp += state.current_hp as f64;
+            party_max_hp += state.base_combatant.creature.hp as f64;
             if state.current_hp > 0 {
                 survivors += 1.0;
             }
@@ -414,7 +416,10 @@ pub fn calculate_lightweight_score(final_states: &[crate::context::CombattantSta
         }
     }
 
-    (survivors * 1_000_000.0) + player_hp - monster_hp
+    // Match the formula in calculate_encounter_score (aggregation.rs:221)
+    // (survivors * party_max_hp * 1000.0) + player_hp - (monster_hp * 2.0)
+    let survival_weight = if party_max_hp > 0.0 { party_max_hp } else { 100.0 };
+    (survivors * survival_weight * 1000.0) + player_hp - (monster_hp * 2.0)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
