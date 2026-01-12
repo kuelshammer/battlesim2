@@ -124,8 +124,8 @@ mod tests {
         ];
 
         let score = calculate_efficiency_score(&result, &events);
-        // Base: 1,000,000 + 100 - (2 * 15) = 1,000,070
-        assert_eq!(score, 1_000_070.0);
+        // Base: 100,000 + 100 - (2 * 15) = 100,070
+        assert_eq!(score, 100_070.0);
     }
 
     #[test]

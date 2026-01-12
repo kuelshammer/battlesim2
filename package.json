@@ -30,7 +30,6 @@
     "@hookform/resolvers": "^3.1.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@ts-react/form": "^1.6.4",
     "@types/react": "18.0.24",
     "@types/react-dom": "18.0.8",
     "clsx": "^2.1.1",
@@ -41,7 +40,6 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-hook-form": "^7.43.9",
-    "react-joyride": "^2.9.3",
     "react-range": "^1.8.14",
     "react-select": "^5.7.3",
     "react-virtuoso": "^4.18.1",
@@ -52,6 +50,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^25.0.3",
