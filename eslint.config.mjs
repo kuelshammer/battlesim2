@@ -13,6 +13,7 @@ export default [
       "e2e/**",           // E2E files have their own tsconfig
       "next-env.d.ts",    // Auto-generated
       "public/**",        // Public folder
+      "out/**",           // Static export build output
       "*.template.js",    // Template files
       "fix_templates.js",
       "debug_template.js",
