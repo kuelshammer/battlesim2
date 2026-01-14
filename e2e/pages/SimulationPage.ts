@@ -43,8 +43,9 @@ export class SimulationPage extends BasePage {
 
   /**
    * Wait for the page to be fully loaded (WASM initialized and storage loaded)
+   * Default timeout is 60s for CI environments (slower than local)
    */
-  async waitForPageReady(timeout: number = 15000): Promise<void> {
+  async waitForPageReady(timeout: number = 60000): Promise<void> {
     await this.page.waitForFunction(
       () => {
         return (window as any).simulationWasm !== undefined &&

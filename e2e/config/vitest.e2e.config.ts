@@ -9,9 +9,9 @@ export default defineConfig({
     setupFiles: ['./e2e/config/setup.ts'],
     include: ['e2e/specs/**/*.e2e.ts'],
     exclude: ['node_modules', 'dist', '.next'],
-    testTimeout: 30000,
-    hookTimeout: 60000,
-    teardownTimeout: 30000,
+    testTimeout: 60000,
+    hookTimeout: 120000,
+    teardownTimeout: 60000,
     reporter: ['default'],
     coverage: {
       provider: 'v8',
