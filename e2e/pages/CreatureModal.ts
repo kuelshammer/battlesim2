@@ -128,47 +128,73 @@ export class CreatureModal extends BasePage {
 
   /**
    * Set AC (Armor Class)
-   * Note: Uses keyboard interaction to properly trigger React's onChange handler
+   * Note: Uses direct value setting with event dispatching for reliability
    */
   async setAC(ac: number): Promise<void> {
-    await this.page.click(this.selectors.acInput);
-    // Select all and type new value
-    await this.page.keyboard.down('Control');
-    await this.page.keyboard.press('A');
-    await this.page.keyboard.up('Control');
-    await this.page.keyboard.type(ac.toString());
-    // Wait for the input value to actually be set
+    await this.waitForVisible(this.selectors.acInput);
+    await this.page.evaluate(
+      (sel, val) => {
+        const input = document.querySelector(sel) as HTMLInputElement;
+        if (input) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(input, val);
+          } else {
+            input.value = val;
+          }
+          // Trigger React's change detection with both input and change events
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      },
+      this.selectors.acInput,
+      ac.toString()
+    );
+    // Verify value is set to ensure React has picked up the event
     await this.page.waitForFunction(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        return input && input.value === val.toString();
+        return input && input.value === val;
       },
       {},
       this.selectors.acInput,
-      ac
+      ac.toString()
     );
   }
 
   /**
    * Set HP (Hit Points)
-   * Note: Uses keyboard interaction to properly trigger React's onChange handler
+   * Note: Uses direct value setting with event dispatching for reliability
    */
   async setHP(hp: number): Promise<void> {
-    await this.page.click(this.selectors.hpInput);
-    // Select all and type new value
-    await this.page.keyboard.down('Control');
-    await this.page.keyboard.press('A');
-    await this.page.keyboard.up('Control');
-    await this.page.keyboard.type(hp.toString());
-    // Wait for the input value to actually be set
+    await this.waitForVisible(this.selectors.hpInput);
+    await this.page.evaluate(
+      (sel, val) => {
+        const input = document.querySelector(sel) as HTMLInputElement;
+        if (input) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(input, val);
+          } else {
+            input.value = val;
+          }
+          // Trigger React's change detection with both input and change events
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      },
+      this.selectors.hpInput,
+      hp.toString()
+    );
+    // Verify value is set to ensure React has picked up the event
     await this.page.waitForFunction(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        return input && input.value === val.toString();
+        return input && input.value === val;
       },
       {},
       this.selectors.hpInput,
-      hp
+      hp.toString()
     );
   }
 
