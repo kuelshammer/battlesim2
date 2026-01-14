@@ -11,6 +11,7 @@ use simulation_wasm::model::{Creature, TimelineStep, TargetRole, DiceFormula, En
 use std::mem::size_of;
 
 // Helper to calculate deep size of heap-allocated data
+#[allow(dead_code)]
 fn calculate_deep_size<T: ?Sized>(_: &T) -> usize {
     // Placeholder - in reality, we'd need to recursively traverse all allocations
     // For now, we'll use theoretical calculations based on structure sizes
@@ -97,7 +98,6 @@ fn estimate_memory_for_iterations() {
 
     // Calculate theoretical memory based on structure sizes and content
     use simulation_wasm::model::{SimulationRun, SimulationResult, EncounterResult};
-    use simulation_wasm::context::CombattantState;
 
     let mut total_estimated_bytes = 0;
     for run in &runs {
@@ -105,7 +105,7 @@ fn estimate_memory_for_iterations() {
         total_estimated_bytes += size_of::<SimulationRun>();
 
         // SimulationResult contains: Vec<EncounterResult>
-        let result_bytes = size_of::<SimulationResult>();
+        let _result_bytes = size_of::<SimulationResult>();
 
         // EncounterResult contains: HashMap<String, EncounterStats> + Vec<Round>
         // Each EncounterResult has stats + rounds with combattants
@@ -205,7 +205,7 @@ fn demonstrate_memory_growth() {
         // Theoretical size calculation
         let mut total_size = 0;
         for run in &runs {
-            total_size += size_of_val(&run);
+            total_size += size_of_val(run);
             // Rough estimate of heap allocations
             for enc in &run.result.encounters {
                 total_size += enc.stats.len() * 128; // HashMap entry estimate

@@ -1,4 +1,4 @@
-use simulation_wasm::enums::{ActionCondition, BuffDuration, TriggerCondition, TriggerEffect, AttackRange};
+use simulation_wasm::enums::{BuffDuration, TriggerCondition, TriggerEffect, AttackRange};
 use simulation_wasm::events::Event;
 
 #[test]

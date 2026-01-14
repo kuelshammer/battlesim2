@@ -2,6 +2,8 @@
 //
 // These tests use proptest to validate that fundamental simulation rules
 // hold across thousands of randomly generated inputs.
+#![allow(clippy::absurd_extreme_comparisons)]
+#![allow(unused_comparisons)]
 
 use proptest::prelude::*;
 use simulation_wasm::model::*;

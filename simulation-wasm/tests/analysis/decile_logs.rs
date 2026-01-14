@@ -67,9 +67,9 @@ fn test_cumulative_log_sorting() {
     // Cumulative score = hp1 + hp2 = i + (100 - i) = 100 (Constant!)
     // If scores are constant, sorting order might be stable or random.
     // Let's make E2 slightly different to ensure sorting.
-    for i in 0..100 {
+    for (i, run) in runs.iter_mut().enumerate().take(100) {
         let hp2 = (100 - i) as u32;
-        runs[i].result.encounters[1].rounds[0].team1[0].final_state.current_hp = hp2;
+        run.result.encounters[1].rounds[0].team1[0].final_state.current_hp = hp2;
     }
     
     let output2 = run_encounter_analysis_with_logs(&mut runs, 1, "Enc 2", 1, 0);

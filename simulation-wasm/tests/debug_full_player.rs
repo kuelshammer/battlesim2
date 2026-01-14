@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod debug_full_player_tests {
     use simulation_wasm::model::Creature;
-    use serde_json;
     use std::error::Error;
 
     // Test with actual player data structure from examples.ts

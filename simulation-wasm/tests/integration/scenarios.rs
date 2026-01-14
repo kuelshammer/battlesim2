@@ -3,12 +3,12 @@
 //! These tests load JSON encounter files, run simulations, and validate
 //! that the results maintain expected invariants (no impossible states).
 
-use crate::engine::invariants;
 use std::path::Path;
 use std::fs;
 use simulation_wasm::model::{Creature, TimelineStep};
 
 /// Test configuration for scenarios
+#[allow(dead_code)]
 struct ScenarioTest {
     name: String,
     max_rounds: u32,

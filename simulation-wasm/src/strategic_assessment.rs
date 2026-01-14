@@ -466,7 +466,7 @@ mod tests {
         // Players kill monsters in 6 rounds, monsters kill players in 13 rounds
         // Expected: Even or PlayerAdvantage (NOT EnemyAdvantage!)
 
-        let mut players: Vec<Combattant> = (0..4).map(|i| {
+        let players: Vec<Combattant> = (0..4).map(|i| {
             let creature = Creature {
                 id: format!("player_{}", i),
                 name: format!("Player {}", i),
@@ -514,7 +514,7 @@ mod tests {
             }
         }).collect();
 
-        let mut monsters: Vec<Combattant> = (0..8).map(|i| {
+        let monsters: Vec<Combattant> = (0..8).map(|i| {
             let creature = Creature {
                 id: format!("monster_{}", i),
                 name: format!("Monster {}", i),
@@ -698,7 +698,7 @@ mod tests {
         // Due to AC differences (fighters AC 20, goblins AC 15) and to-hit chances,
         // fighters have significant advantage despite action count
 
-        let mut players: Vec<Combattant> = (0..2).map(|i| {
+        let players: Vec<Combattant> = (0..2).map(|i| {
             // Lvl 10 fighter: 120 HP, AC 20, ~40 DPR (multiple attacks)
             create_combatant(
                 format!("fighter_{}", i),
@@ -711,7 +711,7 @@ mod tests {
             )
         }).collect();
 
-        let mut monsters: Vec<Combattant> = (0..20).map(|i| {
+        let monsters: Vec<Combattant> = (0..20).map(|i| {
             // Goblin: 7 HP, AC 15, ~8 DPR
             create_combatant(
                 format!("goblin_{}", i),
@@ -746,7 +746,7 @@ mod tests {
         // One very strong monster vs many very weak players
         // Expected: Enemy Advantage (single monster too powerful)
 
-        let mut players: Vec<Combattant> = (0..4).map(|i| {
+        let players: Vec<Combattant> = (0..4).map(|i| {
             // Lvl 1 commoner: 8 HP, AC 10, ~4 DPR
             create_combatant(
                 format!("commoner_{}", i),
@@ -759,7 +759,7 @@ mod tests {
             )
         }).collect();
 
-        let mut monsters: Vec<Combattant> = vec![
+        let monsters: Vec<Combattant> = vec![
             // Ancient dragon: 400 HP, AC 22, ~120 DPR (breath + multiple attacks)
             create_combatant(
                 "ancient_dragon".to_string(),
@@ -789,7 +789,7 @@ mod tests {
         // Task case 3: 4 vs 4 balanced match
         // Expected: Even state (balanced action economy and damage)
 
-        let mut players: Vec<Combattant> = (0..4).map(|i| {
+        let players: Vec<Combattant> = (0..4).map(|i| {
             // Balanced player: 50 HP, AC 16, ~15 DPR
             create_combatant(
                 format!("player_{}", i),
@@ -802,7 +802,7 @@ mod tests {
             )
         }).collect();
 
-        let mut monsters: Vec<Combattant> = (0..4).map(|i| {
+        let monsters: Vec<Combattant> = (0..4).map(|i| {
             // Balanced monster: 50 HP, AC 15, ~15 DPR
             create_combatant(
                 format!("monster_{}", i),

@@ -360,7 +360,7 @@ fn test_decile_approximation_accuracy() {
     ];
     let timeline = create_simple_timeline();
     let iterations = 200;
-    let seed = Some(123456);
+    let seed = 123456;
 
     // 1. Run with rolling stats (Two-Pass)
     let summary = simulation_wasm::run_simulation_with_rolling_stats(
@@ -368,13 +368,13 @@ fn test_decile_approximation_accuracy() {
         timeline.clone(),
         iterations,
         false,
-        seed
+        Some(seed)
     );
 
     // 2. Run full simulation (One-Pass) manually for comparison
     let mut full_scores = Vec::new();
     for i in 0..iterations {
-        simulation_wasm::rng::seed_rng(seed.unwrap() + i as u64);
+        simulation_wasm::rng::seed_rng(seed + i as u64);
         let (res, _) = simulation_wasm::run_single_event_driven_simulation(&players, &timeline, false);
         full_scores.push(simulation_wasm::aggregation::calculate_score(&res));
     }

@@ -18,7 +18,7 @@ fn test_mock_rng_d20() {
     
     // Should fall back to random (or seeded) after queue is empty
     let next = rng::roll_d20();
-    assert!(next >= 1 && next <= 20);
+    assert!((1..=20).contains(&next));
     
     rng::clear_forced_rolls();
 }
