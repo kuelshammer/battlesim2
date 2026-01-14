@@ -113,7 +113,7 @@ pub struct ActiveEffect {
 /// Types of effects that can be applied
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EffectType {
-    Buff(crate::model::Buff), // Store full Buff object
+    Buff(Box<crate::model::Buff>), // Store full Buff object
     DamageOverTime {
         damage_per_round: f64,
         damage_type: String,
@@ -180,7 +180,7 @@ impl TurnContext {
                         id: format!("{}_{}", buff_id, unit_id),
                         source_id: unit_id.clone(), // Assume self-sourced for initial buffs
                         target_id: unit_id.clone(),
-                        effect_type: EffectType::Buff(buff.clone()),
+                        effect_type: EffectType::Buff(Box::new(buff.clone())),
                         remaining_duration: match buff.duration {
                             crate::enums::BuffDuration::EntireEncounter => 100,
                             crate::enums::BuffDuration::OneRound => 1,

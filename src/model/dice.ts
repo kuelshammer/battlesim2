@@ -60,7 +60,7 @@ function evaluateDie(roll: FullRoll, luck: number, options: EvaluationOptions) {
     let result = count * (die + 1) * luck
     
     // TODO: handle multiple mods simultaneously instead of replacing the result
-    for (let mod of roll.mods || []) {
+    for (const mod of roll.mods || []) {
         if (mod.type === 'explode') {
             result *= die / (die - 1)
         } else if (mod.type === 'keep') {
@@ -167,7 +167,7 @@ function keepHighestLowest(diceCount: number, diceSize: number, keepCount: numbe
     // Calculate average result
     let sum = 0
     let rolls = 0
-    for (let [result, count] of results) {
+    for (const [result, count] of results) {
         sum += result * count
         rolls += count
     }
@@ -205,7 +205,7 @@ function evaluateMathExpr(expr: MathExpression, luck: number, options: Evaluatio
 
     let last = head
     let sum = 0
-    for (let {tail, op} of expr.ops) {
+    for (const {tail, op} of expr.ops) {
         const tailValue = evaluateUnknown(tail, luck, options)
 
         if (op === "+") {

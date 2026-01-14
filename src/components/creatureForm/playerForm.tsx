@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import { Creature } from "@/model/model"
 import styles from './playerForm.module.scss'
 import { Class, ClassesList } from "@/model/enums"
@@ -52,35 +52,47 @@ const DefaultClass: ClassForm = { type: 'barbarian', options: DefaultOptions.bar
 const DefaultLevel = 1
 
 const PlayerForm:FC<PropType> = ({ value, onChange }) => {
-    const [chosenClass, setChosenClass] = useState<ClassForm|null>((value && value.class) ? { type: value.class.type, options: value.class.options } as ClassForm : DefaultClass)
-    const [level, setLevel] = useState<number | null>((value && value.class) ? value.class.level : DefaultLevel)
+    const chosenClass: ClassForm = (value && value.class) ? { type: value.class.type, options: value.class.options } as ClassForm : DefaultClass;
+    const level = (value && value.class) ? value.class.level : DefaultLevel;
 
+    // Apply template on first mount if no class exists
     useEffect(() => {
-        if (!level || !chosenClass) return
-
-        const template = PlayerTemplates[chosenClass.type]
-        const creature = (template as (level: number, options: any) => Creature)(level, chosenClass.options)
-        creature.class = {
-            type: chosenClass.type,
-            level: level,
-            options: chosenClass.options,
+        if (value && !value.class) {
+            applyTemplate(DefaultClass.type, DefaultLevel, DefaultOptions[DefaultClass.type]);
         }
-        creature.count = value?.count || 1
-        creature.speed_fly = value?.speed_fly
-        onChange(creature)
-    }, [chosenClass, level])
+    }, []);
+
+    function applyTemplate(type: Class, lvl: number, options: any) {
+        const template = PlayerTemplates[type];
+        const creature = (template as (level: number, options: any) => Creature)(lvl, options);
+        creature.id = value?.id || creature.id;
+        creature.class = {
+            type: type,
+            level: lvl,
+            options: options,
+        };
+        creature.count = value?.count || 1;
+        creature.name = value?.name || creature.name;
+        
+        // If HP/AC were default 10, let template decide. Otherwise keep parent's.
+        if (value && value.hp !== 10) creature.hp = value.hp;
+        if (value && value.ac !== 10) creature.ac = value.ac;
+
+        onChange(creature);
+    }
 
     function setClass(type: Class) {
-        const newChosenClass: ClassForm = { type, options: DefaultOptions[type] } as ClassForm
-        setChosenClass(newChosenClass)
+        applyTemplate(type, level, DefaultOptions[type]);
+    }
+
+    function setLevel(lvl: number) {
+        applyTemplate(chosenClass.type, lvl, chosenClass.options);
     }
 
     function setClassOptions(callback: (classOptions: any) => void) {
-        if (!chosenClass) return
-
         const chosenClassClone = clone(chosenClass)
         callback(chosenClassClone.options)
-        setChosenClass(chosenClassClone)
+        applyTemplate(chosenClassClone.type, level, chosenClassClone.options);
     }
 
     return (

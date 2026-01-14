@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 /// User preferences for GUI behavior
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct UserPreferences {
     /// Display mode preferences
     pub display: DisplayPreferences,
@@ -15,18 +15,6 @@ pub struct UserPreferences {
     pub background: BackgroundPreferences,
     /// General UI preferences
     pub ui: UIPreferences,
-}
-
-impl Default for UserPreferences {
-    fn default() -> Self {
-        Self {
-            display: DisplayPreferences::default(),
-            progress: ProgressPreferences::default(),
-            storage: StoragePreferences::default(),
-            background: BackgroundPreferences::default(),
-            ui: UIPreferences::default(),
-        }
-    }
 }
 
 /// Display-related preferences
@@ -262,6 +250,12 @@ pub struct ConfigManager {
     dirty: bool,
 }
 
+impl Default for ConfigManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ConfigManager {
     /// Create a new configuration manager
     pub fn new() -> Self {
@@ -402,6 +396,12 @@ impl ConfigManager {
 #[wasm_bindgen]
 pub struct ConfigManagerWrapper {
     inner: ConfigManager,
+}
+
+impl Default for ConfigManagerWrapper {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[wasm_bindgen]

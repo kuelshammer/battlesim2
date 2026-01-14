@@ -18,7 +18,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
     const [creatureType, setCreatureType] = useSharedState(defaultTypeFilter)
     const [minCR, setMinCR] = useSharedState<ChallengeRating>(ChallengeRatingList[0])
     const [maxCR, setMaxCR] = useSharedState<ChallengeRating>(ChallengeRatingList[ChallengeRatingList.length - 2])
-    const [name, setName] = useSharedState<string>('')
+    const [search, setSearch] = useSharedState<string>('')
     const [monsters, setMonsters] = useState<Creature[]>([])
 
     useEffect(() => {
@@ -35,7 +35,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
     }, []);
 
     const searchResults = useCalculatedState(() => monsters.filter(monster => {
-        if (!monster.name.toLocaleLowerCase().includes(name.toLocaleLowerCase())) return false
+        if (!monster.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())) return false
         if (!monster.cr) return false
         if (numericCR(monster.cr) > numericCR(maxCR)) return false
         if (numericCR(monster.cr) < numericCR(minCR)) return false
@@ -43,7 +43,7 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
         if (!creatureType[monster.type]) return false
 
         return true
-    }), [creatureType, minCR, maxCR, name, monsters])
+    }), [creatureType, minCR, maxCR, search, monsters])
     
     function toggleCreatureType(type: CreatureType) {
         const newValue = clone(creatureType)
@@ -56,17 +56,32 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
         const monsterTemplate = CreatureSchema.safeParse(templates[monster.id])
 
         const creature = monsterTemplate.success ? monsterTemplate.data : clone(monster)
-        // Generate new UUID to prevent React key duplication
-        creature.id = crypto.randomUUID()
-        creature.count = value?.count || 1
+        
+        // Preserve parent's ID
+        creature.id = value?.id || creature.id;
+        
+        // Keep parent's count if already set
+        creature.count = value?.count || 1;
+        
+        // IMPORTANT: In monster search, selecting a monster SHOULD overwrite the Name/HP/AC
+        // unless they were dirty? No, usually you want the monster stats.
+        // We'll let onChange propagate the new monster data.
+        
         onChange(creature)
     }
 
     return (
         <div className={styles.monsterForm}>
             <section>
-                <h3>Name</h3>
-                <input type='text' value={name} onChange={e => setName(e.target.value)} placeholder='Bandit...'  autoFocus={true} />
+                <h3>Search Monster</h3>
+                <input 
+                    type='text' 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                    placeholder='Bandit...'  
+                    autoFocus={true} 
+                    data-testid="monster-search" 
+                />
             </section>
 
             <section>
@@ -112,7 +127,8 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
                     Name: (a: Creature, b: Creature) => a.name.localeCompare(b.name),
                     CR: (a: Creature, b: Creature) => (numericCR(a.cr!) - numericCR(b.cr!)),
                 }}
-                onChange={selectMonster}>
+                onChange={selectMonster}
+                data-testid="monster-select">
                     { monster => (
                         <div className={styles.monster}>
                             <span className={styles.name}>{monster.name}</span>

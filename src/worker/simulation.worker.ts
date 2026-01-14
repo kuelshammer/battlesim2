@@ -38,7 +38,7 @@ function refineSimulation(genId: number, targetK: number, maxK: number) {
 
     const incrementalRuns = 200;
 
-    
+
 
     try {
 
@@ -96,7 +96,7 @@ function refineSimulation(genId: number, targetK: number, maxK: number) {
 
 export const handleMessage = async (e: MessageEvent) => {
 
-    const { type: messageType, players, timeline, monsters, genId, seed, maxK = 51 } = e.data;
+    const { type: messageType, players, timeline, genId, seed, maxK = 51 } = e.data;
 
 
 
@@ -106,25 +106,25 @@ export const handleMessage = async (e: MessageEvent) => {
 
             await ensureWasmInitialized();
 
-            
+
 
             // 1. Update Generation ID
 
             currentGenId = genId;
 
-            
+
 
             // 2. Initialize Runner
 
             activeRunner = new ChunkedSimulationRunner(players, timeline, seed);
 
-            
+
 
             // 3. Initial Pass (K=1, 100 runs)
 
             activeRunner.run_chunk(100);
 
-            
+
 
             const output = activeRunner.get_analysis(1);
 
@@ -182,7 +182,7 @@ export const handleMessage = async (e: MessageEvent) => {
 
     }
 
- else if (messageType === 'AUTO_ADJUST_ENCOUNTER') {
+    else if (messageType === 'AUTO_ADJUST_ENCOUNTER') {
         const { players, monsters, timeline, encounterIndex, genId } = e.data;
         try {
             await ensureWasmInitialized();

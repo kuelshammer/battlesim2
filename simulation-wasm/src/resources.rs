@@ -147,31 +147,23 @@ impl ResourceLedger {
 
     pub fn reset(&mut self, reset_type: ResetType) {
         for (key, rule) in &self.reset_rules {
-            let should_reset = match (rule, &reset_type) {
-                (ResetType::ShortRest, ResetType::ShortRest) |
-                (ResetType::ShortRest, ResetType::LongRest) => true,
-                
-                (ResetType::LongRest, ResetType::LongRest) => true,
-                
-                (ResetType::Turn, ResetType::Turn) |
-                (ResetType::Turn, ResetType::Round) |
-                (ResetType::Turn, ResetType::Encounter) |
-                (ResetType::Turn, ResetType::ShortRest) |
-                (ResetType::Turn, ResetType::LongRest) => true,
-                
-                (ResetType::Round, ResetType::Round) |
-                (ResetType::Round, ResetType::Encounter) |
-                (ResetType::Round, ResetType::ShortRest) |
-                (ResetType::Round, ResetType::LongRest) => true,
-                
-                (ResetType::Encounter, ResetType::Encounter) |
-                (ResetType::Encounter, ResetType::ShortRest) |
-                (ResetType::Encounter, ResetType::LongRest) => true,
-                
-                _ => false,
+            let rule_rank = match rule {
+                ResetType::Turn => 1,
+                ResetType::Round => 2,
+                ResetType::Encounter => 3,
+                ResetType::ShortRest => 4,
+                ResetType::LongRest => 5,
             };
 
-            if should_reset {
+            let event_rank = match reset_type {
+                ResetType::Turn => 1,
+                ResetType::Round => 2,
+                ResetType::Encounter => 3,
+                ResetType::ShortRest => 4,
+                ResetType::LongRest => 5,
+            };
+
+            if rule_rank <= event_rank {
                 if let Some(max_val) = self.max.get(key) {
                     self.current.insert(key.clone(), *max_val);
                 }

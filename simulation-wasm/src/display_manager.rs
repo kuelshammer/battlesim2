@@ -9,9 +9,10 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 /// Display modes for simulation results
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum DisplayMode {
     /// Always show the newest simulation results
+    #[default]
     ShowNewest,
     /// Show the most similar results to current parameters
     ShowMostSimilar,
@@ -32,12 +33,6 @@ impl std::fmt::Display for DisplayMode {
             DisplayMode::PrimaryOnly => write!(f, "PrimaryOnly"),
             DisplayMode::SecondaryOnly => write!(f, "SecondaryOnly"),
         }
-    }
-}
-
-impl Default for DisplayMode {
-    fn default() -> Self {
-        DisplayMode::ShowNewest
     }
 }
 
@@ -120,6 +115,8 @@ pub struct DisplayResult {
     pub messages: Vec<String>,
 }
 
+type ProgressCommunicatorRef = std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>;
+
 /// Manager for displaying simulation results with various modes
 pub struct DisplayManager {
     /// Storage manager for accessing simulation data
@@ -131,7 +128,7 @@ pub struct DisplayManager {
     /// Last parameters that were displayed
     last_parameters: Option<ScenarioParameters>,
     /// Progress communicator for background simulations
-    progress_communicator: Option<std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>>,
+    progress_communicator: Option<ProgressCommunicatorRef>,
     /// Receiver for progress updates
     progress_receiver: Option<mpsc::Receiver<crate::progress_communication::ProgressUpdate>>,
     /// Last received progress update
@@ -170,7 +167,7 @@ impl DisplayManager {
 
         // Check if parameters have changed
         let parameters_changed = self.last_parameters.as_ref()
-            .map(|last| !self.parameters_equal(&last, &parameters))
+            .map(|last| !self.parameters_equal(last, &parameters))
             .unwrap_or(true);
 
         // Auto-switch to most similar if enabled and parameters changed
@@ -293,7 +290,7 @@ impl DisplayManager {
     }
 
     /// Set progress communicator for background simulation updates
-    pub fn set_progress_communicator(&mut self, communicator_arc: std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>) {
+    pub fn set_progress_communicator(&mut self, communicator_arc: ProgressCommunicatorRef) {
         {
             let communicator = communicator_arc.lock().unwrap_or_else(PoisonError::into_inner);
             // Create a unique subscription ID for this display manager

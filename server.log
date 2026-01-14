@@ -1,12 +1,15 @@
 
 > battlesim@0.1.0 dev
-> next dev
+> next dev --port 3000
 
- ⚠ Port 3000 is in use by process 66725, using available port 3001 instead.
-   ▲ Next.js 16.0.10 (Turbopack)
-   - Local:         http://localhost:3001
-   - Network:       http://192.168.2.31:3001
-
- ✓ Starting...
- ✓ Ready in 402ms
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
 [?25h

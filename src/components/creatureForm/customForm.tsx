@@ -83,9 +83,17 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
     return (
         <div className={styles.customForm}>
             <section>
-                <h3>Name</h3>
                 <div className={styles.nameContainer}>
-                    <input type='text' value={value.name} onChange={e => update(v => { v.name = e.target.value })} />
+                    <input
+                        type='number'
+                        min={1}
+                        max={20}
+                        value={value.count}
+                        onChange={e => update(v => { v.count = Math.max(1, Math.min(20, Math.round(Number(e.target.value)))) })}
+                        data-testid="count-input"
+                        className={styles.countInput}
+                        aria-label="Count"
+                    />
                     {canSaveTemplate ? (
                         <>
                             <button onClick={() => saveCreature(value)}>
@@ -111,11 +119,11 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
             </section>
             <section>
                 <h3>Hit Points</h3>
-                <DecimalInput min={0} value={value.hp} onChange={hp => update(v => { v.hp = hp || 0 })} />
+                <DecimalInput min={0} value={value.hp} onChange={hp => update(v => { v.hp = hp || 0 })} data-testid="hp-input" />
             </section>
             <section>
                 <h3>Armor Class</h3>
-                <DecimalInput min={0} value={value.ac} onChange={ac => update(v => { v.ac = ac || 0 })} />
+                <DecimalInput min={0} value={value.ac} onChange={ac => update(v => { v.ac = ac || 0 })} data-testid="ac-input" />
             </section>
             <section className="tooltipContainer">
                 <h3>Average Save Bonus</h3>

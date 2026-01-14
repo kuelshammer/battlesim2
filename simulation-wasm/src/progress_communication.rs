@@ -154,6 +154,9 @@ impl ProgressUpdate {
     }
 }
 
+/// Subscription filter type
+pub type ProgressFilter = Box<dyn Fn(&ProgressUpdate) -> bool + Send + Sync>;
+
 /// Subscription filter for progress updates
 pub struct ProgressSubscription {
     /// Unique subscription identifier
@@ -165,7 +168,7 @@ pub struct ProgressSubscription {
     /// Whether to receive only completion updates
     pub completions_only: bool,
     /// Custom filter function
-    pub custom_filter: Option<Box<dyn Fn(&ProgressUpdate) -> bool + Send + Sync>>,
+    pub custom_filter: Option<ProgressFilter>,
 }
 
 impl Clone for ProgressSubscription {

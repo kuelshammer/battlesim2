@@ -130,10 +130,6 @@ impl ActionResolver {
     }
 
 
-    /// Helper to resolve a single hit of an attack
-
-    /// Resolve healing actions with proper event emission
-
     /// Trigger reactions for all alive combatants based on a condition
     fn trigger_global_reactions(
         &self,

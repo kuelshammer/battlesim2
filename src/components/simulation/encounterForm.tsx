@@ -121,6 +121,9 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                                     <FontAwesomeIcon icon={faPen} />
                                     <span>Edit</span>
                                 </button>
+                                <button onClick={() => deleteCreature(index)} aria-label={`Delete ${creature.name}`} data-testid="remove-creature-btn">
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
                             </div>
                         ))}
                     </div>

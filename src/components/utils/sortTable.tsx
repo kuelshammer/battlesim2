@@ -9,9 +9,10 @@ type PropType<T> = {
     onChange: (newValue: T) => void,
     comparators: {[name: string]: (a: T, b: T) => number},
     children: (elem: T) => ReactNode,
+    'data-testid'?: string,
 }
 
-const SortTable = <T,>({ value, list, onChange, comparators, children }: PropType<T>): JSX.Element => {
+const SortTable = <T,>({ value, list, onChange, comparators, children, 'data-testid': testId }: PropType<T>): JSX.Element => {
     const [criteria, setCriteria] = useState(Object.keys(comparators).at(0)!)
     const [direction, setDirection] = useState<'asc'|'desc'>('asc')
 
@@ -52,7 +53,8 @@ const SortTable = <T,>({ value, list, onChange, comparators, children }: PropTyp
                         <button
                             key={index}
                             onClick={() => onChange(elem)}
-                            className={`${styles.elem} ${value === elem ? styles.active : ''}`}>
+                            className={`${styles.elem} ${value === elem ? styles.active : ''}`}
+                            data-testid={testId}>
                                 { children(elem) }
                         </button>
                     ))

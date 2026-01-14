@@ -1,4 +1,4 @@
-import { DependencyList, FC, ReactNode, createContext, useContext, useEffect, useState } from "react"
+import { DependencyList, FC, ReactNode, createContext, useContext, useEffect, useState, useRef } from "react"
 import { semiPersistentContext } from "./semiPersistentContext"
 
 export function clone<T>(obj: T): T {
@@ -7,31 +7,35 @@ export function clone<T>(obj: T): T {
 
 export function useStoredState<T>(key: string, defaultValue: T, parser: (str: unknown) => T | null) {
     const [state, setState] = useState<T>(defaultValue);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     // Load state from localStorage only after the initial render (client-side only)
     useEffect(() => {
         if (typeof window === 'undefined') return;
+        
         const storedValue = localStorage.getItem(key);
-        if (storedValue === null) return;
-        try {
-            const parsed = JSON.parse(storedValue);
-            const parsedValue = parser(parsed);
-            if (parsedValue !== null) {
-                setState(parsedValue);
+        if (storedValue !== null) {
+            try {
+                const parsed = JSON.parse(storedValue);
+                const parsedValue = parser(parsed);
+                if (parsedValue !== null) {
+                    setState(parsedValue);
+                }
+            } catch (e) {
+                console.error(`Error loading state for key "${key}":`, e);
             }
-        } catch (e) {
-            console.error(`Error loading state for key "${key}":`, e);
         }
+        setIsLoaded(true);
     }, [key]); 
 
-    const stateSaver = (newValue: T) => {
-        setState(newValue);
-        if (typeof window !== 'undefined' && localStorage) {
-            localStorage.setItem(key, JSON.stringify(newValue));
-        }
-    };
+    // Save to localStorage whenever state changes, but skip until loaded
+    useEffect(() => {
+        if (typeof window === 'undefined' || !isLoaded) return;
+        
+        localStorage.setItem(key, JSON.stringify(state));
+    }, [key, state, isLoaded]);
 
-    return [state, stateSaver] as const;
+    return [state, setState, isLoaded] as const;
 }
 
 // The state will be shared between identical components, even if the component is unmounted

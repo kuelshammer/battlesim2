@@ -22,7 +22,7 @@ impl BackgroundSimulationId {
             .unwrap_or_default()
             .as_nanos()))
     }
-    
+
     pub fn from_string(s: &str) -> Result<Self, String> {
         if s.is_empty() {
             Err("Simulation ID string cannot be empty".to_string())
@@ -32,19 +32,20 @@ impl BackgroundSimulationId {
     }
 }
 
+impl Default for BackgroundSimulationId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Priority level for simulation requests
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize, Default)]
 pub enum SimulationPriority {
     Low = 0,
+    #[default]
     Normal = 1,
     High = 2,
     Critical = 3,
-}
-
-impl Default for SimulationPriority {
-    fn default() -> Self {
-        SimulationPriority::Normal
-    }
 }
 
 /// Progress information for a running simulation
@@ -350,10 +351,7 @@ impl BackgroundSimulationEngine {
     /// Check for completed simulations (non-blocking)
     pub fn try_receive_completed(&self) -> Option<BackgroundSimulationResult> {
         if let Ok(receiver) = self.completion_receiver.try_lock() {
-            match receiver.try_recv() {
-                Ok(result) => Some(result),
-                Err(_) => None,
-            }
+            receiver.try_recv().ok()
         } else {
             None
         }

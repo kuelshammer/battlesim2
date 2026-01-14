@@ -35,14 +35,14 @@ impl ActionExecutionEngine {
                 .collect();
 
             for combatant_id in &initiative_order {
-                if !self.context.is_combatant_alive(&combatant_id) {
+                if !self.context.is_combatant_alive(combatant_id) {
                     continue;
                 }
 
                 total_turns += 1;
 
                 // Execute turn
-                let _turn_result = self.execute_combatant_turn(&combatant_id);
+                let _turn_result = self.execute_combatant_turn(combatant_id);
                 let _reactions = self.context.process_events();
                 self.context.update_effects();
 

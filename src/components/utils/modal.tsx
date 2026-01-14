@@ -9,13 +9,14 @@ type PropType = {
     onCancel: () => void,
     children: ReactNode,
     title?: string,
+    'data-testid'?: string,
 }
 
 /**
  * Modal component using Radix Dialog primitives (Library Discipline compliance)
  * Provides accessible, unstyled dialog primitives that we style with Grimoire aesthetic
  */
-const Modal:FC<PropType> = ({ onCancel, children, className, title }) => {
+const Modal:FC<PropType> = ({ onCancel, children, className, title, 'data-testid': testId }) => {
     return (
         <Dialog.Root open onOpenChange={(open) => !open && onCancel()}>
             <Dialog.Portal>
@@ -27,6 +28,7 @@ const Modal:FC<PropType> = ({ onCancel, children, className, title }) => {
                             role="dialog"
                             aria-modal="true"
                             aria-label={title || "Modal Dialog"}
+                            data-testid={testId}
                         >
                             {/* Close button using Radix's close functionality */}
                             <Dialog.Close asChild>

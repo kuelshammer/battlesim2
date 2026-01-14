@@ -38,8 +38,10 @@ pub fn resolve(
 
         let target_id = if is_enemy {
             if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+        } else if idx < allies.len() {
+            allies[idx].id.clone()
         } else {
-            if idx < allies.len() { allies[idx].id.clone() } else { continue }
+            continue
         };
 
         // Apply healing through TurnContext (unified method)

@@ -69,7 +69,7 @@ impl AutoBalancer {
                 break;
             }
 
-            analysis = self.run_analysis(&players, &mut monsters, &full_day_timeline, encounter_index);
+            analysis = self.run_analysis(&players, &monsters, &full_day_timeline, encounter_index);
         }
 
         // 4. Finalize dice notation
@@ -84,10 +84,8 @@ impl AutoBalancer {
         // Construct a timeline that is identical to the full day, 
         // EXCEPT the target encounter uses the currently-being-optimized monsters.
         let mut modified_timeline = full_day_timeline.to_vec();
-        if let Some(step) = modified_timeline.get_mut(encounter_index) {
-            if let TimelineStep::Combat(enc) = step {
-                enc.monsters = monsters.to_vec();
-            }
+        if let Some(TimelineStep::Combat(enc)) = modified_timeline.get_mut(encounter_index) {
+            enc.monsters = monsters.to_vec();
         }
         
         let runs = run_event_driven_simulation_rust(
@@ -137,7 +135,7 @@ impl AutoBalancer {
 
     fn apply_adjustment(
         &self, 
-        monsters: &mut Vec<Creature>, 
+        monsters: &mut [Creature], 
         roles: &[MonsterRole], 
         step: f64, 
         is_nerf: bool,
@@ -191,5 +189,11 @@ impl AutoBalancer {
                 },
             }
         }
+    }
+}
+
+impl Default for AutoBalancer {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -54,8 +54,10 @@ pub fn resolve(
 
         let target_id = if is_enemy {
             if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+        } else if idx < allies.len() {
+            allies[idx].id.clone()
         } else {
-            if idx < allies.len() { allies[idx].id.clone() } else { continue }
+            continue
         };
 
         // Apply effect based on template name
@@ -119,7 +121,7 @@ pub fn resolve(
                 id: format!("{}-{}-{}", template_action.template_options.template_name, actor_id, target_id),
                 source_id: actor_id.to_string(),
                 target_id: target_id.clone(),
-                effect_type: EffectType::Buff(buff),
+                effect_type: EffectType::Buff(Box::new(buff)),
                 remaining_duration: 10,
                 conditions: Vec::new(),
             };

@@ -9,9 +9,9 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 
 thread_local! {
-    static RNG: RefCell<Option<StdRng>> = RefCell::new(None);
-    static CURRENT_SEED: RefCell<u64> = RefCell::new(0);
-    static FORCED_ROLLS: RefCell<VecDeque<(u32, u32)>> = RefCell::new(VecDeque::new()); // (sides, value)
+    static RNG: RefCell<Option<StdRng>> = const { RefCell::new(None) };
+    static CURRENT_SEED: RefCell<u64> = const { RefCell::new(0) };
+    static FORCED_ROLLS: RefCell<VecDeque<(u32, u32)>> = const { RefCell::new(VecDeque::new()) }; // (sides, value)
 }
 
 /// Seed the thread-local RNG with the given seed value

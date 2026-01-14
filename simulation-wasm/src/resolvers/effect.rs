@@ -35,15 +35,17 @@ pub fn resolve_buff(
 
         let target_id = if is_enemy {
             if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+        } else if idx < allies.len() {
+            allies[idx].id.clone()
         } else {
-            if idx < allies.len() { allies[idx].id.clone() } else { continue }
+            continue
         };
 
         let effect = ActiveEffect {
             id: format!("{}-{}-{}", buff_action.name, actor_id, target_id),
             source_id: actor_id.to_string(),
             target_id: target_id.clone(),
-            effect_type: EffectType::Buff(buff_action.buff.clone()),
+            effect_type: EffectType::Buff(Box::new(buff_action.buff.clone())),
             remaining_duration: 10,
             conditions: Vec::new(),
         };
@@ -86,8 +88,10 @@ pub fn resolve_debuff(
 
         let target_id = if is_enemy {
             if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+        } else if idx < allies.len() {
+            allies[idx].id.clone()
         } else {
-            if idx < allies.len() { allies[idx].id.clone() } else { continue }
+            continue
         };
 
         // 1. Perform saving throw
@@ -99,7 +103,7 @@ pub fn resolve_debuff(
                 id: format!("{}-{}-{}", debuff_action.name, actor_id, target_id),
                 source_id: actor_id.to_string(),
                 target_id: target_id.clone(),
-                effect_type: EffectType::Buff(debuff_action.buff.clone()),
+                effect_type: EffectType::Buff(Box::new(debuff_action.buff.clone())),
                 remaining_duration: 10,
                 conditions: Vec::new(),
             };

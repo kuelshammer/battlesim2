@@ -37,7 +37,7 @@ pub fn resolve(
             .map(|c| c.base_combatant.clone())
             .collect();
 
-        let strategy = attack.target.clone();
+        let strategy = attack.target;
         
         if let Some(idx) = targeting::select_enemy_target(&actor, strategy, &enemies, &[], None) {
             let target_id = enemies[idx].id.clone();
@@ -116,18 +116,15 @@ pub fn resolve_single_attack_hit(
             
             let mods = context.roll_modifications.take_all(actor_id);
             for modif in mods {
-                match modif {
-                    crate::context::RollModification::AddBonus { amount } => {
-                        let formula = crate::model::DiceFormula::Expr(amount);
-                        let bonus = dice::evaluate(&formula, 1);
-                        attack_result.total += bonus;
-                        
-                        if let Some(detail) = &mut attack_result.roll_detail {
-                            detail.modifiers.push(("Post-Roll Bonus".to_string(), bonus));
-                            detail.total += bonus;
-                        }
+                if let crate::context::RollModification::AddBonus { amount } = modif {
+                    let formula = crate::model::DiceFormula::Expr(amount);
+                    let bonus = dice::evaluate(&formula, 1);
+                    attack_result.total += bonus;
+                    
+                    if let Some(detail) = &mut attack_result.roll_detail {
+                        detail.modifiers.push(("Post-Roll Bonus".to_string(), bonus));
+                        detail.total += bonus;
                     }
-                    _ => {}
                 }
             }
             

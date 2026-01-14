@@ -271,8 +271,8 @@ function getTargets(combattant: Combattant, action: FinalAction, allies: Combatt
 
     let lastTarget: Combattant | undefined = undefined
     let targetsCount = action.targets
-    let targettableAllies = new Set(allies)
-    let targettableEnemies = new Set(enemies.filter(enemy => (enemy.finalState.currentHP > 0)))
+    const targettableAllies = new Set(allies)
+    const targettableEnemies = new Set(enemies.filter(enemy => (enemy.finalState.currentHP > 0)))
     while ((targetsCount > 0) && (targettableAllies.size > 0) && (targettableEnemies.size > 0)) {
         targetsCount--
 

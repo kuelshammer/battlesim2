@@ -517,7 +517,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                     Damage:
                     <DiceFormulaInput value={value.dpr} onChange={dpr => update(v => { (v as AtkAction).dpr = dpr || 0 })} canCrit={!value.useSaves} />
 
-                    {!!value.useSaves ? (
+                    {value.useSaves ? (
                         <>
                             Save for half?
                             <Select
@@ -538,7 +538,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             else update(v => { delete (v as AtkAction).riderEffect })
                         }} />
 
-                    {(!!value.riderEffect) ? (
+                    {(value.riderEffect) ? (
                         <>
                             Save DC:
                             <DecimalInput value={value.riderEffect.dc} onChange={dc => updateRiderEffect(e => { e.dc = dc || 0 })} />

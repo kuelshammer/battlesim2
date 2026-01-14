@@ -97,14 +97,14 @@ impl ActionExecutionEngine {
             let initiative_order = self.initiative_order.clone();
 
             for combatant_id in &initiative_order {
-                if !self.context.is_combatant_alive(&combatant_id) {
+                if !self.context.is_combatant_alive(combatant_id) {
                     continue;
                 }
 
                 total_turns += 1;
 
                 // Execute turn with all actions and reactions
-                let turn_result = self.execute_combatant_turn(&combatant_id);
+                let turn_result = self.execute_combatant_turn(combatant_id);
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("  Combatant {}: {} actions", combatant_id, turn_result.action_results.len()).into());
                 #[cfg(not(target_arch = "wasm32"))]
@@ -148,7 +148,7 @@ impl ActionExecutionEngine {
         if self.context.log_enabled {
             let mut final_snapshot: Vec<CombattantState> = self.context.combatants
                 .values()
-                .map(|state| state.clone())
+                .cloned()
                 .collect();
             final_snapshot.sort_by(|a, b| a.id.cmp(&b.id));
             round_snapshots.push(final_snapshot);

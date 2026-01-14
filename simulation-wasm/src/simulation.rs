@@ -6,6 +6,8 @@ use crate::resources::{ResetType, ResourceType};
 use std::collections::{HashMap, HashSet};
 
 /// Short rest without event collection - used by lightweight simulation
+type ActionHistory = HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>>;
+
 pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> Vec<Combattant> {
     let mut updated_players = Vec::new();
 
@@ -291,8 +293,8 @@ pub(crate) fn update_player_states_for_next_encounter(
 /// Reconstruct actions from event history
 pub(crate) fn reconstruct_actions(
     event_history: &[crate::events::Event],
-) -> HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> {
-    let mut actions_by_round_actor: HashMap<(u32, String), Vec<(String, HashMap<String, i32>)>> =
+) -> ActionHistory {
+    let mut actions_by_round_actor: ActionHistory =
         HashMap::new();
     let mut current_round = 0;
     let mut current_actor_actions: HashMap<String, (String, HashMap<String, i32>)> = HashMap::new();

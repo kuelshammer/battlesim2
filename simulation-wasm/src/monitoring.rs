@@ -38,6 +38,7 @@ impl SimulationMetrics {
             end_time: now,
         }
     }
+
     
     pub fn success_rate(&self) -> f64 {
         if self.total_iterations == 0 {
@@ -77,6 +78,12 @@ impl SimulationMetrics {
     
     pub fn duration(&self) -> Duration {
         Duration::from_secs(self.end_time.saturating_sub(self.start_time))
+    }
+}
+
+impl Default for SimulationMetrics {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

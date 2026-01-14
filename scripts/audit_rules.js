@@ -37,7 +37,7 @@ runs.forEach((run, runIndex) => {
         movement: 0,
         spells: []
     };
-    let roundUsage = {
+    const roundUsage = {
         reactions: new Map() // actorId -> count
     };
 

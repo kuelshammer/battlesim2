@@ -33,7 +33,7 @@ pub fn get_targets(
                 );
                 // For attacks, we allow targeting the same enemy multiple times (e.g. Multiattack, Scorching Ray)
                 // So we pass an empty excluded list.
-                if let Some(idx) = select_enemy_target(c, a.target.clone(), enemies, &[], None) {
+                if let Some(idx) = select_enemy_target(c, a.target, enemies, &[], None) {
                     #[cfg(debug_assertions)]
                     eprintln!(
                         "            Target selected for {}: Enemy {}",
@@ -75,7 +75,7 @@ pub fn get_targets(
                 );
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
                 if let Some(idx) =
-                    select_injured_ally_target(a.target.clone(), allies, self_idx, &targets, None)
+                    select_injured_ally_target(a.target, allies, self_idx, &targets, None)
                 {
                     #[cfg(debug_assertions)]
                     eprintln!(
@@ -104,7 +104,7 @@ pub fn get_targets(
                 );
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
                 if let Some(idx) = select_ally_target(
-                    a.target.clone(),
+                    a.target,
                     allies,
                     self_idx,
                     &targets,
@@ -136,7 +136,7 @@ pub fn get_targets(
                     c.creature.name
                 );
                 if let Some(idx) =
-                    select_enemy_target(c, a.target.clone(), enemies, &targets, Some(&a.base().id))
+                    select_enemy_target(c, a.target, enemies, &targets, Some(&a.base().id))
                 {
                     #[cfg(debug_assertions)]
                     eprintln!(
@@ -177,7 +177,7 @@ pub fn get_targets(
                     TargetType::Enemy(enemy_strategy) => {
                         if let Some(idx) = select_enemy_target(
                             c,
-                            enemy_strategy.clone(),
+                            *enemy_strategy,
                             enemies,
                             &targets,
                             Some(&a.base().id),
@@ -193,7 +193,7 @@ pub fn get_targets(
                     TargetType::Ally(ally_strategy) => {
                         let self_idx = allies.iter().position(|al| al.id == c.id).unwrap_or(0);
                         if let Some(idx) = select_ally_target(
-                            ally_strategy.clone(),
+                            *ally_strategy,
                             allies,
                             self_idx,
                             &targets,

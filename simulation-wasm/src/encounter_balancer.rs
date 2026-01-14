@@ -101,7 +101,7 @@ pub fn project_encounter_metrics(
     death_counts.sort();
     let deaths_p1 = death_counts[(death_counts.len() * 99 / 100).min(death_counts.len() - 1)];
     let deaths_p50 = death_counts[death_counts.len() / 2];
-    let deaths_p99 = death_counts[(death_counts.len() * 1 / 100).min(death_counts.len() - 1)];
+    let deaths_p99 = death_counts[(death_counts.len() / 100).min(death_counts.len() - 1)];
 
     // Calculate resource drain as percentage of total party HP
     let total_party_hp: f64 = party.iter().map(|p| p.hp as f64).sum();

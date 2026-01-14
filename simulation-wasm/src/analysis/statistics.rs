@@ -4,6 +4,8 @@ use crate::model::*;
 use std::collections::HashMap;
 
 /// Calculate Total Daily Net Worth (sum of all player budgets)
+pub type ExtractionFn = dyn Fn(&SimulationResult, Option<usize>) -> (Vec<super::types::CombatantVisualization>, usize);
+
 pub fn calculate_tdnw(run: &SimulationResult, sr_count: usize) -> f64 {
     let mut total = 0.0;
     // Find the first encounter that has at least one round
@@ -24,7 +26,7 @@ pub fn calculate_tdnw(run: &SimulationResult, sr_count: usize) -> f64 {
 pub fn calculate_tdnw_lightweight(players: &[Creature], sr_count: usize) -> f64 {
     let mut total = 0.0;
     for p in players {
-        total += crate::intensity_calculation::calculate_daily_budget(p, sr_count) * (p.count as f64);
+        total += crate::intensity_calculation::calculate_daily_budget(p, sr_count) * p.count;
     }
     total
 }
@@ -336,7 +338,7 @@ pub fn calculate_vitals_with_config(
                 }
             }
 
-            for (_id, min_hp) in &char_min_hp {
+            for min_hp in char_min_hp.values() {
                 run_min_hp = run_min_hp.min(*min_hp);
             }
             run_crisis_participants += char_crisis_hit.len();
@@ -348,7 +350,7 @@ pub fn calculate_vitals_with_config(
                     let current_hp = c.final_state.current_hp as f64;
                     let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
 
-                    if hp_pct >= 0.01 && hp_pct <= 0.10 {
+                    if (0.01..=0.10).contains(&hp_pct) {
                         run_near_death_count += 1;
                     }
                 }
@@ -424,7 +426,7 @@ pub fn calculate_decile_stats_internal(
     party_size: usize,
     tdnw: f64,
     sr_count: usize,
-    extract_vis_fn: &dyn Fn(&SimulationResult, Option<usize>) -> (Vec<super::types::CombatantVisualization>, usize),
+    extract_vis_fn: &ExtractionFn,
 ) -> DecileStats {
     let mut total_wins = 0.0;
     let mut total_hp_lost = 0.0;
@@ -489,7 +491,7 @@ pub fn calculate_decile_stats_internal(
         hp_lost_percent: if tdnw > 0.0 { (avg_hp_lost / tdnw) * 100.0 } else { 0.0 },
         win_rate: if count > 0.0 { (total_wins / count) * 100.0 } else { 0.0 },
         median_run_visualization: visualization_data,
-        median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
+        median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.first().cloned() },
         battle_duration_rounds: if count > 0.0 { (total_duration as f64 / count).round() as usize } else { 0 },
         resource_timeline: avg_timeline,
         vitality_timeline: avg_vitality_timeline,
@@ -505,7 +507,7 @@ pub fn analyze_results_internal(
     party_size: usize,
     runs: Option<&[crate::model::SimulationRun]>,
     sr_count: usize,
-    extract_vis_fn: &dyn Fn(&SimulationResult, Option<usize>) -> (Vec<super::types::CombatantVisualization>, usize),
+    extract_vis_fn: &ExtractionFn,
 ) -> AggregateOutput {
     if results.is_empty() {
         return AggregateOutput {
@@ -585,12 +587,10 @@ pub fn analyze_results_internal(
     let total_day_weight: f64 = results[0].encounters.iter().map(|e| e.target_role.weight()).sum();
     let current_encounter_weight = if let Some(idx) = encounter_idx {
         results[0].encounters.get(idx).map(|e| e.target_role.weight()).unwrap_or(2.0)
+    } else if results[0].encounters.len() == 1 {
+        results[0].encounters[0].target_role.weight()
     } else {
-        if results[0].encounters.len() == 1 {
-            results[0].encounters[0].target_role.weight()
-        } else {
-            results[0].encounters.get(0).map(|e| e.target_role.weight()).unwrap_or(2.0)
-        }
+        results[0].encounters.first().map(|e| e.target_role.weight()).unwrap_or(2.0)
     };
 
     let total_runs = results.len();
@@ -645,7 +645,7 @@ pub fn analyze_results_internal(
             hp_lost_percent: if tdnw > 0.0 { (metrics.burned / tdnw) * 100.0 } else { 0.0 },
             win_rate: if metrics.survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
-            median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.get(0).cloned() },
+            median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.first().cloned() },
             battle_duration_rounds: metrics.duration,
             resource_timeline: metrics.ehp_timeline,
             vitality_timeline: metrics.vitality_timeline,

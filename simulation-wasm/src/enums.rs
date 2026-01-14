@@ -145,7 +145,7 @@ pub enum EnemyTarget {
     EnemyWithHighestSurvivability,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AllyTarget {
     #[serde(rename = "ally with least HP", alias = "ally with the least HP")]

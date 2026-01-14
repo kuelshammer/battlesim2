@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
-// @ts-ignore
+// @ts-expect-error -- vite plugin issue
 import react from '@vitejs/plugin-react';
-// @ts-ignore
 import path from 'path';
 
 export default defineConfig({

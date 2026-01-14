@@ -85,8 +85,8 @@ const sanitizeTimelineParser = (parser: (data: unknown) => TimelineEvent[]) => (
 };
 
 const Simulation: FC<PropType> = memo(({ }) => {
-    const [players, setPlayers] = useStoredState<Creature[]>('players', [], sanitizePlayersParser(z.array(CreatureSchema).parse))
-    const [timeline, setTimeline] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], sanitizeTimelineParser(z.array(TimelineEventSchema).parse))
+    const [players, setPlayers, isPlayersLoaded] = useStoredState<Creature[]>('players', [], sanitizePlayersParser(z.array(CreatureSchema).parse))
+    const [timeline, setTimeline, isTimelineLoaded] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], sanitizeTimelineParser(z.array(TimelineEventSchema).parse))
     const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
     const [state, setState] = useState(new Map<string, any>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
@@ -100,17 +100,20 @@ const Simulation: FC<PropType> = memo(({ }) => {
     const [runTour, setRunTour] = useState(false)
     const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
 
-    // Expose for E2E tests
-    useEffect(() => {
-        (window as any).simulationWasm = true;
-    }, []);
-
     // Web Worker Simulation
     const worker = useSimulationWorker();
     const [needsResimulation, setNeedsResimulation] = useState(false);
     const [isStale, setIsStale] = useState(false);
-    const [highPrecision, setHighPrecision] = useStoredState<boolean>('highPrecision', false, z.boolean().parse);
+    const [highPrecision, setHighPrecision, isHighPrecisionLoaded] = useStoredState<boolean>('highPrecision', false, z.boolean().parse);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Expose for E2E tests
+    useEffect(() => {
+        if (isPlayersLoaded && isTimelineLoaded && isHighPrecisionLoaded) {
+            (window as any).simulationWasm = true;
+            (window as any).storageLoaded = true;
+        }
+    }, [isPlayersLoaded, isTimelineLoaded, isHighPrecisionLoaded]);
 
     // Memoize expensive computations
     const isEmptyResult = useMemo(() => {
@@ -353,7 +356,7 @@ const Simulation: FC<PropType> = memo(({ }) => {
                             </div>
                         )}
                         <div className={styles.autoSimulateToggle}>
-                            <label className={styles.toggleLabel}>
+                            <label className={styles.toggleLabel} data-testid="high-precision-toggle">
                                 <input
                                     type="checkbox"
                                     checked={highPrecision}

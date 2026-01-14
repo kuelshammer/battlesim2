@@ -52,7 +52,7 @@ const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds
         const creatureMap = new Map(allCombattants.map(c => [c.creature.id, c]))
 
         const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count], index) => {
-            let targetCombattant = combattantMap.get(targetId) || creatureMap.get(targetId)
+            const targetCombattant = combattantMap.get(targetId) || creatureMap.get(targetId)
             if (!targetCombattant) return `Target ${index + 1}`
             const creatureName = targetCombattant.creature.name
             return count === 1 ? creatureName : `${creatureName} x${count}`
