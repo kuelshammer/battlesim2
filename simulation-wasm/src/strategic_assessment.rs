@@ -278,6 +278,7 @@ pub fn calculate_action_economy(
 }
 
 #[cfg(test)]
+#[allow(clippy::useless_vec)]
 mod tests {
     use super::*;
     use crate::model::{Creature, Action, AtkAction, Frequency, DiceFormula};

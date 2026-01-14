@@ -641,7 +641,7 @@ mod tests {
             id: "aoa".to_string(),
             source_id: "warlock".to_string(),
             target_id: "warlock".to_string(),
-            effect_type: EffectType::Buff(buff),
+            effect_type: EffectType::Buff(Box::new(buff)),
             remaining_duration: 100,
             conditions: vec![],
         });

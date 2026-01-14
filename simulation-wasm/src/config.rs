@@ -471,9 +471,9 @@ mod tests {
     fn test_default_preferences() {
         let prefs = UserPreferences::default();
         assert_eq!(prefs.display.default_mode, "ShowNewest");
-        assert_eq!(prefs.progress.show_progress_indicators, true);
+        assert!(prefs.progress.show_progress_indicators);
         assert_eq!(prefs.storage.max_memory_slots, 100);
-        assert_eq!(prefs.background.enable_background_processing, true);
+        assert!(prefs.background.enable_background_processing);
         assert_eq!(prefs.ui.theme, "light");
     }
 

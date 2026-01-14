@@ -39,11 +39,9 @@ fn run_scenarios_in_dir(dir: &str) {
         .expect("Failed to read scenarios directory");
 
     let mut scenario_count = 0;
-    for entry in entries {
-        if let Ok(entry) = entry {
-            if entry.path().extension().is_some_and(|ext| ext == "json") {
-                scenario_count += 1;
-            }
+    for entry in entries.flatten() {
+        if entry.path().extension().is_some_and(|ext| ext == "json") {
+            scenario_count += 1;
         }
     }
 
@@ -101,7 +99,7 @@ fn run_scenario(scenario: &TestScenario, _config: &ScenarioTest) -> Result<(), S
 
 /// Validate that a creature has all required fields set
 fn validate_creature(creature: &Creature) -> Result<(), String> {
-    if creature.hp <= 0 {
+    if creature.hp == 0 {
         return Err(format!("{} has invalid HP: {}", creature.name, creature.hp));
     }
 
