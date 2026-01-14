@@ -96,7 +96,7 @@ describe('E2E: Basic Combat Workflow', () => {
 
     await simulationPage.clickAddCreature();
     await creatureModal.quickCreate({
-      mode: 'monster',
+      mode: 'custom',
       name: 'Weak Goblin',
       ac: 10,
       hp: 5,
@@ -174,7 +174,7 @@ describe('E2E: Basic Combat Workflow', () => {
     for (let i = 0; i < 3; i++) {
       await simulationPage.clickAddCreature();
       await creatureModal.quickCreate({
-        mode: 'monster',
+        mode: 'custom',
         name: `Temp Monster ${i + 1}`,
         ac: 10,
         hp: 10,
