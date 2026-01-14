@@ -69,6 +69,8 @@ export class CreatureModal extends BasePage {
     await this.waitForModal();
     const modeSelector = `[data-testid="mode-${mode}"]`;
     await this.click(modeSelector);
+    // Wait for mode switch to complete - the form re-renders after mode change
+    await new Promise(r => setTimeout(r, 300));
   }
 
   /**
@@ -79,8 +81,28 @@ export class CreatureModal extends BasePage {
     await this.page.evaluate(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val;
+        if (input) {
+          const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+          if (nativeInputValueSetter) {
+            nativeInputValueSetter.call(input, val);
+          } else {
+            input.value = val;
+          }
+          // Trigger React's change detection
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       },
+      this.selectors.nameInput,
+      name
+    );
+    // Verify value is set to ensure React has picked up the event
+    await this.page.waitForFunction(
+      (sel, val) => {
+        const input = document.querySelector(sel) as HTMLInputElement;
+        return input && input.value === val;
+      },
+      {},
       this.selectors.nameInput,
       name
     );
@@ -93,7 +115,11 @@ export class CreatureModal extends BasePage {
     await this.page.evaluate(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+        if (input) {
+          input.value = val.toString();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       },
       this.selectors.levelInput,
       level
@@ -102,13 +128,22 @@ export class CreatureModal extends BasePage {
 
   /**
    * Set AC (Armor Class)
+   * Note: Uses keyboard interaction to properly trigger React's onChange handler
    */
   async setAC(ac: number): Promise<void> {
-    await this.page.evaluate(
+    await this.page.click(this.selectors.acInput);
+    // Select all and type new value
+    await this.page.keyboard.down('Control');
+    await this.page.keyboard.press('A');
+    await this.page.keyboard.up('Control');
+    await this.page.keyboard.type(ac.toString());
+    // Wait for the input value to actually be set
+    await this.page.waitForFunction(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+        return input && input.value === val.toString();
       },
+      {},
       this.selectors.acInput,
       ac
     );
@@ -116,13 +151,22 @@ export class CreatureModal extends BasePage {
 
   /**
    * Set HP (Hit Points)
+   * Note: Uses keyboard interaction to properly trigger React's onChange handler
    */
   async setHP(hp: number): Promise<void> {
-    await this.page.evaluate(
+    await this.page.click(this.selectors.hpInput);
+    // Select all and type new value
+    await this.page.keyboard.down('Control');
+    await this.page.keyboard.press('A');
+    await this.page.keyboard.up('Control');
+    await this.page.keyboard.type(hp.toString());
+    // Wait for the input value to actually be set
+    await this.page.waitForFunction(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+        return input && input.value === val.toString();
       },
+      {},
       this.selectors.hpInput,
       hp
     );
@@ -136,7 +180,11 @@ export class CreatureModal extends BasePage {
     await this.page.evaluate(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+        if (input) {
+          input.value = val.toString();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       },
       selector,
       value
@@ -176,7 +224,11 @@ export class CreatureModal extends BasePage {
     await this.page.evaluate(
       (sel, val) => {
         const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+        if (input) {
+          input.value = val.toString();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
       },
       this.selectors.countInput,
       count
@@ -195,6 +247,15 @@ export class CreatureModal extends BasePage {
    * Save the creature
    */
   async save(): Promise<void> {
+    // Wait for save button to be enabled (form is valid)
+    await this.page.waitForFunction(
+      () => {
+        const btn = document.querySelector('[data-testid="save-creature-btn"]') as HTMLButtonElement;
+        return btn && !btn.disabled;
+      },
+      { timeout: 5000 }
+    );
+
     await this.click(this.selectors.saveBtn);
     // Wait for modal to close
     await this.page.waitForFunction(
@@ -219,8 +280,19 @@ export class CreatureModal extends BasePage {
    */
   async searchMonster(name: string): Promise<void> {
     await this.waitForVisible(this.selectors.monsterSearch);
-    await this.type(this.selectors.monsterSearch, name);
-    await this.page.waitForTimeout(500); // Wait for debounce
+    await this.page.evaluate(
+      (sel, val) => {
+        const input = document.querySelector(sel) as HTMLInputElement;
+        if (input) {
+          input.value = val;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      },
+      this.selectors.monsterSearch,
+      name
+    );
+    await new Promise(r => setTimeout(r, 500)); // Wait for debounce
   }
 
   /**
@@ -235,22 +307,35 @@ export class CreatureModal extends BasePage {
 
   /**
    * Quick create: fill minimal creature and save
+   * Note: For player mode, we switch to custom mode to allow direct AC/HP entry
    */
   async quickCreate(params: {
-    mode: 'player' | 'monster';
+    mode: 'player' | 'monster' | 'custom';
     name: string;
     ac: number;
     hp: number;
     count?: number;
   }): Promise<void> {
     await this.waitForModal();
-    await this.setMode(params.mode);
+
+    // For player mode with AC/HP specified, use custom mode instead
+    // since player mode uses class templates and doesn't expose direct AC/HP inputs
+    const effectiveMode = (params.mode === 'player') ? 'custom' : params.mode;
+
+    await this.setMode(effectiveMode);
     await this.setName(params.name);
+
+    // Set AC/HP for custom and monster modes
     await this.setAC(params.ac);
     await this.setHP(params.hp);
+
     if (params.count !== undefined) {
       await this.setCount(params.count);
     }
+
+    // Give React time to propagate state updates from child components to parent
+    await new Promise(r => setTimeout(r, 500));
+
     await this.save();
   }
 }

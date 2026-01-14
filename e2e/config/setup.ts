@@ -32,6 +32,12 @@ beforeAll(async () => {
   });
 
   global.page = await global.browser.newPage();
+  
+  // Log browser console messages
+  global.page.on('console', msg => {
+    console.log(`[BROWSER] ${msg.type().toUpperCase()}: ${msg.text()}`);
+  });
+
   global.E2E_BASE_URL = BASE_URL;
 
   // Set default timeout

@@ -50,8 +50,10 @@ describe('E2E: Import/Export & Persistence', () => {
     await simulationPage.clearLocalStorage();
 
     // Change settings
-    await simulationPage.setRepetitions(250);
-    await simulationPage.setMaxRounds(15);
+    await simulationPage.toggleHighPrecision();
+    
+    // Give time for localStorage to update
+    await new Promise(r => setTimeout(r, 500));
 
     // Get state
     const state = await simulationPage.getLocalStorage();
@@ -60,7 +62,10 @@ describe('E2E: Import/Export & Persistence', () => {
     await simulationPage.goto();
     await simulationPage.waitForPageReady();
 
-    // Verify settings persisted (by checking localStorage still has them)
+    // Verify settings persisted
+    const isEnabled = await simulationPage.isHighPrecisionEnabled();
+    expect(isEnabled).toBe(true);
+
     const newState = await simulationPage.getLocalStorage();
     expect(Object.keys(newState).length).toBeGreaterThan(0);
   });
@@ -186,7 +191,7 @@ describe('E2E: Import/Export & Persistence', () => {
     for (let i = 0; i < creatureCount; i++) {
       await simulationPage.clickAddCreature();
       await creatureModal.quickCreate({
-        mode: 'monster',
+        mode: 'custom',
         name: `Goblin ${i + 1}`,
         ac: 12,
         hp: 7,

@@ -158,7 +158,7 @@ export class ResultsPanel extends BasePage {
    */
   async toggleDetails(): Promise<void> {
     await this.click(this.selectors.detailToggle);
-    await this.page.waitForTimeout(500);
+    await new Promise(r => setTimeout(r, 500));
   }
 
   /**

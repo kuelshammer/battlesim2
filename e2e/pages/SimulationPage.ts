@@ -15,8 +15,7 @@ export class SimulationPage extends BasePage {
 
     // Simulation controls
     runSimulationBtn: '[data-testid="run-simulation-btn"]',
-    repetitionInput: '[data-testid="repetition-input"]',
-    maxRoundsInput: '[data-testid="max-rounds-input"]',
+    highPrecisionToggle: '[data-testid="high-precision-toggle"]',
 
     // Results
     resultsPanel: '[data-testid="results-panel"]',
@@ -43,12 +42,13 @@ export class SimulationPage extends BasePage {
   }
 
   /**
-   * Wait for the page to be fully loaded (WASM initialized)
+   * Wait for the page to be fully loaded (WASM initialized and storage loaded)
    */
   async waitForPageReady(timeout: number = 15000): Promise<void> {
     await this.page.waitForFunction(
       () => {
         return (window as any).simulationWasm !== undefined &&
+               (window as any).storageLoaded !== undefined &&
                document.querySelector('[data-testid="creature-list"]') !== null;
       },
       { timeout }
@@ -93,33 +93,47 @@ export class SimulationPage extends BasePage {
   }
 
   /**
-   * Set the number of repetitions
+   * Toggle High Precision Mode
    */
-  async setRepetitions(count: number): Promise<void> {
-    await this.page.waitForSelector(this.selectors.repetitionInput);
-    await this.page.evaluate(
-      (sel, val) => {
-        const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
+  async toggleHighPrecision(): Promise<void> {
+    await this.waitForVisible(this.selectors.highPrecisionToggle);
+    const before = await this.isHighPrecisionEnabled();
+
+    // Click the input checkbox directly for more reliable interaction
+    await this.page.evaluate((sel) => {
+      const label = document.querySelector(sel);
+      const input = label?.querySelector('input') as HTMLInputElement;
+      if (input) {
+        input.click();
+      }
+    }, this.selectors.highPrecisionToggle);
+
+    // Verify it changed
+    await this.page.waitForFunction(
+      (sel, wasEnabled) => {
+        const label = document.querySelector(sel);
+        const input = label?.querySelector('input') as HTMLInputElement;
+        return input && input.checked !== wasEnabled;
       },
-      this.selectors.repetitionInput,
-      count
+      {},
+      this.selectors.highPrecisionToggle,
+      before
     );
+
+    // Give time for state to update and persist to localStorage
+    await new Promise(r => setTimeout(r, 500));
   }
 
   /**
-   * Set the maximum rounds
+   * Check if High Precision Mode is enabled
    */
-  async setMaxRounds(rounds: number): Promise<void> {
-    await this.page.waitForSelector(this.selectors.maxRoundsInput);
-    await this.page.evaluate(
-      (sel, val) => {
-        const input = document.querySelector(sel) as HTMLInputElement;
-        if (input) input.value = val.toString();
-      },
-      this.selectors.maxRoundsInput,
-      rounds
-    );
+  async isHighPrecisionEnabled(): Promise<boolean> {
+    await this.waitForVisible(this.selectors.highPrecisionToggle);
+    return await this.evaluate((sel) => {
+      const label = document.querySelector(sel);
+      const input = label?.querySelector('input') as HTMLInputElement;
+      return input?.checked ?? false;
+    }, this.selectors.highPrecisionToggle);
   }
 
   /**
@@ -196,7 +210,7 @@ export class SimulationPage extends BasePage {
   async exportState(): Promise<string> {
     await this.click(this.selectors.exportBtn);
     // Wait a moment for download to trigger
-    await this.page.waitForTimeout(1000);
+    await new Promise(r => setTimeout(r, 1000));
     // In a real implementation, you'd capture the download
     return '';
   }
@@ -253,6 +267,7 @@ export class SimulationPage extends BasePage {
   async clearLocalStorage(): Promise<void> {
     await this.evaluate(() => {
       localStorage.clear();
+      localStorage.setItem('useLocalStorage', 'true');
     });
     await this.page.reload({ waitUntil: 'networkidle0' });
     await this.waitForPageReady();

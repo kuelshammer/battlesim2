@@ -161,8 +161,8 @@ describe('E2E: Basic Combat Workflow', () => {
     const state = await simulationPage.getLocalStorage();
     expect(Object.keys(state).length).toBeGreaterThan(0);
 
-    // Verify creatures key exists
-    const hasCreaturesKey = Object.keys(state).some(k => k.includes('creature') || k.includes('simulation'));
+    // Verify creatures key exists (actual keys are 'players' and 'timeline')
+    const hasCreaturesKey = Object.keys(state).some(k => k.includes('players') || k.includes('timeline'));
     expect(hasCreaturesKey).toBe(true);
   });
 
