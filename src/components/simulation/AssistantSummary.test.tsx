@@ -5,7 +5,7 @@ import React from 'react';
 
 describe('AssistantSummary Component', () => {
     it('should display "Balanced" message for green status', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             actualSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
             plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
             finalResources: 50
@@ -16,7 +16,7 @@ describe('AssistantSummary Component', () => {
     });
 
     it('should display "Minor Pacing Drift" for yellow status', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             actualSegments: [{ type: 'combat', percent: 32 }, { type: 'combat', percent: 25 }],
             plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
             finalResources: 43
@@ -26,7 +26,7 @@ describe('AssistantSummary Component', () => {
     });
 
     it('should display "Overtuned" for delta > 10%', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             actualSegments: [{ type: 'combat', percent: 40 }, { type: 'combat', percent: 25 }],
             plannedSegments: [{ type: 'combat', percent: 25 }, { type: 'combat', percent: 25 }],
             finalResources: 35
@@ -36,7 +36,7 @@ describe('AssistantSummary Component', () => {
     });
 
     it('should display "Impossible Day" for red status', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             actualSegments: [{ type: 'combat', percent: 60 }, { type: 'combat', percent: 50 }],
             plannedSegments: [{ type: 'combat', percent: 50 }, { type: 'combat', percent: 50 }],
             finalResources: 0

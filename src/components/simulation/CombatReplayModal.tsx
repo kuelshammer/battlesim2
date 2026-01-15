@@ -30,6 +30,38 @@ import type { Replay, ReplayAction } from '@/model/replayTypes'
 import type { Event } from '@/model/model'
 import { PlayerTemplates } from '@/data/data'
 
+// Type guards for specific event types
+type AttackHitEvent = Extract<Event, { type: 'AttackHit' }>
+type AttackMissedEvent = Extract<Event, { type: 'AttackMissed' }>
+type DamageTakenEvent = Extract<Event, { type: 'DamageTaken' }>
+type HealingAppliedEvent = Extract<Event, { type: 'HealingApplied' }>
+type BuffAppliedEvent = Extract<Event, { type: 'BuffApplied' }>
+type ConditionAddedEvent = Extract<Event, { type: 'ConditionAdded' }>
+
+function isAttackHit(event: Event): event is AttackHitEvent {
+  return event.type === 'AttackHit'
+}
+
+function isAttackMissed(event: Event): event is AttackMissedEvent {
+  return event.type === 'AttackMissed'
+}
+
+function isDamageTaken(event: Event): event is DamageTakenEvent {
+  return event.type === 'DamageTaken'
+}
+
+function isHealingApplied(event: Event): event is HealingAppliedEvent {
+  return event.type === 'HealingApplied'
+}
+
+function isBuffApplied(event: Event): event is BuffAppliedEvent {
+  return event.type === 'BuffApplied'
+}
+
+function isConditionAdded(event: Event): event is ConditionAddedEvent {
+  return event.type === 'ConditionAdded'
+}
+
 interface CombatReplayModalProps {
   /** The replay data to visualize */
   replay: Replay | null
@@ -204,21 +236,15 @@ const calculateActionStats = (_actorId: string, subEvents: Event[]) => {
   let healingDone = 0
 
   for (const event of subEvents) {
-    if (event.type === 'DamageTaken') {
-      const evt = event as any
-      if (evt.target_id === _actorId) {
-        damageTaken += evt.damage || 0
+    if (isDamageTaken(event)) {
+      if (event.target_id === _actorId) {
+        damageTaken += event.damage || 0
       } else {
-        damageDealt += evt.damage || 0
+        damageDealt += event.damage || 0
       }
     }
-    if (event.type === 'HealingApplied') {
-      const evt = event as any
-      if (evt.target_id === _actorId) {
-        healingDone += evt.amount || 0
-      } else {
-        healingDone += evt.amount || 0
-      }
+    if (isHealingApplied(event)) {
+      healingDone += event.amount || 0
     }
   }
 
@@ -309,32 +335,32 @@ const getActionResultText = (subEvents: Event[]): string => {
   const types = subEvents.map(e => e.type)
 
   if (types.includes('AttackHit')) {
-    const hit = subEvents.find(e => e.type === 'AttackHit') as any
+    const hit = subEvents.find(isAttackHit)
     const target = hit?.target_id || 'unknown'
-    const damage = subEvents.find(e => e.type === 'DamageTaken') as any
+    const damage = subEvents.find(isDamageTaken)
     const amount = damage?.damage || 0
     return `→ ${target} Hit ${amount}dmg`
   }
 
   if (types.includes('AttackMissed')) {
-    const miss = subEvents.find(e => e.type === 'AttackMissed') as any
+    const miss = subEvents.find(isAttackMissed)
     const target = miss?.target_id || 'unknown'
     return `→ ${target} Missed`
   }
 
   if (types.includes('HealingApplied')) {
-    const heal = subEvents.find(e => e.type === 'HealingApplied') as any
+    const heal = subEvents.find(isHealingApplied)
     const amount = heal?.amount || 0
     return `Heal ${amount}hp`
   }
 
   if (types.includes('BuffApplied')) {
-    const buff = subEvents.find(e => e.type === 'BuffApplied') as any
+    const buff = subEvents.find(isBuffApplied)
     return `Applied ${buff?.buff_id || 'buff'}`
   }
 
   if (types.includes('ConditionAdded')) {
-    const cond = subEvents.find(e => e.type === 'ConditionAdded') as any
+    const cond = subEvents.find(isConditionAdded)
     return `Added ${cond?.condition || 'condition'}`
   }
 

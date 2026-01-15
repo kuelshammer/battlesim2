@@ -25,12 +25,11 @@ import PlayerGraphs from "./PlayerGraphs"
 import HeartbeatGraph from "./HeartbeatGraph"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 import { CrosshairProvider } from "./CrosshairContext"
+import { CrosshairTooltip } from "./CrosshairLine"
 
 
 
-type PropType = {
-    // TODO
-}
+type PropType = object
 
 const emptyCombat: TimelineEvent = {
     type: 'combat',
@@ -79,11 +78,11 @@ const sanitizeTimelineParser = (parser: (data: unknown) => TimelineEvent[]) => (
     });
 };
 
-const Simulation: FC<PropType> = memo(({ }) => {
+const Simulation: FC<PropType> = memo(() => {
     const [players, setPlayers, isPlayersLoaded] = useStoredState<Creature[]>('players', [], sanitizePlayersParser(z.array(CreatureSchema).parse))
     const [timeline, setTimeline, isTimelineLoaded] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], sanitizeTimelineParser(z.array(TimelineEventSchema).parse))
     const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
-    const [state, setState] = useState(new Map<string, any>())
+    const [state, setState] = useState(new Map<string, unknown>())
     const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
 
     const [saving, setSaving] = useState(false)
@@ -105,8 +104,8 @@ const Simulation: FC<PropType> = memo(({ }) => {
     // Expose for E2E tests
     useEffect(() => {
         if (isPlayersLoaded && isTimelineLoaded && isHighPrecisionLoaded) {
-            (window as any).simulationWasm = true;
-            (window as any).storageLoaded = true;
+            (window as Window & { simulationWasm?: boolean; storageLoaded?: boolean }).simulationWasm = true;
+            (window as Window & { simulationWasm?: boolean; storageLoaded?: boolean }).storageLoaded = true;
         }
     }, [isPlayersLoaded, isTimelineLoaded, isHighPrecisionLoaded]);
 

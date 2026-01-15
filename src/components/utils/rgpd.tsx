@@ -1,6 +1,6 @@
 import { FC, useEffect } from "react";
 
-type PropType = {}
+type PropType = object
 
 const RGPD: FC<PropType> = () => {
     useEffect(() => {

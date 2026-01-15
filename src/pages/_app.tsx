@@ -43,8 +43,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
   } catch {
     // Silently handle crypto polyfill errors in production
   }
-} else {
-  }
+}
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

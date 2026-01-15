@@ -9,7 +9,7 @@ class MockWorker {
   terminate = vi.fn();
 }
 
-global.Worker = MockWorker as any;
+global.Worker = MockWorker as unknown;
 
 describe('useSimulationWorker', () => {
   beforeEach(() => {

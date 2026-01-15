@@ -212,8 +212,8 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     const ratingInfo = useMemo(() => {
         if (!analysis || !analysis.deciles?.length) return null;
 
-        const { encounterLabel, intensityTier, analysisSummary, isGoodDesign, pacing, vitals } = analysis as any;
-        const safetyGrade = vitals?.safetyGrade || (analysis as any).safetyGrade;
+        const { encounterLabel, intensityTier, analysisSummary, isGoodDesign, pacing, vitals } = analysis;
+        const safetyGrade = vitals?.safetyGrade || (analysis as { safetyGrade?: string }).safetyGrade;
         
         const getGradeColor = (grade: string) => {
             if (isShortRest) return "#2c5282"; // Blue for short rest

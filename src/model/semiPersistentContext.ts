@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
 export const semiPersistentContext = createContext({
-    state: new Map<string, any>(), 
-    setState: (newValue: Map<string, any>) => {}, // eslint-disable-line @typescript-eslint/no-unused-vars
+    state: new Map<string, unknown>(),
+    setState: (newValue: Map<string, unknown>) => {}, // eslint-disable-line @typescript-eslint/no-unused-vars
 })

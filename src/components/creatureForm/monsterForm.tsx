@@ -11,7 +11,7 @@ type PropType = {
     onChange: (newvalue: Creature) => void,
 }
 
-const defaultTypeFilter: {[type in CreatureType]: boolean} = Object.fromEntries(CreatureTypeList.map(t => [t, true])) as any
+const defaultTypeFilter: {[type in CreatureType]: boolean} = Object.fromEntries(CreatureTypeList.map(t => [t, true])) as {[type in CreatureType]: boolean}
 
 const MonsterForm:FC<PropType> = ({ onChange, value }) => {
     const useSharedState = sharedStateGenerator('monsterForm')
@@ -92,8 +92,8 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
                         className={!Object.entries(creatureType).find(([_]) => !b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
                             All
                     </button>
-                    <button 
-                        onClick={() => setCreatureType(Object.fromEntries(Object.keys(creatureType).map(t => [t, false])) as any)} 
+                    <button
+                        onClick={() => setCreatureType(Object.fromEntries(Object.keys(creatureType).map(t => [t, false])) as {[type in CreatureType]: boolean})}
                         className={!Object.entries(creatureType).find(([_]) => b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
                             None
                     </button>

@@ -4,12 +4,12 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the Worker
 const mockWorkerInstance = {
-  onmessage: null as any,
+  onmessage: null as ((e: MessageEvent) => void) | null,
   postMessage: vi.fn(),
   terminate: vi.fn(),
 };
 
-global.Worker = vi.fn().mockImplementation(function() { return mockWorkerInstance; }) as any;
+global.Worker = vi.fn().mockImplementation(function() { return mockWorkerInstance; }) as unknown;
 
 describe('useSimulationWorker Logs', () => {
   beforeEach(() => {

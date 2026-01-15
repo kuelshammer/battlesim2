@@ -209,8 +209,8 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                         />
                     ) : (
                         <DiceFormulaInput
-                            value={value[modifier] as any}
-                            onChange={v => updateDiceFormula(modifier as any, v ?? '')}
+                            value={value[modifier] as DiceFormula | undefined}
+                            onChange={v => updateDiceFormula(modifier, v ?? '')}
                         />
                     )}
                     <button onClick={() => setModifier(index, null)}>
@@ -479,7 +479,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             step={1}
                             className={value.freq.cooldownRounds < 2 ? styles.invalid : ''}
                             value={value.freq.cooldownRounds}
-                            onChange={e => update(v => { (v.freq as any).cooldownRounds = Number(e.target.value || 0) })} />
+                            onChange={e => update(v => { (v.freq as Frequency & { cooldownRounds?: number }).cooldownRounds = Number(e.target.value || 0) })} />
                     </>
                 ) : (
                     <>
@@ -490,7 +490,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             step={1}
                             className={value.freq.uses < 1 ? styles.invalid : ''}
                             value={value.freq.uses}
-                            onChange={e => update(v => { (v.freq as any).uses = Number(e.target.value || 0) })} />
+                            onChange={e => update(v => { (v.freq as Frequency & { uses?: number }).uses = Number(e.target.value || 0) })} />
                     </>
                 )
             ) : null}

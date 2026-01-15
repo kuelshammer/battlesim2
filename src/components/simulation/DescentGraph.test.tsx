@@ -4,13 +4,13 @@ import DescentGraph from './DescentGraph';
 import React from 'react';
 
 describe('DescentGraph Component', () => {
-    const mockDeciles: any[] = [
+    const mockDeciles: unknown[] = [
         {}, {}, { vitalityTimeline: [100, 80], powerTimeline: [100, 90] },
         {}, {}, {}, {},
         { vitalityTimeline: [100, 90], powerTimeline: [100, 95] }
     ];
 
-    const mockPacingData: any = {
+    const mockPacingData: Record<string, unknown> = {
         plannedTimeline: [100, 80],
         labels: ['Start', 'E1'],
         vitalityTimeline: [100, 85],
@@ -53,7 +53,7 @@ describe('DescentGraph Component', () => {
         const { container } = render(
             <DescentGraph 
                 deciles={[]} 
-                pacingData={{ plannedTimeline: [], labels: [], vitalityTimeline: [], powerTimeline: [] } as any} 
+                pacingData={{ plannedTimeline: [], labels: [], vitalityTimeline: [], powerTimeline: [] } as Record<string, unknown>} 
             />
         );
         expect(container.querySelector('svg')).toBeDefined();

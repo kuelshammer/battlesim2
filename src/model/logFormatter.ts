@@ -83,7 +83,7 @@ export class LogFormatter {
             case 'EncounterEnded':
                 return `Encounter ended. Winner: ${event.winner || 'None'}.`;
             default:
-                return (event as any).type;
+                return (event as Event & { type: string }).type;
         }
     }
 

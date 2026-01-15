@@ -1,9 +1,7 @@
 import { FC } from "react"
 import styles from './logo.module.scss'
 
-type PropType = {
-    // TODO
-}
+type PropType = object
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Logo: FC<PropType> = (props) => {

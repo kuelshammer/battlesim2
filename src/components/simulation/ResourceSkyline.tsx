@@ -18,12 +18,13 @@ import {
     SkylineInteractionState,
     ColorScale,
 } from '@/model/skylineTypes';
+import { PercentileBucket } from '@/model/model';
 
 export interface ResourceSkylineProps {
     /** Full analysis data or single character bucket data */
     data: SkylineAnalysis | CharacterBucketData[];
     onHover?: (state: SkylineInteractionState) => void;
-    onBucketClick?: (bucket: any) => void;
+    onBucketClick?: (bucket: PercentileBucket) => void;
     className?: string;
     characterFilter?: string[];
     // Single character mode props
@@ -340,7 +341,7 @@ const ResourceSkyline: React.FC<ResourceSkylineProps> = memo(({
         }
     }, [onHover]);
 
-    const handleBucketClick = useCallback((bucket: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+    const handleBucketClick = useCallback((bucket: PercentileBucket) => { // eslint-disable-line @typescript-eslint/no-unused-vars
         onBucketClick?.(bucket);
     }, [onBucketClick]);
 

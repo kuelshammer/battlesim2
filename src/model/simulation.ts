@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Legacy simulation file, replaced by WASM backend
 import { getFinalAction } from "../data/actions"
 import { EvaluationOptions, evaluateDiceFormula } from "./dice"

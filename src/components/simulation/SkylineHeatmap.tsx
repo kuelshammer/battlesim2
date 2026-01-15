@@ -89,7 +89,7 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
             ctx.fillText('50%', offsetX - 5, axisY + 53) // Resources middle
             ctx.fillText('100%', offsetX - 5, offsetY + 200) // Resources bottom
 
-            player.data.forEach((charData: any, bucketIdx: number) => {
+            player.data.forEach((charData: { hpPercent: number; resourcePercent: number; deathRound?: number | null; isDead: boolean; name: string; id: string; maxHp: number }, bucketIdx: number) => {
                 if (!charData) return
 
                 const x = offsetX + bucketIdx * effectiveBucketWidth

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Temporarily excluded: legacy actions need migration to new schema (37 remaining)
 import ClassOptions from '../model/classOptions'
 import { Action, Creature } from "../model/model"

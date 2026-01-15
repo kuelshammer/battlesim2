@@ -138,7 +138,7 @@ const encounters = [
           clearInterval(progressInterval);
 
           console.log('Running simulation...');
-          const simulationResults = wasm.run_event_driven_simulation(players, encounters, 100) as any[];
+          const simulationResults = wasm.run_event_driven_simulation(players, encounters, 100) as unknown[];
 
           // Process results
           const processedResults = simulationResults.map((result, index) => ({

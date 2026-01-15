@@ -32,9 +32,9 @@ const SaveBonusModal: FC<Props> = ({ value, onChange, onClose }) => {
         const updated = clone(localValue);
         if (newValue === undefined || newValue === updated.saveBonus) {
             // Clear the override if it matches the average
-            delete (updated as any)[key];
+            delete (updated as Creature & Record<string, unknown>)[key];
         } else {
-            (updated as any)[key] = newValue;
+            (updated as Creature & Record<string, unknown>)[key] = newValue;
         }
         setLocalValue(updated);
     };

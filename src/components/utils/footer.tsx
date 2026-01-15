@@ -1,7 +1,7 @@
 import { FC } from "react";
 import styles from './footer.module.scss'
 
-const Footer:FC<{}> = ({}) => {
+const Footer:FC = () => {
     return (
         <div className={styles.footer}>
             <span className={styles.legal}>

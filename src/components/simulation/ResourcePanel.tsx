@@ -47,7 +47,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
         return { type: 'Other', label: key, icon: faDiceD6, color: '#aaa' };
     };
 
-    const groups: Record<string, any[]> = {
+    const groups: Record<string, Array<{ key: string; value: number; max: number; type: string; label: string; icon: unknown; color: string; sort?: number }>> = {
         'Main': [],
         'SpellSlot': [],
         'ClassResource': [],
@@ -122,11 +122,11 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
                 {groups['Main'].length > 0 && (
                     <div className={styles.mainGroup}>
                         {groups['Main'].map(res => (
-                            <motion.div 
-                                key={res.key} 
+                            <motion.div
+                                key={res.key}
                                 variants={itemVariants}
                                 className={cn(styles.mainIcon, res.value <= 0 && styles.depleted)}
-                                style={{ '--glow-color': res.color } as any}
+                                style={{ '--glow-color': res.color } as React.CSSProperties}
                                 title={`${res.label}: ${res.value}/${res.max}`}
                             >
                                 <FontAwesomeIcon icon={res.icon} />

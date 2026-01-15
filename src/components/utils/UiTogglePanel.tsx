@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react'
-import { UIToggleState, useUIToggles } from '@/model/uiToggleState'
+import { UIToggleState, useUIToggles, UIToggleID } from '@/model/uiToggleState'
 import styles from './UiTogglePanel.module.scss'
 
 type ToggleControlProps = {
   toggle: UIToggleState
-  onToggle: (id: string, enabled: boolean) => void
+  onToggle: (id: UIToggleID, enabled: boolean) => void
 }
 
 const ToggleControl: FC<ToggleControlProps> = ({ toggle, onToggle }) => {
@@ -102,7 +102,7 @@ const UiTogglePanel: FC<UiTogglePanelProps> = ({
   const analysisToggles = getTogglesByCategory('analysis')
 
   const handleToggle = (id: string, enabled: boolean) => {
-    updateToggle(id as any, enabled)
+    updateToggle(id as UIToggleID, enabled)
   }
 
   const handleReset = () => {

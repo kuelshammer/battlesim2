@@ -116,11 +116,11 @@ const PerformanceDashboard: FC<PerformanceDashboardProps> = ({ isVisible, onClos
           fastestRound,
           totalRounds: newRoundTimes.length,
           wasmSize: metrics.wasmSize,
-          memoryUsage: 0, // @ts-ignore - performance.memory is non-standard
+          memoryUsage: 0, // @ts-expect-error - performance.memory is non-standard
           ...(typeof performance !== 'undefined' &&
-          (performance as any).memory &&
+          (performance as { memory?: { usedJSHeapSize: number } }).memory &&
           {
-            memoryUsage: (performance as any).memory.usedJSHeapSize,
+            memoryUsage: (performance as { memory?: { usedJSHeapSize: number } }).memory!.usedJSHeapSize,
           }),
         })
 
@@ -133,7 +133,7 @@ const PerformanceDashboard: FC<PerformanceDashboardProps> = ({ isVisible, onClos
 
     // Also listen for console logs (from Rust)
     const originalLog = console.log
-    console.log = (...args: any[]) => {
+    console.log = (...args: unknown[]) => {
       originalLog.apply(console, args)
 
       // Parse performance logs
@@ -179,11 +179,11 @@ const PerformanceDashboard: FC<PerformanceDashboardProps> = ({ isVisible, onClos
     if (!isVisible) return
 
     const interval = setInterval(() => {
-      // @ts-ignore - performance.memory is non-standard but available in Chrome
-      if (typeof performance !== 'undefined' && (performance as any).memory) {
+      // @ts-expect-error - performance.memory is non-standard but available in Chrome
+      if (typeof performance !== 'undefined' && (performance as { memory?: { usedJSHeapSize: number } }).memory) {
         setMetrics((prev) => ({
           ...prev,
-          memoryUsage: (performance as any).memory.usedJSHeapSize,
+          memoryUsage: (performance as { memory?: { usedJSHeapSize: number } }).memory!.usedJSHeapSize,
         }))
       }
     }, 1000)

@@ -23,7 +23,7 @@ export function useLoading(manager: LoadingManager = loadingManager) {
   }, [manager])
 
   const startOperation = useCallback(
-    (type: LoadingStateType, priority?: LoadingPriority, message?: string, metadata?: Record<string, any>) => {
+    (type: LoadingStateType, priority?: LoadingPriority, message?: string, metadata?: Record<string, unknown>) => {
       return manager.startOperation(type, priority, message, metadata)
     },
     [manager]
@@ -125,7 +125,7 @@ export function useLoadingOperation(
   const [isActive, setIsActive] = useState(false)
 
   const start = useCallback(
-    (message?: string, metadata?: Record<string, any>) => {
+    (message?: string, metadata?: Record<string, unknown>) => {
       if (operationId) {
         console.warn('Loading operation already active')
         return operationId

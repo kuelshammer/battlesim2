@@ -17,7 +17,7 @@ describe('calculatePacingData', () => {
             { type: 'combat', id: 'enc2', monsters: [], targetRole: 'Standard' }
         ];
 
-        const analysis: any = {
+        const analysis: Record<string, unknown> = {
             overall: {
                 tdnw: 100,
                 globalMedian: {
@@ -82,7 +82,7 @@ describe('calculatePacingData', () => {
             { type: 'shortRest', id: 'rest1' }
         ];
 
-        const analysis: any = {
+        const analysis: Record<string, unknown> = {
             overall: {
                 tdnw: 100,
                 globalMedian: {

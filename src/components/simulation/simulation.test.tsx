@@ -37,7 +37,7 @@ vi.mock('@fortawesome/react-fontawesome', () => ({
 
 // Mock useStoredState to provide a monster
 vi.mock('@/model/utils', async () => {
-    const actual = await vi.importActual<any>('@/model/utils');
+    const actual = await vi.importActual<Record<string, unknown>>('@/model/utils');
     return {
         ...actual,
         useStoredState: vi.fn((key, defaultValue) => {
@@ -76,7 +76,7 @@ describe('Simulation Component', () => {
             autoAdjustEncounter: vi.fn(),
             clearOptimizedResult: vi.fn(),
             terminateAndRestart: vi.fn(),
-        } as any);
+        } as unknown);
 
         render(<Simulation />);
         
@@ -114,7 +114,7 @@ describe('Simulation Component', () => {
             autoAdjustEncounter: vi.fn(),
             clearOptimizedResult: vi.fn(),
             terminateAndRestart: vi.fn(),
-        } as any);
+        } as unknown);
 
         render(<Simulation />);
 
@@ -148,7 +148,7 @@ describe('Simulation Component', () => {
             optimizedResult: mockOptimizedResult,
             clearOptimizedResult,
             autoAdjustEncounter: vi.fn(),
-        } as any);
+        } as unknown);
 
         render(<Simulation />);
         

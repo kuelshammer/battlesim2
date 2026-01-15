@@ -1,12 +1,12 @@
 import { FC, useState, memo } from "react"
-import { Creature, Encounter } from "@/model/model"
+import { Creature, Encounter, TargetRole, TargetRoleList } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp, faPen, faPlus, faTrash, faMagicWandSparkles } from "@fortawesome/free-solid-svg-icons"
 import CreatureForm from "./../creatureForm/creatureForm"
 import { clone } from "@/model/utils"
 import Checkbox from "@/utils/checkbox"
-import Select from "react-select"
+import Select, { SingleValue } from "react-select"
 
 type PropType = {
     mode: 'player' | 'monster',
@@ -20,6 +20,8 @@ type PropType = {
     onMoveDown?: () => void,
     onEditingChange?: (isEditing: boolean) => void,
 }
+
+type SelectOption = { value: TargetRole; label: string }
 
 const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete, onAutoAdjust, autoAdjustDisabled, children, onMoveUp, onMoveDown, onEditingChange }) => {
     const [updating, setUpdating] = useState<number | null>(null)
@@ -141,7 +143,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                                         className={styles.roleSelect}
                                         value={{ value: encounter.targetRole || 'Standard', label: encounter.targetRole || 'Standard' }}
                                         options={TargetRoleList.map(r => ({ value: r, label: r }))}
-                                        onChange={(val: any) => update(e => { e.targetRole = val?.value || 'Standard' })}
+                                        onChange={(val: SingleValue<SelectOption>) => update(e => { e.targetRole = val?.value || 'Standard' })}
                                     />
                                 </div>
                             </>

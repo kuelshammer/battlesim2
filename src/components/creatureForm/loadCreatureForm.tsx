@@ -15,7 +15,7 @@ type PropType = {
 }
 
 function loadSaves(): Creature[] {
-    if (typeof localStorage === undefined) return []
+    if (typeof localStorage === 'undefined') return []
 
     const json = localStorage.getItem('savedCreatures')
     if (!json) return []
@@ -30,7 +30,7 @@ function loadSaves(): Creature[] {
 }
 
 export function saveCreature(creature: Creature) {
-    if (typeof localStorage === undefined) return
+    if (typeof localStorage === 'undefined') return
     if (!localStorage.getItem('useLocalStorage')) return
 
     const saves = loadSaves()
@@ -59,7 +59,7 @@ const LoadCreatureForm:FC<PropType> = ({ onCancel, onLoad }) => {
         setSaves(savesClone)
         setTimeout(() => setSelected(undefined), 0)
 
-        if (typeof localStorage === undefined) return
+        if (typeof localStorage === 'undefined') return
         if (!localStorage.getItem('useLocalStorage')) return
         localStorage.setItem('savedCreatures', JSON.stringify(savesClone))
     }

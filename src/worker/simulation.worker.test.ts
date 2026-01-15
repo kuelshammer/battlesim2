@@ -28,11 +28,11 @@ const postMessageMock = vi.fn();
 global.self = {
   postMessage: postMessageMock,
   onmessage: null
-} as any;
+} as { postMessage: typeof postMessageMock; onmessage: null };
 
 // Mock setTimeout to execute once to avoid infinite recursion in tests
 let timeoutCount = 0;
-vi.stubGlobal('setTimeout', (fn: Function) => {
+vi.stubGlobal('setTimeout', (fn: () => void) => {
   if (timeoutCount < 2) {
     timeoutCount++;
     fn();

@@ -54,7 +54,7 @@ describe('5etools-mapper', () => {
 
         const creature = mapMonster5eToCreature(monster);
         expect(creature.actions.length).toBe(1);
-        const action = creature.actions[0] as any;
+        const action = creature.actions[0] as { name: string; toHit: number; dpr: string | number };
         expect(action.name).toBe("Talon");
         expect(action.toHit).toBe(4);
         expect(action.dpr).toBe("1d6 + 2");
@@ -84,10 +84,10 @@ describe('5etools-mapper', () => {
 
         const creature = mapMonster5eToCreature(monster);
         expect(creature.actions.length).toBe(2);
-        const action0 = creature.actions[0] as any;
+        const action0 = creature.actions[0] as { name: string; targets: number };
         expect(action0.name).toBe("Beak");
         expect(action0.targets).toBe(2); // OWlbear makes two attacks total, we map it to 'targets' for simplicity in this engine
-        const action1 = creature.actions[1] as any;
+        const action1 = creature.actions[1] as { name: string; targets: number };
         expect(action1.name).toBe("Claws");
         expect(action1.targets).toBe(2);
     });

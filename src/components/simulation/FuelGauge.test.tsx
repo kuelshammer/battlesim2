@@ -5,7 +5,7 @@ import React from 'react';
 
 describe('FuelGauge Component', () => {
     it('should render planned segments based on weights', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             plannedSegments: [{ type: 'combat', percent: 25, label: 'Enc 1' }],
             vitalitySegments: [{ type: 'combat', percent: 20, label: 'Enc 1' }],
             powerSegments: [{ type: 'combat', percent: 10, label: 'Enc 1' }]
@@ -15,7 +15,7 @@ describe('FuelGauge Component', () => {
     });
 
     it('should render vitality and power attrition bars', () => {
-        const pacingData: any = {
+        const pacingData: Record<string, unknown> = {
             plannedSegments: [{ type: 'combat', percent: 25, label: 'Enc 1' }],
             vitalitySegments: [{ type: 'combat', percent: 20, label: 'Enc 1' }],
             powerSegments: [{ type: 'combat', percent: 10, label: 'Enc 1' }]

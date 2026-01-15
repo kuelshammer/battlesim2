@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import EncounterResult from './encounterResult';
 import React from 'react';
 import { UIToggleProvider } from '@/model/uiToggleState';
+import { EncounterResult as EncounterResultType } from '@/model/model';
 
 describe('EncounterResult Component', () => {
     const mockValue = {
@@ -13,7 +14,7 @@ describe('EncounterResult Component', () => {
                 team2: []
             }
         ]
-    } as any;
+    } as EncounterResultType;
 
     it('should render the component', () => {
         render(

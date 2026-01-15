@@ -62,9 +62,9 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
         }
     }, []);
 
-    function applyTemplate(type: Class, lvl: number, options: any) {
+    function applyTemplate(type: Class, lvl: number, options: ClassOptionsMap[Class]) {
         const template = PlayerTemplates[type];
-        const creature = (template as (level: number, options: any) => Creature)(lvl, options);
+        const creature = (template as (level: number, options: ClassOptionsMap[Class]) => Creature)(lvl, options);
         creature.id = value?.id || creature.id;
         creature.class = {
             type: type,
@@ -89,7 +89,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
         applyTemplate(chosenClass.type, lvl, chosenClass.options);
     }
 
-    function setClassOptions(callback: (classOptions: any) => void) {
+    function setClassOptions(callback: (classOptions: ClassForm['options']) => void) {
         const chosenClassClone = clone(chosenClass)
         callback(chosenClassClone.options)
         applyTemplate(chosenClassClone.type, level, chosenClassClone.options);
@@ -153,7 +153,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).gwm = !(options as z.infer<typeof ClassOptions.barbarian>).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -162,7 +162,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
@@ -180,7 +180,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).gwm = !(options as z.infer<typeof ClassOptions.barbarian>).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -189,7 +189,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
@@ -203,7 +203,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                         <section className={styles.classOptions}>
                             <Checkbox 
                                 value={chosenClass.options.gwm} 
-                                onToggle={() => setClassOptions(options => { (options as any).gwm = !(options as any).gwm })}>
+                                onToggle={() => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).gwm = !(options as z.infer<typeof ClassOptions.barbarian>).gwm })}>
                                 Use Great Weapon Master
                             </Checkbox>
                             <div className={styles.option}>
@@ -212,7 +212,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                     min={0}
                                     max={3}
                                     value={chosenClass.options.weaponBonus}
-                                    onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                    onChange={(newValue) => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).weaponBonus = newValue })}
                                     label={`+${chosenClass.options.weaponBonus}`}
                                 />
                             </div>
@@ -224,7 +224,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                          <section className={styles.classOptions}>
                              <Checkbox 
                                  value={chosenClass.options.ss} 
-                                 onToggle={() => setClassOptions(options => { (options as any).ss = !(options as any).ss })}>
+                                 onToggle={() => setClassOptions(options => { (options as z.infer<typeof ClassOptions.ranger>).ss = !(options as z.infer<typeof ClassOptions.ranger>).ss })}>
                                  Use Sharpshooter
                              </Checkbox>
                              <div className={styles.option}>
@@ -233,7 +233,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                      min={0}
                                      max={3}
                                      value={chosenClass.options.weaponBonus}
-                                     onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                     onChange={(newValue) => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).weaponBonus = newValue })}
                                      label={`+${chosenClass.options.weaponBonus}`}
                                  />
                              </div>
@@ -245,7 +245,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                          <section className={styles.classOptions}>
                              <Checkbox 
                                  value={chosenClass.options.ss} 
-                                 onToggle={() => setClassOptions(options => { (options as any).ss = !(options as any).ss })}>
+                                 onToggle={() => setClassOptions(options => { (options as z.infer<typeof ClassOptions.ranger>).ss = !(options as z.infer<typeof ClassOptions.ranger>).ss })}>
                                  Use Sharpshooter
                              </Checkbox>
                              <div className={styles.option}>
@@ -254,7 +254,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                                      min={0}
                                      max={3}
                                      value={chosenClass.options.weaponBonus}
-                                     onChange={(newValue) => setClassOptions(options => { (options as any).weaponBonus = newValue })}
+                                     onChange={(newValue) => setClassOptions(options => { (options as z.infer<typeof ClassOptions.barbarian>).weaponBonus = newValue })}
                                      label={`+${chosenClass.options.weaponBonus}`}
                                  />
                              </div>

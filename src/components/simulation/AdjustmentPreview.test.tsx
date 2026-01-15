@@ -6,7 +6,7 @@ import React from 'react';
 describe('AdjustmentPreview Component', () => {
     const mockOriginalMonsters = [
         { id: 'm1', name: 'Goblin', hp: 7, ac: 15, saveBonus: 0, actions: [] }
-    ] as any;
+    ] as unknown[];
 
     const mockAdjustmentResult = {
         monsters: [
@@ -18,7 +18,7 @@ describe('AdjustmentPreview Component', () => {
             deciles: [],
             battleDurationRounds: 3
         }
-    } as any;
+    } as unknown;
 
     it('should display original and optimized stats', () => {
         render(

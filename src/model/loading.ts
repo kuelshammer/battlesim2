@@ -90,7 +90,7 @@ export class LoadingManager {
     type: LoadingStateType,
     priority: LoadingPriority = 'medium',
     message?: string,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): string {
     const id = this.generateOperationId()
     const operation: LoadingOperation = {

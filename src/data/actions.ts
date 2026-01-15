@@ -282,7 +282,7 @@ export function getFinalAction(action: Action): FinalAction {
         actionSlot: action.actionSlot ?? template.actionSlot,
         freq,
         condition,
-        target: template.target || target as any,
+        target: template.target || target as AllyTarget | EnemyTarget,
         templateName,
     }
 
