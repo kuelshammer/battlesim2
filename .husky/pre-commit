@@ -1,6 +1,16 @@
 #!/bin/bash
 set -e
 
+# Smart bypass: Skip ALL code quality checks if only .beads files are staged
+# This allows 'bd sync' to work without ESLint blocking
+STAGED_FILES=$(git diff --cached --name-only)
+NON_BEADS_FILES=$(echo "$STAGED_FILES" | grep -v "^\.beads/" || true)
+
+if [ -z "$NON_BEADS_FILES" ]; then
+    echo "📂 Only .beads files staged, skipping code quality checks"
+    exit 0
+fi
+
 echo "🔍 Pre-commit quality checks..."
 echo ""
 
