@@ -46,7 +46,7 @@ const TIER_RANGES = {
 const BalancerBandOverlay: React.FC<BalancerBandOverlayProps> = memo(({
     width,
     height,
-    chartId = 'unknown',
+    chartId, // eslint-disable-line @typescript-eslint/no-unused-vars
     padding = { top: 20, right: 10, bottom: 30, left: 40 },
     tier,
     showOutOfRange = false,

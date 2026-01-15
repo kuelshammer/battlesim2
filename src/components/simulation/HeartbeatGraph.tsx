@@ -36,7 +36,7 @@ const HeartbeatGraph: FC<HeartbeatGraphProps> = ({ encounters, className }) => {
         // Start at left baseline
         let d = `M ${padding.left} ${height - padding.bottom}`;
         
-        points.forEach((p, i) => {
+        points.forEach((p) => {
             // Straight lines for "heartbeat" feel or curves?
             // Let's use simple lines for now
             d += ` L ${p.x} ${p.y}`;

@@ -3,7 +3,7 @@ import { AggregateOutput } from "@/model/model"
 import BattleCard from "./battleCard"
 import styles from './decileAnalysis.module.scss'
 import { useUIToggles, UIToggleType } from "@/model/uiToggleState"
-import { EncounterRating, MedianPerformanceDisplay } from "./AnalysisComponents"
+import { EncounterRating } from "./AnalysisComponents"
 
 type PropType = {
     analysis: AggregateOutput | null,

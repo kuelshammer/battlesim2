@@ -5,6 +5,7 @@ type PropType = {
     // TODO
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Logo: FC<PropType> = (props) => {
     return (
         <div className={styles.logo}>

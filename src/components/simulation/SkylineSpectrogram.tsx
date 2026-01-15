@@ -51,7 +51,7 @@ const SkylineSpectrogramInner: React.FC<SkylineSpectrogramProps> = memo(({
     showAccessibilityControls = true,
     className,
 }) => {
-    const { highContrast, patternDensity } = useAccessibility();
+    const { highContrast } = useAccessibility();
 
     // Register bucket data for crosshair tooltips
     useCrosshairBucketRegistration('skyline-main', data.buckets);

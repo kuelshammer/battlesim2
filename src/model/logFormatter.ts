@@ -27,7 +27,7 @@ export class LogFormatter {
     static formatRollResult(result: RollResult, targetAc?: number): string {
         // Build the value breakdown (e.g. "12 + 7 + 2")
         const valueBreakdown = result.modifiers
-            .map(([name, val], index) => {
+            .map(([, val], index) => {
                 const prefix = index === 0 ? (val < 0 ? '-' : '') : (val < 0 ? ' - ' : ' + ');
                 return `${prefix}${Math.abs(val)}`;
             })
@@ -35,7 +35,7 @@ export class LogFormatter {
 
         // Prettify formula: "1d20+3[PB]" -> "1d20 + 3[PB]"
         const prettyFormula = result.formula
-            .replace(/([+\-])/g, ' $1 ')
+            .replace(/([+-])/g, ' $1 ')
             .replace(/\s+/g, ' ')
             .trim();
 
@@ -87,8 +87,7 @@ export class LogFormatter {
         }
     }
 
-    static toDetails(event: Event, names: Record<string, string>, actionNames: Record<string, string> = {}): string {
-        const getName = (id: string) => this.getUnitName(id, names);
+    static toDetails(event: Event, names: Record<string, string>): string { // eslint-disable-line @typescript-eslint/no-unused-vars
 
         switch (event.type) {
             case 'AttackHit': {

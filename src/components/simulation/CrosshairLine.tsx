@@ -6,7 +6,7 @@
  */
 
 import React, { memo, useRef, useEffect, useCallback, useState } from 'react';
-import { useCrosshair, CrosshairState } from './CrosshairContext';
+import { useCrosshair } from './CrosshairContext';
 import styles from './crosshairLine.module.scss';
 
 export interface CrosshairLineProps {
@@ -27,7 +27,7 @@ export interface CrosshairLineProps {
 const CrosshairLine: React.FC<CrosshairLineProps> = memo(({
     width,
     height,
-    chartId = 'unknown',
+    chartId, // eslint-disable-line @typescript-eslint/no-unused-vars
     padding = { top: 20, right: 10, bottom: 30, left: 40 },
     className,
 }) => {
@@ -49,7 +49,6 @@ const CrosshairLine: React.FC<CrosshairLineProps> = memo(({
             return;
         }
 
-        const chartWidth = width - padding.left - padding.right;
         const x = padding.left + state.xPosition;
 
         // Draw vertical crosshair line
@@ -155,22 +154,22 @@ export const CrosshairTooltip: React.FC = memo(() => {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        let finalX = mouseX + padding;
-        let finalY = mouseY + padding;
+        let _finalX = mouseX + padding;
+        let _finalY = mouseY + padding;
 
         // Flip horizontally if overflow
-        if (finalX + tooltipWidth > viewportWidth) {
-            finalX = mouseX - tooltipWidth - padding;
+        if (_finalX + tooltipWidth > viewportWidth) {
+            _finalX = mouseX - tooltipWidth - padding;
         }
 
         // Flip vertically if overflow
-        if (finalY + tooltipHeight > viewportHeight) {
-            finalY = mouseY - tooltipHeight - padding;
+        if (_finalY + tooltipHeight > viewportHeight) {
+            _finalY = mouseY - tooltipHeight - padding;
         }
 
         setStyle({
-            left: Math.max(padding, finalX),
-            top: Math.max(padding, finalY),
+            left: Math.max(padding, _finalX),
+            top: Math.max(padding, _finalY),
             opacity: 1
         });
     }, [mouseX, mouseY, bucketData]);

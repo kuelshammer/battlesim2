@@ -14,7 +14,6 @@ import styles from './resourceSkyline.module.scss';
 import {
     SkylineAnalysis,
     CharacterBucketData,
-    valueToColor,
     DEFAULT_SKYLINE_COLORS,
     SkylineInteractionState,
     ColorScale,
@@ -341,7 +340,7 @@ const ResourceSkyline: React.FC<ResourceSkylineProps> = memo(({
         }
     }, [onHover]);
 
-    const handleBucketClick = useCallback((bucket: any) => {
+    const handleBucketClick = useCallback((bucket: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
         onBucketClick?.(bucket);
     }, [onBucketClick]);
 

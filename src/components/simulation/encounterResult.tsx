@@ -1,5 +1,5 @@
 import { FC, useState, memo, useMemo } from "react"
-import { Combattant, EncounterResult as EncounterResultType, EncounterStats, FinalAction, Buff, DiceFormula, AggregateOutput, FullAnalysisOutput, PlayerSlot } from "@/model/model"
+import { Combattant, EncounterResult as EncounterResultType, AggregateOutput } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import ActionEconomyDisplay from "./ActionEconomyDisplay"
 import styles from './encounterResult.module.scss'
@@ -7,75 +7,18 @@ import { Round } from "@/model/model"
 import { clone } from "@/model/utils"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBrain } from "@fortawesome/free-solid-svg-icons"
-import { useUIToggle } from "@/model/uiToggleState"
 import { EncounterRating, VitalsDashboard, ValidationNotice } from "./AnalysisComponents"
 import DeltaBadge from "./DeltaBadge"
 import PartyOverview from "./PartyOverview"
 import PlayerGraphs from "./PlayerGraphs"
-import { SkylineAnalysis } from "@/model/model"
 
 type TeamPropType = {
     round: Round,
     team: Combattant[],
-    stats?: Map<string, EncounterStats>,
     highlightedIds?: string[],
-    onHighlight?: (targetIds: string[]) => void,
 }
 
-// Enhanced action label function that provides complete action descriptions
-function getActionLabel(combattantAction: { action: FinalAction, targets: Map<string, number> }): string {
-    const { action } = combattantAction
-    const actionName = action.name?.trim() || ''
-
-    switch (action.type) {
-        case 'atk':
-            return actionName ? `Attack ${actionName}` : 'Attack'
-        case 'heal':
-            return actionName || 'Heal'
-        case 'buff':
-            return actionName || 'Buff'
-        case 'debuff':
-            return actionName || 'Debuff'
-    }
-}
-
-function getTargetPrefix(combattantAction: { action: FinalAction, targets: Map<string, number> }): string {
-    return 'on'
-}
-
-
-const TeamResults: FC<TeamPropType> = memo(({ round, team, stats, highlightedIds, onHighlight }) => {
-    function getTarget(combattantAction: { action: FinalAction, targets: Map<string, number> }) {
-        if (combattantAction.action.target === 'self') return 'itself'
-        const allCombattants = [...round.team1, ...round.team2]
-        const combattantMap = new Map(allCombattants.map(c => [c.id, c]))
-        const creatureMap = new Map(allCombattants.map(c => [c.creature.id, c]))
-
-        const targetNames = Array.from(combattantAction.targets.entries()).map(([targetId, count], index) => {
-            const targetCombattant = combattantMap.get(targetId) || creatureMap.get(targetId)
-            if (!targetCombattant) return `Target ${index + 1}`
-            const creatureName = targetCombattant.creature.name
-            return count === 1 ? creatureName : `${creatureName} x${count}`
-        }).filter(nullable => !!nullable)
-
-        return targetNames.join(' and ')
-    }
-
-    function getNumberWithSign(n: DiceFormula) {
-        let result = String(n)
-        if (!result.startsWith('-')) result = '+' + result
-        return ' ' + result
-    }
-
-    function getBuffEffect(buff: Buff) {
-        const buffEffects: string[] = []
-        if (buff.ac != undefined) buffEffects.push(getNumberWithSign(buff.ac) + ' AC')
-        if (buff.condition != undefined) buffEffects.push(' ' + buff.condition)
-        if (buff.damageMultiplier != undefined) buffEffects.push(' x' + buff.damageMultiplier + ' damage')
-        if (buff.toHit != undefined) buffEffects.push(getNumberWithSign(buff.toHit) + ' to hit')
-        return buffEffects.join(', ')
-    }
-
+const TeamResults: FC<TeamPropType> = memo(({ team, highlightedIds }) => {
     return (
         <div className={styles.team}>
             {team.map(combattant => (
@@ -132,7 +75,6 @@ type PropType = {
 }
 
 const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, playerNames, isStale, isPreliminary, targetPercent, actualPercent, cumulativeDrift, isShortRest, targetRole }) => {
-    const [hpBarsVisible, setHpBarsVisible] = useUIToggle('hp-bars')
     const [detailsExpanded, setDetailsExpanded] = useState(false)
 
     const lastRound = useMemo(() => {

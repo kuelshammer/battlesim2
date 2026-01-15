@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TimelineEventSchema, EncounterSchema, ShortRestSchema } from './model';
+import { TimelineEventSchema } from './model';
 
 describe('Timeline Models', () => {
     it('should validate a combat encounter as a timeline event', () => {

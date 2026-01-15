@@ -61,7 +61,7 @@ const SaveFileSchema = z.object({
 })
 type SaveFile = z.infer<typeof SaveFileSchema>
 
-const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onCancel, onApplyChanges, onEditingChange }) => {
+const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onCancel, onApplyChanges }) => {
     const [editedPlayers, setEditedPlayers] = useState<Creature[]>(currentPlayers);
     const [editedTimeline, setEditedTimeline] = useState<TimelineEvent[]>(currentTimeline);
     const [saveName, setSaveName] = useState("");
@@ -203,7 +203,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
 
     async function applyAndSave() {
         onApplyChanges(editedPlayers, editedTimeline);
-        
+
         if (isValidSaveName) {
             try {
                 await fetch('/api/adventuring-days', {
@@ -217,7 +217,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
                     })
                 })
                 fetchSaves()
-            } catch (e) {
+            } catch {
                 setError('Failed to save')
             }
         }
@@ -239,7 +239,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
             if (response.ok) {
                 fetchSaves()
             }
-        } catch (e) {
+        } catch {
             setError('Failed to delete')
         }
     }
@@ -276,7 +276,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
 
         let obj
         try { obj = JSON.parse(json) }
-        catch (e) { setError('File is not valid JSON'); return }
+        catch { setError('File is not valid JSON'); return }
 
         const parsed = SaveFileSchema.safeParse(obj)
         if (!parsed.success) { setError('Invalid schema'); return }
@@ -301,7 +301,7 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
             setEditedPlayers(sanitized.players);
             setEditedTimeline(sanitized.timeline);
             setSaveName(newSave.name);
-        } catch (e) {
+        } catch {
             setError('Failed to upload')
         }
     }

@@ -442,7 +442,7 @@ function useBuffAction(buffer: Combattant, action: BuffAction, target: Combattan
 // e.g. getBuffs(combattant, b => b.ac, 'add') will return the total of all of the buffs which alter a creature's AC
 function getBuffs(combattant: Combattant, getter: (buff: Buff) => DiceFormula | undefined, reducer: 'add' | 'mult', luck: number, options?: EvaluationOptions): number {
     return Array.from(combattant.finalState.buffs)
-        .map(([_, buff]) => {
+        .map(([_, buff]) => { // eslint-disable-line @typescript-eslint/no-unused-vars
             const expr = getter(buff)
 
             if (expr === undefined) return (reducer === 'add') ? 0 : 1

@@ -14,7 +14,6 @@ import {
     SkylineCanvasProps,
     DEFAULT_SKYLINE_COLORS,
     SkylineInteractionState,
-    valueToColor,
 } from '@/model/skylineTypes';
 
 const DEFAULT_CONFIG: SkylineCanvasProps['config'] = {
@@ -33,9 +32,9 @@ const DEFAULT_CONFIG: SkylineCanvasProps['config'] = {
 /**
  * Get high-DPI scaled canvas dimensions
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in other components
 function getCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
 
     return {
         // Display size (CSS pixels)
@@ -121,27 +120,6 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
     }, [data, config]);
 
     /**
-     * Handle mouse move for hover/crosshair
-     */
-    const handleMouseMove = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        // TODO: Calculate bucket from X position
-        // const bucket = Math.floor((x - padding.left) / availableWidth * 100) + 1;
-
-        // interactionRef.current.hoveredBucket = bucket;
-        // onHover?.(interactionRef.current);
-
-        // Trigger re-render for crosshair
-        // requestAnimationFrame(render);
-    }, [config, onHover]);
-
-    /**
      * Handle mouse leave
      */
     const handleMouseLeave = useCallback(() => {
@@ -156,7 +134,7 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
     /**
      * Handle click for bucket selection
      */
-    const handleClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleClick = useCallback(() => {
         const bucketIndex = interactionRef.current.hoveredBucket;
         if (bucketIndex && bucketIndex >= 1 && bucketIndex <= data.buckets.length) {
             onBucketClick?.(data.buckets[bucketIndex - 1]);

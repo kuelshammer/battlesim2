@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
 import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, EncounterSchema, TimelineEvent, TimelineEventSchema, SimulationResult, AggregateOutput, EncounterResult as EncounterResultType } from "@/model/model"
-import { parseEventString, SimulationEvent } from "@/model/events"
+import { Creature, CreatureSchema, Encounter, TimelineEvent, TimelineEventSchema, EncounterResult as EncounterResultType } from "@/model/model"
+import { SimulationEvent } from "@/model/events"
 import { clone, useStoredState } from "@/model/utils"
 import styles from './simulation.module.scss'
 import EncounterForm from "./encounterForm"
@@ -10,11 +10,10 @@ import EventLog from "../combat/EventLog"
 import OnboardingTour from "./OnboardingTour"
 import PerformanceDashboard from "../debug/PerformanceDashboard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faRedo, faBed, faMagicWandSparkles, faBolt, faBullseye, faQuestionCircle, faTachometerAlt } from "@fortawesome/free-solid-svg-icons"
+import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faBed, faBolt, faQuestionCircle, faTachometerAlt } from "@fortawesome/free-solid-svg-icons"
 import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
-import { getFinalAction } from "@/data/actions"
 import { UIToggleProvider } from "@/model/uiToggleState"
 import { useSimulationWorker } from "@/model/useSimulationWorker"
 import AdjustmentPreview from "./AdjustmentPreview"
@@ -26,7 +25,6 @@ import PlayerGraphs from "./PlayerGraphs"
 import HeartbeatGraph from "./HeartbeatGraph"
 import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 import { CrosshairProvider } from "./CrosshairContext"
-import { CrosshairTooltip } from "./CrosshairLine"
 
 
 
@@ -42,9 +40,6 @@ const emptyCombat: TimelineEvent = {
     playersSurprised: false,
     targetRole: 'Standard',
 }
-
-const FAST_ITERATIONS = 100;
-const PRECISE_ITERATIONS = 2511;
 
 // Sanitization helper: Fix duplicate IDs in players array
 const sanitizePlayersParser = (parser: (data: unknown) => Creature[]) => (data: unknown) => {

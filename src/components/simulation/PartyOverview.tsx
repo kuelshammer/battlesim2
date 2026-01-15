@@ -1,8 +1,8 @@
 import React, { FC, useRef, useEffect, useMemo, useState, useCallback } from 'react'
-import { SkylineAnalysis, PlayerSlot, CharacterBucketData } from '@/model/model'
+import { SkylineAnalysis, CharacterBucketData } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 import { useCrosshair, useCrosshairBucketRegistration } from './CrosshairContext'
-import CrosshairLine, { CrosshairTooltip } from './CrosshairLine'
+import CrosshairLine from './CrosshairLine'
 
 interface PartyOverviewProps {
     skyline: SkylineAnalysis
@@ -130,7 +130,7 @@ const PartyOverview: FC<PartyOverviewProps> = ({ skyline, partySlots, playerName
                         ...target,
                         partyHpPercent: start.partyHpPercent + (target.partyHpPercent - start.partyHpPercent) * ease,
                         partyResourcePercent: start.partyResourcePercent + (target.partyResourcePercent - start.partyResourcePercent) * ease,
-                        characters: target.characters.map((tChar, cIdx) => {
+                        characters: target.characters.map((tChar) => {
                             const sChar = start.characters.find(c => c.id === tChar.id) || tChar;
                             return {
                                 ...tChar,

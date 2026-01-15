@@ -17,15 +17,14 @@ async function run() {
         process.exit(1);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const inputData = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-    const players = inputData.players || [];
-    const timeline = inputData.timeline || inputData.encounters || [];
 
     // The wasm pkg is at simulation-wasm/pkg
-    // We need to load it. Since it's wasm-bindgen for web, 
+    // We need to load it. Since it's wasm-bindgen for web,
     // it might be tricky to run directly in Node.
     // However, we have simulation-wasm/src/bin/sim_cli.rs which is a native binary.
-    
+
     console.log('Using native sim_cli for reliable JSON output...');
     
     const { execSync } = require('child_process');

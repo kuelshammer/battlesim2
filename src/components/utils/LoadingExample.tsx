@@ -16,7 +16,7 @@ export const LoadingExample: React.FC = () => {
   const dataLoading = useLoadingOperation('simulation-data', 'high')
 
   const handleLoadData = async () => {
-    const operationId = dataLoading.start('Loading simulation data...')
+    dataLoading.start('Loading simulation data...')
 
     try {
       // Simulate data loading with progress updates
@@ -31,7 +31,7 @@ export const LoadingExample: React.FC = () => {
 
       dataLoading.update(100, 'Data loaded successfully')
       dataLoading.complete('Simulation data loaded')
-    } catch (error) {
+    } catch {
       dataLoading.error('Failed to load data', 'Network error occurred')
     }
   }
@@ -47,7 +47,7 @@ export const LoadingExample: React.FC = () => {
       }
 
       loading.completeOperation(operationId, 'Simulation completed')
-    } catch (error) {
+    } catch {
       loading.errorOperation(operationId, 'Simulation failed', 'Unexpected error')
     }
   }

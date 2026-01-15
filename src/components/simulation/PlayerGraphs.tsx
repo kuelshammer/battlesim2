@@ -97,7 +97,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                             </div>
 
                             <div className={styles.hpVisualization}>
-                                {playerBuckets.map(({ percentile, character }, idx) => {
+                                {playerBuckets.map(({ character }, idx) => {
                                     const hpPct = character?.hpPercent ?? 0
                                     const resPct = character?.resourcePercent ?? 0
                                     const isDead = character?.isDead ?? false

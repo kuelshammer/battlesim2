@@ -27,7 +27,7 @@ const ImportModal: FC<PropType> = ({ onImport, onCancel }) => {
             let rawData;
             try {
                 rawData = JSON.parse(cleaned);
-            } catch (e) {
+            } catch {
                 setError("Failed to parse JSON syntax. Please check for missing braces or extra characters.");
                 return;
             }

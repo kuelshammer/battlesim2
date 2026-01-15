@@ -1,24 +1,24 @@
 // @ts-nocheck - Temporarily excluded: legacy actions need migration to new schema (37 remaining)
 import ClassOptions from '../model/classOptions'
-import { Action, AtkAction, Creature, DiceFormula, HealAction } from "../model/model"
+import { Action, Creature } from "../model/model"
 import { z } from 'zod'
-import { getMonster, DefaultMonsters } from './monsters'
+import { DefaultMonsters } from './monsters'
 import { v4 as uuid } from 'uuid'
 import { ActionSlots } from '../model/enums'
 import { calculateSpellSlots } from '../model/spellSlots'
-import { clone } from '../model/utils'
 
-// TODO: 
+// TODO:
 // 1) Add more options to the templates
 // 2) Find a way to handle multiclasses
 
-function artificer(level: number, options: z.infer<typeof ClassOptions.artificer>): Creature {
+/* eslint-disable @typescript-eslint/no-unused-vars -- Class template options kept for future use */
+
+function artificer(level: number, _options: z.infer<typeof ClassOptions.artificer>): Creature {
     const INT = scale(level, { 1: 4, 4: 5, 8: 5 })
     const CON = scale(level, { 1: 2, 12: 3, 16: 4, 19: 5 })
     const PB = pb(level)
     const ac = scale(level, { 1: 17, 3: 18, 5: 19, 10: 20, 15: 21, 20: 22 })
     const toHit = INT + PB
-    const DC = 8 + PB + INT
 
     const fireBolt = `${cantrip(level)}d10`
     const arcaneFireArm = scale(level, { 1: '', 5: '+1d8[Arcane Firearm]' })
@@ -242,7 +242,7 @@ function barbarian(level: number, options: z.infer<typeof ClassOptions.barbarian
 }
 
 
-function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creature {
+function bard(level: number, _options: z.infer<typeof ClassOptions.bard>): Creature {
     const CON = 2
     const CHA = scale(level, { 1: 4, 4: 5, 8: 5 })
     const DEX = scale(level, { 1: 2, 12: 3, 16: 4 })
@@ -342,7 +342,7 @@ function bard(level: number, options: z.infer<typeof ClassOptions.bard>): Creatu
     }
 }
 
-function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Creature {
+function cleric(level: number, _options: z.infer<typeof ClassOptions.cleric>): Creature {
     const CON = 2
     const WIS = scale(level, { 1: 4, 4: 5, 8: 5 })
     const PB = pb(level)
@@ -449,12 +449,11 @@ function cleric(level: number, options: z.infer<typeof ClassOptions.cleric>): Cr
     }
 }
 
-function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Creature {
+function druid(level: number, _options: z.infer<typeof ClassOptions.druid>): Creature {
     const CON = 2
     const DEX = 2
     const WIS = scale(level, { 1: 4, 4: 5, 8: 5 })
     const PB = pb(level)
-    const DC = 8 + PB + WIS
     const toHit = PB + WIS
 
     const spellSlots = calculateSpellSlots(level, 'full')
@@ -468,7 +467,7 @@ function druid(level: number, options: z.infer<typeof ClassOptions.druid>): Crea
     }
 
     const wildshape = scale<Creature>(level, {
-        1: { name: 'None', hp: 0, ac: 10, actions: [] } as any, // Placeholder for lvl 1
+        1: { name: 'None', hp: 0, ac: 10, actions: [] } as unknown as Creature, // Placeholder for lvl 1
         2: DefaultMonsters.find(m => m.name === 'Dire Wolf')!,
         6: DefaultMonsters.find(m => m.name === 'Giant Constrictor Snake')!,
         9: DefaultMonsters.find(m => m.name === 'Giant Scorpion')!,
@@ -667,7 +666,7 @@ function fighter(level: number, options: z.infer<typeof ClassOptions.fighter>): 
     }
 }
 
-function monk(level: number, options: z.infer<typeof ClassOptions.monk>): Creature {
+function monk(level: number, _options: z.infer<typeof ClassOptions.monk>): Creature {
     const CON = 2
     const DEX = scale(level, { 1: 4, 4: 5, 8: 5 })
     const WIS = scale(level, { 1: 3, 4: 4, 12: 5 })
@@ -778,7 +777,7 @@ function monk(level: number, options: z.infer<typeof ClassOptions.monk>): Creatu
     }
 }
 
-function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): Creature {
+function paladin(level: number, _options: z.infer<typeof ClassOptions.paladin>): Creature {
     const CON = 2
     const STR = scale(level, { 1: 4, 4: 5, 8: 5 })
     const CHA = scale(level, { 1: 3, 4: 4, 12: 5 })
@@ -887,7 +886,6 @@ function paladin(level: number, options: z.infer<typeof ClassOptions.paladin>): 
 function ranger(level: number, options: z.infer<typeof ClassOptions.ranger>): Creature {
     const CON = 2
     const DEX = scale(level, { 1: 4, 4: 5, 8: 5 })
-    const WIS = scale(level, { 1: 3, 4: 4, 12: 5 })
     const PB = pb(level)
     const ac = DEX + scale(level, { 1: 12, 5: 13, 11: 14 })
     const toHit = `${PB}[PB] + ${DEX}[DEX]`
@@ -956,7 +954,7 @@ function ranger(level: number, options: z.infer<typeof ClassOptions.ranger>): Cr
     }
 }
 
-function rogue(level: number, options: z.infer<typeof ClassOptions.rogue>): Creature {
+function rogue(level: number, _options: z.infer<typeof ClassOptions.rogue>): Creature {
     const CON = 2
     const DEX = scale(level, { 1: 4, 4: 5, 10: 5 })
     const PB = pb(level)
@@ -1046,7 +1044,7 @@ function rogue(level: number, options: z.infer<typeof ClassOptions.rogue>): Crea
     }
 }
 
-function sorcerer(level: number, options: z.infer<typeof ClassOptions.sorcerer>): Creature {
+function sorcerer(level: number, _options: z.infer<typeof ClassOptions.sorcerer>): Creature {
     const CON = 2
     const DEX = 2
     const CHA = scale(level, { 1: 4, 4: 5, 8: 5 })
@@ -1116,7 +1114,7 @@ function sorcerer(level: number, options: z.infer<typeof ClassOptions.sorcerer>)
     }
 }
 
-function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): Creature {
+function warlock(level: number, _options: z.infer<typeof ClassOptions.warlock>): Creature {
     const CON = 2
     const DEX = 2
     const CHA = scale(level, { 1: 4, 4: 5, 8: 5 })
@@ -1185,7 +1183,7 @@ function warlock(level: number, options: z.infer<typeof ClassOptions.warlock>): 
     }
 }
 
-function wizard(level: number, options: z.infer<typeof ClassOptions.wizard>): Creature {
+function wizard(level: number, _options: z.infer<typeof ClassOptions.wizard>): Creature {
     const CON = 2
     const DEX = 2
     const INT = scale(level, { 1: 4, 4: 5, 8: 5 })
@@ -1332,12 +1330,6 @@ export const PlayerTemplates = {
 
 /*  UTILS   */
 
-const acTION = 0
-const BONUS_ACTION = 1
-const REACTION = 4
-const PASSIVE = 5
-const RIDER_EFFECT = 6
-
 function scale<T>(currentLevel: number, levelScale: { [minLevel: number]: T }): T {
     const keys = Object.keys(levelScale).map(Number);
     const applicableLevels = keys.filter(scaleLevel => (scaleLevel <= currentLevel));
@@ -1363,19 +1355,6 @@ function scaleArray<T>(currentLevel: number, minLevelScale: { [minLevel: number]
     ]
 }
 
-function multiattack(level: number, expr: DiceFormula) {
-    if (level < 5) return expr
-
-    return `(${expr})*2`
-}
-
-const ADVANTAGE = 4.5
-const DISADVANTAGE = -4.5
-const d4 = 2.5
-const d6 = 3.5
-const d8 = 4.5
-const d10 = 5.5
-const d12 = 6.5
 const cantrip = (level: number) => scale(level, { 1: 1, 5: 2, 11: 3, 17: 4 })
 
 function hp(level: number, dieSize: number, con: number) {

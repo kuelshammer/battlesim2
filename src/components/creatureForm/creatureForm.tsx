@@ -1,5 +1,5 @@
 import { FC, useEffect, useState, useRef } from "react"
-import { Action, Creature, CreatureSchema } from "@/model/model"
+import { Creature, CreatureSchema } from "@/model/model"
 import { clone } from "@/model/utils"
 import styles from './creatureForm.module.scss'
 import PlayerForm from "./playerForm"

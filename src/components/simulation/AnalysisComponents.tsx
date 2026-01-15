@@ -1,10 +1,10 @@
 import { FC, memo, useMemo } from "react"
-import { AggregateOutput, DecileStats, CombatantVisualization, Vitals } from "@/model/model"
+import { AggregateOutput } from "@/model/model"
 import styles from './encounterResult.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { 
-    faBrain, faTrophy, faCheckCircle, faExclamationTriangle, 
-    faBolt, faSkull, faGasPump, faCompass, faExclamationCircle 
+import {
+    faBrain, faTrophy, faCheckCircle, faExclamationTriangle,
+    faBolt, faSkull, faGasPump, faCompass, faExclamationCircle
 } from "@fortawesome/free-solid-svg-icons"
 
 const formatLabel = (label: string): string => {
@@ -296,6 +296,7 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
 
     if (!medianDecile) return null;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const getHpBarColor = (hpPercentage: number, isDead: boolean): string => {
         if (isDead) return styles.dead;
         if (hpPercentage <= 20) return styles.danger;

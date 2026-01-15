@@ -20,7 +20,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       } else {
         res.status(404).json({ error: 'File not found' })
       }
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to delete' })
     }
   } else if (req.method === 'GET') {
@@ -31,7 +31,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       } else {
         res.status(404).json({ error: 'File not found' })
       }
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to load' })
     }
   } else {

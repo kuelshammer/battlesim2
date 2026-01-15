@@ -2,8 +2,6 @@ import type { Event } from './model'
 import type {
   Replay,
   ReplayRound,
-  ReplayTurn,
-  ReplayAction,
   ParseState
 } from './replayTypes'
 

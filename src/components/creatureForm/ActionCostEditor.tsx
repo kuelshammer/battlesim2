@@ -3,7 +3,7 @@ import { ActionCost } from '@/model/model'
 import { ResourceTypeList } from '@/model/enums'
 import Select from '@/utils/select'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash, faPlus, faExchange } from '@fortawesome/free-solid-svg-icons' // faExchangeAlt? faRetweet? faRandom? Using faExchange for swapping types
+import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { faRandom } from '@fortawesome/free-solid-svg-icons'
 import styles from './actionForm.module.scss'
 

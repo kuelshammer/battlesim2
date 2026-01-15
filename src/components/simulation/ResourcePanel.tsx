@@ -8,7 +8,7 @@ import {
     faHeart, faPlus, faStar, faShoePrints,
     faMagic, faShieldHalved
 } from '@fortawesome/free-solid-svg-icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

@@ -13,7 +13,6 @@ import {
   faShieldAlt,
   faSkull,
   faHeart,
-  faArrowRight,
   faMagic,
   faBolt,
   faUser,
@@ -22,7 +21,6 @@ import {
   faExchangeAlt,
   faUserFriends,
   faList,
-  faCheck,
   faHand,
   faChevronDown,
   faFire
@@ -176,55 +174,6 @@ const SubEventCard: FC<{ event: Event; index: number }> = ({ event, index }) => 
 }
 
 /**
- * Generate a brief summary for an action's sub-events
- */
-const getActionSummary = (subEvents: Event[]): string => {
-  if (!subEvents || subEvents.length === 0) return 'No events'
-
-  const types = subEvents.map(e => e.type)
-
-  if (types.includes('AttackHit')) {
-    const hit = subEvents.find(e => e.type === 'AttackHit')
-    const target = (hit as any)?.target_id || 'unknown'
-    const damage = subEvents.find(e => e.type === 'DamageTaken')
-    const amount = damage ? (damage as any).damage : 0
-    return `Hit ${target} for ${amount} damage`
-  }
-
-  if (types.includes('AttackMissed')) {
-    const miss = subEvents.find(e => e.type === 'AttackMissed')
-    const target = (miss as any)?.target_id || 'unknown'
-    return `Missed ${target}`
-  }
-
-  if (types.includes('HealingApplied')) {
-    const heal = subEvents.find(e => e.type === 'HealingApplied')
-    const amount = (heal as any)?.amount || 0
-    return `Healed for ${amount}`
-  }
-
-  if (types.includes('BuffApplied')) {
-    const buff = subEvents.find(e => e.type === 'BuffApplied')
-    const buffId = (buff as any)?.buff_id || 'buff'
-    return `Applied ${buffId}`
-  }
-
-  if (types.includes('ConditionAdded')) {
-    const cond = subEvents.find(e => e.type === 'ConditionAdded')
-    const condition = (cond as any)?.condition || 'condition'
-    return `Added ${condition}`
-  }
-
-  if (types.includes('SpellCast')) {
-    const spell = subEvents.find(e => e.type === 'SpellCast')
-    const spellId = (spell as any)?.spell_id || 'spell'
-    return `Cast ${spellId}`
-  }
-
-  return `${subEvents.length} events`
-}
-
-/**
  * Get action icon based on action type or sub-events
  */
 const getActionIcon = (actionId: string, subEvents: Event[]) => {
@@ -249,7 +198,7 @@ const getActionIcon = (actionId: string, subEvents: Event[]) => {
 /**
  * Calculate damage dealt, taken, and healing for an action
  */
-const calculateActionStats = (actorId: string, subEvents: Event[]) => {
+const calculateActionStats = (_actorId: string, subEvents: Event[]) => {
   let damageDealt = 0
   let damageTaken = 0
   let healingDone = 0
@@ -257,7 +206,7 @@ const calculateActionStats = (actorId: string, subEvents: Event[]) => {
   for (const event of subEvents) {
     if (event.type === 'DamageTaken') {
       const evt = event as any
-      if (evt.target_id === actorId) {
+      if (evt.target_id === _actorId) {
         damageTaken += evt.damage || 0
       } else {
         damageDealt += evt.damage || 0
@@ -265,7 +214,7 @@ const calculateActionStats = (actorId: string, subEvents: Event[]) => {
     }
     if (event.type === 'HealingApplied') {
       const evt = event as any
-      if (evt.target_id === actorId) {
+      if (evt.target_id === _actorId) {
         healingDone += evt.amount || 0
       } else {
         healingDone += evt.amount || 0
@@ -403,6 +352,7 @@ interface ActionCardProps {
   onSeek: (index: number) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ActionCard: FC<ActionCardProps> = ({ action, actorId, actionIndex, isActive, onSeek }) => {
   const icon = getActionIcon(action.actionId, action.subEvents)
   const resultText = getActionResultText(action.subEvents)
@@ -661,6 +611,7 @@ const SyncLogPanel: FC<SyncLogPanelProps> = ({
   }
 
   // Build a lookup map: actionIndex → FlattenedAction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const actionMap = useMemo(() => {
     const map = new Map<number, FlattenedAction>()
     actions.forEach(a => map.set(a.index, a))
@@ -750,7 +701,8 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
   open,
   onOpenChange
 }) => {
-  const [showGlobalEvents, setShowGlobalEvents] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+const [showGlobalEvents, setShowGlobalEvents] = useState(false)
 
   const playback = useCombatPlayback(replay, {
     autoAdvanceInterval: 800
@@ -765,8 +717,10 @@ export const CombatReplayModal: FC<CombatReplayModalProps> = ({
     progress,
     nextAction,
     prevAction,
-    play,
-    pause,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  play,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  pause,
     togglePlay,
     seekToStart,
     seekToEnd,

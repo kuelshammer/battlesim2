@@ -1,6 +1,5 @@
 import Head from 'next/head'
 import React from 'react'
-import Link from 'next/link'
 import RGPD from '../components/utils/rgpd'
 import Logo from '../components/utils/logo'
 import Footer from '../components/utils/footer'

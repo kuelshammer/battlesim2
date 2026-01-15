@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileImport } from "@fortawesome/free-solid-svg-icons";
 import { Creature } from "@/model/model";
 import ImportModal from "./ImportModal";
-import styles from "./creatureForm.module.scss"; // Reuse some styles
 
 type PropType = {
     onImport: (creature: Creature) => void;

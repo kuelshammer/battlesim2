@@ -1,4 +1,4 @@
-import { AnyRoll, DiceRoller, FullRoll, GroupedRoll, InlineExpression, MathExpression, MathOperation, NumberType, RollExpression, RollExpressionType, RollOrExpression, RootType } from "dice-roller-parser"
+import { AnyRoll, DiceRoller, FullRoll, GroupedRoll, InlineExpression, MathExpression, NumberType, RollExpression, RollExpressionType, RollOrExpression, RootType } from "dice-roller-parser"
 import { range } from "./utils"
 
 /** Options applied to the root evaluation, and used if the appropriate condition is met */
@@ -11,9 +11,9 @@ export function validateDiceFormula(expr: number|string) {
     if (typeof expr === 'number' || !isNaN(+expr)) return true
 
     try {
-        const roll = roller.parse(expr.trim())
+        roller.parse(expr.trim())
         return true
-    } catch (e) {
+    } catch {
         return false
     }
 }
@@ -43,22 +43,22 @@ function evaluateUnknown(roll: RootType|AnyRoll|RollExpression|RollOrExpression,
     }
 }
 
-function evaluateNumber(roll: NumberType, options: EvaluationOptions): number {
+function evaluateNumber(roll: NumberType): number {
     return roll.value
 }
 
 function evaluateDie(roll: FullRoll, luck: number, options: EvaluationOptions) {
     const countMultiplier = options.doubleDice ? 2 : 1
     const count = countMultiplier * (
-        (roll.count.type === 'number') ? evaluateNumber(roll.count, options) : evaluateMathExpr(roll.count, luck, options)
+        (roll.count.type === 'number') ? evaluateNumber(roll.count) : evaluateMathExpr(roll.count, luck, options)
     )
 
-    const die = (roll.die.type === "number") ? evaluateNumber(roll.die, options)
+    const die = (roll.die.type === "number") ? evaluateNumber(roll.die)
         : (roll.die.type === 'expression') ? evaluateMathExpr(roll.die, luck, options)
         : 0
 
     let result = count * (die + 1) * luck
-    
+
     // TODO: handle multiple mods simultaneously instead of replacing the result
     for (const mod of roll.mods || []) {
         if (mod.type === 'explode') {
@@ -66,11 +66,11 @@ function evaluateDie(roll: FullRoll, luck: number, options: EvaluationOptions) {
         } else if (mod.type === 'keep') {
             const keep = evaluateUnknown(mod.expr, luck, options)
 
-            result = keepHighestLowest(count, die, keep, (mod.highlow === "l") ? 'min' : 'max', luck, options)
+            result = keepHighestLowest(count, die, keep, (mod.highlow === "l") ? 'min' : 'max', luck)
         } else if (mod.type === 'drop') {
             const drop = evaluateUnknown(mod.expr, luck, options)
 
-            result = keepHighestLowest(count, die, count - drop, (mod.highlow === "l") ? 'max' : 'min', luck, options)
+            result = keepHighestLowest(count, die, count - drop, (mod.highlow === "l") ? 'max' : 'min', luck)
         }
     }
 
@@ -102,7 +102,7 @@ function weightedDie(diceSize: number, luck: number) {
     })
 }
 
-function keepHighestLowest(diceCount: number, diceSize: number, keepCount: number, which: 'min'|'max', luck: number, options: EvaluationOptions) {
+function keepHighestLowest(diceCount: number, diceSize: number, keepCount: number, which: 'min'|'max', luck: number) {
     if (diceSize === 0) return 0
 
     const sort = (a: number, b: number) => (which === 'min') ? (a-b) : (b-a)

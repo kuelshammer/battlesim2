@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculatePacingData } from './pacingUtils';
-import { TimelineEvent, FullAnalysisOutput } from '@/model/model';
+import { TimelineEvent } from '@/model/model';
 
 describe('calculatePacingData', () => {
     it('should return null if analysis is missing', () => {

@@ -11,12 +11,12 @@
  * - Performance with 100 buckets
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { CrosshairProvider, useCrosshair } from './CrosshairContext';
 import { AccessibilityProvider, useAccessibility } from './AccessibilityContext';
-import { PercentileBucket, CharacterBucketData, ResourceBreakdown } from '@/model/skylineTypes';
+import { PercentileBucket, CharacterBucketData } from '@/model/skylineTypes';
 
 // Mock data for testing
 const createMockBucket = (
@@ -278,7 +278,6 @@ describe('Skyline UI - E2E Tests', () => {
             // Simulate rendering overhead
             const totalHp = buckets.reduce((sum, b) => sum + b.partyHpPercent, 0);
             const totalRes = buckets.reduce((sum, b) => sum + b.partyResourcePercent, 0);
-            const deathCount = buckets.reduce((sum, b) => sum + b.deathCount, 0);
 
             const endTime = performance.now();
             const duration = endTime - startTime;

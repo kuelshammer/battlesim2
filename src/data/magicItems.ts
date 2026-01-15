@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid'
 import type { Buff } from "../model/model"
 
 export type MagicItemTemplateName = keyof typeof MagicItemTemplates;

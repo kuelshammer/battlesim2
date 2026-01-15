@@ -25,14 +25,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
               players: content.players,
               timeline: content.timeline || content.encounters || []
             }
-          } catch (e) {
+          } catch {
             return null
           }
         })
         .filter(s => s !== null)
       
       res.status(200).json(saves)
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to load saves' })
     }
   } else if (req.method === 'POST') {
@@ -41,11 +41,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!name) {
         return res.status(400).json({ error: 'Name is required' })
       }
-      
+
       if (!fs.existsSync(SAVES_DIR)) {
         fs.mkdirSync(SAVES_DIR)
       }
-      
+
       const filePath = path.join(SAVES_DIR, `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`)
       const content = {
         name,
@@ -53,10 +53,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         timeline,
         updated: Date.now()
       }
-      
+
       fs.writeFileSync(filePath, JSON.stringify(content, null, 2))
       res.status(200).json({ success: true })
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: 'Failed to save' })
     }
   } else {

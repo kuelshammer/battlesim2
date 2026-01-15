@@ -28,8 +28,6 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
         setExpandedEvents(newExpanded);
     };
 
-    const getActionName = (id: string) => actionNames[id] || id;
-
     const filteredEvents = useMemo(() => {
         if (filter === 'all') return events;
 
@@ -118,7 +116,7 @@ const EventLog: FC<Props> = ({ events, combatantNames, actionNames = {}, isModal
         }
 
         const summary = LogFormatter.toSummary(event, combatantNames, actionNames);
-        const details = hasDetails ? LogFormatter.toDetails(event, combatantNames, actionNames) : null;
+        const details = hasDetails ? LogFormatter.toDetails(event, combatantNames) : null;
 
         return (
             <div

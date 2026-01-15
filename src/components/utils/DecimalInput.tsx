@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 
 type PropType = {
     value: number|undefined,
@@ -8,11 +8,10 @@ type PropType = {
     step?: number,
     className?: string,
     placeholder?: string,
-    disabled?: string,
     'data-testid'?: string,
 }
 
-const DecimalInput:FC<PropType> = ({ value, onChange, min, max, step, className, placeholder, disabled, 'data-testid': testId }) => {
+const DecimalInput:FC<PropType> = ({ value, onChange, min, max, step, className, placeholder, 'data-testid': testId }) => {
     const [valueString, setValueString] = useState(String(value))
 
     const valueNum = +valueString // Can be NaN

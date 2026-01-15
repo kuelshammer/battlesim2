@@ -1,4 +1,4 @@
-import { FC, useLayoutEffect, useRef, useMemo } from "react"
+import { FC, useMemo } from "react"
 import { Virtuoso } from 'react-virtuoso'
 import styles from './simulation.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -56,8 +56,7 @@ function parseEventText(text: string): React.ReactNode {
     // Find keywords (HIT, CRIT, miss)
     while ((match = keywordRegex.exec(text)) !== null) {
         const keyword = match[0]
-        const type = keyword === 'miss' ? 'hit' : (keyword === 'CRIT' ? 'crit' : 'hit')
-        matches.push({ start: match.index, end: match.index + keyword.length, type, content: keyword })
+        matches.push({ start: match.index, end: match.index + keyword.length, type: 'hit', content: keyword })
     }
     keywordRegex.lastIndex = 0
 
@@ -65,17 +64,17 @@ function parseEventText(text: string): React.ReactNode {
     matches.sort((a, b) => a.start - b.start)
 
     // Build parsed output
-    matches.forEach((m, i) => {
+    matches.forEach((_m, i) => {
         // Add text before this match
-        if (m.start > lastIndex) {
-            parts.push(text.slice(lastIndex, m.start))
+        if (_m.start > lastIndex) {
+            parts.push(text.slice(lastIndex, _m.start))
         }
 
         // Add styled match (React auto-escapes content - no XSS risk)
-        const className = styles[m.type as keyof typeof styles] || ''
-        parts.push(<span key={i} className={className}>{m.content}</span>)
+        const className = styles[_m.type as keyof typeof styles] || ''
+        parts.push(<span key={i} className={className}>{_m.content}</span>)
 
-        lastIndex = m.end
+        lastIndex = _m.end
     })
 
     // Add remaining text
@@ -122,15 +121,15 @@ const EventLog: FC<EventLogProps> = ({ events, title = "Combat Chronicle" }) => 
                     style={{ height: '60vh' }}
                     className={styles.grimoireContent}
                     data={events}
-                    itemContent={(index, event) => (
+                    itemContent={(index) => (
                         <div className={styles.grimoireEntry} role="listitem">
                             <FontAwesomeIcon icon={faFireFlameSimple} className={styles.ember} aria-hidden="true" />
                             <span className={styles.chronicleText}>{parsedEvents[index]}</span>
                         </div>
                     )}
                     components={{
-                        List: ({ children, ...props }) => (
-                            <div {...props} aria-label={`${title} - ${eventCount} events`} role="list">
+                        List: ({ children }) => (
+                            <div aria-label={`${title} - ${eventCount} events`} role="list">
                                 {children}
                             </div>
                         ),

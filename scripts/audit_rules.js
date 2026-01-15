@@ -27,16 +27,9 @@ console.log(`🕵️  Starting 5e Rule Audit across ${runs.length} runs...`);
 
 runs.forEach((run, runIndex) => {
     const events = run.events;
-    
+
     // State trackers
     let currentRound = 0;
-    let currentActor = null;
-    let turnUsage = {
-        action: 0,
-        bonusAction: 0,
-        movement: 0,
-        spells: []
-    };
     const roundUsage = {
         reactions: new Map() // actorId -> count
     };
@@ -44,7 +37,7 @@ runs.forEach((run, runIndex) => {
     // Global concentration map: casterId -> { spellId, startTime }
     const activeConcentration = new Map();
 
-    events.forEach((event, index) => {
+    events.forEach((event) => {
         const type = event.type;
         const actorId = (event.actor_id || event.attacker_id || event.caster_id || event.unit_id);
 
@@ -87,8 +80,3 @@ if (violations.length === 0) {
     });
     process.exit(1);
 }
-
-// Helpers for string parsing (if needed)
-function extractType(str) { return str.includes('starts turn') ? 'TurnStarted' : ''; }
-function extractActor(str) { return str.split(' ')[0]; }
-function extractRound(str) { return 1; }

@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import { FC, useEffect } from "react"
 import { Creature } from "@/model/model"
 import styles from './playerForm.module.scss'
 import { Class, ClassesList } from "@/model/enums"

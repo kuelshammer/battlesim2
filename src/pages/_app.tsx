@@ -32,7 +32,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
     if (typeof globalThis !== 'undefined' && typeof (globalThis as { crypto?: Crypto }).crypto === 'undefined') {
       (globalThis as { crypto?: Crypto }).crypto = cryptoWrapper;
     }
-  } catch (e) {
+  } catch {
     // Silently handle crypto polyfill errors in production
   }
 
@@ -40,7 +40,7 @@ if (typeof window !== 'undefined' && typeof window.crypto !== 'undefined') {
     if (typeof self !== 'undefined' && self !== window && typeof self.crypto === 'undefined') {
       (self as { crypto: Crypto }).crypto = cryptoWrapper;
     }
-  } catch (e) {
+  } catch {
     // Silently handle crypto polyfill errors in production
   }
 } else {

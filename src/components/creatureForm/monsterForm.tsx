@@ -89,12 +89,12 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
                 <div className={styles.creatureTypes}>
                     <button 
                         onClick={() => setCreatureType(defaultTypeFilter)} 
-                        className={!Object.entries(creatureType).find(([_, b]) => !b) ? styles.active : undefined}>
+                        className={!Object.entries(creatureType).find(([_]) => !b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
                             All
                     </button>
                     <button 
                         onClick={() => setCreatureType(Object.fromEntries(Object.keys(creatureType).map(t => [t, false])) as any)} 
-                        className={!Object.entries(creatureType).find(([_, b]) => b) ? styles.active : undefined}>
+                        className={!Object.entries(creatureType).find(([_]) => b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
                             None
                     </button>
                     { CreatureTypeList.map(type => (

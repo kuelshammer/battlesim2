@@ -58,9 +58,10 @@ export const SimulationResults: React.FC = () => {
   );
 };
 
-const LoadingSkeleton: React.FC<{ className?: string }> = ({ className }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Kept for future use
+const _LoadingSkeleton: React.FC = () => {
   return (
-    <div className={`animate-pulse ${className || ''}`}>
+    <div className="animate-pulse">
       <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
       <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
       <div className="h-4 bg-gray-200 rounded w-5/6"></div>

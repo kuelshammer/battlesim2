@@ -1,5 +1,5 @@
 import { FC, useMemo } from "react"
-import { Combattant, Round } from "@/model/model"
+import { Round } from "@/model/model"
 import styles from './ActionEconomyDisplay.module.scss'
 
 // Action economy state enum

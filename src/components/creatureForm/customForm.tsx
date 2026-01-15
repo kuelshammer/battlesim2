@@ -1,4 +1,4 @@
-import { FC, ReactNode, useState } from "react"
+import { FC, useState } from "react"
 import { Action, Creature } from "@/model/model"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFolder, faPlus, faSave, faCog } from "@fortawesome/free-solid-svg-icons"

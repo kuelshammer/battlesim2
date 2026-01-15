@@ -1,6 +1,5 @@
 import { FC, useRef, useEffect } from 'react'
 import { SkylineAnalysis, Combattant } from '@/model/model'
-import { SkylineCanvasConfig } from '@/model/skylineTypes'
 import styles from './SkylineHeatmap.module.scss'
 
 interface SkylineHeatmapProps {
@@ -21,14 +20,12 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-        const { width, height } = canvas
+        const { width: canvasWidth } = canvas
         const padding = { top: 30, right: 20, bottom: 40, left: 60 }
-        const chartWidth = width - padding.left - padding.right
         const chartHeight = 200 // Fixed height for the 100px upper + 100px lower
 
         const numBuckets = skyline.buckets.length
-        const bucketWidth = chartWidth / numBuckets
-        const barWidth = bucketWidth * 0.9 // 90% of bucket width for the bar
+        const chartWidth = canvasWidth - padding.left - padding.right
 
         // Find matching characters for each player
         const playerData = players.map(player => {

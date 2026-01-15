@@ -5,7 +5,7 @@
  * Only visible in development mode.
  */
 
-import React, { FC, useEffect, useState, useCallback } from 'react'
+import React, { FC, useEffect, useState } from 'react'
 import styles from './PerformanceDashboard.module.scss'
 
 export interface PerformanceMetrics {

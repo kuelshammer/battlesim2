@@ -9,7 +9,6 @@
  */
 
 import React, { memo, useCallback, useMemo } from 'react';
-import SkylineCanvas from './SkylineCanvas';
 import styles from './hpSkyline.module.scss';
 import {
     SkylineAnalysis,
@@ -343,18 +342,7 @@ const HPSkyline: React.FC<HPSkylineProps> = memo(({
         });
     }, [analysisData.buckets, characterFilter]);
 
-    const handleBucketHover = useCallback((bucketIndex: number | null, charId: string) => {
-        setHoveredBucket(bucketIndex);
-        if (bucketIndex === null) {
-            setHoveredCharId(null);
-            onHover?.({ hoveredBucket: null, hoveredCharacter: null });
-        } else {
-            setHoveredCharId(charId);
-            onHover?.({ hoveredBucket: bucketIndex, hoveredCharacter: charId });
-        }
-    }, [onHover]);
-
-    const handleBucketClick = useCallback((bucket: any) => {
+    const handleBucketClick = useCallback((bucket: any) => { // eslint-disable-line @typescript-eslint/no-unused-vars
         onBucketClick?.(bucket);
     }, [onBucketClick]);
 
@@ -376,7 +364,16 @@ const HPSkyline: React.FC<HPSkylineProps> = memo(({
                         width={canvasWidth}
                         height={canvasHeight}
                         colors={{ hp: DEFAULT_SKYLINE_COLORS }}
-                        onHover={(bucket) => handleBucketHover(bucket, charId)}
+                        onHover={(bucket) => {
+                            setHoveredBucket(bucket);
+                            if (bucket === null) {
+                                setHoveredCharId(null);
+                                onHover?.({ hoveredBucket: null, hoveredCharacter: null });
+                            } else {
+                                setHoveredCharId(charId);
+                                onHover?.({ hoveredBucket: bucket, hoveredCharacter: charId });
+                            }
+                        }}
                         hoveredBucket={hoveredCharId === charId ? hoveredBucket : null}
                     />
                 ))}

@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Simulation from './simulation';
 import React from 'react';
 import { useSimulationWorker } from '@/model/useSimulationWorker';
-import { Creature } from '@/model/model';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -38,10 +37,10 @@ vi.mock('@fortawesome/react-fontawesome', () => ({
 
 // Mock useStoredState to provide a monster
 vi.mock('@/model/utils', async () => {
-    const actual = await vi.importActual('@/model/utils') as any;
+    const actual = await vi.importActual<any>('@/model/utils');
     return {
         ...actual,
-        useStoredState: vi.fn((key, defaultValue, parser) => {
+        useStoredState: vi.fn((key, defaultValue) => {
             if (key === 'timeline') {
                 return [[{
                     type: 'combat',
