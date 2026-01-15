@@ -49,23 +49,23 @@ const HeartbeatGraph: FC<HeartbeatGraphProps> = ({ encounters, className }) => {
     }, [points]);
 
     return (
-        <div className={`${styles.heartbeatGraph} ${className || ''}`}>
-            <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
+        <div className={`${styles.heartbeatGraph} ${className || ''}`} data-testid="heartbeat-graph">
+            <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" data-testid="heartbeat-svg">
                 {/* Background Zones */}
-                <rect x={padding.left} y={padding.top} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.5} fill="rgba(239, 68, 68, 0.05)" /> {/* Red Zone */}
-                <rect x={padding.left} y={padding.top + (height - padding.top - padding.bottom) * 0.5} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.3} fill="rgba(245, 158, 11, 0.05)" /> {/* Yellow Zone */}
-                <rect x={padding.left} y={padding.top + (height - padding.top - padding.bottom) * 0.8} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.2} fill="rgba(34, 197, 94, 0.05)" /> {/* Green Zone */}
+                <rect x={padding.left} y={padding.top} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.5} fill="rgba(239, 68, 68, 0.05)" data-testid="zone-lethal" /> {/* Red Zone */}
+                <rect x={padding.left} y={padding.top + (height - padding.top - padding.bottom) * 0.5} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.3} fill="rgba(245, 158, 11, 0.05)" data-testid="zone-risky" /> {/* Yellow Zone */}
+                <rect x={padding.left} y={padding.top + (height - padding.top - padding.bottom) * 0.8} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.2} fill="rgba(34, 197, 94, 0.05)" data-testid="zone-safe" /> {/* Green Zone */}
 
                 {/* Grid Lines */}
                 <line x1={padding.left} y1={height - padding.bottom} x2={width - padding.right} y2={height - padding.bottom} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
                 
                 {/* Tension Line */}
-                <path d={pathData} fill="none" stroke="#d4af37" strokeWidth="2" strokeLinejoin="round" className={styles.tensionPath} />
+                <path d={pathData} fill="none" stroke="#d4af37" strokeWidth="2" strokeLinejoin="round" className={styles.tensionPath} data-testid="tension-line" />
 
                 {/* Nodes */}
                 {points.map((p, i) => (
-                    <g key={i} className={styles.node}>
-                        <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} />
+                    <g key={i} className={styles.node} data-testid={`graph-node-${i}`}>
+                        <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} data-testid={`node-circle-${i}`} />
                         <text x={p.x} y={height - 5} textAnchor="middle" className={styles.axisLabel}>{p.label}</text>
                     </g>
                 ))}
@@ -74,7 +74,7 @@ const HeartbeatGraph: FC<HeartbeatGraphProps> = ({ encounters, className }) => {
                 <text x={padding.left - 5} y={padding.top + 5} textAnchor="end" className={styles.axisLabel}>Lethal</text>
                 <text x={padding.left - 5} y={height - padding.bottom} textAnchor="end" className={styles.axisLabel}>Safe</text>
             </svg>
-            <div className={styles.title}>Projected Tension Arc</div>
+            <div className={styles.title} data-testid="graph-title">Projected Tension Arc</div>
         </div>
     );
 };

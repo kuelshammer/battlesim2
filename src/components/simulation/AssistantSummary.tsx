@@ -63,18 +63,18 @@ const AssistantSummary: React.FC<AssistantSummaryProps> = ({ pacingData }) => {
     const summary = getSummary();
 
     return (
-        <div className={styles.summaryContainer}>
-            <div className={`${styles.assessment} ${summary.statusClass}`}>
+        <div className={styles.summaryContainer} data-testid="assistant-summary">
+            <div className={`${styles.assessment} ${summary.statusClass}`} data-testid="assistant-assessment">
                 <div className={styles.title}>Assistant Assessment</div>
-                <div className={styles.message}>{summary.message}</div>
+                <div className={styles.message} data-testid="assistant-message">{summary.message}</div>
             </div>
             
-            <div className={`${styles.partyState} ${state.class}`}>
+            <div className={`${styles.partyState} ${state.class}`} data-testid="party-state">
                 <div className={styles.title}>Party State: {state.label}</div>
                 <div className={styles.message}>{state.desc}</div>
-                <div className={styles.metrics}>
-                    <span>❤️ Vitality: {Math.round(finalVitality)}%</span>
-                    <span>⚡ Power: {Math.round(finalPower)}%</span>
+                <div className={styles.metrics} data-testid="party-metrics">
+                    <span data-testid="final-vitality">❤️ Vitality: {Math.round(finalVitality)}%</span>
+                    <span data-testid="final-power">⚡ Power: {Math.round(finalPower)}%</span>
                 </div>
             </div>
         </div>

@@ -71,9 +71,9 @@ export const ValidationNotice: FC<{
     if (warnings.length === 0) return null;
 
     return (
-        <div className={styles.validationNotice}>
+        <div className={styles.validationNotice} data-testid="validation-notice">
             {warnings.map((w, i) => (
-                <div key={i} className={styles.warningItem}>
+                <div key={i} className={styles.warningItem} data-testid="validation-warning">
                     <FontAwesomeIcon icon={faExclamationCircle} /> {w}
                 </div>
             ))}
@@ -125,15 +125,15 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
     };
 
     return (
-        <div className={`${styles.vitalsDashboard} ${isPreliminary ? styles.isUpdating : ''}`}>
+        <div className={`${styles.vitalsDashboard} ${isPreliminary ? styles.isUpdating : ''}`} data-testid="vitals-dashboard">
             <div className={styles.vitalsGrid}>
                 {/* 1. Lethality Section */}
-                <div className={styles.vitalsCard}>
+                <div className={styles.vitalsCard} data-testid="vitals-lethality">
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faSkull} className={styles.iconLethality} />
                         <span>Lethality</span>
                     </div>
-                    <div className={styles.cardValue}>
+                    <div className={styles.cardValue} data-testid="lethality-value">
                         {Math.round(lethalityIndex * 100)}%
                     </div>
                     <div className={styles.cardLabel}>{getLethalityText(lethalityIndex)}</div>
@@ -144,19 +144,19 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                         />
                     </div>
                     {tpkRisk > 0.05 && (
-                        <div className={styles.tpkWarning}>
+                        <div className={styles.tpkWarning} data-testid="tpk-rate">
                             <FontAwesomeIcon icon={faExclamationTriangle} /> {Math.round(tpkRisk * 100)}% TPK Risk
                         </div>
                     )}
                 </div>
 
                 {/* 2. Attrition Section */}
-                <div className={styles.vitalsCard}>
+                <div className={styles.vitalsCard} data-testid="vitals-attrition">
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faGasPump} className={styles.iconAttrition} />
                         <span>Attrition</span>
                     </div>
-                    <div className={styles.cardValue}>
+                    <div className={styles.cardValue} data-testid="attrition-value">
                         {Math.round(attritionScore * 100)}%
                     </div>
                     <div className={styles.cardLabel}>{getAttritionText(attritionScore)}</div>
@@ -164,12 +164,12 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                 </div>
 
                 {/* 3. Thrilling Section */}
-                <div className={styles.vitalsCard}>
+                <div className={styles.vitalsCard} data-testid="vitals-thrilling">
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faBolt} className={styles.iconThrilling} />
                         <span>Thrilling</span>
                     </div>
-                    <div className={styles.cardValue}>
+                    <div className={styles.cardValue} data-testid="thrilling-value">
                         {deathsDoorIndex.toFixed(1)}
                     </div>
                     <div className={styles.cardLabel}>{getThrillingText(deathsDoorIndex)}</div>
@@ -177,7 +177,7 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                 </div>
 
                 {/* 4. Experience Section */}
-                <div className={styles.vitalsCard}>
+                <div className={styles.vitalsCard} data-testid="vitals-experience">
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faBrain} className={styles.iconExperience} />
                         <span>Experience</span>
@@ -190,7 +190,7 @@ export const VitalsDashboard: FC<{ analysis: AggregateOutput | null, isPrelimina
                 </div>
 
                 {/* 5. Forecast Section */}
-                <div className={styles.vitalsCard}>
+                <div className={styles.vitalsCard} data-testid="vitals-forecast">
                     <div className={styles.cardHeader}>
                         <FontAwesomeIcon icon={faCompass} className={styles.iconForecast} />
                         <span>Forecast ({pacingLabel})</span>
@@ -252,14 +252,14 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
     if (!ratingInfo) return null;
 
     return (
-        <div className={styles.encounterRating} style={{ backgroundColor: ratingInfo.color }}>
+        <div className={styles.encounterRating} style={{ backgroundColor: ratingInfo.color }} data-testid="encounter-rating">
             <div className={styles.ratingHeader}>
-                {ratingInfo.statusIcon && <FontAwesomeIcon icon={ratingInfo.statusIcon} className={styles.statusIcon} />}
-                <span className={styles.ratingTitle}>
+                {ratingInfo.statusIcon && <FontAwesomeIcon icon={ratingInfo.statusIcon} className={styles.statusIcon} data-testid="rating-status-icon" />}
+                <span className={styles.ratingTitle} data-testid="rating-title">
                     {ratingInfo.title}
                 </span>
                 {!isShortRest && (
-                    <div className={styles.intensityBolts}>
+                    <div className={styles.intensityBolts} data-testid="intensity-bolts">
                         {Array.from({ length: 4 }).map((_, i) => (
                             <FontAwesomeIcon 
                                 key={i} 
@@ -269,16 +269,16 @@ export const EncounterRating: FC<{ analysis: AggregateOutput | null, isPrelimina
                         ))}
                     </div>
                 )}
-                {isPreliminary && <span className={styles.preliminaryNotice}> (ESTIMATING...)</span>}
+                {isPreliminary && <span className={styles.preliminaryNotice} data-testid="preliminary-notice"> (ESTIMATING...)</span>}
             </div>
             
             {!isShortRest && (
-                <div className={styles.ratingSubline}>
+                <div className={styles.ratingSubline} data-testid="rating-tier">
                     <span>{ratingInfo.tier}</span>
                 </div>
             )}
 
-            <div className={styles.ratingDetails}>
+            <div className={styles.ratingDetails} data-testid="rating-summary">
                 <span>{ratingInfo.summary}</span>
             </div>
         </div>
@@ -323,30 +323,30 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
     };
 
     return (
-        <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`}>
+        <div className={`${styles.bestDecileDisplay} ${isPreliminary ? styles.isEstimating : ''}`} data-testid="median-performance-display">
             <h4>
                 {isDaySummary ? 'TYPICAL DAY END STATE' : 'TYPICAL ENCOUNTER END STATE'}
                 {isPreliminary && <small>(REFINE IN PROGRESS...)</small>}
             </h4>
             
             <div className={styles.bestDecileHeader}>
-                <div className={styles.survivorsBadge}>
+                <div className={styles.survivorsBadge} data-testid="survivors-count">
                     {medianDecile.medianSurvivors} / {medianDecile.partySize} Survivors
                 </div>
-                <div className={styles.winRateBadge}>
+                <div className={styles.winRateBadge} data-testid="win-rate">
                     {Math.round(medianDecile.winRate)}% Survival Rate
                 </div>
             </div>
 
-            <div className={styles.bestDecileCombatants}>
+            <div className={styles.bestDecileCombatants} data-testid="median-combatants">
                 {medianDecile.medianRunVisualization.map((c, i) => (
-                    <div key={i} className={styles.bestDecileCombatant}>
-                        <div className={styles.combatantName}>
-                            {c.name} {c.isDead && <span className={styles.deathIndicator}>(KO)</span>}
+                    <div key={i} className={styles.bestDecileCombatant} data-testid={`median-combatant-${i}`}>
+                        <div className={styles.combatantName} data-testid="creature-name">
+                            {c.name} {c.isDead && <span className={styles.deathIndicator} data-testid="death-indicator">(KO)</span>}
                         </div>
                         <div className={styles.hpBar}>
-                            <div className={styles.hpBarContainer}>
-                                <div className={styles.hpBarVisual}>
+                            <div className={styles.hpBarContainer} data-testid="hp-bar-container">
+                                <div className={styles.hpBarVisual} data-testid="hp-bar-visual">
                                     {renderHpBar(c.currentHp, c.startHp, c.maxHp).map((color, idx) => (
                                         <span key={idx} className={
                                             color === 'green' ? styles.segmentGreen :
@@ -355,7 +355,7 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
                                         }>█</span>
                                     ))}
                                 </div>
-                                <div className={styles.hpText}>
+                                <div className={styles.hpText} data-testid="hp-text">
                                     {c.currentHp} / {c.maxHp} HP
                                 </div>
                             </div>
@@ -365,10 +365,10 @@ export const MedianPerformanceDisplay: FC<{ analysis: AggregateOutput | null, is
             </div>
 
             <div className={styles.bestDecileMetrics}>
-                <div className={styles.metric}>
+                <div className={styles.metric} data-testid="attrition-cost">
                     Cost: <strong>{Math.round(medianDecile.hpLostPercent)}%</strong> daily budget
                 </div>
-                <div className={styles.metric}>
+                <div className={styles.metric} data-testid="battle-duration">
                     Duration: <strong>{medianDecile.battleDurationRounds}</strong> rounds
                 </div>
             </div>

@@ -38,79 +38,90 @@ const ActionCostEditor: FC<Props> = ({ value, onChange }) => {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }} data-testid="action-cost-editor">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9em', fontWeight: 'bold' }}>Costs:</span>
-                <button onClick={addCost} title="Add Cost">
+                <button onClick={addCost} title="Add Cost" data-testid="add-cost-btn">
                     <FontAwesomeIcon icon={faPlus} />
                 </button>
             </div>
-            {value.map((cost, index) => (
-                <div key={index} className={styles.modifier} style={{ marginTop: '4px' }}>
-                    <Select
-                        value={cost.resourceType}
-                        options={ResourceTypeList.map(r => ({ value: r, label: r }))}
-                        onChange={rt => updateCost(index, { ...cost, resourceType: rt })}
-                    />
-
-                    {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(cost.resourceType) && (
-                        <input
-                            type="text"
-                            value={cost.resourceVal || ''}
-                            onChange={e => updateCost(index, { ...cost, resourceVal: e.target.value })}
-                            placeholder={
-                                cost.resourceType === 'SpellSlot' ? 'Level' :
-                                    cost.resourceType === 'ClassResource' ? 'Name' :
-                                        cost.resourceType === 'ItemCharge' ? 'Item' :
-                                            cost.resourceType === 'HitDice' ? 'Die' :
-                                                'Value'
-                            }
-                            title="Resource Value (e.g. Spell Level, Resource Name)"
-                            style={{ width: '80px' }}
+            <div data-testid="costs-list">
+                {value.map((cost, index) => (
+                    <div key={index} className={styles.modifier} style={{ marginTop: '4px' }} data-testid={`cost-row-${index}`}>
+                        <Select
+                            value={cost.resourceType}
+                            options={ResourceTypeList.map(r => ({ value: r, label: r }))}
+                            onChange={rt => updateCost(index, { ...cost, resourceType: rt })}
+                            data-testid="cost-resource-type-select"
                         />
-                    )}
 
-                    {cost.type === 'Discrete' ? (
-                        <>
+                        {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(cost.resourceType) && (
                             <input
-                                type="number"
-                                value={cost.amount}
-                                onChange={e => updateCost(index, { ...cost, amount: Number(e.target.value) })}
-                                title="Amount"
-                                style={{ width: '45px' }}
+                                type="text"
+                                value={cost.resourceVal || ''}
+                                onChange={e => updateCost(index, { ...cost, resourceVal: e.target.value })}
+                                placeholder={
+                                    cost.resourceType === 'SpellSlot' ? 'Level' :
+                                        cost.resourceType === 'ClassResource' ? 'Name' :
+                                            cost.resourceType === 'ItemCharge' ? 'Item' :
+                                                cost.resourceType === 'HitDice' ? 'Die' :
+                                                    'Value'
+                                }
+                                title="Resource Value (e.g. Spell Level, Resource Name)"
+                                style={{ width: '80px' }}
+                                data-testid="cost-resource-val-input"
                             />
-                        </>
-                    ) : (
-                        <>
-                            <input
-                                type="number"
-                                value={cost.min}
-                                onChange={e => updateCost(index, { ...cost, min: Number(e.target.value) })}
-                                placeholder="Min"
-                                title="Min Amount"
-                                style={{ width: '45px' }}
-                            />
-                            -
-                            <input
-                                type="number"
-                                value={cost.max}
-                                onChange={e => updateCost(index, { ...cost, max: Number(e.target.value) })}
-                                placeholder="Max"
-                                title="Max Amount"
-                                style={{ width: '45px' }}
-                            />
-                        </>
-                    )}
+                        )}
 
-                    <button onClick={() => toggleType(index, cost)} title={cost.type === 'Discrete' ? "Switch to Variable" : "Switch to Fixed"}>
-                        <FontAwesomeIcon icon={faRandom} color={cost.type === 'Variable' ? '#4CAF50' : undefined} />
-                    </button>
+                        {cost.type === 'Discrete' ? (
+                            <>
+                                <input
+                                    type="number"
+                                    value={cost.amount}
+                                    onChange={e => updateCost(index, { ...cost, amount: Number(e.target.value) })}
+                                    title="Amount"
+                                    style={{ width: '45px' }}
+                                    data-testid="cost-amount-input"
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <input
+                                    type="number"
+                                    value={cost.min}
+                                    onChange={e => updateCost(index, { ...cost, min: Number(e.target.value) })}
+                                    placeholder="Min"
+                                    title="Min Amount"
+                                    style={{ width: '45px' }}
+                                    data-testid="cost-min-input"
+                                />
+                                -
+                                <input
+                                    type="number"
+                                    value={cost.max}
+                                    onChange={e => updateCost(index, { ...cost, max: Number(e.target.value) })}
+                                    placeholder="Max"
+                                    title="Max Amount"
+                                    style={{ width: '45px' }}
+                                    data-testid="cost-max-input"
+                                />
+                            </>
+                        )}
 
-                    <button onClick={() => removeCost(index)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                </div>
-            ))}
+                        <button 
+                            onClick={() => toggleType(index, cost)} 
+                            title={cost.type === 'Discrete' ? "Switch to Variable" : "Switch to Fixed"}
+                            data-testid="toggle-cost-type-btn"
+                        >
+                            <FontAwesomeIcon icon={faRandom} color={cost.type === 'Variable' ? '#4CAF50' : undefined} />
+                        </button>
+
+                        <button onClick={() => removeCost(index)} data-testid="delete-cost-btn">
+                            <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

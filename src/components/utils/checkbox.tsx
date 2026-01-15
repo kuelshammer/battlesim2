@@ -13,7 +13,9 @@ const Checkbox:FC<PropType> = ({ value, onToggle, children }) => {
     return (
         <button 
             className={`${styles.checkbox} ${value ? styles.checked : ''}`}
-            onClick={onToggle}>
+            onClick={onToggle}
+            data-testid="checkbox"
+        >
                 <FontAwesomeIcon icon={faCheck} />
                 {children}
         </button>

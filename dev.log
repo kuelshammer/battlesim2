@@ -1,0 +1,2299 @@
+
+> battlesim@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.2.94:3000
+
+ ✓ Starting...
+ ✓ Ready in 1703ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1402ms (1127 modules)
+ GET / 200 in 1993ms
+ GET / 200 in 222ms
+ GET / 200 in 224ms
+ GET / 200 in 225ms
+ GET / 200 in 224ms
+ GET / 200 in 232ms
+ GET / 200 in 227ms
+ GET / 200 in 221ms
+ GET / 200 in 223ms
+ GET / 200 in 232ms
+ GET / 200 in 234ms
+ GET / 200 in 227ms
+ GET / 200 in 223ms
+ GET / 200 in 224ms
+ GET / 200 in 222ms
+ GET / 200 in 221ms
+ GET / 200 in 230ms
+ GET / 200 in 224ms
+ GET / 200 in 224ms
+ GET / 200 in 225ms
+ GET / 200 in 221ms
+ GET / 200 in 224ms
+ GET / 200 in 228ms
+ GET / 200 in 221ms
+ GET / 200 in 223ms
+ GET / 200 in 232ms
+ GET / 200 in 232ms
+ GET / 200 in 220ms
+ GET / 200 in 223ms
+ GET / 200 in 222ms
+ GET / 200 in 229ms
+ GET / 200 in 222ms
+ GET / 200 in 225ms
+ GET / 200 in 224ms
+ GET / 200 in 233ms
+ GET / 200 in 233ms
+ GET / 200 in 231ms
+ GET / 200 in 232ms
+ GET / 200 in 229ms
+ GET / 200 in 229ms
+ GET / 200 in 224ms
+ GET / 200 in 227ms
+ GET / 200 in 223ms
+ GET / 200 in 231ms
+ GET / 200 in 251ms
+ GET / 200 in 223ms
+ GET / 200 in 232ms
+ GET / 200 in 229ms
+ GET / 200 in 276ms
+ GET / 200 in 222ms
+ GET / 200 in 230ms
+ GET / 200 in 250ms
+ GET / 200 in 220ms
+ GET / 200 in 250ms
+ GET / 200 in 228ms
+ GET / 200 in 223ms
+ GET / 200 in 220ms
+ GET / 200 in 231ms
+ GET / 200 in 232ms
+ GET / 200 in 218ms
+ GET / 200 in 225ms
+ GET / 200 in 232ms
+ GET / 200 in 273ms
+ GET / 200 in 223ms
+ GET / 200 in 226ms
+ GET / 200 in 221ms
+ GET / 200 in 280ms
+ GET / 200 in 245ms
+ GET / 200 in 218ms
+ GET / 200 in 222ms
+ ✓ Compiled in 508ms (1127 modules)
+ GET / 200 in 420ms
+ GET / 200 in 233ms
+ GET / 200 in 250ms
+ GET / 200 in 239ms
+ GET / 200 in 218ms
+ GET / 200 in 218ms
+ GET / 200 in 219ms
+ GET / 200 in 224ms
+ GET / 200 in 227ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 218ms
+ GET / 200 in 220ms
+ GET / 200 in 224ms
+ GET / 200 in 224ms
+ GET / 200 in 224ms
+ GET / 200 in 231ms
+ GET / 200 in 224ms
+ GET / 200 in 222ms
+ GET / 200 in 219ms
+ GET / 200 in 232ms
+ GET / 200 in 223ms
+ GET / 200 in 232ms
+ GET / 200 in 219ms
+ GET / 200 in 221ms
+ GET / 200 in 223ms
+ GET / 200 in 220ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 218ms
+ GET / 200 in 224ms
+ GET / 200 in 225ms
+ GET / 200 in 219ms
+ GET / 200 in 241ms
+ GET / 200 in 220ms
+ GET / 200 in 233ms
+ GET / 200 in 223ms
+ GET / 200 in 237ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 244ms
+ GET / 200 in 222ms
+ GET / 200 in 243ms
+ GET / 200 in 287ms
+ GET / 200 in 223ms
+ GET / 200 in 224ms
+ GET / 200 in 226ms
+ GET / 200 in 225ms
+ GET / 200 in 232ms
+ GET / 200 in 219ms
+ GET / 200 in 221ms
+ GET / 200 in 222ms
+ GET / 200 in 228ms
+ GET / 200 in 233ms
+ GET / 200 in 224ms
+ GET / 200 in 224ms
+ GET / 200 in 231ms
+ GET / 200 in 227ms
+ GET / 200 in 224ms
+ GET / 200 in 222ms
+ GET / 200 in 248ms
+ GET / 200 in 243ms
+ GET / 200 in 225ms
+ GET / 200 in 222ms
+ GET / 200 in 223ms
+ GET / 200 in 227ms
+ GET / 200 in 228ms
+ GET / 200 in 230ms
+ GET / 200 in 237ms
+ GET / 200 in 230ms
+ GET / 200 in 220ms
+ GET / 200 in 223ms
+ GET / 200 in 216ms
+ GET / 200 in 224ms
+ GET / 200 in 220ms
+ GET / 200 in 230ms
+ GET / 200 in 220ms
+ GET / 200 in 221ms
+ GET / 200 in 217ms
+ GET / 200 in 228ms
+ GET / 200 in 222ms
+ GET / 200 in 223ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 222ms
+ GET / 200 in 228ms
+ GET / 200 in 227ms
+ GET / 200 in 224ms
+ GET / 200 in 237ms
+ GET / 200 in 224ms
+ GET / 200 in 221ms
+ GET / 200 in 230ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 226ms
+ GET / 200 in 227ms
+ GET / 200 in 245ms
+ GET / 200 in 224ms
+ GET / 200 in 228ms
+ GET / 200 in 229ms
+ GET / 200 in 227ms
+ GET / 200 in 221ms
+ GET / 200 in 224ms
+ GET / 200 in 232ms
+ GET / 200 in 250ms
+ GET / 200 in 226ms
+ GET / 200 in 227ms
+ GET / 200 in 222ms
+ GET / 200 in 237ms
+ GET / 200 in 239ms
+ GET / 200 in 224ms
+ GET / 200 in 223ms
+ GET / 200 in 228ms
+ GET / 200 in 222ms
+ GET / 200 in 225ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 226ms
+ GET / 200 in 221ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 231ms
+ GET / 200 in 225ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 224ms
+ GET / 200 in 226ms
+ GET / 200 in 239ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 226ms
+ GET / 200 in 224ms
+ GET / 200 in 227ms
+ GET / 200 in 234ms
+ GET / 200 in 239ms
+ GET / 200 in 224ms
+ GET / 200 in 222ms
+ GET / 200 in 221ms
+ GET / 200 in 222ms
+ GET / 200 in 231ms
+ GET / 200 in 221ms
+ GET / 200 in 224ms
+ GET / 200 in 228ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 219ms
+ GET / 200 in 227ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 237ms
+ GET / 200 in 222ms
+ GET / 200 in 223ms
+ GET / 200 in 224ms
+ GET / 200 in 223ms
+ GET / 200 in 224ms
+ GET / 200 in 224ms
+ GET / 200 in 242ms
+ GET / 200 in 231ms
+ GET / 200 in 222ms
+ GET / 200 in 224ms
+ GET / 200 in 220ms
+ GET / 200 in 221ms
+ GET / 200 in 218ms
+ GET / 200 in 227ms
+ GET / 200 in 227ms
+ GET / 200 in 226ms
+ GET / 200 in 216ms
+ GET / 200 in 231ms
+ GET / 200 in 219ms
+ GET / 200 in 223ms
+ GET / 200 in 365ms
+ GET / 200 in 218ms
+ GET / 200 in 233ms
+ GET / 200 in 220ms
+ GET / 200 in 226ms
+ GET / 200 in 233ms
+ GET / 200 in 231ms
+ GET / 200 in 216ms
+ GET / 200 in 223ms
+ GET / 200 in 217ms
+ GET / 200 in 214ms
+ GET / 200 in 214ms
+ GET / 200 in 222ms
+ GET / 200 in 233ms
+ GET / 200 in 221ms
+ GET / 200 in 225ms
+ GET / 200 in 215ms
+ GET / 200 in 219ms
+ GET / 200 in 222ms
+ GET / 200 in 231ms
+ GET / 200 in 221ms
+ GET / 200 in 308ms
+ GET / 200 in 228ms
+ GET / 200 in 215ms
+ GET / 200 in 218ms
+ GET / 200 in 217ms
+ GET / 200 in 216ms
+ GET / 200 in 229ms
+ GET / 200 in 217ms
+ GET / 200 in 216ms
+ GET / 200 in 229ms
+ GET / 200 in 228ms
+ GET / 200 in 171185ms
+ GET / 200 in 225ms
+ GET / 200 in 231ms
+ GET / 200 in 228ms
+ GET / 200 in 245ms
+ GET / 200 in 258ms
+ GET / 200 in 222ms
+ GET / 200 in 218ms
+ GET / 200 in 216ms
+ GET / 200 in 219ms
+ GET / 200 in 228ms
+ GET / 200 in 221ms
+ GET / 200 in 232ms
+ GET / 200 in 229ms
+ GET / 200 in 229ms
+ GET / 200 in 258ms
+ GET / 200 in 218ms
+ GET / 200 in 227ms
+ GET / 200 in 217ms
+ GET / 200 in 213ms
+ GET / 200 in 217ms
+ GET / 200 in 236ms
+ GET / 200 in 221ms
+ GET / 200 in 239ms
+ GET / 200 in 236ms
+ GET / 200 in 235ms
+ GET / 200 in 247ms
+ GET / 200 in 235ms
+ GET / 200 in 228ms
+ GET / 200 in 221ms
+ GET / 200 in 221ms
+ GET / 200 in 245ms
+ GET / 200 in 225ms
+ GET / 200 in 237ms
+ GET / 200 in 220ms
+ GET / 200 in 230ms
+ GET / 200 in 223ms
+ GET / 200 in 229ms
+ GET / 200 in 230ms
+ GET / 200 in 935ms
+ GET / 200 in 561ms
+ GET / 200 in 258ms
+ GET / 200 in 235ms
+ GET / 200 in 230ms
+ GET / 200 in 240ms
+ GET / 200 in 218ms
+ GET / 200 in 221ms
+ GET / 200 in 224ms
+ GET / 200 in 222ms
+ GET / 200 in 226ms
+ GET / 200 in 261ms
+ GET / 200 in 248ms
+ GET / 200 in 223ms
+ GET / 200 in 220ms
+ GET / 200 in 225ms
+ GET / 200 in 220ms
+ GET / 200 in 227ms
+ GET / 200 in 226ms
+ GET / 200 in 234ms
+ GET / 200 in 225ms
+ GET / 200 in 216ms
+ GET / 200 in 227ms
+ GET / 200 in 221ms
+ GET / 200 in 228ms
+ GET / 200 in 219ms
+ GET / 200 in 220ms
+ GET / 200 in 220ms
+ GET / 200 in 215ms
+ GET / 200 in 258ms
+ GET / 200 in 359ms
+ GET / 200 in 246ms
+ GET / 200 in 221ms
+ GET / 200 in 218ms
+ GET / 200 in 222ms
+ GET / 200 in 231ms
+ GET / 200 in 224ms
+ GET / 200 in 225ms
+ GET / 200 in 229ms
+ GET / 200 in 222ms
+ GET / 200 in 355ms
+ GET / 200 in 241ms
+ ✓ Compiled in 457ms (1127 modules)
+ ✓ Compiled in 167ms (1127 modules)
+ ✓ Compiled in 1020ms (1127 modules)
+ ✓ Compiled in 294ms (1127 modules)
+ ✓ Compiled in 283ms (1127 modules)
+ ✓ Compiled in 304ms (1127 modules)
+ ✓ Compiled in 440ms (1127 modules)
+ ✓ Compiled in 921ms (1127 modules)
+ ✓ Compiled in 658ms (1127 modules)
+ ✓ Compiled in 183ms (1127 modules)
+ ✓ Compiled in 236ms (1127 modules)
+ ✓ Compiled in 299ms (1127 modules)
+ ✓ Compiled in 281ms (1127 modules)
+ ✓ Compiled in 281ms (1127 modules)
+ ✓ Compiled in 255ms (1127 modules)
+ ✓ Compiled in 540ms (1127 modules)
+ ✓ Compiled in 247ms (1127 modules)
+ ✓ Compiled in 1021ms (1127 modules)
+ ✓ Compiled in 1113ms (1127 modules)
+ ✓ Compiled in 659ms (1127 modules)
+ ✓ Compiled in 213ms (1127 modules)
+ ✓ Compiled in 465ms (1127 modules)
+ ✓ Compiled in 165ms (1127 modules)
+ ✓ Compiled in 339ms (1127 modules)
+ ✓ Compiled in 285ms (1127 modules)
+ ✓ Compiled in 528ms (1127 modules)
+ ✓ Compiled in 167ms (1127 modules)
+ ✓ Compiled in 354ms (1127 modules)
+ ✓ Compiled in 644ms (1127 modules)
+ ✓ Compiled in 324ms (1127 modules)
+ ✓ Compiled in 223ms (1127 modules)
+ ✓ Compiled in 280ms (1127 modules)
+ ✓ Compiled in 1504ms (1127 modules)
+ ✓ Compiled in 1022ms (1127 modules)
+ ✓ Compiled in 1304ms (1127 modules)
+ ✓ Compiled in 314ms (1127 modules)
+ ✓ Compiled in 1137ms (1127 modules)
+ ✓ Compiled in 1128ms (1127 modules)
+ ✓ Compiled in 432ms (1127 modules)
+ ✓ Compiled in 183ms (1127 modules)
+ ✓ Compiled in 723ms (1127 modules)
+ ✓ Compiled in 176ms (1127 modules)
+ ✓ Compiled in 219ms (1127 modules)
+ ✓ Compiled in 199ms (1127 modules)
+ ✓ Compiled in 260ms (1127 modules)
+ ✓ Compiled in 562ms (1127 modules)
+ ✓ Compiled in 303ms (1127 modules)
+ ✓ Compiled in 665ms (1127 modules)
+ ✓ Compiled in 134ms (1127 modules)
+ ✓ Compiled in 291ms (1127 modules)
+ ✓ Compiled in 1250ms (1127 modules)
+ ✓ Compiled in 944ms (1127 modules)
+ ✓ Compiled in 1208ms (1127 modules)
+ ✓ Compiled in 999ms (1127 modules)
+ ✓ Compiled in 392ms (1127 modules)
+ ✓ Compiled in 196ms (1127 modules)
+ ✓ Compiled in 311ms (1127 modules)
+ ✓ Compiled in 1119ms (1127 modules)
+ ✓ Compiled in 183ms (1127 modules)
+ ✓ Compiled in 172ms (1127 modules)
+ ✓ Compiled in 1716ms (1127 modules)
+ ✓ Compiled in 352ms (1127 modules)
+ ✓ Compiled in 740ms (1127 modules)
+ ✓ Compiled in 1380ms (1127 modules)
+ ✓ Compiled in 224ms (1127 modules)
+ ✓ Compiled in 897ms (1127 modules)
+ ✓ Compiled in 349ms (1127 modules)
+ ✓ Compiled in 170ms (1127 modules)
+ ✓ Compiled in 337ms (1127 modules)
+ ✓ Compiled in 300ms (1127 modules)
+ ✓ Compiled in 563ms (1127 modules)
+ ✓ Compiled in 2.1s (1127 modules)
+ ✓ Compiled in 273ms (1127 modules)
+ ✓ Compiled in 951ms (1127 modules)
+ ✓ Compiled in 1635ms (1127 modules)
+ ✓ Compiled in 2.4s (1127 modules)
+ ✓ Compiled in 954ms (1127 modules)
+ ✓ Compiled in 418ms (1127 modules)
+ ✓ Compiled in 636ms (1127 modules)
+ ✓ Compiled in 181ms (1127 modules)
+ ✓ Compiled in 180ms (1127 modules)
+ ✓ Compiled in 282ms (1127 modules)
+ ✓ Compiled in 830ms (1127 modules)
+ ✓ Compiled in 385ms (1127 modules)
+ ✓ Compiled in 247ms (1127 modules)
+ ✓ Compiled in 373ms (1127 modules)
+ ✓ Compiled in 3.4s (1127 modules)
+ ✓ Compiled in 194ms (1127 modules)
+ ✓ Compiled in 445ms (1127 modules)
+ ✓ Compiled in 1161ms (1127 modules)
+ ✓ Compiled in 179ms (1127 modules)
+ ✓ Compiled in 2.5s (1127 modules)
+ ✓ Compiled in 1142ms (1127 modules)
+ ✓ Compiled in 280ms (1127 modules)
+ ✓ Compiled in 1124ms (1127 modules)
+ ✓ Compiled in 2.9s (1127 modules)
+ ✓ Compiled in 441ms (1127 modules)
+ ✓ Compiled in 233ms (1127 modules)
+ ✓ Compiled in 1937ms (1127 modules)
+ ✓ Compiled in 317ms (1127 modules)
+ ✓ Compiled in 420ms (1127 modules)
+ ✓ Compiled in 228ms (1127 modules)
+ ✓ Compiled in 2.8s (1127 modules)
+ ✓ Compiled in 1032ms (1127 modules)
+ ✓ Compiled in 304ms (1127 modules)
+ ✓ Compiled in 305ms (1127 modules)
+ ✓ Compiled in 185ms (1127 modules)
+ ✓ Compiled in 1726ms (1127 modules)
+ ✓ Compiled in 290ms (1127 modules)
+ ✓ Compiled in 4.3s (1127 modules)
+ ✓ Compiled in 2.1s (1127 modules)
+ ✓ Compiled in 2.3s (1127 modules)
+ ✓ Compiled in 338ms (1127 modules)
+ ✓ Compiled in 181ms (1127 modules)
+ ✓ Compiled in 176ms (1127 modules)
+ ✓ Compiled in 890ms (1127 modules)
+ ✓ Compiled in 149ms (1127 modules)
+ ✓ Compiled in 1365ms (1127 modules)
+ ⨯ ./src/components/simulation/encounterForm.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                  ^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Optimize this encounter's difficulty automatically\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/encounterForm.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                  ^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Optimize this encounter's difficulty automatically\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/encounterForm.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                  ^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Optimize this encounter's difficulty automatically\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/encounterForm.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                  ^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Optimize this encounter's difficulty automatically\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/encounterForm.tsx[0m:164:1]
+ [2m161[0m |                             className={styles.autoAdjustBtn} 
+ [2m162[0m |                             onClick={onAutoAdjust}
+ [2m163[0m |                             disabled={autoAdjustDisabled}
+ [2m164[0m |                             title=\"Optimize this encounter's difficulty automatically\"
+     : [35;1m                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m165[0m |                             data-testid=\"auto-adjust-btn\"
+ [2m166[0m |                         >
+ [2m167[0m |                             <FontAwesomeIcon icon={faMagicWandSparkles} />
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:494:1]
+ [2m491[0m |                                                 setShowLogModal(true);
+ [2m492[0m |                                             }}
+ [2m493[0m |                                             className={styles.showLogButton}
+ [2m494[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                         ^^^^^^^^^^^^^^^[0m
+ [2m495[0m |                                         >
+ [2m496[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m497[0m |                                             Show Log
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:494:1]
+ [2m491[0m |                                                 setShowLogModal(true);
+ [2m492[0m |                                             }}
+ [2m493[0m |                                             className={styles.showLogButton}
+ [2m494[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                        ^[0m
+ [2m495[0m |                                         >
+ [2m496[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m497[0m |                                             Show Log
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "show-log-btn\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:494:1]
+ [2m491[0m |                                                 setShowLogModal(true);
+ [2m492[0m |                                             }}
+ [2m493[0m |                                             className={styles.showLogButton}
+ [2m494[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                         ^^^^^^^^^^^^^^^[0m
+ [2m495[0m |                                         >
+ [2m496[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m497[0m |                                             Show Log
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                      ^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "Start guided tour\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:304:1]
+ [2m301[0m |                             <button
+ [2m302[0m |                                 className={styles.helpButton}
+ [2m303[0m |                                 onClick={() => setRunTour(true)}
+ [2m304[0m |                                 title=\"Start guided tour\"
+     : [35;1m                                       ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m305[0m |                                 aria-label=\"Start guided tour\"
+ [2m306[0m |                                 data-testid=\"help-btn\"
+ [2m307[0m |                             >
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:496:1]
+ [2m493[0m |                                                 setShowLogModal(true);
+ [2m494[0m |                                             }}
+ [2m495[0m |                                             className={styles.showLogButton}
+ [2m496[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                         ^^^^^^^^^^^^^^^[0m
+ [2m497[0m |                                         >
+ [2m498[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m499[0m |                                             Show Log
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:496:1]
+ [2m493[0m |                                                 setShowLogModal(true);
+ [2m494[0m |                                             }}
+ [2m495[0m |                                             className={styles.showLogButton}
+ [2m496[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                        ^[0m
+ [2m497[0m |                                         >
+ [2m498[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m499[0m |                                             Show Log
+     `----
+  [31mx[0m Expected '</', got 'string literal (, "show-log-btn\")'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:496:1]
+ [2m493[0m |                                                 setShowLogModal(true);
+ [2m494[0m |                                             }}
+ [2m495[0m |                                             className={styles.showLogButton}
+ [2m496[0m |                                             data-testid=\"show-log-btn\"
+     : [35;1m                                                         ^^^^^^^^^^^^^^^[0m
+ [2m497[0m |                                         >
+ [2m498[0m |                                             <FontAwesomeIcon icon={faEye} />
+ [2m499[0m |                                             Show Log
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/simulation.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:507:1]
+ [2m504[0m |                         )
+ [2m505[0m |                     })}
+ [2m506[0m | 
+ [2m507[0m |                     <div className={styles.addButtons} data-testid=\"add-timeline-buttons\">
+     : [35;1m                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m508[0m |                         <button
+ [2m509[0m |                             onClick={createCombat}
+ [2m510[0m |                             className={styles.addEncounterBtn}
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:507:1]
+ [2m504[0m |                         )
+ [2m505[0m |                     })}
+ [2m506[0m | 
+ [2m507[0m |                     <div className={styles.addButtons} data-testid=\"add-timeline-buttons\">
+     : [35;1m                                                                   ^[0m
+ [2m508[0m |                         <button
+ [2m509[0m |                             onClick={createCombat}
+ [2m510[0m |                             className={styles.addEncounterBtn}
+     `----
+  [31mx[0m Expected '</', got 'string literal (>, "add-timeline-buttons\">)'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/simulation.tsx[0m:507:1]
+ [2m504[0m |                         )
+ [2m505[0m |                     })}
+ [2m506[0m | 
+ [2m507[0m |                     <div className={styles.addButtons} data-testid=\"add-timeline-buttons\">
+     : [35;1m                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^[0m
+ [2m508[0m |                         <button
+ [2m509[0m |                             onClick={createCombat}
+ [2m510[0m |                             className={styles.addEncounterBtn}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/HeartbeatGraph.tsx
+Error:   [31mx[0m Unterminated string constant
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:52:1]
+ [2m49[0m |     }, [points]);
+ [2m50[0m | 
+ [2m51[0m |     return (
+ [2m52[0m |         <div className={`${styles.heartbeatGraph} ${className || ''}`} data-testid=\"heartbeat-graph\">
+    : [35;1m                                                                                    ^^^^^^^^^^^^^^^^^^^[0m
+ [2m53[0m |             <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio=\"xMidYMid meet\" data-testid=\"heartbeat-svg\">
+ [2m54[0m |                 {/* Background Zones */}
+ [2m55[0m |                 <rect x={padding.left} y={padding.top} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.5} fill=\"rgba(239, 68, 68, 0.05)\" data-testid=\"zone-lethal\" /> {/* Red Zone */}
+    `----
+  [31mx[0m Expected unicode escape
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:52:1]
+ [2m49[0m |     }, [points]);
+ [2m50[0m | 
+ [2m51[0m |     return (
+ [2m52[0m |         <div className={`${styles.heartbeatGraph} ${className || ''}`} data-testid=\"heartbeat-graph\">
+    : [35;1m                                                                                   ^[0m
+ [2m53[0m |             <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio=\"xMidYMid meet\" data-testid=\"heartbeat-svg\">
+ [2m54[0m |                 {/* Background Zones */}
+ [2m55[0m |                 <rect x={padding.left} y={padding.top} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.5} fill=\"rgba(239, 68, 68, 0.05)\" data-testid=\"zone-lethal\" /> {/* Red Zone */}
+    `----
+  [31mx[0m JSX value should be either an expression or a quoted JSX text
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:52:1]
+ [2m49[0m |     }, [points]);
+ [2m50[0m | 
+ [2m51[0m |     return (
+ [2m52[0m |         <div className={`${styles.heartbeatGraph} ${className || ''}`} data-testid=\"heartbeat-graph\">
+    : [35;1m                                                                                   ^[0m
+ [2m53[0m |             <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio=\"xMidYMid meet\" data-testid=\"heartbeat-svg\">
+ [2m54[0m |                 {/* Background Zones */}
+ [2m55[0m |                 <rect x={padding.left} y={padding.top} width={width - padding.left - padding.right} height={(height - padding.top - padding.bottom) * 0.5} fill=\"rgba(239, 68, 68, 0.05)\" data-testid=\"zone-lethal\" /> {/* Red Zone */}
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/HeartbeatGraph.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/creatureForm/creatureForm.tsx
+Error:   [31mx[0m Unterminated string constant
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/creatureForm.tsx[0m:210:1]
+ [2m207[0m |                     </span>
+ [2m208[0m |                 </div>
+ [2m209[0m |                 { (value.mode === 'custom') ? null : (
+ [2m210[0m |                     <div className=\"tooltipContainer\">
+     : [35;1m                                    ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m211[0m |                         <button 
+ [2m212[0m |                             onClick={() => setValue({...value, mode: 'custom'})} 
+ [2m213[0m |                             disabled={!isValid} 
+     `----
+  [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/creatureForm.tsx[0m:210:1]
+ [2m207[0m |                     </span>
+ [2m208[0m |                 </div>
+ [2m209[0m |                 { (value.mode === 'custom') ? null : (
+ [2m210[0m |                     <div className=\"tooltipContainer\">
+     : [35;1m                                   ^[0m
+ [2m211[0m |                         <button 
+ [2m212[0m |                             onClick={() => setValue({...value, mode: 'custom'})} 
+ [2m213[0m |                             disabled={!isValid} 
+     `----
+  [31mx[0m Expected '</', got 'string literal (>, "tooltipContainer\">)'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/creatureForm.tsx[0m:210:1]
+ [2m207[0m |                     </span>
+ [2m208[0m |                 </div>
+ [2m209[0m |                 { (value.mode === 'custom') ? null : (
+ [2m210[0m |                     <div className=\"tooltipContainer\">
+     : [35;1m                                    ^^^^^^^^^^^^^^^^^^^^[0m
+ [2m211[0m |                         <button 
+ [2m212[0m |                             onClick={() => setValue({...value, mode: 'custom'})} 
+ [2m213[0m |                             disabled={!isValid} 
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/creatureForm/creatureForm.tsx
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/creatureForm/actionForm.tsx
+Error:   [31mx[0m Expression expected
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/actionForm.tsx[0m:691:1]
+ [2m688[0m |         </div>
+ [2m689[0m |     )
+ [2m690[0m | }
+ [2m691[0m | }
+     : [35;1m^[0m
+ [2m692[0m | 
+ [2m693[0m | export default ActionForm
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/creatureForm/actionForm.tsx
+./src/components/creatureForm/customForm.tsx
+./src/components/creatureForm/creatureForm.tsx
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/creatureForm/ActionCostEditor.tsx
+Error:   [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/ActionCostEditor.tsx[0m:111:1]
+ [2m108[0m |                             </>
+ [2m109[0m |                         )}
+ [2m110[0m | 
+ [2m111[0m |                         <button onClick={() => toggleType(index, cost)} title={cost.type === 'Discrete' ? "Switch to Variable" : "Switch to Fixed"}\n                                data-testid="toggle-cost-type-btn">\n                            <FontAwesomeIcon icon={faRandom} color={cost.type === 'Variable' ? '#4CAF50' : undefined} />\n                        </button>\n\n                        <button onClick={() => removeCost(index)} data-testid="delete-cost-btn">\n                            <FontAwesomeIcon icon={faTrash} />\n                        </button>\n                    </div>\n                ))}\n            </div>\n        </div>\n    )
+     : [35;1m                                                                                                                                                   ^[0m
+ [2m112[0m |     )
+ [2m113[0m | }
+     `----
+  [31mx[0m Expected '</', got 'n'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/ActionCostEditor.tsx[0m:111:1]
+ [2m108[0m |                             </>
+ [2m109[0m |                         )}
+ [2m110[0m | 
+ [2m111[0m |                         <button onClick={() => toggleType(index, cost)} title={cost.type === 'Discrete' ? "Switch to Variable" : "Switch to Fixed"}\n                                data-testid="toggle-cost-type-btn">\n                            <FontAwesomeIcon icon={faRandom} color={cost.type === 'Variable' ? '#4CAF50' : undefined} />\n                        </button>\n\n                        <button onClick={() => removeCost(index)} data-testid="delete-cost-btn">\n                            <FontAwesomeIcon icon={faTrash} />\n                        </button>\n                    </div>\n                ))}\n            </div>\n        </div>\n    )
+     : [35;1m                                                                                                                                                    ^[0m
+ [2m112[0m |     )
+ [2m113[0m | }
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/creatureForm/ActionCostEditor.tsx
+./src/components/creatureForm/actionForm.tsx
+./src/components/creatureForm/customForm.tsx
+./src/components/creatureForm/creatureForm.tsx
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/creatureForm/ActionRequirementEditor.tsx
+Error:   [31mx[0m Expression expected
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/creatureForm/ActionRequirementEditor.tsx[0m:168:1]
+ [2m165[0m |             </div>
+ [2m166[0m |         </div>
+ [2m167[0m |     )
+ [2m168[0m |     )
+     : [35;1m    ^[0m
+ [2m169[0m | }
+ [2m170[0m | 
+ [2m171[0m | export default ActionRequirementEditor
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/creatureForm/ActionRequirementEditor.tsx
+./src/components/creatureForm/actionForm.tsx
+./src/components/creatureForm/customForm.tsx
+./src/components/creatureForm/creatureForm.tsx
+./src/components/simulation/encounterForm.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/HeartbeatGraph.tsx
+Error:   [31mx[0m Expected unicode escape
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:70:1]
+ [2m67[0m |                     <g key={i} className={styles.node} data-testid={`graph-node-${i}`}>
+ [2m68[0m |                         <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} data-testid={`node-circle-${i}`} />
+ [2m69[0m |                         <text x={p.x} y={height - 5} textAnchor="middle" className={styles.axisLabel}>{p.label}</text>
+ [2m70[0m |                     </g>\n                ))}
+    : [35;1m                        ^[0m
+ [2m71[0m | 
+ [2m72[0m |                 {/* Y-Axis Labels */}
+ [2m73[0m |                 <text x={padding.left - 5} y={padding.top + 5} textAnchor="end" className={styles.axisLabel}>Lethal</text>
+    `----
+  [31mx[0m Expected '</', got 'n'
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:70:1]
+ [2m67[0m |                     <g key={i} className={styles.node} data-testid={`graph-node-${i}`}>
+ [2m68[0m |                         <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} data-testid={`node-circle-${i}`} />
+ [2m69[0m |                         <text x={p.x} y={height - 5} textAnchor="middle" className={styles.axisLabel}>{p.label}</text>
+ [2m70[0m |                     </g>\n                ))}
+    : [35;1m                         ^[0m
+ [2m71[0m | 
+ [2m72[0m |                 {/* Y-Axis Labels */}
+ [2m73[0m |                 <text x={padding.left - 5} y={padding.top + 5} textAnchor="end" className={styles.axisLabel}>Lethal</text>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/HeartbeatGraph.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/HeartbeatGraph.tsx
+Error:   [31mx[0m Expected unicode escape
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:70:1]
+ [2m67[0m |                     <g key={i} className={styles.node} data-testid={`graph-node-${i}`}>
+ [2m68[0m |                         <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} data-testid={`node-circle-${i}`} />
+ [2m69[0m |                         <text x={p.x} y={height - 5} textAnchor="middle" className={styles.axisLabel}>{p.label}</text>
+ [2m70[0m |                     </g>\n                ))}
+    : [35;1m                        ^[0m
+ [2m71[0m | 
+ [2m72[0m |                 {/* Y-Axis Labels */}
+ [2m73[0m |                 <text x={padding.left - 5} y={padding.top + 5} textAnchor="end" className={styles.axisLabel}>Lethal</text>
+    `----
+  [31mx[0m Expected '</', got 'n'
+    ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/HeartbeatGraph.tsx[0m:70:1]
+ [2m67[0m |                     <g key={i} className={styles.node} data-testid={`graph-node-${i}`}>
+ [2m68[0m |                         <circle cx={p.x} cy={p.y} r="4" fill={p.lethality > 0.5 ? '#ef4444' : p.lethality > 0.2 ? '#f59e0b' : '#22c55e'} data-testid={`node-circle-${i}`} />
+ [2m69[0m |                         <text x={p.x} y={height - 5} textAnchor="middle" className={styles.axisLabel}>{p.label}</text>
+ [2m70[0m |                     </g>\n                ))}
+    : [35;1m                         ^[0m
+ [2m71[0m | 
+ [2m72[0m |                 {/* Y-Axis Labels */}
+ [2m73[0m |                 <text x={padding.left - 5} y={padding.top + 5} textAnchor="end" className={styles.axisLabel}>Lethal</text>
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/HeartbeatGraph.tsx
+./src/components/simulation/simulation.tsx
+ ⨯ ./src/components/simulation/adventuringDayForm.tsx
+Error:   [31mx[0m Expected unicode escape
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/adventuringDayForm.tsx[0m:345:1]
+ [2m342[0m |                  savedDays.map(save => (
+ [2m343[0m |                     <div key={save.name} className={styles.saveItem} data-testid={`save-item-${save.name}`}>
+ [2m344[0m |                         <span>{save.name} ({new Date(save.updated).toLocaleDateString()})</span>
+ [2m345[0m |                         <button onClick={() => loadSavedDay(save)} data-testid="load-save-btn">Load</button>\n                        <button onClick={() => deleteSave(save.filename || save.name)} data-testid="delete-save-btn">Delete</button>\n                    </div>\n                ))}\n            </section>\n\n            {/* Players Section */}\n            <section className={styles.playersSection} data-testid="players-section">\n                <h2>Players</h2>\n                <button onClick={addPlayer} data-testid="add-player-btn"><FontAwesomeIcon icon={faPlus} /> Add Player</button>\n                <div className={styles.playerList} data-testid="player-list">\n                    {editedPlayers.map(player => (\n                        <div key={player.id} className={styles.playerItem} data-testid={`player-item-${player.id}`}>\n                            <span>{player.name} (Lvl {player.class?.level} {player.class?.type})</span>\n                            <button onClick={() => setEditingPlayer(player)} data-testid="edit-player-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>\n                            <button onClick={() => removePlayer(player.id)} data-testid="remove-player-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>\n                        </div>\n                    ))}\n                </div>\n            </section>\n\n            {/* Timeline Section */}\n            <section className={styles.encountersSection} data-testid="timeline-section">\n                <h2>Timeline</h2>\n                <div className={styles.timelineControls} data-testid="timeline-controls">\n                    <button onClick={addEncounter} data-testid="add-combat-btn"><FontAwesomeIcon icon={faPlus} /> Add Combat</button>\n                    <button onClick={addShortRest} className={styles.restBtn} data-testid="add-rest-btn"><FontAwesomeIcon icon={faBed} /> Add Short Rest</button>\n                </div>\n                \n                <div className={styles.encounterList} data-testid="encounter-list">\n                    {editedTimeline.map((item, index) => (\n                        <div key={item.id} className={item.type === 'combat' ? styles.encounterItem : styles.restItem} data-testid={`timeline-item-${index}`}>\n                            <div className={styles.itemHeader}>\n                                <h3>{item.type === 'combat' ? `Encounter ${index + 1}` : 'Short Rest'}</h3>\n                                <div className={styles.itemControls} data-testid="item-controls">\n                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0} data-testid="move-item-up-btn">↑</button>\n                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === editedTimeline.length - 1} data-testid="move-item-down-btn">↓</button>\n                                    <button onClick={() => removeTimelineItem(index)} className={styles.deleteBtn} data-testid="delete-item-btn"><FontAwesomeIcon icon={faTrash} /></button>\n                                </div>\n                            </div>\n\n                            {item.type === 'combat' ? (\n                                <div data-testid="combat-details">\n                                    <div className={styles.encounterSettings} data-testid="encounter-settings">\n                                        <Checkbox value={item.playersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, playersSurprised: !item.playersSurprised })} data-testid="players-surprised-checkbox">Players Surprised</Checkbox>\n                                        <Checkbox value={item.monstersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, monstersSurprised: !item.monstersSurprised })} data-testid="monsters-surprised-checkbox">Monsters Surprised</Checkbox>\n                                        <Checkbox value={item.playersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, playersPrecast: !item.playersPrecast })} data-testid="players-precast-checkbox">Players Precast</Checkbox>\n                                        <Checkbox value={item.monstersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, monstersPrecast: !item.monstersPrecast })} data-testid="monsters-precast-checkbox">Monsters Precast</Checkbox>\n                                    </div>\n                                    <h4>Monsters</h4>\n                                    <button onClick={() => addMonsterToEncounter(index)} data-testid="add-monster-btn"><FontAwesomeIcon icon={faPlus} /> Add Monster</button>\n                                    <div className={styles.monsterList} data-testid="monster-list">\n                                        {item.monsters.map(monster => (\n                                            <div key={monster.id} className={styles.monsterItem} data-testid={`monster-item-${monster.id}`}>\n                                                <span>{monster.name} (x{monster.count})</span>\n                                                <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(index); }} data-testid="edit-monster-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>\n                                                <button onClick={() => removeMonsterFromEncounter(index, monster.id)} data-testid="remove-monster-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>\n                                            </div>\n                                        ))}\n                                    </div>\n                                </div>\n                            ) : (\n                                <div className={styles.restBody} data-testid="rest-details">\n                                    <p><FontAwesomeIcon icon={faBed} size="2x" /></p>\n                                    <p>Standard 1-hour rest. Characters spend Hit Dice to recover HP and reset "Short Rest" resources.</p>\n                                </div>\n                            )}\n                        </div>\n                    ))}\n                </div>\n            </section>
+     : [35;1m                                                                                                                                                                                                                                                                              ^[0m
+ [2m346[0m | 
+ [2m347[0m |             {/* Player Edit Modal */}
+ [2m348[0m |             {editingPlayer && (
+     `----
+  [31mx[0m Expected '</', got 'n'
+     ,-[[36;1;4m/Users/max/Rust/Battlesim2/src/components/simulation/adventuringDayForm.tsx[0m:345:1]
+ [2m342[0m |                  savedDays.map(save => (
+ [2m343[0m |                     <div key={save.name} className={styles.saveItem} data-testid={`save-item-${save.name}`}>
+ [2m344[0m |                         <span>{save.name} ({new Date(save.updated).toLocaleDateString()})</span>
+ [2m345[0m |                         <button onClick={() => loadSavedDay(save)} data-testid="load-save-btn">Load</button>\n                        <button onClick={() => deleteSave(save.filename || save.name)} data-testid="delete-save-btn">Delete</button>\n                    </div>\n                ))}\n            </section>\n\n            {/* Players Section */}\n            <section className={styles.playersSection} data-testid="players-section">\n                <h2>Players</h2>\n                <button onClick={addPlayer} data-testid="add-player-btn"><FontAwesomeIcon icon={faPlus} /> Add Player</button>\n                <div className={styles.playerList} data-testid="player-list">\n                    {editedPlayers.map(player => (\n                        <div key={player.id} className={styles.playerItem} data-testid={`player-item-${player.id}`}>\n                            <span>{player.name} (Lvl {player.class?.level} {player.class?.type})</span>\n                            <button onClick={() => setEditingPlayer(player)} data-testid="edit-player-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>\n                            <button onClick={() => removePlayer(player.id)} data-testid="remove-player-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>\n                        </div>\n                    ))}\n                </div>\n            </section>\n\n            {/* Timeline Section */}\n            <section className={styles.encountersSection} data-testid="timeline-section">\n                <h2>Timeline</h2>\n                <div className={styles.timelineControls} data-testid="timeline-controls">\n                    <button onClick={addEncounter} data-testid="add-combat-btn"><FontAwesomeIcon icon={faPlus} /> Add Combat</button>\n                    <button onClick={addShortRest} className={styles.restBtn} data-testid="add-rest-btn"><FontAwesomeIcon icon={faBed} /> Add Short Rest</button>\n                </div>\n                \n                <div className={styles.encounterList} data-testid="encounter-list">\n                    {editedTimeline.map((item, index) => (\n                        <div key={item.id} className={item.type === 'combat' ? styles.encounterItem : styles.restItem} data-testid={`timeline-item-${index}`}>\n                            <div className={styles.itemHeader}>\n                                <h3>{item.type === 'combat' ? `Encounter ${index + 1}` : 'Short Rest'}</h3>\n                                <div className={styles.itemControls} data-testid="item-controls">\n                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0} data-testid="move-item-up-btn">↑</button>\n                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === editedTimeline.length - 1} data-testid="move-item-down-btn">↓</button>\n                                    <button onClick={() => removeTimelineItem(index)} className={styles.deleteBtn} data-testid="delete-item-btn"><FontAwesomeIcon icon={faTrash} /></button>\n                                </div>\n                            </div>\n\n                            {item.type === 'combat' ? (\n                                <div data-testid="combat-details">\n                                    <div className={styles.encounterSettings} data-testid="encounter-settings">\n                                        <Checkbox value={item.playersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, playersSurprised: !item.playersSurprised })} data-testid="players-surprised-checkbox">Players Surprised</Checkbox>\n                                        <Checkbox value={item.monstersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, monstersSurprised: !item.monstersSurprised })} data-testid="monsters-surprised-checkbox">Monsters Surprised</Checkbox>\n                                        <Checkbox value={item.playersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, playersPrecast: !item.playersPrecast })} data-testid="players-precast-checkbox">Players Precast</Checkbox>\n                                        <Checkbox value={item.monstersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, monstersPrecast: !item.monstersPrecast })} data-testid="monsters-precast-checkbox">Monsters Precast</Checkbox>\n                                    </div>\n                                    <h4>Monsters</h4>\n                                    <button onClick={() => addMonsterToEncounter(index)} data-testid="add-monster-btn"><FontAwesomeIcon icon={faPlus} /> Add Monster</button>\n                                    <div className={styles.monsterList} data-testid="monster-list">\n                                        {item.monsters.map(monster => (\n                                            <div key={monster.id} className={styles.monsterItem} data-testid={`monster-item-${monster.id}`}>\n                                                <span>{monster.name} (x{monster.count})</span>\n                                                <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(index); }} data-testid="edit-monster-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>\n                                                <button onClick={() => removeMonsterFromEncounter(index, monster.id)} data-testid="remove-monster-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>\n                                            </div>\n                                        ))}\n                                    </div>\n                                </div>\n                            ) : (\n                                <div className={styles.restBody} data-testid="rest-details">\n                                    <p><FontAwesomeIcon icon={faBed} size="2x" /></p>\n                                    <p>Standard 1-hour rest. Characters spend Hit Dice to recover HP and reset "Short Rest" resources.</p>\n                                </div>\n                            )}\n                        </div>\n                    ))}\n                </div>\n            </section>
+     : [35;1m                                                                                                                                                                                                                                                                               ^[0m
+ [2m346[0m | 
+ [2m347[0m |             {/* Player Edit Modal */}
+ [2m348[0m |             {editingPlayer && (
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/simulation/adventuringDayForm.tsx
+./src/components/simulation/simulation.tsx
+ ✓ Compiled in 6.2s (1127 modules)
+ ✓ Compiled in 4.6s (1127 modules)
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 4.4s (1223 modules)
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 10529ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 86ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 72ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 56ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 40ms
+ ✓ Compiled in 624ms (1223 modules)
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 512ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 53ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 60ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 41ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 49ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 45ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 44ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 40ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 52ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 32ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 48ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 38ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 51ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 40ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 28ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 54ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 55ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 36ms
+ ✓ Compiled in 546ms (1223 modules)
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 446ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 22ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 23ms
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/'
+}
+ ⨯ Error: Cannot find module './317.js'
+Require stack:
+- /Users/max/Rust/Battlesim2/.next/server/webpack-runtime.js
+- /Users/max/Rust/Battlesim2/.next/server/pages/_document.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/require.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/load-components.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/utils.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/options.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/swc/index.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/parse-module.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/build/analysis/get-page-static-info.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/router-server.js
+- /Users/max/Rust/Battlesim2/node_modules/next/dist/server/lib/start-server.js
+    at Array.map (<anonymous>) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ GET / 500 in 28ms

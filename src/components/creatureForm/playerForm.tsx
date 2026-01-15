@@ -96,14 +96,15 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
     }
 
     return (
-        <div className={styles.playerForm}>
+        <div className={styles.playerForm} data-testid="player-form">
             <h3>Class</h3>
-            <section className={styles.classes}>
+            <section className={styles.classes} data-testid="class-selector">
                 { ClassesList.map(className => (
                     <button
                         key={className}
                         className={`${styles.class} ${(chosenClass?.type === className) ? styles.active : ''}`}
                         onClick={() => { setClass(className) }}
+                        data-testid={`class-${className}`}
                     >
                         <img src={`./classes/${className}.jpeg`} />
                         {capitalize(className)}
@@ -112,12 +113,13 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
             </section>
             
             <h3>Level</h3>
-            <section className={styles.levels}>
+            <section className={styles.levels} data-testid="level-selector">
                 { range(20).map(i => i+1).map(lvl => (
                     <button
                         key={lvl}
                         className={`${styles.level} ${(level === lvl) ? styles.active : ''}`}
                         onClick={() => setLevel(lvl)}
+                        data-testid={`level-${lvl}`}
                     >
                         {lvl}
                     </button>
@@ -132,6 +134,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                     onChange={(e) => {
                         onChange({ ...value!, hitDice: e.target.value || undefined });
                     }}
+                    data-testid="hit-dice-input"
                 />
             </section>
 
@@ -143,6 +146,7 @@ const PlayerForm:FC<PropType> = ({ value, onChange }) => {
                     onChange={(e) => {
                         onChange({ ...value!, conModifier: parseFloat(e.target.value) || 0 });
                     }}
+                    data-testid="con-modifier-input"
                 />
             </section>
 

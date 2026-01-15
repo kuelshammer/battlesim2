@@ -22,14 +22,14 @@ const DeltaBadge: React.FC<DeltaBadgeProps> = ({ targetCost, actualCost, cumulat
     const sign = delta >= 0 ? '+' : '';
 
     return (
-        <div className={styles.deltaBadgeContainer}>
-            <div className={`${styles.badge} ${zone.colorClass}`}>
-                <span className={styles.icon}>{zone.icon}</span>
-                <span className={styles.label}>{zone.label}</span>
-                <span className={styles.value}>{sign}{Math.round(delta)}%</span>
+        <div className={styles.deltaBadgeContainer} data-testid="delta-badge">
+            <div className={`${styles.badge} ${zone.colorClass}`} data-testid="delta-zone">
+                <span className={styles.icon} data-testid="delta-icon">{zone.icon}</span>
+                <span className={styles.label} data-testid="delta-label">{zone.label}</span>
+                <span className={styles.value} data-testid="delta-value">{sign}{Math.round(delta)}%</span>
             </div>
             {cumulativeDrift !== undefined && (
-                <div className={styles.cumulativeDrift}>
+                <div className={styles.cumulativeDrift} data-testid="cumulative-drift">
                     Total Day Drift: {cumulativeDrift >= 0 ? '+' : ''}{Math.round(cumulativeDrift)}%
                 </div>
             )}

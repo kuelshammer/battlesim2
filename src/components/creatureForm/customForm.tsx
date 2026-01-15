@@ -81,9 +81,9 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
         value.saveAdvantage;
 
     return (
-        <div className={styles.customForm}>
+        <div className={styles.customForm} data-testid="custom-form">
             <section>
-                <div className={styles.nameContainer}>
+                <div className={styles.nameContainer} data-testid="count-container">
                     <input
                         type='number'
                         min={1}
@@ -96,11 +96,11 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                     />
                     {canSaveTemplate ? (
                         <>
-                            <button onClick={() => saveCreature(value)}>
+                            <button onClick={() => saveCreature(value)} data-testid="save-template-btn">
                                 <FontAwesomeIcon icon={faSave} />
                                 <span className={styles.btnText}>Save</span>
                             </button>
-                            <button onClick={() => setIsLoading(true)}>
+                            <button onClick={() => setIsLoading(true)} data-testid="load-template-btn">
                                 <FontAwesomeIcon icon={faFolder} />
                                 <span className={styles.btnText}>Load</span>
                             </button>
@@ -117,38 +117,24 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                     )}
                 </div>
             </section>
-            <section>
+            <section data-testid="hp-section">
                 <h3>Hit Points</h3>
                 <DecimalInput min={0} value={value.hp} onChange={hp => update(v => { v.hp = hp || 0 })} data-testid="hp-input" />
             </section>
-            <section>
+            <section data-testid="ac-section">
                 <h3>Armor Class</h3>
                 <DecimalInput min={0} value={value.ac} onChange={ac => update(v => { v.ac = ac || 0 })} data-testid="ac-input" />
             </section>
-            <section className="tooltipContainer">
+            <section className="tooltipContainer" data-testid="save-bonus-section">
                 <h3>Average Save Bonus</h3>
                 <div className={styles.saveRow}>
-                    <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} />
+                    <DecimalInput min={0} value={value.saveBonus} onChange={save => update(v => { v.saveBonus = save || 0 })} data-testid="save-bonus-input" />
                     <button
                         onClick={() => setIsSaveModalOpen(true)}
                         className={styles.detailsBtn}
                         title="Configure individual saves and advantages"
-                    >
-                        <FontAwesomeIcon icon={faCog} />
-                        <span>Details</span>
-                        {hasDetailedSaves && <span className={styles.badge}>✓</span>}
-                    </button>
-                </div>
-                <div className="tooltip">Average of all saves' bonuses. Click "Details" to set individual save bonuses and advantages (e.g., CON save advantage for Concentration).</div>
-            </section>
-            <section>
-                <h3>Initiative Bonus</h3>
-                <DiceFormulaInput value={value.initiativeBonus || 0} onChange={(init: DiceFormula | undefined) => update(v => { v.initiativeBonus = init || 0 })} />
-            </section>
-            <section>
-                <h3>Initiative Advantage</h3>
-                <Checkbox value={!!value.initiativeAdvantage} onToggle={() => update(v => { v.initiativeAdvantage = !v.initiativeAdvantage })} />
-            </section>
+                        data-testid="save-details-btn"
+                    >\n                        <FontAwesomeIcon icon={faCog} />\n                        <span>Details</span>\n                        {hasDetailedSaves && <span className={styles.badge}>✓</span>}\n                    </button>\n                </div>\n                <div className="tooltip">Average of all saves' bonuses. Click "Details" to set individual save bonuses and advantages (e.g., CON save advantage for Concentration).</div>\n            </section>\n            <section data-testid="initiative-section">\n                <h3>Initiative Bonus</h3>\n                <DiceFormulaInput value={value.initiativeBonus || 0} onChange={(init: DiceFormula | undefined) => update(v => { v.initiativeBonus = init || 0 })} />\n            </section>\n            <section data-testid="initiative-adv-section">\n                <h3>Initiative Advantage</h3>\n                <Checkbox value={!!value.initiativeAdvantage} onToggle={() => update(v => { v.initiativeAdvantage = !v.initiativeAdvantage })} />\n            </section>
 
             <ResourceEditor value={value} onChange={onChange} />
 
@@ -157,15 +143,17 @@ const CustomForm: FC<PropType> = ({ value, onChange }) => {
                 onReorder={(newActions) => update(v => { v.actions = newActions })}
             />
 
-            <h3 className={styles.actionsHeader}>
+            <h3 className={styles.actionsHeader} data-testid="actions-header">
                 <span className={styles.label}>Actions (Detailed)</span>
                 <button
                     onClick={createAction}
-                    className={styles.createActionBtn}>
+                    className={styles.createActionBtn}
+                    data-testid="add-action-btn"
+                >
                     <FontAwesomeIcon icon={faPlus} />
                 </button>
             </h3>
-            <div className={styles.actions}>
+            <div className={styles.actions} data-testid="actions-list">
                 {value.actions.map((action, index) => (
                     <ActionForm
                         key={action.id}

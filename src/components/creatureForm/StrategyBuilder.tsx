@@ -65,23 +65,23 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
     };
 
     return (
-        <div className={styles.strategyBuilder}>
+        <div className={styles.strategyBuilder} data-testid="strategy-builder">
             <h4>Strategy & Priority</h4>
             <p className={styles.hint}>Actions are evaluated in order. The first valid and affordable action for each slot type will be used.</p>
 
-            <div className={styles.actionList}>
+            <div className={styles.actionList} data-testid="strategy-actions-list">
                 {actions.map((action, index) => {
                     const base = getActionBase(action);
                     const requirements = base.requirements || [];
                     return (
-                        <div key={base.id} className={styles.actionItem}>
+                        <div key={base.id} className={styles.actionItem} data-testid={`strategy-item-${index}`}>
                             <div className={styles.priority}>{index + 1}</div>
-                            <div className={styles.iconContainer}>
+                            <div className={styles.iconContainer} data-testid="action-cost-icon">
                                 {getCostIcon(action)}
                             </div>
                             <div className={styles.details}>
-                                <span className={styles.name}>{base.name}</span>
-                                <span className={styles.summary}>
+                                <span className={styles.name} data-testid="strategy-action-name">{base.name}</span>
+                                <span className={styles.summary} data-testid="strategy-action-summary">
                                     {requirements.length > 0
                                         ? `${requirements.length} condition(s)`
                                         : 'Always'}
@@ -92,6 +92,7 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
                                     onClick={() => moveUp(index)}
                                     disabled={index === 0}
                                     className={styles.moveBtn}
+                                    data-testid="move-strategy-up-btn"
                                 >
                                     <FontAwesomeIcon icon={faArrowUp} />
                                 </button>
@@ -99,6 +100,7 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
                                     onClick={() => moveDown(index)}
                                     disabled={index === actions.length - 1}
                                     className={styles.moveBtn}
+                                    data-testid="move-strategy-down-btn"
                                 >
                                     <FontAwesomeIcon icon={faArrowDown} />
                                 </button>
@@ -106,7 +108,7 @@ const StrategyBuilder: FC<Props> = ({ actions, onReorder }) => {
                         </div>
                     );
                 })}
-                {actions.length === 0 && <div className={styles.empty}>No actions defined</div>}
+                {actions.length === 0 && <div className={styles.empty} data-testid="no-strategy-actions">No actions defined</div>}
             </div>
         </div>
     );

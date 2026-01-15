@@ -10,9 +10,10 @@ type PropType = {
     placeholder?: string,
     disabled?: boolean,
     canCrit?: boolean,
+    'data-testid'?: string,
 }
 
-const DiceFormulaInput:FC<PropType> = ({ value, onChange, className, placeholder, disabled, canCrit }) => {
+const DiceFormulaInput:FC<PropType> = ({ value, onChange, className, placeholder, disabled, canCrit, 'data-testid': testId }) => {
     const [valueString, setValueString] = useState((value === undefined) ? '' : String(value))
     const [isValid, setIsValid] = useState(false)
 
@@ -32,6 +33,7 @@ const DiceFormulaInput:FC<PropType> = ({ value, onChange, className, placeholder
                 disabled={disabled}
                 className={`${className} ${isValid ? styles.isValid : styles.invalid}`}
                 placeholder={placeholder}
+                data-testid={testId}
             />
             { validateDiceFormula(valueString) && (String(evaluateDiceFormula(valueString, 0.5)) !== valueString) ? (
                 <div className="tooltip">

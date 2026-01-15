@@ -35,6 +35,7 @@ const Modal:FC<PropType> = ({ onCancel, children, className, title, 'data-testid
                                 <button
                                     className={styles.closeBtn}
                                     aria-label="Close modal"
+                                    data-testid="close-modal-btn"
                                 >
                                     <FontAwesomeIcon icon={faXmark} />
                                 </button>

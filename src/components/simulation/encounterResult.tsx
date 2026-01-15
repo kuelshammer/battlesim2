@@ -20,17 +20,19 @@ type TeamPropType = {
 
 const TeamResults: FC<TeamPropType> = memo(({ team, highlightedIds }) => {
     return (
-        <div className={styles.team}>
+        <div className={styles.team} data-testid="team-results">
             {team.map(combattant => (
                 <div
                     key={combattant.id}
-                    className={`${styles.lifebar} tooltipContainer`}>
-                    <div className={`${styles.lifebarBackground} ${highlightedIds?.includes(combattant.id) ? styles.highlighted : ''}`}>
+                    className={`${styles.lifebar} tooltipContainer`}
+                    data-testid={`lifebar-${combattant.id}`}>
+                    <div className={`${styles.lifebarBackground} ${highlightedIds?.includes(combattant.id) ? styles.highlighted : ''}`} data-testid="lifebar-background">
                         <div
                             className={styles.lifebarForeground}
                             style={{
                                 width: `${100 * combattant.initialState.currentHp / (combattant.creature.hp + (combattant.initialState.tempHp || 0))}%`
                             }}
+                            data-testid="lifebar-foreground"
                         />
                         {combattant.initialState.tempHp ? (
                             <div
@@ -38,17 +40,18 @@ const TeamResults: FC<TeamPropType> = memo(({ team, highlightedIds }) => {
                                 style={{
                                     width: `${100 * combattant.initialState.tempHp / (combattant.creature.hp + combattant.initialState.tempHp)}%`,
                                 }}
+                                data-testid="lifebar-thp"
                             />
                         ) : null}
-                        <div className={styles.lifebarLabel}>
+                        <div className={styles.lifebarLabel} data-testid="lifebar-label">
                             {combattant.initialState.currentHp}/{combattant.creature.hp}
                             {combattant.initialState.tempHp ? `+${combattant.initialState.tempHp}` : null}
                         </div>
                     </div>
-                    <div className={styles.creatureName}>
+                    <div className={styles.creatureName} data-testid="creature-name">
                         {combattant.creature.name}
                         {combattant.finalState.concentratingOn ? (
-                            <span className={styles.concentrationIcon} title={`Concentrating on ${combattant.finalState.concentratingOn}`}>
+                            <span className={styles.concentrationIcon} title={`Concentrating on ${combattant.finalState.concentratingOn}`} data-testid="concentration-icon">
                                 <FontAwesomeIcon icon={faBrain} />
                             </span>
                         ) : null}
@@ -141,16 +144,17 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                 <button
                     className={styles.detailsToggle}
                     onClick={() => setDetailsExpanded(!detailsExpanded)}
+                    data-testid="detail-toggle"
                 >
                     {detailsExpanded ? '🔽' : '▶️'} {detailsExpanded ? 'Hide' : 'Show'} Detailed Analysis
                 </button>
 
                 {detailsExpanded && hasRounds && value && lastRound && (
-                    <div className={styles.detailsContent}>
+                    <div className={styles.detailsContent} data-testid="details-content">
                         <div className={styles.round}>
                             <h3>Final State</h3>
                             <ActionEconomyDisplay round={lastRound} />
-                            <div className={styles.lifebars}>
+                            <div className={styles.lifebars} data-testid="final-state-lifebars">
                                 <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
                                 <hr />
                                 <TeamResults round={lastRound} team={lastRound.team2} stats={value.stats} />

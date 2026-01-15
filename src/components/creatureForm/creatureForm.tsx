@@ -212,6 +212,7 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                             onClick={() => setValue({...value, mode: 'custom'})} 
                             disabled={!isValid} 
                             aria-label="Advanced customization"
+                            data-testid="customize-creature-btn"
                         >
                             <FontAwesomeIcon icon={faWrench} />
                             Customize
@@ -226,6 +227,7 @@ const CreatureForm:FC<PropType> = ({ initialMode, onSubmit, onCancel, initialVal
                         <button 
                             onClick={onDelete} 
                             aria-label="Delete creature"
+                            data-testid="delete-creature-btn"
                         >
                             <FontAwesomeIcon icon={faTrash} />
                             Delete

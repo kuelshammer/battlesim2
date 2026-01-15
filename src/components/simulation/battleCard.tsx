@@ -101,35 +101,35 @@ const BattleCard: FC<PropType> = memo(({ decile }) => {
     }
 
     return (
-        <div className={styles.battleCard}>
-            <div className={styles.header}>
+        <div className={styles.battleCard} data-testid="timeline-item">
+            <div className={styles.header} data-testid="decile-header">
                 <div className={styles.decileInfo}>
-                    <div className={styles.decileLabel}>
+                    <div className={styles.decileLabel} data-testid="decile-label">
                         {getDecileLabel(decile.decile)}
                         <span className={styles.statisticalMeaning}>
                             {getStatisticalMeaning(decile.decile)}
                         </span>
                     </div>
-                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(decile.winRate)}`}>
+                    <span className={`${styles.outcomeBadge} ${getWinRateBadgeClass(decile.winRate)}`} data-testid="outcome-badge">
                         {getOutcomeIcon(decile.winRate)} {getOutcomeLabel(decile.winRate)}
                     </span>
                 </div>
-                <div className={styles.duration}>
+                <div className={styles.duration} data-testid="battle-duration">
                     Duration: {decile.battleDurationRounds} Rounds
                 </div>
             </div>
 
-            <div className={styles.combatants}>
+            <div className={styles.combatants} data-testid="decile-combatants">
                 {decile.medianRunVisualization?.map((combatant: CombatantVisualization, index: number) => (
-                    <div key={index} className={styles.combatant}>
-                        <div className={styles.combatantName}>
+                    <div key={index} className={styles.combatant} data-testid={`combatant-${index}`}>
+                        <div className={styles.combatantName} data-testid="creature-name">
                             {combatant.name}
-                            {combatant.isDead && <span className={styles.deathIndicator}> 💀 Dead</span>}
+                            {combatant.isDead && <span className={styles.deathIndicator} data-testid="death-indicator"> 💀 Dead</span>}
                         </div>
-                        <div className={styles.hpBar}>
+                        <div className={styles.hpBar} data-testid="hp-bar">
                             <span className={getHpBarColor(combatant.hpPercentage, combatant.isDead)}>
                                 [{renderHpBar(combatant.currentHp, combatant.startHp, combatant.maxHp)}] 
-                                <span className={styles.hpText}>
+                                <span className={styles.hpText} data-testid="hp-text">
                                     {combatant.currentHp}/{combatant.maxHp}
                                 </span>
                             </span>
@@ -145,10 +145,10 @@ const BattleCard: FC<PropType> = memo(({ decile }) => {
             </div>
 
             <div className={styles.footer}>
-                <div className={decile.winRate < 100 ? styles.winRateDanger : styles.winRate}>
+                <div className={decile.winRate < 100 ? styles.winRateDanger : styles.winRate} data-testid="win-rate">
                     Win Rate: {decile.winRate.toFixed(1)}%
                 </div>
-                <div className={styles.survivors}>
+                <div className={styles.survivors} data-testid="survivors-count">
                     Survivors: {decile.medianSurvivors}/{decile.partySize}
                 </div>
             </div>

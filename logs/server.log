@@ -1,0 +1,85 @@
+
+> battlesim@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 83825, using available port 3001 instead.
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.2.94:3001
+
+ ✓ Starting...
+ ✓ Ready in 3.7s
+ ○ Compiling / ...
+ ✓ Compiled / in 4.7s (1130 modules)
+ GET / 200 in 5554ms
+ GET / 200 in 233ms
+ GET / 200 in 222ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 227ms
+ GET / 200 in 224ms
+ GET / 200 in 219ms
+ GET / 200 in 241ms
+ GET / 200 in 230ms
+ GET / 200 in 226ms
+ GET / 200 in 223ms
+ GET / 200 in 219ms
+ GET / 200 in 220ms
+ GET / 200 in 221ms
+ GET / 200 in 220ms
+ GET / 200 in 221ms
+ GET / 200 in 219ms
+ GET / 200 in 221ms
+ GET / 200 in 216ms
+ GET / 200 in 222ms
+ GET / 200 in 220ms
+ GET / 200 in 223ms
+ GET / 200 in 219ms
+ GET / 200 in 221ms
+ GET / 200 in 222ms
+ GET / 200 in 244ms
+ GET / 200 in 221ms
+ GET / 200 in 219ms
+ GET / 200 in 218ms
+ GET / 200 in 223ms
+ GET / 200 in 224ms
+ GET / 200 in 266ms
+ GET / 200 in 265ms
+ GET / 200 in 290ms
+ GET / 200 in 223ms
+ GET / 200 in 268ms
+ GET / 200 in 223ms
+ GET / 200 in 218ms
+ GET / 200 in 223ms
+ GET / 200 in 245ms
+ GET / 200 in 225ms
+ GET / 200 in 226ms
+ GET / 200 in 233ms
+ GET / 200 in 224ms
+ GET / 200 in 236ms
+ GET / 200 in 262ms
+ GET / 200 in 223ms
+ GET / 200 in 221ms
+ GET / 200 in 226ms
+ GET / 200 in 220ms
+ GET / 200 in 263ms
+ ✓ Compiled in 402ms (1130 modules)
+ ✓ Compiled in 257ms (1130 modules)
+ ✓ Compiled in 179ms (1130 modules)
+ ✓ Compiled in 374ms (1130 modules)
+ ✓ Compiled in 180ms (1130 modules)
+ ✓ Compiled in 1106ms (1130 modules)
+ ✓ Compiled in 186ms (1130 modules)
+ ✓ Compiled in 253ms (1130 modules)
+ ✓ Compiled in 352ms (1130 modules)
+ ✓ Compiled in 142ms (1130 modules)
+ ✓ Compiled in 361ms (1130 modules)
+ ✓ Compiled in 251ms (1130 modules)
+ ✓ Compiled in 161ms (1130 modules)
+ ✓ Compiled in 156ms (1130 modules)
+ ✓ Compiled in 280ms (1130 modules)
+ ✓ Compiled in 313ms (1130 modules)
+ ✓ Compiled in 207ms (1130 modules)
+ ✓ Compiled in 258ms (1130 modules)
+ ✓ Compiled in 771ms (1130 modules)
+[?25h

@@ -308,20 +308,20 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
 
 
     return (
-        <Modal onCancel={onCancel} className={styles.adventuringDayEditor}>
+        <Modal onCancel={onCancel} className={styles.adventuringDayEditor} data-testid="adventuring-day-modal">
             <h1>Adventuring Day Editor</h1>
 
             {/* Save/Load Toolbar */}
-            <section className={styles.toolbar}>
+            <section className={styles.toolbar} data-testid="save-load-toolbar">
                 <h3>Save Name:</h3>
-                <input type="text" value={saveName} onChange={e => setSaveName(e.target.value)} />
-                <button disabled={!isValidSaveName} onClick={applyAndSave}>
+                <input type="text" value={saveName} onChange={e => setSaveName(e.target.value)} data-testid="save-name-input" />
+                <button disabled={!isValidSaveName} onClick={applyAndSave} data-testid="save-day-btn">
                     <FontAwesomeIcon icon={faSave} /> Save
                 </button>
-                <button className="tooltipContainer" onClick={onDownload}>
+                <button className="tooltipContainer" onClick={onDownload} data-testid="download-day-btn">
                     <FontAwesomeIcon icon={faDownload} /> Download
                 </button>
-                <label htmlFor="file" className="tooltipContainer">
+                <label htmlFor="file" className="tooltipContainer" data-testid="upload-day-label">
                     <FontAwesomeIcon icon={faUpload} /> Upload
                 </label>
                 <input
@@ -329,80 +329,82 @@ const AdventuringDayForm: FC<PropType> = ({ currentPlayers, currentTimeline, onC
                     id="file"
                     accept="application/json"
                     style={{ display: "none" }}
-                    onChange={(e) => onUpload(e.target.files)} />
+                    onChange={(e) => onUpload(e.target.files)}
+                    data-testid="upload-day-input"
+                />
             </section>
 
             {/* Existing Save Files List */}
-            <section className={styles.saveFilesList}>
+            <section className={styles.saveFilesList} data-testid="saved-days-list">
                 <h3>Saved Days:</h3>
-                {loading ? <p>Loading saves...</p> : 
-                 savedDays.length === 0 ? <p>No saved adventuring days found.</p> :
+                {loading ? <p data-testid="loading-saves-msg">Loading saves...</p> : 
+                 savedDays.length === 0 ? <p data-testid="no-saves-msg">No saved adventuring days found.</p> :
                  savedDays.map(save => (
-                    <div key={save.name} className={styles.saveItem}>
+                    <div key={save.name} className={styles.saveItem} data-testid={`save-item-${save.name}`}>
                         <span>{save.name} ({new Date(save.updated).toLocaleDateString()})</span>
-                        <button onClick={() => loadSavedDay(save)}>Load</button>
-                        <button onClick={() => deleteSave(save.filename || save.name)}>Delete</button>
+                        <button onClick={() => loadSavedDay(save)} data-testid="load-save-btn">Load</button>
+                        <button onClick={() => deleteSave(save.filename || save.name)} data-testid="delete-save-btn">Delete</button>
                     </div>
                 ))}
             </section>
 
             {/* Players Section */}
-            <section className={styles.playersSection}>
+            <section className={styles.playersSection} data-testid="players-section">
                 <h2>Players</h2>
-                <button onClick={addPlayer}><FontAwesomeIcon icon={faPlus} /> Add Player</button>
-                <div className={styles.playerList}>
+                <button onClick={addPlayer} data-testid="add-player-btn"><FontAwesomeIcon icon={faPlus} /> Add Player</button>
+                <div className={styles.playerList} data-testid="player-list">
                     {editedPlayers.map(player => (
-                        <div key={player.id} className={styles.playerItem}>
+                        <div key={player.id} className={styles.playerItem} data-testid={`player-item-${player.id}`}>
                             <span>{player.name} (Lvl {player.class?.level} {player.class?.type})</span>
-                            <button onClick={() => setEditingPlayer(player)}><FontAwesomeIcon icon={faPen} /> Edit</button>
-                            <button onClick={() => removePlayer(player.id)}><FontAwesomeIcon icon={faTimes} /> Remove</button>
+                            <button onClick={() => setEditingPlayer(player)} data-testid="edit-player-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>
+                            <button onClick={() => removePlayer(player.id)} data-testid="remove-player-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>
                         </div>
                     ))}
                 </div>
             </section>
 
             {/* Timeline Section */}
-            <section className={styles.encountersSection}>
+            <section className={styles.encountersSection} data-testid="timeline-section">
                 <h2>Timeline</h2>
-                <div className={styles.timelineControls}>
-                    <button onClick={addEncounter}><FontAwesomeIcon icon={faPlus} /> Add Combat</button>
-                    <button onClick={addShortRest} className={styles.restBtn}><FontAwesomeIcon icon={faBed} /> Add Short Rest</button>
+                <div className={styles.timelineControls} data-testid="timeline-controls">
+                    <button onClick={addEncounter} data-testid="add-combat-btn"><FontAwesomeIcon icon={faPlus} /> Add Combat</button>
+                    <button onClick={addShortRest} className={styles.restBtn} data-testid="add-rest-btn"><FontAwesomeIcon icon={faBed} /> Add Short Rest</button>
                 </div>
                 
-                <div className={styles.encounterList}>
+                <div className={styles.encounterList} data-testid="encounter-list">
                     {editedTimeline.map((item, index) => (
-                        <div key={item.id} className={item.type === 'combat' ? styles.encounterItem : styles.restItem}>
+                        <div key={item.id} className={item.type === 'combat' ? styles.encounterItem : styles.restItem} data-testid={`timeline-item-${index}`}>
                             <div className={styles.itemHeader}>
                                 <h3>{item.type === 'combat' ? `Encounter ${index + 1}` : 'Short Rest'}</h3>
-                                <div className={styles.itemControls}>
-                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
-                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === editedTimeline.length - 1}>↓</button>
-                                    <button onClick={() => removeTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                <div className={styles.itemControls} data-testid="item-controls">
+                                    <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0} data-testid="move-item-up-btn">↑</button>
+                                    <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === editedTimeline.length - 1} data-testid="move-item-down-btn">↓</button>
+                                    <button onClick={() => removeTimelineItem(index)} className={styles.deleteBtn} data-testid="delete-item-btn"><FontAwesomeIcon icon={faTrash} /></button>
                                 </div>
                             </div>
 
                             {item.type === 'combat' ? (
-                                <>
-                                    <div className={styles.encounterSettings}>
-                                        <Checkbox value={item.playersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, playersSurprised: !item.playersSurprised })}>Players Surprised</Checkbox>
-                                        <Checkbox value={item.monstersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, monstersSurprised: !item.monstersSurprised })}>Monsters Surprised</Checkbox>
-                                        <Checkbox value={item.playersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, playersPrecast: !item.playersPrecast })}>Players Precast</Checkbox>
-                                        <Checkbox value={item.monstersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, monstersPrecast: !item.monstersPrecast })}>Monsters Precast</Checkbox>
+                                <div data-testid="combat-details">
+                                    <div className={styles.encounterSettings} data-testid="encounter-settings">
+                                        <Checkbox value={item.playersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, playersSurprised: !item.playersSurprised })} data-testid="players-surprised-checkbox">Players Surprised</Checkbox>
+                                        <Checkbox value={item.monstersSurprised || false} onToggle={() => updateTimelineItem(index, { ...item, monstersSurprised: !item.monstersSurprised })} data-testid="monsters-surprised-checkbox">Monsters Surprised</Checkbox>
+                                        <Checkbox value={item.playersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, playersPrecast: !item.playersPrecast })} data-testid="players-precast-checkbox">Players Precast</Checkbox>
+                                        <Checkbox value={item.monstersPrecast || false} onToggle={() => updateTimelineItem(index, { ...item, monstersPrecast: !item.monstersPrecast })} data-testid="monsters-precast-checkbox">Monsters Precast</Checkbox>
                                     </div>
                                     <h4>Monsters</h4>
-                                    <button onClick={() => addMonsterToEncounter(index)}><FontAwesomeIcon icon={faPlus} /> Add Monster</button>
-                                    <div className={styles.monsterList}>
+                                    <button onClick={() => addMonsterToEncounter(index)} data-testid="add-monster-btn"><FontAwesomeIcon icon={faPlus} /> Add Monster</button>
+                                    <div className={styles.monsterList} data-testid="monster-list">
                                         {item.monsters.map(monster => (
-                                            <div key={monster.id} className={styles.monsterItem}>
+                                            <div key={monster.id} className={styles.monsterItem} data-testid={`monster-item-${monster.id}`}>
                                                 <span>{monster.name} (x{monster.count})</span>
-                                                <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(index); }}><FontAwesomeIcon icon={faPen} /> Edit</button>
-                                                <button onClick={() => removeMonsterFromEncounter(index, monster.id)}><FontAwesomeIcon icon={faTimes} /> Remove</button>
+                                                <button onClick={() => { setEditingMonster(monster); setEditingMonsterEncounterIndex(index); }} data-testid="edit-monster-btn"><FontAwesomeIcon icon={faPen} /> Edit</button>
+                                                <button onClick={() => removeMonsterFromEncounter(index, monster.id)} data-testid="remove-monster-btn"><FontAwesomeIcon icon={faTimes} /> Remove</button>
                                             </div>
                                         ))}
                                     </div>
-                                </>
+                                </div>
                             ) : (
-                                <div className={styles.restBody}>
+                                <div className={styles.restBody} data-testid="rest-details">
                                     <p><FontAwesomeIcon icon={faBed} size="2x" /></p>
                                     <p>Standard 1-hour rest. Characters spend Hit Dice to recover HP and reset "Short Rest" resources.</p>
                                 </div>

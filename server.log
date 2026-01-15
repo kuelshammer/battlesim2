@@ -2,14 +2,15 @@
 > battlesim@0.1.0 dev
 > next dev --port 3000
 
- ⨯ Failed to start server
-Error: listen EADDRINUSE: address already in use :::3000
-    at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
-    at new Promise (<anonymous>) {
-  code: 'EADDRINUSE',
-  errno: -48,
-  syscall: 'listen',
-  address: '::',
-  port: 3000
-}
-[?25h
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.2.94:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling / ...
+ ✓ Compiled / in 1491ms (1127 modules)
+ GET / 200 in 2111ms
+ GET / 200 in 226ms
+ GET / 200 in 222ms
+ GET / 200 in 232ms

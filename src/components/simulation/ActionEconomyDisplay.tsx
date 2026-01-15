@@ -126,22 +126,22 @@ const ActionEconomyDisplay: FC<PropType> = ({ round }) => {
   const stateClass = `${styles.actionEconomy} ${styles[status.state.toLowerCase()]}`
 
   return (
-    <div className={stateClass}>
-      <div className={styles.header}>
+    <div className={stateClass} data-testid="action-economy-display">
+      <div className={styles.header} data-testid="ae-header">
         <span className={styles.icon}>{stateInfo.icon}</span>
-        <span className={styles.label}>Action Economy: {stateInfo.label}</span>
+        <span className={styles.label} data-testid="ae-label">Action Economy: {stateInfo.label}</span>
       </div>
 
-      <div className={styles.details}>
-        <span className={styles.counts}>
+      <div className={styles.details} data-testid="ae-details">
+        <span className={styles.counts} data-testid="ae-counts">
           ({status.playerCount} vs {status.monsterCount})
         </span>
-        <span className={styles.rounds}>
+        <span className={styles.rounds} data-testid="ae-rounds">
           You {status.roundsToKillMonsters.toFixed(1)} rounds | Them {status.roundsToKillPlayers.toFixed(1)} rounds
         </span>
       </div>
 
-      <div className={styles.recommendation}>
+      <div className={styles.recommendation} data-testid="ae-recommendation">
         {stateInfo.recommendation}
       </div>
     </div>

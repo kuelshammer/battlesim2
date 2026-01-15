@@ -183,50 +183,58 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
 
     // ... (inside BuffForm)
     return (
-        <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <Checkbox value={!!value.concentration} onToggle={() => onUpdate({ ...value, concentration: !value.concentration })} />
+        <div data-testid="buff-form">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }} data-testid="concentration-toggle-container">
+                <Checkbox value={!!value.concentration} onToggle={() => onUpdate({ ...value, concentration: !value.concentration })} data-testid="concentration-checkbox" />
                 Requires Concentration
             </div>
             Effects:
-            {modifiers.map((modifier, index) => (
-                <div key={modifier} className={styles.modifier}>
-                    <Select
-                        value={modifier}
-                        onChange={newValue => setModifier(index, newValue)}
-                        options={BuffStatOptions.filter(option => (modifier === option.value) || !modifiers.includes(option.value))}
-                    />
-                    {((modifier === 'damageMultiplier') || (modifier === 'damageTakenMultiplier')) ? (
-                        <DecimalInput
-                            value={value[modifier]}
-                            onChange={v => updateValue(modifier, v || 0)}
-                        />
-                    ) : (modifier === 'condition') ? (
+            <div data-testid="modifiers-list">
+                {modifiers.map((modifier, index) => (
+                    <div key={modifier} className={styles.modifier} data-testid={`modifier-row-${index}`}>
                         <Select
-                            value={value.condition}
-                            options={CreatureConditionList.map(condition => ({ value: condition, label: condition }))}
-                            onChange={(newCondition) => updateCondition(newCondition)}
+                            value={modifier}
+                            onChange={newValue => setModifier(index, newValue)}
+                            options={BuffStatOptions.filter(option => (modifier === option.value) || !modifiers.includes(option.value))}
+                            classNamePrefix="select-modifier-type"
                         />
-                    ) : (
-                        <DiceFormulaInput
-                            value={value[modifier] as DiceFormula | undefined}
-                            onChange={v => updateDiceFormula(modifier, v ?? '')}
-                        />
-                    )}
-                    <button onClick={() => setModifier(index, null)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                </div>
-            ))}
+                        {((modifier === 'damageMultiplier') || (modifier === 'damageTakenMultiplier')) ? (
+                            <DecimalInput
+                                value={value[modifier]}
+                                onChange={v => updateValue(modifier, v || 0)}
+                                data-testid="modifier-value-input"
+                            />
+                        ) : (modifier === 'condition') ? (
+                            <Select
+                                value={value.condition}
+                                options={CreatureConditionList.map(condition => ({ value: condition, label: condition }))}
+                                onChange={(newCondition) => updateCondition(newCondition)}
+                                classNamePrefix="select-condition-type"
+                            />
+                        ) : (
+                            <DiceFormulaInput
+                                value={value[modifier] as DiceFormula | undefined}
+                                onChange={v => updateDiceFormula(modifier, v ?? '')}
+                                data-testid="modifier-formula-input"
+                            />
+                        )}
+                        <button onClick={() => setModifier(index, null)} data-testid="delete-modifier-btn">
+                            <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                    </div>
+                ))}
+            </div>
 
             <button
                 className="tooltipContainer"
                 disabled={modifiers.length === BuffStatOptions.length}
-                onClick={addModifier}>
+                onClick={addModifier}
+                data-testid="add-modifier-btn"
+            >
                 <FontAwesomeIcon icon={faPlus} />
                 <div className="tooltip">Add effect to the buff/debuff</div>
             </button>
-        </>
+        </div>
     )
 }
 
@@ -393,21 +401,25 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
     }
 
     return (
-        <div className={styles.actionForm}>
-            <div className={styles.arrowBtns}>
+        <div className={styles.actionForm} data-testid="action-form">
+            <div className={styles.arrowBtns} data-testid="action-move-controls">
                 <button
                     onClick={onMoveUp}
-                    disabled={!onMoveUp}>
+                    disabled={!onMoveUp}
+                    data-testid="move-action-up-btn"
+                >
                     <FontAwesomeIcon icon={faChevronUp} />
                 </button>
                 <button
                     onClick={onMoveDown}
-                    disabled={!onMoveDown}>
+                    disabled={!onMoveDown}
+                    data-testid="move-action-down-btn"
+                >
                     <FontAwesomeIcon icon={faChevronDown} />
                 </button>
             </div>
 
-            <button onClick={onDelete}>
+            <button onClick={onDelete} data-testid="delete-action-btn">
                 <FontAwesomeIcon icon={faTrash} />
             </button>
 
@@ -418,13 +430,15 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                     onChange={(e) => updateFinalAction(v => { v.name = e.target.value.length < 100 ? e.target.value : v.name })}
                     placeholder="Action name..."
                     style={{ minWidth: `${value.name.length}ch` }}
+                    data-testid="action-name-input"
                 />
             ) : null}
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }} data-testid="precast-toggle-container">
                 <Checkbox
                     value={value.actionSlot === -3}
                     onToggle={() => update(v => { v.actionSlot = (v.actionSlot === -3) ? 0 : -3 })}
+                    data-testid="precast-checkbox"
                 />
                 <span style={{ fontSize: '0.9em' }}>Cast before combat</span>
             </div>
@@ -432,9 +446,12 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             <Select
                 value={value.actionSlot ?? (value.type === 'template' ? ActionTemplates[value.templateOptions.templateName].actionSlot : 0)}
                 options={ActionOptions}
-                onChange={actionSlot => update(v => { v.actionSlot = actionSlot })} />
+                onChange={actionSlot => update(v => { v.actionSlot = actionSlot })}
+                classNamePrefix="select-action-slot"
+                data-testid="action-slot-select"
+            />
 
-            <div style={{ width: '100%', borderTop: '1px solid #eee', marginTop: '4px', paddingTop: '4px' }}>
+            <div style={{ width: '100%', borderTop: '1px solid #eee', marginTop: '4px', paddingTop: '4px' }} data-testid="action-details-section">
                 <ActionCostEditor
                     value={value.cost || []}
                     onChange={newCost => update(v => { v.cost = newCost })}
@@ -449,13 +466,15 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 />
             </div>
 
-            <Select value={value.type} options={TypeOptions} onChange={updateType} />
+            <Select value={value.type} options={TypeOptions} onChange={updateType} classNamePrefix="select-action-type" />
 
             {value.type === 'template' ? (
                 <Select
                     value={value.templateOptions.templateName}
                     options={Object.keys(ActionTemplates).map(key => ({ value: key as keyof typeof ActionTemplates, label: key }))}
-                    onChange={onTemplateChange} />
+                    onChange={onTemplateChange}
+                    classNamePrefix="select-template-name"
+                />
             ) : null}
 
             <Select
@@ -467,11 +486,13 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                                     : 'at will'
                 }
                 options={FreqOptions}
-                onChange={freq => updateFrequency(freq)} />
+                onChange={freq => updateFrequency(freq)}
+                classNamePrefix="select-frequency"
+            />
 
             {typeof value.freq !== 'string' ? (
                 value.freq.reset === 'recharge' ? (
-                    <>
+                    <div data-testid="recharge-controls">
                         Cooldown in rounds:
                         <input
                             type='number'
@@ -479,10 +500,12 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             step={1}
                             className={value.freq.cooldownRounds < 2 ? styles.invalid : ''}
                             value={value.freq.cooldownRounds}
-                            onChange={e => update(v => { (v.freq as Frequency & { cooldownRounds?: number }).cooldownRounds = Number(e.target.value || 0) })} />
-                    </>
+                            onChange={e => update(v => { (v.freq as Frequency & { cooldownRounds?: number }).cooldownRounds = Number(e.target.value || 0) })}
+                            data-testid="cooldown-input"
+                        />
+                    </div>
                 ) : (
-                    <>
+                    <div data-testid="limited-uses-controls">
                         Uses:
                         <input
                             type='number'
@@ -490,21 +513,23 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             step={1}
                             className={value.freq.uses < 1 ? styles.invalid : ''}
                             value={value.freq.uses}
-                            onChange={e => update(v => { (v.freq as Frequency & { uses?: number }).uses = Number(e.target.value || 0) })} />
-                    </>
+                            onChange={e => update(v => { (v.freq as Frequency & { uses?: number }).uses = Number(e.target.value || 0) })}
+                            data-testid="uses-input"
+                        />
+                    </div>
                 )
             ) : null}
 
             {((value.type === 'atk') && (!value.useSaves)) ? (
-                <Select value={value.targets} options={HitCountOptions} onChange={targets => updateFinalAction(v => v.targets = targets)} />
+                <Select value={value.targets} options={HitCountOptions} onChange={targets => updateFinalAction(v => v.targets = targets)} classNamePrefix="select-hit-count" />
             ) : (value.type !== 'template') ? (
-                <Select value={value.targets} options={TargetCountOptions} onChange={targets => updateFinalAction(v => { v.targets = targets })} />
+                <Select value={value.targets} options={TargetCountOptions} onChange={targets => updateFinalAction(v => { v.targets = targets })} classNamePrefix="select-target-count" />
             ) : null}
             Use this action if:
-            <Select value={value.condition} options={ConditionOptions} onChange={condition => update(v => { v.condition = condition })} />
+            <Select value={value.condition} options={ConditionOptions} onChange={condition => update(v => { v.condition = condition })} classNamePrefix="select-condition" />
 
             {(value.type === "atk") ? (
-                <>
+                <div data-testid="attack-fields">
                     <Select
                         value={!!value.useSaves}
                         options={AtkOptions}
@@ -512,23 +537,27 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             const atk = (v as AtkAction);
                             if (atk.useSaves !== useSaves) atk.targets = 1
                             atk.useSaves = useSaves
-                        })} />
-                    <DiceFormulaInput value={value.toHit} onChange={toHit => update(v => { (v as AtkAction).toHit = toHit || 0 })} />
+                        })}
+                        classNamePrefix="select-atk-mode"
+                    />
+                    <DiceFormulaInput value={value.toHit} onChange={toHit => update(v => { (v as AtkAction).toHit = toHit || 0 })} data-testid="to-hit-input" />
                     Damage:
-                    <DiceFormulaInput value={value.dpr} onChange={dpr => update(v => { (v as AtkAction).dpr = dpr || 0 })} canCrit={!value.useSaves} />
+                    <DiceFormulaInput value={value.dpr} onChange={dpr => update(v => { (v as AtkAction).dpr = dpr || 0 })} canCrit={!value.useSaves} data-testid="damage-input" />
 
                     {value.useSaves ? (
-                        <>
+                        <div data-testid="save-options">
                             Save for half?
                             <Select
                                 value={!!value.halfOnSave}
                                 options={[{ value: true, label: 'Yes' }, { value: false, label: 'No' }]}
-                                onChange={halfOnSave => update(v => { (v as AtkAction).halfOnSave = halfOnSave })} />
-                        </>
+                                onChange={halfOnSave => update(v => { (v as AtkAction).halfOnSave = halfOnSave })}
+                                classNamePrefix="select-half-on-save"
+                            />
+                        </div>
                     ) : null}
 
                     Target:
-                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
+                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-enemy-target" />
                     On Hit Effect:
                     <Select
                         value={value.riderEffect !== undefined}
@@ -536,85 +565,93 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                         onChange={b => {
                             if (b) update(v => { (v as AtkAction).riderEffect ||= { dc: 0, buff: { duration: "1 round" } } })
                             else update(v => { delete (v as AtkAction).riderEffect })
-                        }} />
+                        }}
+                        classNamePrefix="select-has-rider"
+                    />
 
                     {(value.riderEffect) ? (
-                        <>
+                        <div data-testid="rider-effect-fields">
                             Save DC:
-                            <DecimalInput value={value.riderEffect.dc} onChange={dc => updateRiderEffect(e => { e.dc = dc || 0 })} />
+                            <DecimalInput value={value.riderEffect.dc} onChange={dc => updateRiderEffect(e => { e.dc = dc || 0 })} data-testid="rider-dc-input" />
                             Duration:
-                            <Select value={value.riderEffect.buff.duration} options={BuffDurationOptions} onChange={duration => updateRiderEffect(e => { e.buff.duration = duration })} />
+                            <Select value={value.riderEffect.buff.duration} options={BuffDurationOptions} onChange={duration => updateRiderEffect(e => { e.buff.duration = duration })} classNamePrefix="select-rider-duration" />
                             <BuffForm value={value.riderEffect.buff} onUpdate={newValue => updateRiderEffect(e => { e.buff = newValue })} />
-                        </>
+                        </div>
                     ) : null}
-                </>
+                </div>
             ) : null}
             {(value.type === "heal") ? (
-                <>
+                <div data-testid="heal-fields">
                     <Select
                         value={!!value.tempHP}
                         options={[{ value: true, label: 'Temp HP:' }, { value: false, label: 'Heal Amount:' }]}
-                        onChange={tempHP => update(v => { (v as HealAction).tempHP = tempHP })} />
-                    <DiceFormulaInput value={value.amount} onChange={heal => update(v => { (v as HealAction).amount = heal || 0 })} />
+                        onChange={tempHP => update(v => { (v as HealAction).tempHP = tempHP })}
+                        classNamePrefix="select-heal-mode"
+                    />
+                    <DiceFormulaInput value={value.amount} onChange={heal => update(v => { (v as HealAction).amount = heal || 0 })} data-testid="heal-amount-input" />
                     Target:
-                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
-                </>
+                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-ally-target" />
+                </div>
             ) : null}
             {(value.type === "buff") ? (
-                <>
+                <div data-testid="buff-fields">
                     Target:
-                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
+                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-ally-target" />
                     Duration:
-                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as BuffAction).buff.duration = duration })} />
+                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as BuffAction).buff.duration = duration })} classNamePrefix="select-buff-duration" />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as BuffAction).buff = newValue })} />
-                </>
+                </div>
             ) : null}
             {(value.type === "debuff") ? (
-                <>
+                <div data-testid="debuff-fields">
                     Target:
-                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
+                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-enemy-target" />
                     Duration:
-                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as DebuffAction).buff.duration = duration })} />
+                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as DebuffAction).buff.duration = duration })} classNamePrefix="select-debuff-duration" />
                     Save DC:
-                    <input type='number' value={value.saveDC} onChange={e => update(v => { (v as DebuffAction).saveDC = Number(e.target.value) })} />
+                    <input type='number' value={value.saveDC} onChange={e => update(v => { (v as DebuffAction).saveDC = Number(e.target.value) })} data-testid="debuff-save-dc-input" />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as DebuffAction).buff = newValue })} />
-                </>
+                </div>
             ) : null}
             {(value.type === "template") ? (() => {
                 const template = ActionTemplates[value.templateOptions.templateName]
 
                 const targetForm = template.target ? null : (
-                    <>
+                    <div data-testid="template-target-fields">
                         Target:
                         <Select
                             value={value.templateOptions.target}
                             options={((template.type === 'atk') || (template.type === 'debuff')) ? EnemyTargetOptions : AllyTargetOptions}
-                            onChange={target => updateTemplateAction(v => { v.templateOptions.target = target })} />
-                    </>
+                            onChange={target => updateTemplateAction(v => { v.templateOptions.target = target })}
+                            classNamePrefix="select-template-target"
+                        />
+                    </div>
                 )
 
                 if (template.type === 'atk') return (
-                    <>
+                    <div data-testid="template-atk-fields">
                         {template.useSaves ? 'Save DC:' : 'To hit:'}
-                        <DiceFormulaInput value={value.templateOptions.toHit} onChange={toHit => updateTemplateAction(v => { v.templateOptions.toHit = toHit || 0 })} />
+                        <DiceFormulaInput value={value.templateOptions.toHit} onChange={toHit => updateTemplateAction(v => { v.templateOptions.toHit = toHit || 0 })} data-testid="template-to-hit-input" />
                         {template.riderEffect ? (
-                            <>
+                            <div data-testid="template-rider-fields">
                                 Save DC for the additional effects:
-                                <input type='number' value={value.templateOptions.saveDC} onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })} />
-                            </>
+                                <input type='number' value={value.templateOptions.saveDC} onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })} data-testid="template-rider-dc-input" />
+                            </div>
                         ) : null}
                         {targetForm}
-                    </>
+                    </div>
                 )
                 if (template.type === 'debuff') return (
-                    <>
+                    <div data-testid="template-debuff-fields">
                         Save DC:
                         <input
                             type='number'
                             value={value.templateOptions.saveDC}
-                            onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })} />
+                            onChange={e => updateTemplateAction(v => { v.templateOptions.saveDC = Number(e.target.value) })}
+                            data-testid="template-save-dc-input"
+                        />
                         {targetForm}
-                    </>
+                    </div>
                 )
 
                 return targetForm
@@ -622,24 +659,24 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
 
             {/* Backend Feature Feedback Panel - Only shown in dev mode */}
             {inDevEnvironment ? (
-                <div className={styles.backendFeedback}>
+                <div className={styles.backendFeedback} data-testid="backend-feedback">
                     <div className={styles.feedbackTitle}>🔧 Backend Processing</div>
-                    <div className={styles.feedbackItems}>
+                    <div className={styles.feedbackItems} data-testid="feedback-items">
                         {(() => {
                             const feedback = getBackendFeedback()
                             return [
                                 ...feedback.processors.map(processor => (
-                                    <div key={processor} className={styles.feedbackItem}>
+                                    <div key={processor} className={styles.feedbackItem} data-testid={`processor-${processor}`}>
                                         ⚙️ {processor}
                                     </div>
                                 )),
                                 ...feedback.reactions.map(reaction => (
-                                    <div key={reaction} className={`${styles.feedbackItem} ${styles.reaction}`}>
+                                    <div key={reaction} className={`${styles.feedbackItem} ${styles.reaction}`} data-testid={`reaction-${reaction}`}>
                                         ⚡ {reaction}
                                     </div>
                                 )),
                                 ...feedback.effects.map(effect => (
-                                    <div key={effect} className={`${styles.feedbackItem} ${styles.effect}`}>
+                                    <div key={effect} className={`${styles.feedbackItem} ${styles.effect}`} data-testid={`effect-${effect}`}>
                                         ✨ {effect}
                                     </div>
                                 ))

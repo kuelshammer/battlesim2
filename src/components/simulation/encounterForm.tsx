@@ -68,20 +68,20 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
 
     return (
         <>
-            <div className={styles.encounterForm}>
-                <div className={styles.encounterActions}>
+            <div className={styles.encounterForm} data-testid={`encounter-form-${mode}`}>
+                <div className={styles.encounterActions} data-testid="encounter-actions">
                     {!!onDelete && (
-                        <button onClick={onDelete} aria-label="Delete encounter">
+                        <button onClick={onDelete} aria-label="Delete encounter" data-testid="delete-encounter-btn">
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     )}
                     {(onMoveUp || onMoveDown) && (
-                        <button onClick={onMoveUp} disabled={!onMoveUp} aria-label="Move encounter up">
+                        <button onClick={onMoveUp} disabled={!onMoveUp} aria-label="Move encounter up" data-testid="move-up-btn">
                             <FontAwesomeIcon icon={faChevronUp} />
                         </button>
                     )}
                     {(onMoveUp || onMoveDown) && (
-                        <button onClick={onMoveDown} disabled={!onMoveDown} aria-label="Move encounter down">
+                        <button onClick={onMoveDown} disabled={!onMoveDown} aria-label="Move encounter down" data-testid="move-down-btn">
                             <FontAwesomeIcon icon={faChevronDown} />
                         </button>
                     )}
@@ -118,7 +118,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                                         aria-label={`${creature.name} arrival round`}
                                     />
                                 </span>}
-                                <button onClick={() => handleSetUpdating(index)} aria-label={`Edit ${creature.name}`}>
+                                <button onClick={() => handleSetUpdating(index)} aria-label={`Edit ${creature.name}`} data-testid="edit-creature-btn">
                                     <FontAwesomeIcon icon={faPen} />
                                     <span>Edit</span>
                                 </button>
@@ -128,7 +128,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                             </div>
                         ))}
                     </div>
-                    <div className={styles.encounterSettings}>
+                    <div className={styles.encounterSettings} data-testid="encounter-settings">
                         {children || (encounter.monsters.length ? (
                             <>
                                 <Checkbox value={!!encounter.playersSurprised} onToggle={() => update(e => { e.playersSurprised = !e.playersSurprised })}>
@@ -137,7 +137,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                                 <Checkbox value={!!encounter.monstersSurprised} onToggle={() => update(e => { e.monstersSurprised = !e.monstersSurprised })}>
                                     The enemies are surprised
                                 </Checkbox>
-                                <div className={styles.roleSelection}>
+                                <div className={styles.roleSelection} data-testid="role-selection">
                                     <label>Encounter Role:</label>
                                     <Select
                                         className={styles.roleSelect}
@@ -162,6 +162,7 @@ const EncounterForm: FC<PropType> = memo(({ mode, encounter, onUpdate, onDelete,
                             onClick={onAutoAdjust}
                             disabled={autoAdjustDisabled}
                             title="Optimize this encounter's difficulty automatically"
+                            data-testid="auto-adjust-btn"
                         >
                             <FontAwesomeIcon icon={faMagicWandSparkles} />
                             Auto-Adjust

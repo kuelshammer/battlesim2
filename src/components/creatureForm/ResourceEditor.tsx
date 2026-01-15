@@ -118,8 +118,8 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
         : [];
 
     return (
-        <div className={styles.resourceEditor}>
-            <div className={styles.section}>
+        <div className={styles.resourceEditor} data-testid="resource-editor">
+            <div className={styles.section} data-testid="spell-slots-section">
                 <h3 className={styles.sectionHeader}>
                     Spell Slots
                     <div className={styles.headerButtons}>
@@ -127,17 +127,18 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                             onClick={() => setShowCasterHelper(!showCasterHelper)}
                             title="Set slots from Caster Level"
                             className={showCasterHelper ? styles.activeBtn : ''}
+                            data-testid="caster-helper-btn"
                         >
                             <FontAwesomeIcon icon={faMagicWandSparkles} />
                         </button>
-                        <button onClick={addSpellSlot} title="Add Spell Slot">
+                        <button onClick={addSpellSlot} title="Add Spell Slot" data-testid="add-spell-slot-btn">
                             <FontAwesomeIcon icon={faPlus} />
                         </button>
                     </div>
                 </h3>
 
                 {showCasterHelper && (
-                    <div className={styles.casterHelper}>
+                    <div className={styles.casterHelper} data-testid="caster-helper-panel">
                         <div className={styles.casterRow}>
                             <label>Caster Level:</label>
                             <input
@@ -148,6 +149,7 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                                 onChange={e => setCasterLevel(e.target.value === '' ? '' : parseInt(e.target.value))}
                                 placeholder="1-20"
                                 style={{ width: '60px' }}
+                                data-testid="caster-level-input"
                             />
                         </div>
                         <div className={styles.casterRow}>
@@ -155,6 +157,7 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                             <select
                                 value={casterType}
                                 onChange={e => setCasterType(e.target.value as CasterType)}
+                                data-testid="caster-type-select"
                             >
                                 {Object.entries(CASTER_TYPE_LABELS).map(([type, label]) => (
                                     <option key={type} value={type}>{label}</option>
@@ -165,72 +168,81 @@ const ResourceEditor: FC<Props> = ({ value, onChange }) => {
                             onClick={applyCasterLevel}
                             disabled={typeof casterLevel !== 'number' || casterLevel < 1}
                             className={styles.applyBtn}
+                            data-testid="apply-caster-btn"
                         >
                             Apply Spell Slots
                         </button>
                     </div>
                 )}
 
-                {sortedSpellSlots.map(([level, count]) => (
-                    <div key={level} className={styles.resourceEntry}>
-                        <label>Level:</label>
-                        <input
-                            type="text"
-                            value={level.replace('level_', '')}
-                            onChange={e => {
-                                const newLevel = `level_${e.target.value}`;
-                                updateSpellSlotLevel(level, newLevel);
-                            }}
-                            className={styles.resourceName}
-                            style={{ width: '50px' }}
-                        />
-                        <label>Slots:</label>
-                        <input
-                            type="number"
-                            value={count}
-                            onChange={e => updateSpellSlotCount(level, parseInt(e.target.value) || 0)}
-                            min={0}
-                            style={{ width: '50px' }}
-                        />
-                        <button onClick={() => deleteSpellSlot(level)} title="Delete Spell Slot">
-                            <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                    </div>
-                ))}
-                {sortedSpellSlots.length === 0 && <p>No spell slots configured.</p>}
+                <div data-testid="spell-slots-list">
+                    {sortedSpellSlots.map(([level, count]) => (
+                        <div key={level} className={styles.resourceEntry} data-testid={`spell-slot-row-${level}`}>
+                            <label>Level:</label>
+                            <input
+                                type="text"
+                                value={level.replace('level_', '')}
+                                onChange={e => {
+                                    const newLevel = `level_${e.target.value}`;
+                                    updateSpellSlotLevel(level, newLevel);
+                                }}
+                                className={styles.resourceName}
+                                style={{ width: '50px' }}
+                                data-testid="spell-level-input"
+                            />
+                            <label>Slots:</label>
+                            <input
+                                type="number"
+                                value={count}
+                                onChange={e => updateSpellSlotCount(level, parseInt(e.target.value) || 0)}
+                                min={0}
+                                style={{ width: '50px' }}
+                                data-testid="spell-count-input"
+                            />
+                            <button onClick={() => deleteSpellSlot(level)} title="Delete Spell Slot" data-testid="delete-spell-slot-btn">
+                                <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                {sortedSpellSlots.length === 0 && <p data-testid="no-slots-msg">No spell slots configured.</p>}
             </div>
 
-            <div className={styles.section}>
+            <div className={styles.section} data-testid="class-resources-section">
                 <h3 className={styles.sectionHeader}>
                     Class Resources
-                    <button onClick={addClassResource} title="Add Class Resource">
+                    <button onClick={addClassResource} title="Add Class Resource" data-testid="add-class-resource-btn">
                         <FontAwesomeIcon icon={faPlus} />
                     </button>
                 </h3>
-                {value.classResources && Object.entries(value.classResources).map(([name, count]) => (
-                    <div key={name} className={styles.resourceEntry}>
-                        <label>Name:</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={e => updateClassResourceName(name, e.target.value)}
-                            className={styles.resourceName}
-                            style={{ width: '120px' }}
-                        />
-                        <label>Uses:</label>
-                        <input
-                            type="number"
-                            value={count}
-                            onChange={e => updateClassResourceCount(name, parseInt(e.target.value) || 0)}
-                            min={0}
-                            style={{ width: '50px' }}
-                        />
-                        <button onClick={() => deleteClassResource(name)} title="Delete Class Resource">
-                            <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                    </div>
-                ))}
-                {(!value.classResources || Object.keys(value.classResources).length === 0) && <p>No class resources configured.</p>}
+                <div data-testid="class-resources-list">
+                    {value.classResources && Object.entries(value.classResources).map(([name, count]) => (
+                        <div key={name} className={styles.resourceEntry} data-testid={`class-resource-row-${name.toLowerCase().replace(/\\s+/g, '-')}`}>
+                            <label>Name:</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={e => updateClassResourceName(name, e.target.value)}
+                                className={styles.resourceName}
+                                style={{ width: '120px' }}
+                                data-testid="resource-name-input"
+                            />
+                            <label>Uses:</label>
+                            <input
+                                type="number"
+                                value={count}
+                                onChange={e => updateClassResourceCount(name, parseInt(e.target.value) || 0)}
+                                min={0}
+                                style={{ width: '50px' }}
+                                data-testid="resource-uses-input"
+                            />
+                            <button onClick={() => deleteClassResource(name)} title="Delete Class Resource" data-testid="delete-class-resource-btn">
+                                <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                {(!value.classResources || Object.keys(value.classResources).length === 0) && <p data-testid="no-resources-msg">No class resources configured.</p>}
             </div>
         </div>
     );

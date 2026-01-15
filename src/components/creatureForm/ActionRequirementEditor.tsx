@@ -54,105 +54,115 @@ const ActionRequirementEditor: FC<Props> = ({ value, onChange }) => {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', margin: '4px 0' }} data-testid="action-requirement-editor">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9em', fontWeight: 'bold' }}>Reqs:</span>
-                <button onClick={addReq} title="Add Requirement">
+                <button onClick={addReq} title="Add Requirement" data-testid="add-requirement-btn">
                     <FontAwesomeIcon icon={faPlus} />
                 </button>
             </div>
-            {value.map((req, index) => (
-                <div key={index} className={styles.modifier} style={{ marginTop: '4px' }}>
-                    {/* Requirement Type Selector */}
-                    <Select
-                        value={req.type}
-                        options={RequirementTypes.map(t => ({ value: t, label: t }))}
-                        onChange={t => changeType(index, t)}
-                    />
+            <div data-testid="requirements-list">
+                {value.map((req, index) => (
+                    <div key={index} className={styles.modifier} style={{ marginTop: '4px' }} data-testid={`requirement-row-${index}`}>
+                        {/* Requirement Type Selector */}
+                        <Select
+                            value={req.type}
+                            options={RequirementTypes.map(t => ({ value: t, label: t }))}
+                            onChange={t => changeType(index, t)}
+                            data-testid="requirement-type-select"
+                        />
 
-                    {/* Type specific fields */}
-                    {req.type === 'ResourceAvailable' && (
-                        <>
-                            <Select
-                                value={req.resourceType}
-                                options={ResourceTypeList.map(r => ({ value: r, label: r }))}
-                                onChange={rt => updateReq(index, { ...req, resourceType: rt })}
-                            />
-                            {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(req.resourceType) && (
-                                <input
-                                    type="text"
-                                    value={req.resourceVal || ''}
-                                    onChange={e => updateReq(index, { ...req, resourceVal: e.target.value })}
-                                    placeholder={
-                                        req.resourceType === 'SpellSlot' ? 'Level' :
-                                            req.resourceType === 'ClassResource' ? 'Name' :
-                                                req.resourceType === 'ItemCharge' ? 'Item' :
-                                                    req.resourceType === 'HitDice' ? 'Die' :
-                                                        'Value'
-                                    }
-                                    title="Resource Value (e.g. Spell Level, Resource Name)"
-                                    style={{ width: '80px' }}
+                        {/* Type specific fields */}
+                        {req.type === 'ResourceAvailable' && (
+                            <>
+                                <Select
+                                    value={req.resourceType}
+                                    options={ResourceTypeList.map(r => ({ value: r, label: r }))}
+                                    onChange={rt => updateReq(index, { ...req, resourceType: rt })}
+                                    data-testid="req-resource-type-select"
                                 />
-                            )}
-                            <input
-                                type="number"
-                                value={req.amount}
-                                onChange={e => updateReq(index, { ...req, amount: Number(e.target.value) })}
-                                style={{ width: '45px' }}
-                            />
-                        </>
-                    )}
-
-                    {req.type === 'CombatState' && (
-                        <>
-                            <Select
-                                value={typeof req.condition === 'string' ? req.condition : Object.keys(req.condition)[0]}
-                                options={CombatConditionOptions.map(c => ({ value: c, label: c }))}
-                                onChange={c => {
-                                    if (c === 'EnemyInRange') {
-                                        updateReq(index, { ...req, condition: { EnemyInRange: 5 } })
-                                    } else {
-                                        updateReq(index, { ...req, condition: c as 'IsSurprised' | 'HasTempHP' })
-                                    }
-                                }}
-                            />
-                            {typeof req.condition !== 'string' && 'EnemyInRange' in req.condition && (
+                                {['SpellSlot', 'ClassResource', 'ItemCharge', 'HitDice', 'Custom'].includes(req.resourceType) && (
+                                    <input
+                                        type="text"
+                                        value={req.resourceVal || ''}
+                                        onChange={e => updateReq(index, { ...req, resourceVal: e.target.value })}
+                                        placeholder={
+                                            req.resourceType === 'SpellSlot' ? 'Level' :
+                                                req.resourceType === 'ClassResource' ? 'Name' :
+                                                    req.resourceType === 'ItemCharge' ? 'Item' :
+                                                        req.resourceType === 'HitDice' ? 'Die' :
+                                                            'Value'
+                                        }
+                                        title="Resource Value (e.g. Spell Level, Resource Name)"
+                                        style={{ width: '80px' }}
+                                        data-testid="req-resource-val-input"
+                                    />
+                                )}
                                 <input
                                     type="number"
-                                    value={req.condition.EnemyInRange}
-                                    onChange={e => updateReq(index, { ...req, condition: { EnemyInRange: Number(e.target.value) } })}
-                                    placeholder="Dist"
+                                    value={req.amount}
+                                    onChange={e => updateReq(index, { ...req, amount: Number(e.target.value) })}
                                     style={{ width: '45px' }}
+                                    data-testid="req-amount-input"
                                 />
-                            )}
-                        </>
-                    )}
+                            </>
+                        )}
 
-                    {req.type === 'StatusEffect' && (
-                        <input
-                            type="text"
-                            value={req.effect}
-                            onChange={e => updateReq(index, { ...req, effect: e.target.value })}
-                            placeholder="Effect Name"
-                            style={{ minWidth: '100px' }}
-                        />
-                    )}
+                        {req.type === 'CombatState' && (
+                            <>
+                                <Select
+                                    value={typeof req.condition === 'string' ? req.condition : Object.keys(req.condition)[0]}
+                                    options={CombatConditionOptions.map(c => ({ value: c, label: c }))}
+                                    onChange={c => {
+                                        if (c === 'EnemyInRange') {
+                                            updateReq(index, { ...req, condition: { EnemyInRange: 5 } })
+                                        } else {
+                                            updateReq(index, { ...req, condition: c as 'IsSurprised' | 'HasTempHP' })
+                                        }
+                                    }}
+                                    data-testid="req-condition-select"
+                                />
+                                {typeof req.condition !== 'string' && 'EnemyInRange' in req.condition && (
+                                    <input
+                                        type="number"
+                                        value={req.condition.EnemyInRange}
+                                        onChange={e => updateReq(index, { ...req, condition: { EnemyInRange: Number(e.target.value) } })}
+                                        placeholder="Dist"
+                                        style={{ width: '45px' }}
+                                        data-testid="req-dist-input"
+                                    />
+                                )}
+                            </>
+                        )}
 
-                    {req.type === 'Custom' && (
-                        <input
-                            type="text"
-                            value={req.description}
-                            onChange={e => updateReq(index, { ...req, description: e.target.value })}
-                            placeholder="Description"
-                            style={{ minWidth: '100px' }}
-                        />
-                    )}
+                        {req.type === 'StatusEffect' && (
+                            <input
+                                type="text"
+                                value={req.effect}
+                                onChange={e => updateReq(index, { ...req, effect: e.target.value })}
+                                placeholder="Effect Name"
+                                style={{ minWidth: '100px' }}
+                                data-testid="req-effect-input"
+                            />
+                        )}
 
-                    <button onClick={() => removeReq(index)}>
-                        <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                </div>
-            ))}
+                        {req.type === 'Custom' && (
+                            <input
+                                type="text"
+                                value={req.description}
+                                onChange={e => updateReq(index, { ...req, description: e.target.value })}
+                                placeholder="Description"
+                                style={{ minWidth: '100px' }}
+                                data-testid="req-description-input"
+                            />
+                        )}
+
+                        <button onClick={() => removeReq(index)} data-testid="delete-requirement-btn">
+                            <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

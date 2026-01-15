@@ -21,10 +21,10 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
     }, [partySlots])
 
     return (
-        <div className={styles.playerGraphs}>
+        <div className={styles.playerGraphs} data-testid="player-graphs">
             <h4 className={styles.title}>Individual Performance Breakdown</h4>
 
-            <div className={styles.grid}>
+            <div className={styles.grid} data-testid="player-graphs-grid">
                 {sortedPlayers.map((slot, playerIdx) => {
                     const isHovered = crosshairState.hoveredCharacterId === slot.playerId;
 
@@ -79,31 +79,32 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                             className={`${styles.playerCard} ${isHovered ? styles.hovered : ''}`}
                             onMouseEnter={() => setHoveredCharacter(slot.playerId)}
                             onMouseLeave={() => setHoveredCharacter(null)}
+                            data-testid={`player-card-${slot.playerId}`}
                         >
-                            <div className={styles.cardHeader}>
+                            <div className={styles.cardHeader} data-testid="card-header">
                                 <div className={styles.playerInfo}>
-                                    <h5 className={styles.playerName}>{displayName}</h5>
-                                    <div className={styles.survivabilityBadge}>EHP: {displayEHP}</div>
+                                    <h5 className={styles.playerName} data-testid="player-name">{displayName}</h5>
+                                    <div className={styles.survivabilityBadge} data-testid="survivability-score">EHP: {displayEHP}</div>
                                 </div>
-                                <div className={styles.roleIcon}>
+                                <div className={styles.roleIcon} data-testid="role-icon">
                                     {slot.position === 0 && <span title="Shield Wall">🛡️</span>}
                                     {slot.position === partySlots.length - 1 && partySlots.length > 1 && <span title="Glass Cannon">⚡</span>}
                                 </div>
                             </div>
 
-                            <div className={styles.statsSummary}>
-                                <div className={styles.statItem}><span className={styles.statLabel}>Casualty Rate:</span> <span className={deathRate > 50 ? styles.highDeath : styles.lowDeath}>{deathRate.toFixed(1)}%</span></div>
-                                <div className={styles.statItem}><span className={styles.statLabel}>Avg Vitality:</span> <span className={styles.statValue}>{avgHp.toFixed(0)}%</span></div>
+                            <div className={styles.statsSummary} data-testid="stats-summary">
+                                <div className={styles.statItem} data-testid="casualty-rate"><span className={styles.statLabel}>Casualty Rate:</span> <span className={deathRate > 50 ? styles.highDeath : styles.lowDeath}>{deathRate.toFixed(1)}%</span></div>
+                                <div className={styles.statItem} data-testid="avg-vitality"><span className={styles.statLabel}>Avg Vitality:</span> <span className={styles.statValue}>{avgHp.toFixed(0)}%</span></div>
                             </div>
 
-                            <div className={styles.hpVisualization}>
+                            <div className={styles.hpVisualization} data-testid="hp-visualization">
                                 {playerBuckets.map(({ character }, idx) => {
                                     const hpPct = character?.hpPercent ?? 0
                                     const resPct = character?.resourcePercent ?? 0
                                     const isDead = character?.isDead ?? false
 
                                     return (
-                                        <div key={idx} className={styles.barGroup}>
+                                        <div key={idx} className={styles.barGroup} data-testid={`bar-group-${idx}`}>
                                             <div 
                                                 className={styles.hpBar} 
                                                 style={{ 
@@ -111,6 +112,7 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                                                     bottom: '50%',
                                                     background: isDead ? '#000' : `linear-gradient(0deg, #22c55e ${hpPct}%, #ef4444 ${hpPct}%)` 
                                                 }} 
+                                                data-testid={`hp-bar-${idx}`}
                                             />
                                             <div 
                                                 className={styles.resBar} 
@@ -119,13 +121,14 @@ const PlayerGraphs: FC<PlayerGraphsProps> = ({ skyline, partySlots, playerNames 
                                                     top: '50%',
                                                     background: `linear-gradient(180deg, #3b82f6 ${resPct}%, #eab308 ${resPct}%)` 
                                                 }} 
+                                                data-testid={`res-bar-${idx}`}
                                             />
                                         </div>
                                     )
                                 })}
                             </div>
 
-                            <div className={styles.miniLegend}>
+                            <div className={styles.miniLegend} data-testid="mini-legend">
                                 <span className={styles.legendLabel}>Worst Runs</span>
                                 <span className={styles.legendLabel}>Best Runs</span>
                             </div>

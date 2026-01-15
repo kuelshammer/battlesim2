@@ -86,29 +86,35 @@ const MonsterForm:FC<PropType> = ({ onChange, value }) => {
 
             <section>
                 <h3>Creature Type</h3>
-                <div className={styles.creatureTypes}>
+                <div className={styles.creatureTypes} data-testid="creature-type-selector">
                     <button 
                         onClick={() => setCreatureType(defaultTypeFilter)} 
-                        className={!Object.entries(creatureType).find(([_]) => !b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
+                        className={!Object.entries(creatureType).find(([, b]) => !b) ? styles.active : undefined}
+                        data-testid="type-all"
+                    >
                             All
                     </button>
                     <button
                         onClick={() => setCreatureType(Object.fromEntries(Object.keys(creatureType).map(t => [t, false])) as {[type in CreatureType]: boolean})}
-                        className={!Object.entries(creatureType).find(([_]) => b) ? styles.active : undefined}> {/* eslint-disable-line @typescript-eslint/no-unused-vars */}
+                        className={!Object.entries(creatureType).find(([, b]) => b) ? styles.active : undefined}
+                        data-testid="type-none"
+                    >
                             None
                     </button>
                     { CreatureTypeList.map(type => (
                         <button
                             key={type}
                             onClick={() => toggleCreatureType(type)}
-                            className={creatureType[type] ? styles.active : undefined}>
+                            className={creatureType[type] ? styles.active : undefined}
+                            data-testid={`type-${type}`}
+                        >
                                 {capitalize(type)}
                         </button>
                     )) }
                 </div>
             </section>
             
-            <section className={styles.challengeRating}>
+            <section className={styles.challengeRating} data-testid="cr-selector">
                 <h3>Challenge Rating</h3>
                 <Range
                     values={[ChallengeRatingList.indexOf(minCR), ChallengeRatingList.indexOf(maxCR)]}

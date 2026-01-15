@@ -303,6 +303,7 @@ const Simulation: FC<PropType> = memo(() => {
                                 onClick={() => setRunTour(true)}
                                 title="Start guided tour"
                                 aria-label="Start guided tour"
+                                data-testid="help-btn"
                             >
                                 <FontAwesomeIcon icon={faQuestionCircle} />
                                 Help
@@ -312,6 +313,7 @@ const Simulation: FC<PropType> = memo(() => {
                                 onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)}
                                 title="Toggle performance dashboard"
                                 aria-label={`${showPerformanceDashboard ? 'Hide' : 'Show'} performance dashboard`}
+                                data-testid="perf-btn"
                             >
                                 <FontAwesomeIcon icon={faTachometerAlt} />
                                 {showPerformanceDashboard ? 'Hide' : 'Perf'}
@@ -321,14 +323,14 @@ const Simulation: FC<PropType> = memo(() => {
 
                     
                     {/* Backend Features Status Panel */}
-                    <div className={`${styles.backendStatus} simulation-controls`} role="region" aria-label="Simulation Status">
+                    <div className={`${styles.backendStatus} simulation-controls`} role="region" aria-label="Simulation Status" data-testid="simulation-status">
                         <h4>🔧 Event-Driven Backend {worker.isRunning ? '(Processing...)' : 'Active'}</h4>
-                        <div className={styles.statusItems} aria-live="polite" role="status">
-                            <span>✅ ActionResolution Engine</span>
-                            <span>✅ Event System</span>
-                            <span>✅ Reaction Processing</span>
-                            <span>✅ Effect Tracking</span>
-                            <span>📊 Events: {simulationEvents.length}</span>
+                        <div className={styles.statusItems} aria-live="polite" role="status" data-testid="backend-status-items">
+                            <span data-testid="status-action-engine">✅ ActionResolution Engine</span>
+                            <span data-testid="status-event-system">✅ Event System</span>
+                            <span data-testid="status-reaction-processing">✅ Reaction Processing</span>
+                            <span data-testid="status-effect-tracking">✅ Effect Tracking</span>
+                            <span data-testid="event-count">📊 Events: {simulationEvents.length}</span>
                         </div>
                         {worker.isRunning && (
                             <div 
@@ -382,7 +384,7 @@ const Simulation: FC<PropType> = memo(() => {
                         {worker.error && <div className={styles.errorNotice}>❌ Simulation Error: {worker.error}</div>}
                     </div>
 
-                    <div className="encounter-builder-section player-form-section">
+                    <div className="encounter-builder-section player-form-section" data-testid="player-section">
                         <EncounterForm
                             mode='player'
                             encounter={{ id: 'players', monsters: players, type: 'combat', targetRole: 'Standard' }}
@@ -390,18 +392,18 @@ const Simulation: FC<PropType> = memo(() => {
                             onEditingChange={setIsEditing}>
                             <>
                                 {!isEmptyResult ? (
-                                    <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }}>
+                                    <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }} data-testid="clear-all-btn">
                                         <FontAwesomeIcon icon={faTrash} />
                                         Clear Adventuring Day
                                     </button>
                                 ) : null}
                                 {canSave ? (
-                                    <button onClick={() => setSaving(true)}>
+                                    <button onClick={() => setSaving(true)} data-testid="save-day-btn">
                                         <FontAwesomeIcon icon={faSave} />
                                         Save Adventuring Day
                                     </button>
                                 ) : null}
-                                <button onClick={() => setLoading(true)}>
+                                <button onClick={() => setLoading(true)} data-testid="load-day-btn">
                                     <FontAwesomeIcon icon={faFolder} />
                                     Load Adventuring Day
                                 </button>
@@ -421,9 +423,9 @@ const Simulation: FC<PropType> = memo(() => {
                             const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
 
                             return (
-                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index}>
+                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index} data-testid={item.type === 'combat' ? `encounter-${index}` : `short-rest-${index}`}>
                                     {item.type === 'combat' ? (
-                                        <div className="monster-form-section">
+                                        <div className="monster-form-section" data-testid="monster-section">
                                             <EncounterForm
                                             mode='monster'
                                             encounter={item}
@@ -440,13 +442,13 @@ const Simulation: FC<PropType> = memo(() => {
                                         />
                                         </div>
                                 ) : (
-                                    <div className={styles.restCard}>
+                                    <div className={styles.restCard} data-testid="short-rest-card">
                                         <div className={styles.restHeader}>
                                             <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
-                                            <div className={styles.restControls}>
-                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0}>↑</button>
-                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1}>↓</button>
-                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn}><FontAwesomeIcon icon={faTrash} /></button>
+                                            <div className={styles.restControls} data-testid="rest-controls">
+                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0} data-testid="move-rest-up-btn">↑</button>
+                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1} data-testid="move-rest-down-btn">↓</button>
+                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn} data-testid="delete-rest-btn"><FontAwesomeIcon icon={faTrash} /></button>
                                             </div>
                                         </div>
                                         <div className={styles.restBody}>
@@ -490,7 +492,9 @@ const Simulation: FC<PropType> = memo(() => {
                                                 setSelectedDecileIndex(5); // Reset to Median
                                                 setShowLogModal(true);
                                             }}
-                                            className={styles.showLogButton}>
+                                            className={styles.showLogButton}
+                                            data-testid="show-log-btn"
+                                        >
                                             <FontAwesomeIcon icon={faEye} />
                                             Show Log
                                         </button>
@@ -500,16 +504,20 @@ const Simulation: FC<PropType> = memo(() => {
                         )
                     })}
 
-                    <div className={styles.addButtons}>
+                    <div className={styles.addButtons} data-testid="add-timeline-buttons">
                         <button
                             onClick={createCombat}
-                            className={styles.addEncounterBtn}>
+                            className={styles.addEncounterBtn}
+                            data-testid="add-combat-btn"
+                        >
                             <FontAwesomeIcon icon={faPlus} />
                             Add Combat
                         </button>
                         <button
                             onClick={createShortRest}
-                            className={`${styles.addEncounterBtn} ${styles.restBtn}`}>
+                            className={`${styles.addEncounterBtn} ${styles.restBtn}`}
+                            data-testid="add-rest-btn"
+                        >
                             <FontAwesomeIcon icon={faBed} />
                             Add Short Rest
                         </button>
@@ -518,9 +526,9 @@ const Simulation: FC<PropType> = memo(() => {
                     {/* Overall Day Summary - Moved to bottom and labeled */}
                     {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && pacingData && (
                         <div className={styles.overallSummary} data-testid="overall-summary">
-                            <div className={styles.summaryDivider}>
+                            <div className={styles.summaryDivider} data-testid="summary-divider">
                                 <div className={styles.dividerLine} />
-                                <h3 className={styles.summaryTitle}>
+                                <h3 className={styles.summaryTitle} data-testid="summary-title">
                                     <FontAwesomeIcon icon={faChartLine} /> Projected Day Outcome Summary
                                 </h3>
                                 <div className={styles.dividerLine} />
@@ -535,17 +543,17 @@ const Simulation: FC<PropType> = memo(() => {
                             />
 
                             {worker.analysis.overall.pacing && (
-                                <div className={styles.pacingHeader}>
-                                    <div className={styles.archetypeBadge}>
+                                <div className={styles.pacingHeader} data-testid="pacing-header">
+                                    <div className={styles.archetypeBadge} data-testid="pacing-archetype">
                                         {worker.analysis.overall.pacing.archetype}
                                     </div>
-                                    <div className={styles.directorScore}>
+                                    <div className={styles.directorScore} data-testid="director-score">
                                         DIRECTOR'S SCORE: {Math.round(worker.analysis.overall.pacing.directorScore)}
                                     </div>
                                 </div>
                             )}
 
-                            <div className={styles.summaryGrid}>
+                            <div className={styles.summaryGrid} data-testid="summary-grid">
                                 <HeartbeatGraph 
                                     encounters={worker.analysis.encounters} 
                                     className={styles.tensionArc} 
@@ -572,26 +580,28 @@ const Simulation: FC<PropType> = memo(() => {
 
                     {/* Event Log Modal */}
                     {showLogModal && selectedEncounterIndex !== null && (
-                        <div className={`${styles.logModalOverlay} event-log-section`}>
+                        <div className={`${styles.logModalOverlay} event-log-section`} data-testid="log-modal">
                             <div className={styles.logModal}>
                                 <div className={styles.modalHeader}>
                                     <div className={styles.modalHeaderTitle}>
                                         <h3>Combat Log - Encounter {selectedEncounterIndex + 1}</h3>
-                                        <div className={styles.decileNav}>
+                                        <div className={styles.decileNav} data-testid="decile-nav">
                                             <button 
                                                 disabled={selectedDecileIndex === 0}
                                                 onClick={() => setSelectedDecileIndex(selectedDecileIndex - 1)}
                                                 className={styles.navBtn}
+                                                data-testid="worse-run-btn"
                                             >
                                                 &larr; Worse Run
                                             </button>
-                                            <span className={styles.percentileLabel}>
+                                            <span className={styles.percentileLabel} data-testid="percentile-label">
                                                 {selectedDecileIndex === 5 ? "50% (Median)" : `${selectedDecileIndex * 10 + (selectedDecileIndex < 5 ? 5 : -5)}% Run`}
                                             </span>
                                             <button 
                                                 disabled={selectedDecileIndex === 10}
                                                 onClick={() => setSelectedDecileIndex(selectedDecileIndex + 1)}
                                                 className={styles.navBtn}
+                                                data-testid="better-run-btn"
                                             >
                                                 Better Run &rarr;
                                             </button>
@@ -599,11 +609,13 @@ const Simulation: FC<PropType> = memo(() => {
                                     </div>
                                     <button 
                                         onClick={() => setShowLogModal(false)}
-                                        className={styles.closeButton}>
+                                        className={styles.closeButton}
+                                        data-testid="close-log-btn"
+                                    >
                                         <FontAwesomeIcon icon={faTimes} />
                                     </button>
                                 </div>
-                                <div className={styles.logBody}>
+                                <div className={styles.logBody} data-testid="log-body">
                                     <EventLog
                                         events={worker.analysis?.encounters[selectedEncounterIndex]?.decileLogs?.[selectedDecileIndex] || []}
                                         combatantNames={Object.fromEntries(combatantNames)}

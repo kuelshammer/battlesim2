@@ -98,29 +98,30 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
             variants={containerVariants}
             initial="hidden"
             animate="visible"
+            data-testid="resource-panel"
         >
             <div className={styles.vellumHeader}>
                 <span className={styles.sigil}><FontAwesomeIcon icon={faMagic} /></span>
-                <h4>{creature.name}</h4>
+                <h4 data-testid="creature-name">{creature.name}</h4>
             </div>
 
-            <div className={styles.statsGrid}>
-                <motion.div variants={itemVariants} className={styles.statPill}>
+            <div className={styles.statsGrid} data-testid="stats-grid">
+                <motion.div variants={itemVariants} className={styles.statPill} data-testid="hp-stat-pill">
                     <FontAwesomeIcon icon={faHeart} className={styles.hpIcon} />
-                    <span className={styles.statValue}>{currentHP}/{maxHP}</span>
-                    {tempHP > 0 && <span className={styles.tempHP}>+{tempHP}</span>}
+                    <span className={styles.statValue} data-testid="hp-value">{currentHP}/{maxHP}</span>
+                    {tempHP > 0 && <span className={styles.tempHP} data-testid="thp-value">+{tempHP}</span>}
                 </motion.div>
                 {finalState.arcaneWardHp !== undefined && finalState.arcaneWardHp > 0 && (
-                    <motion.div variants={itemVariants} className={cn(styles.statPill, styles.wardPill)}>
+                    <motion.div variants={itemVariants} className={cn(styles.statPill, styles.wardPill)} data-testid="ward-stat-pill">
                         <FontAwesomeIcon icon={faShieldHalved} />
-                        <span className={styles.statValue}>{finalState.arcaneWardHp}</span>
+                        <span className={styles.statValue} data-testid="ward-value">{finalState.arcaneWardHp}</span>
                     </motion.div>
                 )}
             </div>
 
-            <div className={styles.resourceGroups}>
+            <div className={styles.resourceGroups} data-testid="resource-groups">
                 {groups['Main'].length > 0 && (
-                    <div className={styles.mainGroup}>
+                    <div className={styles.mainGroup} data-testid="main-resources">
                         {groups['Main'].map(res => (
                             <motion.div
                                 key={res.key}
@@ -128,6 +129,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
                                 className={cn(styles.mainIcon, res.value <= 0 && styles.depleted)}
                                 style={{ '--glow-color': res.color } as React.CSSProperties}
                                 title={`${res.label}: ${res.value}/${res.max}`}
+                                data-testid={`resource-${res.type.toLowerCase()}`}
                             >
                                 <FontAwesomeIcon icon={res.icon} />
                             </motion.div>
@@ -136,7 +138,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
                 )}
 
                 {groups['SpellSlot'].length > 0 && (
-                    <div className={styles.spellGroup}>
+                    <div className={styles.spellGroup} data-testid="spell-slots">
                         <div className={styles.divider}><span>Weave Sockets</span></div>
                         <div className={styles.slotsGrid}>
                             {groups['SpellSlot'].map(res => (
@@ -145,6 +147,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
                                     variants={itemVariants}
                                     className={cn(styles.slotNode, res.value <= 0 && styles.empty)}
                                     title={`${res.label}: ${res.value}/${res.max}`}
+                                    data-testid={`spell-slot-${res.sort}`}
                                 >
                                     <span className={styles.levelLabel}>{res.label}</span>
                                     <div className={styles.nodeTrack}>
@@ -160,13 +163,14 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
                 )}
 
                 {groups['ClassResource'].length > 0 && (
-                    <div className={styles.classGroup}>
+                    <div className={styles.classGroup} data-testid="class-resources">
                         <div className={styles.divider}><span>Essence</span></div>
                         {groups['ClassResource'].map(res => (
                             <motion.div 
                                 key={res.key} 
                                 variants={itemVariants}
                                 className={styles.essenceItem}
+                                data-testid={`class-resource-${res.label.toLowerCase().replace(/\s+/g, '-')}`}
                             >
                                 <FontAwesomeIcon icon={res.icon} style={{ color: res.color }} />
                                 <span className={styles.essenceName}>{res.label}</span>
