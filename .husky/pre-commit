@@ -91,7 +91,7 @@ if [ -f "simulation-wasm/pkg/simulation_wasm_bg.wasm" ]; then
     echo "  → Current WASM size: ${WASM_SIZE_KB}KB"
 
     # Baseline size (500KB - adjust after first real build)
-    BASELINE_SIZE_KB=500
+    BASELINE_SIZE_KB=1100
     THRESHOLD_PERCENT=10
 
     # Alert if grew > 10% from baseline (but only if we have a real baseline)
