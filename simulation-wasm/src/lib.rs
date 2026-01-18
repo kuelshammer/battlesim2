@@ -6,6 +6,7 @@ pub mod enums;
 pub mod model;
 pub mod resolvers;
 pub mod api;
+pub mod orchestration;
 pub mod aggregation;
 pub mod cleanup;
 pub mod resources;
