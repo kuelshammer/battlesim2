@@ -3,6 +3,8 @@
 //! This module contains complex simulation logic extracted from wasm_api.rs,
 //! providing pure Rust functions for simulation orchestration.
 
+use wasm_bindgen::prelude::*;
+use js_sys::Function;
 use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun};
 use crate::sorting::{calculate_average_attack_bonus, assign_party_slots};
 use crate::aggregation::calculate_score;
@@ -40,6 +42,7 @@ pub fn run_simulation_with_callback_orchestration(
     players: Vec<Creature>,
     timeline: Vec<TimelineStep>,
     iterations: usize,
+    callback: &Function,
 ) -> Result<FullSimulationOutput, Box<dyn std::error::Error>> {
     let iterations = iterations.max(100);
 
@@ -54,14 +57,14 @@ pub fn run_simulation_with_callback_orchestration(
 
     // Phase 1: Survey Pass
     let batch_size = (iterations / 20).max(1);
-    let (summarized_results, lightweight_runs) = runners::run_survey_with_progress(&sim, &|_, _, _, _| {}, batch_size);
+    let (summarized_results, lightweight_runs) = runners::run_survey_with_progress(&sim, callback, batch_size);
 
     // Phase 2: Selection
     let interesting_seeds = sim.run_selection(&lightweight_runs);
     let median_seed = sim.find_median_seed(&lightweight_runs);
 
     // Phase 3: Deep Dive with progress
-    let seed_to_events = runners::run_deep_dive_with_progress(&sim, &interesting_seeds, &|_, _, _, _| {}, iterations);
+    let seed_to_events = runners::run_deep_dive_with_progress(&sim, &interesting_seeds, callback, iterations);
     let median_run_events = seed_to_events.get(&median_seed).cloned().unwrap_or_default();
 
     // Combine and analyze
