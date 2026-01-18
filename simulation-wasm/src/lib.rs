@@ -67,3 +67,6 @@ pub use two_pass::{run_simulation_with_rolling_stats, run_simulation_with_three_
 
 // Re-export WASM API functions for backward compatibility
 pub use wasm_api::*;
+
+// Re-export orchestration modules for internal use
+pub use orchestration::*;
