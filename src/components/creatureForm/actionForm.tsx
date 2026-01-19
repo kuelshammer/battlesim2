@@ -163,7 +163,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
         onUpdate(buffClone)
     }
 
-    function updateDiceFormula(modifier: string, newValue: DiceFormula) {
+    function updateDiceFormula(modifier: string | number, newValue: DiceFormula) {
         const buffClone = clone(value);
         (buffClone as Buff & Record<string, unknown>)[modifier] = newValue
         onUpdate(buffClone)
@@ -196,7 +196,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                             value={modifier}
                             onChange={newValue => setModifier(index, newValue)}
                             options={BuffStatOptions.filter(option => (modifier === option.value) || !modifiers.includes(option.value))}
-                            classNamePrefix="select-modifier-type"
+                           
                         />
                         {((modifier === 'damageMultiplier') || (modifier === 'damageTakenMultiplier')) ? (
                             <DecimalInput
@@ -209,7 +209,7 @@ const BuffForm: FC<{ value: Buff, onUpdate: (newValue: Buff) => void }> = ({ val
                                 value={value.condition}
                                 options={CreatureConditionList.map(condition => ({ value: condition, label: condition }))}
                                 onChange={(newCondition) => updateCondition(newCondition)}
-                                classNamePrefix="select-condition-type"
+                               
                             />
                         ) : (
                             <DiceFormulaInput
@@ -447,7 +447,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 value={value.actionSlot ?? (value.type === 'template' ? ActionTemplates[value.templateOptions.templateName].actionSlot : 0)}
                 options={ActionOptions}
                 onChange={actionSlot => update(v => { v.actionSlot = actionSlot })}
-                classNamePrefix="select-action-slot"
+               
                 data-testid="action-slot-select"
             />
 
@@ -466,14 +466,14 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 />
             </div>
 
-            <Select value={value.type} options={TypeOptions} onChange={updateType} classNamePrefix="select-action-type" />
+            <Select value={value.type} options={TypeOptions} onChange={updateType} />
 
             {value.type === 'template' ? (
                 <Select
                     value={value.templateOptions.templateName}
                     options={Object.keys(ActionTemplates).map(key => ({ value: key as keyof typeof ActionTemplates, label: key }))}
                     onChange={onTemplateChange}
-                    classNamePrefix="select-template-name"
+                   
                 />
             ) : null}
 
@@ -487,7 +487,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                 }
                 options={FreqOptions}
                 onChange={freq => updateFrequency(freq)}
-                classNamePrefix="select-frequency"
+               
             />
 
             {typeof value.freq !== 'string' ? (
@@ -521,12 +521,12 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
             ) : null}
 
             {((value.type === 'atk') && (!value.useSaves)) ? (
-                <Select value={value.targets} options={HitCountOptions} onChange={targets => updateFinalAction(v => v.targets = targets)} classNamePrefix="select-hit-count" />
+                <Select value={value.targets} options={HitCountOptions} onChange={targets => updateFinalAction(v => v.targets = targets)} />
             ) : (value.type !== 'template') ? (
-                <Select value={value.targets} options={TargetCountOptions} onChange={targets => updateFinalAction(v => { v.targets = targets })} classNamePrefix="select-target-count" />
+                <Select value={value.targets} options={TargetCountOptions} onChange={targets => updateFinalAction(v => { v.targets = targets })} />
             ) : null}
             Use this action if:
-            <Select value={value.condition} options={ConditionOptions} onChange={condition => update(v => { v.condition = condition })} classNamePrefix="select-condition" />
+            <Select value={value.condition} options={ConditionOptions} onChange={condition => update(v => { v.condition = condition })} />
 
             {(value.type === "atk") ? (
                 <div data-testid="attack-fields">
@@ -538,7 +538,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             if (atk.useSaves !== useSaves) atk.targets = 1
                             atk.useSaves = useSaves
                         })}
-                        classNamePrefix="select-atk-mode"
+                       
                     />
                     <DiceFormulaInput value={value.toHit} onChange={toHit => update(v => { (v as AtkAction).toHit = toHit || 0 })} data-testid="to-hit-input" />
                     Damage:
@@ -551,13 +551,13 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                                 value={!!value.halfOnSave}
                                 options={[{ value: true, label: 'Yes' }, { value: false, label: 'No' }]}
                                 onChange={halfOnSave => update(v => { (v as AtkAction).halfOnSave = halfOnSave })}
-                                classNamePrefix="select-half-on-save"
+                               
                             />
                         </div>
                     ) : null}
 
                     Target:
-                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-enemy-target" />
+                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                     On Hit Effect:
                     <Select
                         value={value.riderEffect !== undefined}
@@ -566,7 +566,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             if (b) update(v => { (v as AtkAction).riderEffect ||= { dc: 0, buff: { duration: "1 round" } } })
                             else update(v => { delete (v as AtkAction).riderEffect })
                         }}
-                        classNamePrefix="select-has-rider"
+                       
                     />
 
                     {(value.riderEffect) ? (
@@ -574,7 +574,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             Save DC:
                             <DecimalInput value={value.riderEffect.dc} onChange={dc => updateRiderEffect(e => { e.dc = dc || 0 })} data-testid="rider-dc-input" />
                             Duration:
-                            <Select value={value.riderEffect.buff.duration} options={BuffDurationOptions} onChange={duration => updateRiderEffect(e => { e.buff.duration = duration })} classNamePrefix="select-rider-duration" />
+                            <Select value={value.riderEffect.buff.duration} options={BuffDurationOptions} onChange={duration => updateRiderEffect(e => { e.buff.duration = duration })} />
                             <BuffForm value={value.riderEffect.buff} onUpdate={newValue => updateRiderEffect(e => { e.buff = newValue })} />
                         </div>
                     ) : null}
@@ -586,28 +586,28 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                         value={!!value.tempHP}
                         options={[{ value: true, label: 'Temp HP:' }, { value: false, label: 'Heal Amount:' }]}
                         onChange={tempHP => update(v => { (v as HealAction).tempHP = tempHP })}
-                        classNamePrefix="select-heal-mode"
+                       
                     />
                     <DiceFormulaInput value={value.amount} onChange={heal => update(v => { (v as HealAction).amount = heal || 0 })} data-testid="heal-amount-input" />
                     Target:
-                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-ally-target" />
+                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                 </div>
             ) : null}
             {(value.type === "buff") ? (
                 <div data-testid="buff-fields">
                     Target:
-                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-ally-target" />
+                    <Select value={value.target} options={AllyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                     Duration:
-                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as BuffAction).buff.duration = duration })} classNamePrefix="select-buff-duration" />
+                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as BuffAction).buff.duration = duration })} />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as BuffAction).buff = newValue })} />
                 </div>
             ) : null}
             {(value.type === "debuff") ? (
                 <div data-testid="debuff-fields">
                     Target:
-                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} classNamePrefix="select-enemy-target" />
+                    <Select value={value.target} options={EnemyTargetOptions} onChange={target => updateFinalAction(v => { v.target = target })} />
                     Duration:
-                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as DebuffAction).buff.duration = duration })} classNamePrefix="select-debuff-duration" />
+                    <Select value={value.buff.duration} options={BuffDurationOptions} onChange={duration => update(v => { (v as DebuffAction).buff.duration = duration })} />
                     Save DC:
                     <input type='number' value={value.saveDC} onChange={e => update(v => { (v as DebuffAction).saveDC = Number(e.target.value) })} data-testid="debuff-save-dc-input" />
                     <BuffForm value={value.buff} onUpdate={newValue => update(v => { (v as DebuffAction).buff = newValue })} />
@@ -623,7 +623,7 @@ const ActionForm: FC<PropType> = ({ value, onChange, onDelete, onMoveUp, onMoveD
                             value={value.templateOptions.target}
                             options={((template.type === 'atk') || (template.type === 'debuff')) ? EnemyTargetOptions : AllyTargetOptions}
                             onChange={target => updateTemplateAction(v => { v.templateOptions.target = target })}
-                            classNamePrefix="select-template-target"
+                           
                         />
                     </div>
                 )
