@@ -1,4 +1,5 @@
 import { FC, useState, memo } from "react"
+import React, { ReactNode } from 'react'
 import { Creature, Encounter, TargetRole, TargetRoleList } from "@/model/model"
 import styles from './encounterForm.module.scss'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"

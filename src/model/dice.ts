@@ -31,7 +31,7 @@ export function evaluateDiceFormula(expr: number|string, luck: number, options: 
 
 function evaluateUnknown(roll: RootType|AnyRoll|RollExpression|RollOrExpression, luck: number, options: EvaluationOptions): number {
     switch (roll.type) {
-        case "number":          return evaluateNumber(roll as NumberType, options)
+        case "number":          return evaluateNumber(roll as NumberType)
         case "die":             return evaluateDie(roll as FullRoll, luck, options)
         case "group":           return evaluateGroup(roll as GroupedRoll, luck, options)
         case "expression":      return evaluateMathExpr(roll as MathExpression, luck, options)

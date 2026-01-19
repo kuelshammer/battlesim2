@@ -116,7 +116,7 @@ const PerformanceDashboard: FC<PerformanceDashboardProps> = ({ isVisible, onClos
           fastestRound,
           totalRounds: newRoundTimes.length,
           wasmSize: metrics.wasmSize,
-          memoryUsage: 0, // @ts-expect-error - performance.memory is non-standard
+          memoryUsage: 0,
           ...(typeof performance !== 'undefined' &&
           (performance as { memory?: { usedJSHeapSize: number } }).memory &&
           {
@@ -179,7 +179,7 @@ const PerformanceDashboard: FC<PerformanceDashboardProps> = ({ isVisible, onClos
     if (!isVisible) return
 
     const interval = setInterval(() => {
-      // @ts-expect-error - performance.memory is non-standard but available in Chrome
+
       if (typeof performance !== 'undefined' && (performance as { memory?: { usedJSHeapSize: number } }).memory) {
         setMetrics((prev) => ({
           ...prev,
