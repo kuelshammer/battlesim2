@@ -1,5 +1,5 @@
 import React, { FC, useRef, useEffect, useMemo, useState, useCallback } from 'react'
-import { SkylineAnalysis, CharacterBucketData } from '@/model/model'
+import { SkylineAnalysis, CharacterBucketData, PlayerSlot } from '@/model/model'
 import styles from './PartyOverview.module.scss'
 import { useCrosshair, useCrosshairBucketRegistration } from './CrosshairContext'
 import CrosshairLine from './CrosshairLine'
