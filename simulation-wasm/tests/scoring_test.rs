@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::aggregation::calculate_efficiency_score;
-    use crate::events::Event;
-    use crate::model::*;
+    use simulation_wasm::aggregation::calculate_efficiency_score;
+    use simulation_wasm::events::Event;
+    use simulation_wasm::model::*;
     use std::collections::HashMap;
 
     fn create_mock_combattant(id: &str, current_hp: u32) -> Combattant {
@@ -341,7 +341,7 @@ mod tests {
             "Rage".to_string(),
             Buff {
                 display_name: Some("Rage".to_string()),
-                duration: crate::enums::BuffDuration::OneRound,
+                duration: BuffDuration::OneRound,
                 ac: None,
                 to_hit: None,
                 damage: None,

@@ -729,7 +729,7 @@ fn calculate_target_score_cached(
 }
 
 /// Legacy DPR estimation function - kept for compatibility
-fn estimate_dpr(c: &Combattant) -> f64 {
+pub fn estimate_dpr(c: &Combattant) -> f64 {
     const BASELINE_AC: f64 = 15.0;
 
     // Separate actions by action type for proper action economy
@@ -793,6 +793,4 @@ fn estimate_dpr(c: &Combattant) -> f64 {
     total_dpr
 }
 
-#[cfg(test)]
-#[path = "./targeting_test.rs"]
-mod targeting_test;
+

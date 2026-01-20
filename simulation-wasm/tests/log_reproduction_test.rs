@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::events::Event;
+    use simulation_wasm::events::Event;
     use serde_json::to_string;
 
     #[test]
     fn test_attack_event_contains_roll_details() {
-        use crate::events::{DieRoll, RollResult};
+        use simulation_wasm::events::{DieRoll, RollResult};
 
         let event = Event::AttackHit {
             attacker_id: "a".to_string(),

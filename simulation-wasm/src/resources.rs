@@ -452,6 +452,5 @@ impl From<ActionTag> for String {
     }
 }
 
-#[cfg(test)]
-#[path = "./resources_test.rs"]
-mod resources_test;
+
+

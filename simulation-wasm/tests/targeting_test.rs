@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::enums::*;
-    use crate::model::*;
-    use crate::resources::{ActionCost, ResourceType};
-    use crate::targeting::estimate_dpr;
+    use simulation_wasm::enums::*;
+    use simulation_wasm::model::*;
+    use simulation_wasm::resources::{ActionCost, ResourceType};
+    use simulation_wasm::targeting::estimate_dpr;
 
     fn create_dummy_action(
         name: &str,
@@ -55,7 +55,7 @@ mod tests {
             cha_save_bonus: None,
             con_save_advantage: None,
             save_advantage: None,
-            initiative_bonus: crate::model::DiceFormula::Value(0.0),
+            initiative_bonus: DiceFormula::Value(0.0),
             initiative_advantage: false,
             actions,
             triggers: vec![],
