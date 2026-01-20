@@ -1,4 +1,4 @@
-use super::*;
+use simulation_wasm::resources::*;
 
 #[test]
 fn test_ledger_basic_consumption() {

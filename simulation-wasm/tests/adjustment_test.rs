@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::creature_adjustment::detect_role;
-    use crate::model::*;
+    use simulation_wasm::creature_adjustment::detect_role;
+    use simulation_wasm::model::*;
 
     fn create_test_creature(name: &str, hp: u32, ac: u32, count: f64) -> Creature {
         Creature {
@@ -62,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_adjust_template_action() {
-        use crate::creature_adjustment::adjust_damage;
+        use simulation_wasm::creature_adjustment::adjust_damage;
         let mut dragon = create_test_creature("Black Dragon", 200, 19, 1.0);
         dragon.actions.push(Action::Template(TemplateAction {
             id: "breath".to_string(),
@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     fn test_adjust_template_dc() {
-        use crate::creature_adjustment::adjust_dc;
+        use simulation_wasm::creature_adjustment::adjust_dc;
         let mut dragon = create_test_creature("Black Dragon", 200, 19, 1.0);
         dragon.actions.push(Action::Template(TemplateAction {
             id: "breath".to_string(),

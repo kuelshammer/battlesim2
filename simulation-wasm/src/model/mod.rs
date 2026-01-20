@@ -15,5 +15,5 @@ pub use simulation::*;
 pub use types::*;
 
 // Explicitly re-export from enums as per original model.rs
-pub use crate::enums::ActionCondition;
+pub use crate::enums::{ActionCondition, BuffDuration};
 pub use crate::execution::engine::ActionExecutionEngine;

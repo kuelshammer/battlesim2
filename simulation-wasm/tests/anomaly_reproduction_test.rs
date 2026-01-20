@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::enums::EnemyTarget;
-    use crate::model::*;
-    use crate::run_single_event_driven_simulation;
-    use crate::safe_aggregation::aggregate_results_safe;
+    use simulation_wasm::enums::EnemyTarget;
+    use simulation_wasm::model::*;
+    use simulation_wasm::run_single_event_driven_simulation;
+    use simulation_wasm::safe_aggregation::aggregate_results_safe;
 
     fn create_fighter(id: &str, initiative: f64) -> Creature {
         Creature {

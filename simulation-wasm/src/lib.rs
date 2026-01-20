@@ -22,7 +22,7 @@ pub mod validation; // New module for requirement validation
 pub mod decile_analysis {
     pub use crate::analysis::*;
 }
-pub mod adjustment_test;
+
 pub mod auto_balancer;
 pub mod background_simulation; // Background simulation engine
 pub mod combat_stats;
@@ -34,8 +34,7 @@ pub mod encounter_balancer;
 pub mod enhanced_validation; // Comprehensive validation
 pub mod error_handling; // Enhanced error handling system
 pub mod intensity_calculation;
-#[cfg(test)]
-mod intensity_test;
+
 pub mod monitoring; // Success metrics and monitoring
 pub mod percentile_analysis;
 pub mod progress_communication; // Progress communication system
@@ -43,14 +42,13 @@ pub mod progress_ui; // Progress UI components
 pub mod queue_manager; // Queue management system
 pub mod recovery; // Error recovery mechanisms
 pub mod safe_aggregation; // Safe aggregation functions
-pub mod scoring_test;
+
 pub mod strategic_assessment;
 pub mod user_interaction; // User interaction flows // Configuration system
 
-#[cfg(test)]
-pub mod anomaly_reproduction_test;
+
 pub mod cache;
-pub mod log_reproduction_test;
+
 pub mod memory_guardrails; // Memory safety protections for large simulations
 pub mod seed_selection; // Seed selection algorithms for Two-Pass
 pub mod simulation; // Core simulation execution functions

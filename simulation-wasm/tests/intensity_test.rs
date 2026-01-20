@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::intensity_calculation::*;
-    use crate::resources::*;
+    use simulation_wasm::intensity_calculation::*;
+    use simulation_wasm::resources::*;
     use std::collections::HashMap;
 
     #[test]
