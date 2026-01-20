@@ -2,11 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import AdjustmentPreview from './AdjustmentPreview';
 import React from 'react';
+import { Creature, AutoAdjustmentResult } from '@/model/model';
 
 describe('AdjustmentPreview Component', () => {
     const mockOriginalMonsters = [
         { id: 'm1', name: 'Goblin', hp: 7, ac: 15, saveBonus: 0, actions: [] }
-    ] as unknown[];
+    ] as unknown as Creature[];
 
     const mockAdjustmentResult = {
         monsters: [
@@ -18,7 +19,7 @@ describe('AdjustmentPreview Component', () => {
             deciles: [],
             battleDurationRounds: 3
         }
-    } as unknown;
+    } as unknown as AutoAdjustmentResult;
 
     it('should display original and optimized stats', () => {
         render(
