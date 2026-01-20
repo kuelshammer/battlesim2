@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use crate::model::{Creature, LightweightRun, TimelineStep};
 use std::cell::RefCell;
-use crate::model::{Creature, TimelineStep, LightweightRun};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 /// Combine scenario hash and seed into a single u64 key for more efficient HashMap storage
@@ -27,11 +27,11 @@ thread_local! {
 /// Calculate a stable hash for a simulation scenario
 pub fn get_scenario_hash(players: &[Creature], timeline: &[TimelineStep]) -> u64 {
     let mut hasher = DefaultHasher::new();
-    
+
     // Efficient hashing using implemented Hash traits
     players.hash(&mut hasher);
     timeline.hash(&mut hasher);
-    
+
     hasher.finish()
 }
 

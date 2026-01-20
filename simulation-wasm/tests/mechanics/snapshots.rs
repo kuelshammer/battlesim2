@@ -3,10 +3,10 @@
 // These tests use insta to snapshot simulation results and detect regressions.
 // When simulation logic changes, snapshots will fail and need review.
 
-use simulation_wasm::run_event_driven_simulation_rust;
-use simulation_wasm::decile_analysis::run_decile_analysis;
-use serde::Serialize;
 use crate::common::load_scenario;
+use serde::Serialize;
+use simulation_wasm::decile_analysis::run_decile_analysis;
+use simulation_wasm::run_event_driven_simulation_rust;
 
 /// Snapshot data for a scenario
 #[derive(Serialize)]
@@ -28,9 +28,11 @@ fn snapshot_basic_melee_combat() {
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
     // Sort results (required for decile analysis)
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     // Analyze
     let party_size = 1;
@@ -56,9 +58,11 @@ fn snapshot_damage_vs_precision() {
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let party_size = 1;
     let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
@@ -82,9 +86,11 @@ fn snapshot_heavy_vs_consistent() {
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let party_size = 1;
     let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
@@ -108,9 +114,11 @@ fn snapshot_fireball_aoe() {
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let party_size = 1; // Wizard vs 4 Goblins
     let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
@@ -134,9 +142,11 @@ fn snapshot_healing_word() {
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let party_size = 2; // Cleric + Fighter
     let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
@@ -160,11 +170,13 @@ fn snapshot_multiattack() {
     let runs = run_event_driven_simulation_rust(players, timeline, 101, false, Some(42));
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
-    let party_size = 1; 
+    let party_size = 1;
     let analysis = run_decile_analysis(&results, scenario_file, party_size, 0);
 
     let median = &analysis.deciles[4];

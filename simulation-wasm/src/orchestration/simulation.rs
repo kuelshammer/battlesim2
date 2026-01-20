@@ -3,13 +3,13 @@
 //! This module contains complex simulation logic extracted from wasm_api.rs,
 //! providing pure Rust functions for simulation orchestration.
 
-use wasm_bindgen::prelude::*;
-use js_sys::Function;
-use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun};
-use crate::sorting::{calculate_average_attack_bonus, assign_party_slots};
 use crate::aggregation::calculate_score;
+use crate::model::{Creature, SimulationResult, SimulationRun, TimelineStep};
 use crate::orchestration::runners;
+use crate::sorting::{assign_party_slots, calculate_average_attack_bonus};
+use js_sys::Function;
 use std::collections::HashMap;
+use wasm_bindgen::prelude::*;
 
 /// Output structure for full simulation with callback
 #[derive(serde::Serialize)]
@@ -57,30 +57,57 @@ pub fn run_simulation_with_callback_orchestration(
 
     // Phase 1: Survey Pass
     let batch_size = (iterations / 20).max(1);
-    let (summarized_results, lightweight_runs) = runners::run_survey_with_progress(&sim, callback, batch_size);
+    let (summarized_results, lightweight_runs) =
+        runners::run_survey_with_progress(&sim, callback, batch_size);
 
     // Phase 2: Selection
     let interesting_seeds = sim.run_selection(&lightweight_runs);
     let median_seed = sim.find_median_seed(&lightweight_runs);
 
     // Phase 3: Deep Dive with progress
-    let seed_to_events = runners::run_deep_dive_with_progress(&sim, &interesting_seeds, callback, iterations);
-    let median_run_events = seed_to_events.get(&median_seed).cloned().unwrap_or_default();
+    let seed_to_events =
+        runners::run_deep_dive_with_progress(&sim, &interesting_seeds, callback, iterations);
+    let median_run_events = seed_to_events
+        .get(&median_seed)
+        .cloned()
+        .unwrap_or_default();
 
     // Combine and analyze
-    let mut final_runs = runners::combine_results_with_events(summarized_results, lightweight_runs, &seed_to_events);
-    let sr_count = timeline.iter().filter(|s| matches!(s, TimelineStep::ShortRest(_))).count();
+    let mut final_runs =
+        runners::combine_results_with_events(summarized_results, lightweight_runs, &seed_to_events);
+    let sr_count = timeline
+        .iter()
+        .filter(|s| matches!(s, TimelineStep::ShortRest(_)))
+        .count();
 
-    let overall = crate::decile_analysis::run_decile_analysis_with_logs(&mut final_runs, "Current Scenario", players.len(), sr_count);
+    let overall = crate::decile_analysis::run_decile_analysis_with_logs(
+        &mut final_runs,
+        "Current Scenario",
+        players.len(),
+        sr_count,
+    );
 
-    let num_encounters = final_runs.first().map(|r| r.result.encounters.len()).unwrap_or(0);
+    let num_encounters = final_runs
+        .first()
+        .map(|r| r.result.encounters.len())
+        .unwrap_or(0);
     let encounters_analysis: Vec<_> = (0..num_encounters)
-        .map(|i| crate::decile_analysis::run_encounter_analysis_with_logs(&mut final_runs, i, &format!("Encounter {}", i + 1), players.len(), sr_count))
+        .map(|i| {
+            crate::decile_analysis::run_encounter_analysis_with_logs(
+                &mut final_runs,
+                i,
+                &format!("Encounter {}", i + 1),
+                players.len(),
+                sr_count,
+            )
+        })
         .collect();
 
     // Sort and extract representative results
     final_runs.sort_by(|a, b| {
-        calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal)
+        calculate_score(&a.result)
+            .partial_cmp(&calculate_score(&b.result))
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
 
     let reduced_results = runners::extract_representative_results(&final_runs);
@@ -113,20 +140,27 @@ pub fn run_skyline_analysis_orchestration(
 ) -> Result<crate::percentile_analysis::SkylineAnalysis, Box<dyn std::error::Error>> {
     // Sort by appropriate score
     if let Some(idx) = encounter_index {
-        results.sort_by(|a, b| {
-            match (a.encounters.get(idx), b.encounters.get(idx)) {
-                (Some(ea), Some(eb)) => crate::aggregation::calculate_encounter_score(ea).partial_cmp(&crate::aggregation::calculate_encounter_score(eb)).unwrap_or(std::cmp::Ordering::Equal),
+        results.sort_by(
+            |a, b| match (a.encounters.get(idx), b.encounters.get(idx)) {
+                (Some(ea), Some(eb)) => crate::aggregation::calculate_encounter_score(ea)
+                    .partial_cmp(&crate::aggregation::calculate_encounter_score(eb))
+                    .unwrap_or(std::cmp::Ordering::Equal),
                 (Some(_), None) => std::cmp::Ordering::Less,
                 (None, Some(_)) => std::cmp::Ordering::Greater,
                 (None, None) => std::cmp::Ordering::Equal,
-            }
-        });
+            },
+        );
     } else {
-        results.sort_by(|a, b| calculate_score(a).partial_cmp(&calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            calculate_score(a)
+                .partial_cmp(&calculate_score(b))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
     }
 
     let result_refs: Vec<&SimulationResult> = results.iter().collect();
-    let analysis = crate::percentile_analysis::run_skyline_analysis(&result_refs, party_size, encounter_index);
+    let analysis =
+        crate::percentile_analysis::run_skyline_analysis(&result_refs, party_size, encounter_index);
 
     Ok(analysis)
 }
@@ -137,23 +171,47 @@ pub fn run_decile_analysis_orchestration(
     scenario_name: &str,
     party_size: usize,
 ) -> Result<FullAnalysisOutput, Box<dyn std::error::Error>> {
-    results.sort_by(|a, b| calculate_score(a).partial_cmp(&calculate_score(b)).unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        calculate_score(a)
+            .partial_cmp(&calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
-    let actual_party_size = results.first()
+    let actual_party_size = results
+        .first()
         .and_then(|r| r.encounters.first())
         .and_then(|e| e.rounds.first())
         .map(|r| r.team1.len())
         .unwrap_or(0);
 
-    let sr_count = results.first()
-        .map(|r| r.encounters.iter().filter(|e| e.rounds.len() == 1 && e.rounds[0].team2.is_empty()).count())
+    let sr_count = results
+        .first()
+        .map(|r| {
+            r.encounters
+                .iter()
+                .filter(|e| e.rounds.len() == 1 && e.rounds[0].team2.is_empty())
+                .count()
+        })
         .unwrap_or(0);
 
-    let overall = crate::decile_analysis::run_decile_analysis(&results, scenario_name, actual_party_size, sr_count);
+    let overall = crate::decile_analysis::run_decile_analysis(
+        &results,
+        scenario_name,
+        actual_party_size,
+        sr_count,
+    );
     let num_encounters = results.first().map(|r| r.encounters.len()).unwrap_or(0);
 
     let encounters: Vec<_> = (0..num_encounters)
-        .map(|i| crate::decile_analysis::run_encounter_analysis(&results, i, &format!("Encounter {}", i + 1), actual_party_size, sr_count))
+        .map(|i| {
+            crate::decile_analysis::run_encounter_analysis(
+                &results,
+                i,
+                &format!("Encounter {}", i + 1),
+                actual_party_size,
+                sr_count,
+            )
+        })
         .collect();
 
     Ok(FullAnalysisOutput {

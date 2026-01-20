@@ -27,7 +27,8 @@ pub fn run_auto_adjust_encounter_orchestration(
     encounter_index: usize,
 ) -> Result<AutoAdjustmentResult, Box<dyn std::error::Error>> {
     let balancer = crate::auto_balancer::AutoBalancer::new();
-    let (optimized_monsters, analysis) = balancer.balance_encounter(players, monsters, timeline, encounter_index);
+    let (optimized_monsters, analysis) =
+        balancer.balance_encounter(players, monsters, timeline, encounter_index);
 
     Ok(AutoAdjustmentResult {
         monsters: optimized_monsters,

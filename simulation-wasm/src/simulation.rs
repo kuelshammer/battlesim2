@@ -1,7 +1,7 @@
 //! Internal simulation state and conversion helpers
 
-use crate::model::{Combattant, CreatureState};
 use crate::context::TurnContext;
+use crate::model::{Combattant, CreatureState};
 use crate::resources::{ResetType, ResourceType};
 use std::collections::{HashMap, HashSet};
 
@@ -16,7 +16,8 @@ pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> V
 
         let mut current_hp = player.final_state.current_hp;
         let mut cumulative_spent = player.final_state.cumulative_spent;
-        let mut resources = crate::resources::ResourceLedger::from(player.final_state.resources.clone());
+        let mut resources =
+            crate::resources::ResourceLedger::from(player.final_state.resources.clone());
 
         // 1. Reset Short Rest resources
         resources.reset_by_type(&ResetType::ShortRest);
@@ -40,7 +41,7 @@ pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> V
 
         while current_hp < max_hp {
             let mut used_die = false;
-            
+
             for hd_type in &hd_types {
                 if resources.has(hd_type.clone(), None, 1.0) {
                     let sides = match hd_type {
@@ -50,7 +51,7 @@ pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> V
                         ResourceType::HitDiceD6 => 6.0,
                         _ => 8.0,
                     };
-                    
+
                     let avg_roll = (sides + 1.0) / 2.0;
                     let total_avg = avg_roll + con_mod;
 
@@ -63,10 +64,13 @@ pub(crate) fn apply_short_rest_standalone_no_events(players: &[Combattant]) -> V
                     if resources.consume(hd_type.clone(), None, 1.0).is_ok() {
                         current_hp = (current_hp as f64 + total_avg).round() as u32;
                         current_hp = current_hp.min(max_hp);
-                        
-                        let weight = crate::intensity_calculation::get_hit_die_average(&hd_type.to_key(None), con_mod);
+
+                        let weight = crate::intensity_calculation::get_hit_die_average(
+                            &hd_type.to_key(None),
+                            con_mod,
+                        );
                         cumulative_spent += weight;
-                        
+
                         used_die = true;
                         break;
                     }
@@ -136,10 +140,10 @@ pub(crate) fn apply_short_rest_standalone(
 
         while current_hp < max_hp {
             let mut used_die = false;
-            
+
             for hd_type in &hd_types {
                 let mut heal_to_apply = None;
-                
+
                 if let Some(c) = context.get_combatant_mut(&player.id) {
                     if c.resources.has(hd_type.clone(), None, 1.0) {
                         let sides = match hd_type {
@@ -149,13 +153,13 @@ pub(crate) fn apply_short_rest_standalone(
                             ResourceType::HitDiceD6 => 6.0,
                             _ => 8.0,
                         };
-                        
+
                         let avg_roll = (sides + 1.0) / 2.0;
                         let total_avg = avg_roll + con_mod;
 
                         // Stop if using another hit die would overflow max HP
                         if current_hp as f64 + total_avg > max_hp as f64 {
-                            continue; 
+                            continue;
                         }
 
                         // Consume die
@@ -167,7 +171,7 @@ pub(crate) fn apply_short_rest_standalone(
 
                 if let Some(amount) = heal_to_apply {
                     context.apply_healing(&player.id, amount, false, &player.id);
-                    
+
                     // Add resource consumption event
                     context.record_event(crate::events::Event::ResourceConsumed {
                         unit_id: player.id.clone(),
@@ -177,15 +181,18 @@ pub(crate) fn apply_short_rest_standalone(
 
                     // Track cumulative expenditure for strategic attrition model
                     if let Some(c) = context.get_combatant_mut(&player.id) {
-                        let weight = crate::intensity_calculation::get_hit_die_average(&hd_type.to_key(None), con_mod);
+                        let weight = crate::intensity_calculation::get_hit_die_average(
+                            &hd_type.to_key(None),
+                            con_mod,
+                        );
                         c.cumulative_spent += weight;
                     }
-                    
+
                     // Update local current_hp from context
                     if let Some(c) = context.get_combatant(&player.id) {
                         current_hp = c.current_hp;
                     }
-                    
+
                     used_die = true;
                     break;
                 }
@@ -259,11 +266,7 @@ pub(crate) fn update_player_states_for_next_encounter(
             // Update state
             let next_state = CreatureState {
                 current_hp,
-                temp_hp: if temp_hp > 0 {
-                    Some(temp_hp)
-                } else {
-                    None
-                },
+                temp_hp: if temp_hp > 0 { Some(temp_hp) } else { None },
                 buffs: HashMap::new(),
                 resources: resources.into(),
                 upcoming_buffs: HashMap::new(),
@@ -291,11 +294,8 @@ pub(crate) fn update_player_states_for_next_encounter(
 }
 
 /// Reconstruct actions from event history
-pub(crate) fn reconstruct_actions(
-    event_history: &[crate::events::Event],
-) -> ActionHistory {
-    let mut actions_by_round_actor: ActionHistory =
-        HashMap::new();
+pub(crate) fn reconstruct_actions(event_history: &[crate::events::Event]) -> ActionHistory {
+    let mut actions_by_round_actor: ActionHistory = HashMap::new();
     let mut current_round = 0;
     let mut current_actor_actions: HashMap<String, (String, HashMap<String, i32>)> = HashMap::new();
 
@@ -309,8 +309,7 @@ pub(crate) fn reconstruct_actions(
                 action_id,
                 ..
             } => {
-                if let Some((prev_action_id, prev_targets)) =
-                    current_actor_actions.remove(actor_id)
+                if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(actor_id)
                 {
                     actions_by_round_actor
                         .entry((current_round, actor_id.clone()))
@@ -320,7 +319,8 @@ pub(crate) fn reconstruct_actions(
                 current_actor_actions.insert(actor_id.clone(), (action_id.clone(), HashMap::new()));
             }
             crate::events::Event::TurnEnded { unit_id, .. } => {
-                if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(unit_id) {
+                if let Some((prev_action_id, prev_targets)) = current_actor_actions.remove(unit_id)
+                {
                     actions_by_round_actor
                         .entry((current_round, unit_id.clone()))
                         .or_default()

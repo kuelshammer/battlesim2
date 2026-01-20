@@ -4,7 +4,8 @@ use crate::model::*;
 use std::collections::HashMap;
 
 /// Calculate Total Daily Net Worth (sum of all player budgets)
-pub type ExtractionFn = dyn Fn(&SimulationResult, Option<usize>) -> (Vec<super::types::CombatantVisualization>, usize);
+pub type ExtractionFn =
+    dyn Fn(&SimulationResult, Option<usize>) -> (Vec<super::types::CombatantVisualization>, usize);
 
 pub fn calculate_tdnw(run: &SimulationResult, sr_count: usize) -> f64 {
     let mut total = 0.0;
@@ -12,7 +13,8 @@ pub fn calculate_tdnw(run: &SimulationResult, sr_count: usize) -> f64 {
     for encounter in &run.encounters {
         if let Some(first_round) = encounter.rounds.first() {
             for c in &first_round.team1 {
-                total += crate::intensity_calculation::calculate_daily_budget(&c.creature, sr_count);
+                total +=
+                    crate::intensity_calculation::calculate_daily_budget(&c.creature, sr_count);
             }
             if total > 0.0 {
                 return total;
@@ -45,12 +47,24 @@ pub fn calculate_run_stats_partial(
     let survivors = if let Some(idx) = encounter_idx {
         if let Some(enc) = run.encounters.get(idx) {
             if let Some(last_round) = enc.rounds.last() {
-                last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
-            } else { 0 }
-        } else { 0 }
+                last_round
+                    .team1
+                    .iter()
+                    .filter(|c| c.final_state.current_hp > 0)
+                    .count()
+            } else {
+                0
+            }
+        } else {
+            0
+        }
     } else if let Some(last_enc) = run.encounters.last() {
         if let Some(last_round) = last_enc.rounds.last() {
-            last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count()
+            last_round
+                .team1
+                .iter()
+                .filter(|c| c.final_state.current_hp > 0)
+                .count()
         } else if score < 0.0 {
             0
         } else {
@@ -100,7 +114,7 @@ pub fn calculate_run_stats_partial(
                     c.initial_state.current_hp,
                     c.initial_state.temp_hp.unwrap_or(0),
                     &c.initial_state.resources,
-                    &ledger.reset_rules
+                    &ledger.reset_rules,
                 );
 
                 start_vit_sum += calculate_vitality(
@@ -108,17 +122,27 @@ pub fn calculate_run_stats_partial(
                     &c.initial_state.resources.current,
                     c.creature.hp,
                     &c.initial_state.resources.max,
-                    c.creature.con_modifier.unwrap_or(0.0)
+                    c.creature.con_modifier.unwrap_or(0.0),
                 );
 
-                start_pow_sum += calculate_strategic_power(
-                    c.initial_state.cumulative_spent,
-                    budget
-                );
+                start_pow_sum +=
+                    calculate_strategic_power(c.initial_state.cumulative_spent, budget);
             }
-            timeline.push(if tdnw > 0.0 { (start_ehp / tdnw) * 100.0 } else { 100.0 });
-            vitality_timeline.push(if p_count > 0.0 { start_vit_sum / p_count } else { 100.0 });
-            power_timeline.push(if p_count > 0.0 { start_pow_sum / p_count } else { 100.0 });
+            timeline.push(if tdnw > 0.0 {
+                (start_ehp / tdnw) * 100.0
+            } else {
+                100.0
+            });
+            vitality_timeline.push(if p_count > 0.0 {
+                start_vit_sum / p_count
+            } else {
+                100.0
+            });
+            power_timeline.push(if p_count > 0.0 {
+                start_pow_sum / p_count
+            } else {
+                100.0
+            });
         }
     }
 
@@ -140,7 +164,7 @@ pub fn calculate_run_stats_partial(
                     c.final_state.current_hp,
                     c.final_state.temp_hp.unwrap_or(0),
                     &c.final_state.resources,
-                    &ledger.reset_rules
+                    &ledger.reset_rules,
                 );
 
                 step_vit_sum += calculate_vitality(
@@ -148,17 +172,26 @@ pub fn calculate_run_stats_partial(
                     &c.final_state.resources.current,
                     c.creature.hp,
                     &c.initial_state.resources.max,
-                    c.creature.con_modifier.unwrap_or(0.0)
+                    c.creature.con_modifier.unwrap_or(0.0),
                 );
 
-                step_pow_sum += calculate_strategic_power(
-                    c.final_state.cumulative_spent,
-                    budget
-                );
+                step_pow_sum += calculate_strategic_power(c.final_state.cumulative_spent, budget);
             }
-            timeline.push(if tdnw > 0.0 { (step_ehp / tdnw) * 100.0 } else { 0.0 });
-            vitality_timeline.push(if p_count > 0.0 { step_vit_sum / p_count } else { 0.0 });
-            power_timeline.push(if p_count > 0.0 { step_pow_sum / p_count } else { 0.0 });
+            timeline.push(if tdnw > 0.0 {
+                (step_ehp / tdnw) * 100.0
+            } else {
+                0.0
+            });
+            vitality_timeline.push(if p_count > 0.0 {
+                step_vit_sum / p_count
+            } else {
+                0.0
+            });
+            power_timeline.push(if p_count > 0.0 {
+                step_pow_sum / p_count
+            } else {
+                0.0
+            });
         } else {
             let prev = timeline.last().cloned().unwrap_or(100.0);
             timeline.push(prev);
@@ -173,7 +206,10 @@ pub fn calculate_run_stats_partial(
     let end_val = timeline.last().cloned().unwrap_or(0.0) * tdnw / 100.0;
     let burned_resources = (start_val - end_val).max(-1000.0);
 
-    let duration = encounters_slice.iter().map(|e| e.rounds.len()).sum::<usize>();
+    let duration = encounters_slice
+        .iter()
+        .map(|e| e.rounds.len())
+        .sum::<usize>();
 
     RunMetrics {
         burned: burned_resources,
@@ -217,12 +253,17 @@ pub fn calculate_vitals_with_config(
     // VALIDATION: Verify party_size matches actual team size
     let actual_party_size = results.iter().find_map(|&run| {
         let encounters = if let Some(idx) = encounter_idx {
-            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+            if idx < run.encounters.len() {
+                &run.encounters[idx..=idx]
+            } else {
+                &[]
+            }
         } else {
             &run.encounters[..]
         };
 
-        encounters.iter()
+        encounters
+            .iter()
             .filter_map(|enc| enc.rounds.first())
             .map(|round| round.team1.len())
             .next()
@@ -238,7 +279,11 @@ pub fn calculate_vitals_with_config(
 
     for &run in results {
         let encounters = if let Some(idx) = encounter_idx {
-            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+            if idx < run.encounters.len() {
+                &run.encounters[idx..=idx]
+            } else {
+                &[]
+            }
         } else {
             &run.encounters[..]
         };
@@ -250,7 +295,11 @@ pub fn calculate_vitals_with_config(
         for enc in encounters {
             for round in &enc.rounds {
                 let any_at_deaths_door = round.team1.iter().any(|c| {
-                    let hp_pct = if c.creature.hp > 0 { c.final_state.current_hp as f64 / c.creature.hp as f64 } else { 0.0 };
+                    let hp_pct = if c.creature.hp > 0 {
+                        c.final_state.current_hp as f64 / c.creature.hp as f64
+                    } else {
+                        0.0
+                    };
                     c.final_state.current_hp > 0 && hp_pct < 0.25
                 });
                 if any_at_deaths_door {
@@ -259,19 +308,37 @@ pub fn calculate_vitals_with_config(
             }
 
             if let Some(last_round) = enc.rounds.last() {
-                let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count();
-                if survivors < validated_party_size { run_has_ko = true; }
-                if survivors == 0 { run_is_tpk = true; }
+                let survivors = last_round
+                    .team1
+                    .iter()
+                    .filter(|c| c.final_state.current_hp > 0)
+                    .count();
+                if survivors < validated_party_size {
+                    run_has_ko = true;
+                }
+                if survivors == 0 {
+                    run_is_tpk = true;
+                }
 
-                if last_round.team1.iter().any(|c| (c.final_state.current_hp as f64 / c.creature.hp as f64) < 0.1) {
+                if last_round
+                    .team1
+                    .iter()
+                    .any(|c| (c.final_state.current_hp as f64 / c.creature.hp as f64) < 0.1)
+                {
                     run_has_crisis = true;
                 }
             }
         }
 
-        if run_has_ko { ko_count += 1; }
-        if run_is_tpk { tpk_count += 1; }
-        if run_has_crisis { _crisis_count += 1; }
+        if run_has_ko {
+            ko_count += 1;
+        }
+        if run_is_tpk {
+            tpk_count += 1;
+        }
+        if run_has_crisis {
+            _crisis_count += 1;
+        }
     }
 
     let lethality_index = ko_count as f64 / total_runs as f64;
@@ -283,7 +350,9 @@ pub fn calculate_vitals_with_config(
     let p50_idx = total_runs / 2;
 
     let get_cost = |idx: usize| -> f64 {
-        if idx >= total_runs || tdnw <= 0.0 { return 0.0; }
+        if idx >= total_runs || tdnw <= 0.0 {
+            return 0.0;
+        }
         let metrics = calculate_run_stats_partial(results[idx], encounter_idx, party_size, tdnw, 0);
         metrics.burned / tdnw
     };
@@ -303,7 +372,11 @@ pub fn calculate_vitals_with_config(
 
     for &run in results {
         let encounters = if let Some(idx) = encounter_idx {
-            if idx < run.encounters.len() { &run.encounters[idx..=idx] } else { &[] }
+            if idx < run.encounters.len() {
+                &run.encounters[idx..=idx]
+            } else {
+                &[]
+            }
         } else {
             &run.encounters[..]
         };
@@ -323,7 +396,11 @@ pub fn calculate_vitals_with_config(
                     let char_id = &c.id;
                     let max_hp = c.creature.hp as f64;
                     let current_hp = c.final_state.current_hp as f64;
-                    let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
+                    let hp_pct = if max_hp > 0.0 {
+                        current_hp / max_hp
+                    } else {
+                        0.0
+                    };
 
                     let entry = char_min_hp.entry(char_id.clone()).or_insert(1.0);
                     *entry = (*entry).min(hp_pct);
@@ -348,7 +425,11 @@ pub fn calculate_vitals_with_config(
                 for c in &last_round.team1 {
                     let max_hp = c.creature.hp as f64;
                     let current_hp = c.final_state.current_hp as f64;
-                    let hp_pct = if max_hp > 0.0 { current_hp / max_hp } else { 0.0 };
+                    let hp_pct = if max_hp > 0.0 {
+                        current_hp / max_hp
+                    } else {
+                        0.0
+                    };
 
                     if (0.01..=0.10).contains(&hp_pct) {
                         run_near_death_count += 1;
@@ -394,7 +475,8 @@ pub fn calculate_vitals_with_config(
         pacing_label: "".to_string(),
     };
     temp_vitals.archetype = super::narrative::assess_archetype_with_config(&temp_vitals, config);
-    temp_vitals.difficulty_grade = super::narrative::calculate_difficulty_grade(temp_vitals.lethality_index);
+    temp_vitals.difficulty_grade =
+        super::narrative::calculate_difficulty_grade(temp_vitals.lethality_index);
     temp_vitals.safety_grade = super::narrative::calculate_safety_grade(&temp_vitals);
     temp_vitals.pacing_label = super::narrative::generate_pacing_label(&temp_vitals);
 
@@ -415,7 +497,13 @@ pub fn calculate_vitals(
     party_size: usize,
     tdnw: f64,
 ) -> Vitals {
-    calculate_vitals_with_config(results, encounter_idx, party_size, tdnw, &GameBalance::default())
+    calculate_vitals_with_config(
+        results,
+        encounter_idx,
+        party_size,
+        tdnw,
+        &GameBalance::default(),
+    )
 }
 
 /// Calculate statistics for a decile slice
@@ -438,7 +526,9 @@ pub fn calculate_decile_stats_internal(
 
     for &run in slice {
         let metrics = calculate_run_stats_partial(run, encounter_idx, party_size, tdnw, sr_count);
-        if metrics.survivors > 0 { total_wins += 1.0; }
+        if metrics.survivors > 0 {
+            total_wins += 1.0;
+        }
         total_survivors += metrics.survivors;
         total_hp_lost += metrics.burned;
         total_duration += metrics.duration;
@@ -448,7 +538,11 @@ pub fn calculate_decile_stats_internal(
     }
 
     let count = slice.len() as f64;
-    let avg_hp_lost = if count > 0.0 { total_hp_lost / count } else { 0.0 };
+    let avg_hp_lost = if count > 0.0 {
+        total_hp_lost / count
+    } else {
+        0.0
+    };
 
     // Average the timelines
     let mut avg_timeline = Vec::new();
@@ -485,14 +579,34 @@ pub fn calculate_decile_stats_internal(
     DecileStats {
         decile: decile_num,
         label: format!("{} {}", label, decile_num),
-        median_survivors: if count > 0.0 { (total_survivors as f64 / count).round() as usize } else { 0 },
+        median_survivors: if count > 0.0 {
+            (total_survivors as f64 / count).round() as usize
+        } else {
+            0
+        },
         party_size,
         total_hp_lost: avg_hp_lost,
-        hp_lost_percent: if tdnw > 0.0 { (avg_hp_lost / tdnw) * 100.0 } else { 0.0 },
-        win_rate: if count > 0.0 { (total_wins / count) * 100.0 } else { 0.0 },
+        hp_lost_percent: if tdnw > 0.0 {
+            (avg_hp_lost / tdnw) * 100.0
+        } else {
+            0.0
+        },
+        win_rate: if count > 0.0 {
+            (total_wins / count) * 100.0
+        } else {
+            0.0
+        },
         median_run_visualization: visualization_data,
-        median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.first().cloned() },
-        battle_duration_rounds: if count > 0.0 { (total_duration as f64 / count).round() as usize } else { 0 },
+        median_run_data: if let Some(idx) = encounter_idx {
+            median_run.encounters.get(idx).cloned()
+        } else {
+            median_run.encounters.first().cloned()
+        },
+        battle_duration_rounds: if count > 0.0 {
+            (total_duration as f64 / count).round() as usize
+        } else {
+            0
+        },
         resource_timeline: avg_timeline,
         vitality_timeline: avg_vitality_timeline,
         power_timeline: avg_power_timeline,
@@ -519,8 +633,12 @@ pub fn analyze_results_internal(
             power_range: None,
             decile_logs: Vec::new(),
             battle_duration_rounds: 0,
-            intensity_tier: IntensityTier::Tier1, encounter_label: EncounterLabel::Standard,
-            analysis_summary: "No data.".to_string(), tuning_suggestions: Vec::new(), is_good_design: false, stars: 0,
+            intensity_tier: IntensityTier::Tier1,
+            encounter_label: EncounterLabel::Standard,
+            analysis_summary: "No data.".to_string(),
+            tuning_suggestions: Vec::new(),
+            is_good_design: false,
+            stars: 0,
             tdnw: 0.0,
             num_encounters: 0,
             skyline: None,
@@ -539,14 +657,19 @@ pub fn analyze_results_internal(
     let pacing = if encounter_idx.is_none() && !results.is_empty() {
         let median_idx = results.len() / 2;
         let median_run = results[median_idx];
-        let median_metrics = calculate_run_stats_partial(median_run, None, party_size, tdnw, sr_count);
+        let median_metrics =
+            calculate_run_stats_partial(median_run, None, party_size, tdnw, sr_count);
         super::narrative::calculate_day_pacing(median_run, &median_metrics, tdnw)
     } else {
         None
     };
 
     // Compute skyline analysis (100 buckets)
-    let skyline = Some(crate::percentile_analysis::run_skyline_analysis(results, party_size, encounter_idx));
+    let skyline = Some(crate::percentile_analysis::run_skyline_analysis(
+        results,
+        party_size,
+        encounter_idx,
+    ));
 
     // Collect all timelines for independent percentile calculation
     let mut all_vits = Vec::with_capacity(results.len());
@@ -557,7 +680,11 @@ pub fn analyze_results_internal(
         all_pows.push(metrics.power_timeline);
     }
 
-    let num_steps = if !all_vits.is_empty() { all_vits[0].len() } else { 0 };
+    let num_steps = if !all_vits.is_empty() {
+        all_vits[0].len()
+    } else {
+        0
+    };
     let mut vit_p25 = Vec::with_capacity(num_steps);
     let mut vit_p75 = Vec::with_capacity(num_steps);
     let mut pow_p25 = Vec::with_capacity(num_steps);
@@ -581,16 +708,34 @@ pub fn analyze_results_internal(
         }
     }
 
-    let vitality_range = Some(TimelineRange { p25: vit_p25, p75: vit_p75 });
-    let power_range = Some(TimelineRange { p25: pow_p25, p75: pow_p75 });
+    let vitality_range = Some(TimelineRange {
+        p25: vit_p25,
+        p75: vit_p75,
+    });
+    let power_range = Some(TimelineRange {
+        p25: pow_p25,
+        p75: pow_p75,
+    });
 
-    let total_day_weight: f64 = results[0].encounters.iter().map(|e| e.target_role.weight()).sum();
+    let total_day_weight: f64 = results[0]
+        .encounters
+        .iter()
+        .map(|e| e.target_role.weight())
+        .sum();
     let current_encounter_weight = if let Some(idx) = encounter_idx {
-        results[0].encounters.get(idx).map(|e| e.target_role.weight()).unwrap_or(2.0)
+        results[0]
+            .encounters
+            .get(idx)
+            .map(|e| e.target_role.weight())
+            .unwrap_or(2.0)
     } else if results[0].encounters.len() == 1 {
         results[0].encounters[0].target_role.weight()
     } else {
-        results[0].encounters.first().map(|e| e.target_role.weight()).unwrap_or(2.0)
+        results[0]
+            .encounters
+            .first()
+            .map(|e| e.target_role.weight())
+            .unwrap_or(2.0)
     };
 
     let total_runs = results.len();
@@ -627,13 +772,22 @@ pub fn analyze_results_internal(
         let end_idx = ((i + 1) as f64 * decile_size).floor() as usize;
         let slice = &results[start_idx..end_idx.min(total_runs)];
         if !slice.is_empty() {
-            deciles.push(calculate_decile_stats_internal(slice, encounter_idx, i + 1, party_size, tdnw, sr_count, extract_vis_fn));
+            deciles.push(calculate_decile_stats_internal(
+                slice,
+                encounter_idx,
+                i + 1,
+                party_size,
+                tdnw,
+                sr_count,
+                extract_vis_fn,
+            ));
         }
     }
 
     let median_idx = total_runs / 2;
     if let Some(&median_run) = results.get(median_idx) {
-        let metrics = calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
+        let metrics =
+            calculate_run_stats_partial(median_run, encounter_idx, party_size, tdnw, sr_count);
         let (visualization_data, _) = extract_vis_fn(median_run, encounter_idx);
 
         global_median = Some(DecileStats {
@@ -642,10 +796,18 @@ pub fn analyze_results_internal(
             median_survivors: metrics.survivors,
             party_size,
             total_hp_lost: metrics.burned,
-            hp_lost_percent: if tdnw > 0.0 { (metrics.burned / tdnw) * 100.0 } else { 0.0 },
+            hp_lost_percent: if tdnw > 0.0 {
+                (metrics.burned / tdnw) * 100.0
+            } else {
+                0.0
+            },
             win_rate: if metrics.survivors > 0 { 100.0 } else { 0.0 },
             median_run_visualization: visualization_data,
-            median_run_data: if let Some(idx) = encounter_idx { median_run.encounters.get(idx).cloned() } else { median_run.encounters.first().cloned() },
+            median_run_data: if let Some(idx) = encounter_idx {
+                median_run.encounters.get(idx).cloned()
+            } else {
+                median_run.encounters.first().cloned()
+            },
             battle_duration_rounds: metrics.duration,
             resource_timeline: metrics.ehp_timeline,
             vitality_timeline: metrics.vitality_timeline,
@@ -655,33 +817,65 @@ pub fn analyze_results_internal(
 
     let vitals_val = vitals.as_ref().unwrap();
     let encounter_label = super::narrative::get_encounter_label(&vitals_val.archetype);
-    let analysis_summary = super::narrative::generate_analysis_summary(&vitals_val.archetype, vitals_val, global_median.as_ref().unwrap());
+    let analysis_summary = super::narrative::generate_analysis_summary(
+        &vitals_val.archetype,
+        vitals_val,
+        global_median.as_ref().unwrap(),
+    );
     let tuning_suggestions = super::narrative::generate_tuning_suggestions(&vitals_val.archetype);
 
     let is_good_design = vitals_val.lethality_index < 0.4 && vitals_val.attrition_score > 0.1;
-    let stars = if is_good_design { 3 } else if vitals_val.lethality_index < 0.6 { 2 } else { 1 };
+    let stars = if is_good_design {
+        3
+    } else if vitals_val.lethality_index < 0.6 {
+        2
+    } else {
+        1
+    };
 
-    let battle_duration_rounds = global_median.as_ref().map(|m| m.battle_duration_rounds).unwrap_or(0);
+    let battle_duration_rounds = global_median
+        .as_ref()
+        .map(|m| m.battle_duration_rounds)
+        .unwrap_or(0);
 
     AggregateOutput {
-        scenario_name: scenario_name.to_string(), total_runs, deciles, global_median,
-        vitality_range, power_range,
+        scenario_name: scenario_name.to_string(),
+        total_runs,
+        deciles,
+        global_median,
+        vitality_range,
+        power_range,
         decile_logs,
         battle_duration_rounds,
         intensity_tier: {
             let typical_metrics = if !results.is_empty() {
                 let typical_idx = results.len() / 2;
-                Some(calculate_run_stats_partial(results[typical_idx], encounter_idx, party_size, tdnw, sr_count))
+                Some(calculate_run_stats_partial(
+                    results[typical_idx],
+                    encounter_idx,
+                    party_size,
+                    tdnw,
+                    sr_count,
+                ))
             } else {
                 None
             };
             if let Some(ref metrics) = typical_metrics {
-                super::narrative::assess_intensity_tier_dynamic(metrics, tdnw, total_day_weight, current_encounter_weight)
+                super::narrative::assess_intensity_tier_dynamic(
+                    metrics,
+                    tdnw,
+                    total_day_weight,
+                    current_encounter_weight,
+                )
             } else {
                 IntensityTier::Tier1
             }
         },
-        encounter_label, analysis_summary, tuning_suggestions, is_good_design, stars,
+        encounter_label,
+        analysis_summary,
+        tuning_suggestions,
+        is_good_design,
+        stars,
         tdnw,
         num_encounters,
         skyline,

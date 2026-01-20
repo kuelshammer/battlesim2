@@ -1,9 +1,9 @@
-use crate::context::{TurnContext, EffectType};
-use crate::events::Event;
-use crate::model::{Action, AtkAction};
-use crate::{dice, targeting, action_resolver::ActionResolver, rng};
 use crate::action_resolver::AttackRollResult;
+use crate::context::{EffectType, TurnContext};
+use crate::events::Event;
 use crate::events::RollResult;
+use crate::model::{Action, AtkAction};
+use crate::{action_resolver::ActionResolver, dice, rng, targeting};
 
 pub fn resolve(
     resolver: &ActionResolver,
@@ -20,10 +20,10 @@ pub fn resolve(
     };
 
     let actor_side = context.get_combatant(actor_id).unwrap().side;
-    
+
     // 2. Resolve hits
     let count = attack.targets.max(1) as usize;
-    
+
     for _ in 0..count {
         // Check if action was interrupted by a reaction
         if context.action_interrupted {
@@ -32,13 +32,14 @@ pub fn resolve(
 
         // Refresh alive enemies for every hit to support dynamic strategies (Most HP, Highest Survivability)
         let all_alive = context.get_alive_combatants();
-        let enemies: Vec<_> = all_alive.into_iter()
+        let enemies: Vec<_> = all_alive
+            .into_iter()
             .filter(|c| c.side != actor_side)
             .map(|c| c.base_combatant.clone())
             .collect();
 
         let strategy = attack.target;
-        
+
         if let Some(idx) = targeting::select_enemy_target(&actor, strategy, &enemies, &[], None) {
             let target_id = enemies[idx].id.clone();
             resolve_single_attack_hit(resolver, attack, context, actor_id, &target_id, &mut events);
@@ -72,7 +73,10 @@ pub fn resolve_single_attack_hit(
 
     // Check for RedirectAttack among the events
     for event in events.iter() {
-        if let Event::Custom { event_type, data, .. } = event {
+        if let Event::Custom {
+            event_type, data, ..
+        } = event
+        {
             if event_type == "RedirectAttack" {
                 if let Some(new_target) = data.get("new_target_id") {
                     current_target_id = new_target.clone();
@@ -86,12 +90,18 @@ pub fn resolve_single_attack_hit(
     let mut target_ac = get_target_ac(&current_target_id, context);
 
     // 3. Check for hit
-    let mut is_hit = !attack_result.is_miss
-        && (attack_result.is_critical || attack_result.total >= target_ac);
+    let mut is_hit =
+        !attack_result.is_miss && (attack_result.is_critical || attack_result.total >= target_ac);
 
     // 4. Defensive Reactions (Shield)
     if is_hit && !attack_result.is_critical {
-        let (new_ac, reaction_events) = resolve_defensive_reactions(resolver, &current_target_id, context, attack_result.total, target_ac);
+        let (new_ac, reaction_events) = resolve_defensive_reactions(
+            resolver,
+            &current_target_id,
+            context,
+            attack_result.total,
+            target_ac,
+        );
         if !reaction_events.is_empty() {
             events.extend(reaction_events);
             target_ac = new_ac;
@@ -110,30 +120,33 @@ pub fn resolve_single_attack_hit(
             Some(&current_target_id),
             None,
         );
-        
+
         if !accuracy_triggers.is_empty() {
             events.extend(accuracy_triggers);
-            
+
             let mods = context.roll_modifications.take_all(actor_id);
             for modif in mods {
                 if let crate::context::RollModification::AddBonus { amount } = modif {
                     let formula = crate::model::DiceFormula::Expr(amount);
                     let bonus = dice::evaluate(&formula, 1);
                     attack_result.total += bonus;
-                    
+
                     if let Some(detail) = &mut attack_result.roll_detail {
-                        detail.modifiers.push(("Post-Roll Bonus".to_string(), bonus));
+                        detail
+                            .modifiers
+                            .push(("Post-Roll Bonus".to_string(), bonus));
                         detail.total += bonus;
                     }
                 }
             }
-            
+
             is_hit = attack_result.total >= target_ac;
         }
     }
 
     if is_hit {
-        let (damage, damage_roll) = calculate_damage(attack, attack_result.is_critical, context, actor_id);
+        let (damage, damage_roll) =
+            calculate_damage(attack, attack_result.is_critical, context, actor_id);
 
         use crate::resources::ActionTag;
         let range = if attack.tags.contains(&ActionTag::Melee) {
@@ -171,9 +184,14 @@ pub fn resolve_single_attack_hit(
         let mut split_percent = 0.0;
 
         for event in events.iter() {
-            if let Event::Custom { event_type, data, .. } = event {
+            if let Event::Custom {
+                event_type, data, ..
+            } = event
+            {
                 if event_type == "SplitDamage" {
-                    if let (Some(target), Some(percent_str)) = (data.get("target_id"), data.get("percent")) {
+                    if let (Some(target), Some(percent_str)) =
+                        (data.get("target_id"), data.get("percent"))
+                    {
                         if let Ok(p) = percent_str.parse::<f64>() {
                             split_target_id = Some(target.clone());
                             split_percent = p / 100.0;
@@ -186,12 +204,13 @@ pub fn resolve_single_attack_hit(
         if let Some(tid) = split_target_id {
             let split_amount = actual_damage * split_percent;
             actual_damage -= split_amount;
-            
+
             let split_events = context.apply_damage(&tid, split_amount, "Shared", actor_id);
             events.extend(split_events);
         }
 
-        let damage_events = context.apply_damage(&current_target_id, actual_damage, "Physical", actor_id);
+        let damage_events =
+            context.apply_damage(&current_target_id, actual_damage, "Physical", actor_id);
         events.extend(damage_events);
     } else {
         let miss_event = Event::AttackMissed {
@@ -205,25 +224,53 @@ pub fn resolve_single_attack_hit(
     }
 }
 
-pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str, target_id: &str) -> AttackRollResult {
+pub fn roll_attack(
+    attack: &AtkAction,
+    context: &mut TurnContext,
+    actor_id: &str,
+    target_id: &str,
+) -> AttackRollResult {
     // Take any pending roll modifications
     let mods = context.roll_modifications.take_all(actor_id);
 
     // 1. Determine Advantage/Disadvantage
-    let attacker_has_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithAdvantage)
-        || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage);
-    let attacker_has_triple_adv = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithTripleAdvantage);
-    let target_grants_adv = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithAdvantage);
-    
-    let attacker_has_dis = context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksWithDisadvantage)
-        || context.has_condition(actor_id, crate::enums::CreatureCondition::AttacksAndSavesWithDisadvantage);
-    let target_grants_dis = context.has_condition(target_id, crate::enums::CreatureCondition::IsAttackedWithDisadvantage);
+    let attacker_has_adv = context.has_condition(
+        actor_id,
+        crate::enums::CreatureCondition::AttacksWithAdvantage,
+    ) || context.has_condition(
+        actor_id,
+        crate::enums::CreatureCondition::AttacksAndIsAttackedWithAdvantage,
+    );
+    let attacker_has_triple_adv = context.has_condition(
+        actor_id,
+        crate::enums::CreatureCondition::AttacksWithTripleAdvantage,
+    );
+    let target_grants_adv = context.has_condition(
+        target_id,
+        crate::enums::CreatureCondition::IsAttackedWithAdvantage,
+    );
+
+    let attacker_has_dis = context.has_condition(
+        actor_id,
+        crate::enums::CreatureCondition::AttacksWithDisadvantage,
+    ) || context.has_condition(
+        actor_id,
+        crate::enums::CreatureCondition::AttacksAndSavesWithDisadvantage,
+    );
+    let target_grants_dis = context.has_condition(
+        target_id,
+        crate::enums::CreatureCondition::IsAttackedWithDisadvantage,
+    );
 
     // Check modifications for advantage/disadvantage
     let mut mod_adv = false;
     let mut mod_dis = false;
     for modif in &mods {
-        if let crate::context::RollModification::SetAdvantage { roll_type, advantage } = modif {
+        if let crate::context::RollModification::SetAdvantage {
+            roll_type,
+            advantage,
+        } = modif
+        {
             if roll_type == "attack" {
                 if *advantage {
                     mod_adv = true;
@@ -234,16 +281,24 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
         }
     }
 
-    let final_triple_adv = attacker_has_triple_adv && !(attacker_has_dis || target_grants_dis || mod_dis);
-    let final_adv = (attacker_has_adv || target_grants_adv || mod_adv) && !(attacker_has_dis || target_grants_dis || mod_dis) && !final_triple_adv;
-    let final_dis = (attacker_has_dis || target_grants_dis || mod_dis) && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv || mod_adv);
+    let final_triple_adv =
+        attacker_has_triple_adv && !(attacker_has_dis || target_grants_dis || mod_dis);
+    let final_adv = (attacker_has_adv || target_grants_adv || mod_adv)
+        && !(attacker_has_dis || target_grants_dis || mod_dis)
+        && !final_triple_adv;
+    let final_dis = (attacker_has_dis || target_grants_dis || mod_dis)
+        && !(attacker_has_adv || target_grants_adv || attacker_has_triple_adv || mod_adv);
 
     // 2. Perform Roll
     let mut roll1 = rng::roll_d20();
-    
+
     // Apply rerolls before calculating natural_roll
     for modif in &mods {
-        if let crate::context::RollModification::Reroll { roll_type, must_use_second } = modif {
+        if let crate::context::RollModification::Reroll {
+            roll_type,
+            must_use_second,
+        } = modif
+        {
             if roll_type == "attack" {
                 let roll2 = rng::roll_d20();
                 if *must_use_second {
@@ -256,7 +311,7 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
     }
 
     let natural_roll: u32;
-    
+
     if final_triple_adv {
         let roll2 = rng::roll_d20();
         let roll3 = rng::roll_d20();
@@ -273,11 +328,16 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
 
     let (mut total, roll_detail) = if context.log_enabled {
         let mut detail = dice::evaluate_detailed(&attack.to_hit, 1);
-        detail.modifiers.insert(0, ("Natural Roll".to_string(), natural_roll as f64));
+        detail
+            .modifiers
+            .insert(0, ("Natural Roll".to_string(), natural_roll as f64));
         detail.total += natural_roll as f64;
         (detail.total, Some(detail))
     } else {
-        (natural_roll as f64 + dice::evaluate(&attack.to_hit, 1), None)
+        (
+            natural_roll as f64 + dice::evaluate(&attack.to_hit, 1),
+            None,
+        )
     };
 
     // Apply bonus modifications
@@ -290,10 +350,18 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
 
     // Check for accuracy-altering buffs in active effects
     let mut final_roll_detail = roll_detail;
-    
-    let mut attacker_buffs: Vec<_> = context.active_effects.values()
+
+    let mut attacker_buffs: Vec<_> = context
+        .active_effects
+        .values()
         .filter(|e| e.target_id == actor_id)
-        .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+        .filter_map(|e| {
+            if let EffectType::Buff(b) = &e.effect_type {
+                Some((&e.id, b))
+            } else {
+                None
+            }
+        })
         .collect();
     attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
 
@@ -303,7 +371,12 @@ pub fn roll_attack(attack: &AtkAction, context: &mut TurnContext, actor_id: &str
                 let buff_roll = dice::evaluate_detailed(to_hit_formula, 1);
                 total += buff_roll.total;
                 if let Some(detail) = &mut final_roll_detail {
-                    detail.modifiers.push((buff.display_name.clone().unwrap_or_else(|| "Buff".to_string()), buff_roll.total));
+                    detail.modifiers.push((
+                        buff.display_name
+                            .clone()
+                            .unwrap_or_else(|| "Buff".to_string()),
+                        buff_roll.total,
+                    ));
                     detail.total += buff_roll.total;
                 }
             } else {
@@ -326,7 +399,7 @@ pub fn get_target_ac(target_id: &str, context: &TurnContext) -> f64 {
     };
 
     let base_ac = target.base_combatant.creature.ac as f64;
-    
+
     let mut buff_ac = 0.0;
     for effect in context.active_effects.values() {
         if effect.target_id == target_id {
@@ -341,17 +414,33 @@ pub fn get_target_ac(target_id: &str, context: &TurnContext) -> f64 {
     base_ac + buff_ac
 }
 
-pub fn calculate_damage(attack: &AtkAction, is_critical: bool, context: &TurnContext, actor_id: &str) -> (f64, Option<RollResult>) {
+pub fn calculate_damage(
+    attack: &AtkAction,
+    is_critical: bool,
+    context: &TurnContext,
+    actor_id: &str,
+) -> (f64, Option<RollResult>) {
     let (mut damage, mut damage_roll) = if context.log_enabled {
         let detail = dice::evaluate_detailed(&attack.dpr, if is_critical { 2 } else { 1 });
         (detail.total, Some(detail))
     } else {
-        (dice::evaluate(&attack.dpr, if is_critical { 2 } else { 1 }), None)
+        (
+            dice::evaluate(&attack.dpr, if is_critical { 2 } else { 1 }),
+            None,
+        )
     };
 
-    let mut attacker_buffs: Vec<_> = context.active_effects.values()
+    let mut attacker_buffs: Vec<_> = context
+        .active_effects
+        .values()
         .filter(|e| e.target_id == actor_id)
-        .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+        .filter_map(|e| {
+            if let EffectType::Buff(b) = &e.effect_type {
+                Some((&e.id, b))
+            } else {
+                None
+            }
+        })
         .collect();
     attacker_buffs.sort_by(|a, b| a.0.cmp(b.0));
 
@@ -361,7 +450,12 @@ pub fn calculate_damage(attack: &AtkAction, is_critical: bool, context: &TurnCon
                 let buff_dmg_roll = dice::evaluate_detailed(damage_formula, 1);
                 damage += buff_dmg_roll.total;
                 if let Some(detail) = &mut damage_roll {
-                    detail.modifiers.push((buff.display_name.clone().unwrap_or_else(|| "Damage Buff".to_string()), buff_dmg_roll.total));
+                    detail.modifiers.push((
+                        buff.display_name
+                            .clone()
+                            .unwrap_or_else(|| "Damage Buff".to_string()),
+                        buff_dmg_roll.total,
+                    ));
                     detail.total += buff_dmg_roll.total;
                 }
             } else {
@@ -398,7 +492,12 @@ pub fn resolve_defensive_reactions(
     // Check if reactor has a reaction available
     let reaction_slot_id = crate::enums::ActionSlot::Reaction;
     if let Some(reactor) = context.get_combatant(reactor_id) {
-        if reactor.base_combatant.final_state.used_actions.contains(&(reaction_slot_id as i32).to_string()) {
+        if reactor
+            .base_combatant
+            .final_state
+            .used_actions
+            .contains(&(reaction_slot_id as i32).to_string())
+        {
             return (final_ac, events);
         }
     }
@@ -410,8 +509,11 @@ pub fn resolve_defensive_reactions(
         {
             // Check if it's a Shield-like template
             if let Action::Template(template_action) = &trigger.action {
-                let template_name = template_action.template_options.template_name.to_lowercase();
-                
+                let template_name = template_action
+                    .template_options
+                    .template_name
+                    .to_lowercase();
+
                 if template_name == "shield" {
                     // Shield adds +5 AC
                     let shield_ac_bonus = 5.0;
@@ -419,7 +521,11 @@ pub fn resolve_defensive_reactions(
                         // Trigger it!
                         // 1. Consume reaction
                         if let Some(reactor_mut) = context.get_combatant_mut(reactor_id) {
-                            reactor_mut.base_combatant.final_state.used_actions.insert((reaction_slot_id as i32).to_string());
+                            reactor_mut
+                                .base_combatant
+                                .final_state
+                                .used_actions
+                                .insert((reaction_slot_id as i32).to_string());
                         }
 
                         // 2. Resolve the action (will apply the buff)
@@ -430,7 +536,8 @@ pub fn resolve_defensive_reactions(
                             decision_trace: std::collections::HashMap::new(),
                         });
 
-                        let reaction_events = resolver.resolve_action(&trigger.action, context, reactor_id);
+                        let reaction_events =
+                            resolver.resolve_action(&trigger.action, context, reactor_id);
                         events.extend(reaction_events);
 
                         final_ac += shield_ac_bonus;
@@ -453,9 +560,17 @@ pub fn get_save_bonus(target_id: &str, context: &TurnContext) -> f64 {
 
     // Add bonuses from active effects (Bless, Bane, etc.)
     // Filter and sort for determinism
-    let mut target_buffs: Vec<_> = context.active_effects.values()
+    let mut target_buffs: Vec<_> = context
+        .active_effects
+        .values()
         .filter(|e| e.target_id == target_id)
-        .filter_map(|e| if let EffectType::Buff(b) = &e.effect_type { Some((&e.id, b)) } else { None })
+        .filter_map(|e| {
+            if let EffectType::Buff(b) = &e.effect_type {
+                Some((&e.id, b))
+            } else {
+                None
+            }
+        })
         .collect();
     target_buffs.sort_by(|a, b| a.0.cmp(b.0));
 

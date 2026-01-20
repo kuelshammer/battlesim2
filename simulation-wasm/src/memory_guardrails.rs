@@ -143,7 +143,9 @@ mod tests {
     #[test]
     fn test_should_force_lightweight_mode_exact_threshold() {
         // Exactly at threshold should NOT force lightweight mode
-        assert!(!should_force_lightweight_mode(MAX_ITERATIONS_FOR_FULL_LOGGING));
+        assert!(!should_force_lightweight_mode(
+            MAX_ITERATIONS_FOR_FULL_LOGGING
+        ));
     }
 
     #[test]

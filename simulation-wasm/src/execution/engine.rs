@@ -1,11 +1,11 @@
 use crate::action_resolver::ActionResolver;
 use crate::context::{CombattantState, TurnContext};
+use crate::enums::TriggerCondition;
 use crate::events::Event;
+use crate::execution::results::*;
 use crate::model::{Action, Combattant};
 use crate::reactions::{ReactionManager, ReactionTemplate};
-use crate::enums::TriggerCondition;
 use crate::validation;
-use crate::execution::results::*;
 use std::collections::HashMap;
 
 #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
@@ -83,12 +83,17 @@ impl ActionExecutionEngine {
         // Main combat loop with improved draw detection and memory management
         const MAX_ROUNDS: u32 = 50; // Increased limit with better draw detection
         const MAX_TURNS: u32 = 200; // Prevent infinite loops from extremely long battles
-        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
+        while !self.is_encounter_complete()
+            && self.context.round_number < MAX_ROUNDS
+            && total_turns < MAX_TURNS
+        {
             #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&format!("--- Round {} ---", self.context.round_number + 1).into());
+            web_sys::console::log_1(
+                &format!("--- Round {} ---", self.context.round_number + 1).into(),
+            );
             #[cfg(not(target_arch = "wasm32"))]
             println!("--- Round {} ---", self.context.round_number + 1);
-            
+
             #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
             let round_start = Instant::now();
 
@@ -106,9 +111,20 @@ impl ActionExecutionEngine {
                 // Execute turn with all actions and reactions
                 let turn_result = self.execute_combatant_turn(combatant_id);
                 #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("  Combatant {}: {} actions", combatant_id, turn_result.action_results.len()).into());
+                web_sys::console::log_1(
+                    &format!(
+                        "  Combatant {}: {} actions",
+                        combatant_id,
+                        turn_result.action_results.len()
+                    )
+                    .into(),
+                );
                 #[cfg(not(target_arch = "wasm32"))]
-                println!("  Combatant {}: {} actions", combatant_id, turn_result.action_results.len());
+                println!(
+                    "  Combatant {}: {} actions",
+                    combatant_id,
+                    turn_result.action_results.len()
+                );
 
                 // Process pending events (moves them to event history)
                 let _reactions = self.context.process_events();
@@ -124,10 +140,8 @@ impl ActionExecutionEngine {
 
             // Capture snapshot at end of every round ONLY if logging is enabled
             if self.context.log_enabled {
-                let mut snapshot: Vec<CombattantState> = self.context.combatants
-                    .values()
-                    .cloned()
-                    .collect();
+                let mut snapshot: Vec<CombattantState> =
+                    self.context.combatants.values().cloned().collect();
                 snapshot.sort_by(|a, b| a.id.cmp(&b.id));
                 round_snapshots.push(snapshot);
             }
@@ -146,10 +160,8 @@ impl ActionExecutionEngine {
 
         // Capture a final snapshot of the absolute end state
         if self.context.log_enabled {
-            let mut final_snapshot: Vec<CombattantState> = self.context.combatants
-                .values()
-                .cloned()
-                .collect();
+            let mut final_snapshot: Vec<CombattantState> =
+                self.context.combatants.values().cloned().collect();
             final_snapshot.sort_by(|a, b| a.id.cmp(&b.id));
             round_snapshots.push(final_snapshot);
         }
@@ -204,7 +216,11 @@ impl ActionExecutionEngine {
         let mut effects_applied = Vec::new();
 
         for action in actions {
-            let action_result = self.execute_action_with_reactions(combatant_id, action, Some(decision_trace.clone()));
+            let action_result = self.execute_action_with_reactions(
+                combatant_id,
+                action,
+                Some(decision_trace.clone()),
+            );
 
             // Collect effect IDs from events
             for event in &action_result.events_generated {
@@ -292,7 +308,11 @@ impl ActionExecutionEngine {
                     let weight = crate::intensity_calculation::get_resource_weight(
                         &tracking_id,
                         &combatant.resources.reset_rules,
-                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                        combatant
+                            .base_combatant
+                            .creature
+                            .con_modifier
+                            .unwrap_or(0.0),
                     );
                     combatant.cumulative_spent += weight;
                 }
@@ -311,16 +331,17 @@ impl ActionExecutionEngine {
 
         // SYNC: Ensure all events from pay_costs and process_action are in history
         self.context.process_events();
-        
+
         // Re-collect events from history that were generated during this entire sequence
         // (including ResourceConsumed, UnitMoved, etc.)
         let all_events_in_bus = self.context.event_bus.get_all_events();
-        // Since we want to support reactions to ResourceConsumed/UnitMoved, 
+        // Since we want to support reactions to ResourceConsumed/UnitMoved,
         // we should really be processing reactions for everything new in the bus.
-        // For now, let's at least include the events returned by process_action 
+        // For now, let's at least include the events returned by process_action
         // plus any UnitMoved events we find in the bus for this actor.
-        
-        for event in all_events_in_bus.iter().rev().take(10) { // Look at last 10 events
+
+        for event in all_events_in_bus.iter().rev().take(10) {
+            // Look at last 10 events
             if let Event::UnitMoved { creature_id, .. } = event {
                 if creature_id == actor_id && !events.contains(event) {
                     events.push(event.clone());
@@ -414,7 +435,11 @@ impl ActionExecutionEngine {
                     });
 
                     // Resolve the reaction action properly using ActionResolver
-                    let events = self.action_resolver.resolve_action(&action, &mut self.context, &combatant_id);
+                    let events = self.action_resolver.resolve_action(
+                        &action,
+                        &mut self.context,
+                        &combatant_id,
+                    );
 
                     results.push(ReactionResult {
                         combatant_id: combatant_id.clone(),
@@ -447,7 +472,10 @@ impl ActionExecutionEngine {
     }
 
     /// Select actions for a combatant (basic AI implementation)
-    pub(crate) fn select_actions_for_combatant(&mut self, combatant_id: &str) -> (Vec<Action>, HashMap<String, f64>) {
+    pub(crate) fn select_actions_for_combatant(
+        &mut self,
+        combatant_id: &str,
+    ) -> (Vec<Action>, HashMap<String, f64>) {
         let mut decision_trace = HashMap::new();
         // Clone the actions list to avoid borrowing self.context while iterating
         let actions = {
@@ -521,7 +549,7 @@ impl ActionExecutionEngine {
             // 3. Score the action based on combat situation
             let score = self.score_action(&action, combatant_id);
             decision_trace.insert(action.base().name.clone(), score);
-            
+
             // For the AI to pick it, the score must be > 0 (it must be useful)
             if score > 0.0 {
                 valid_actions.push((index, action.clone(), score));
@@ -529,7 +557,8 @@ impl ActionExecutionEngine {
                 self.context.record_event(Event::ActionSkipped {
                     actor_id: combatant_id.to_string(),
                     action_id: action.base().id.clone(),
-                    reason: "AI determined no benefit (e.g. already concentrating/no targets)".to_string(),
+                    reason: "AI determined no benefit (e.g. already concentrating/no targets)"
+                        .to_string(),
                 });
             }
         }
@@ -540,9 +569,9 @@ impl ActionExecutionEngine {
         // Select best action per slot type
         for (_index, action, _score) in valid_actions {
             let base_slot = action.base().action_slot;
-            
+
             let slot = match base_slot {
-                None => Some(0), 
+                None => Some(0),
                 other => other,
             };
 
@@ -635,7 +664,11 @@ impl ActionExecutionEngine {
             Action::Template(tmpl) => {
                 if is_concentrating {
                     let name = &tmpl.template_options.template_name;
-                    if name == "Bless" || name == "Bane" || name == "Haste" || name == "Hypnotic Pattern" {
+                    if name == "Bless"
+                        || name == "Bane"
+                        || name == "Haste"
+                        || name == "Hypnotic Pattern"
+                    {
                         return 0.0;
                     }
                     5.0
@@ -687,7 +720,8 @@ impl ActionExecutionEngine {
                     uses_per_encounter: None,
                     consumes_reaction: trigger.cost == Some(4),
                 };
-                self.reaction_manager.register_reaction(combatant.id.clone(), template);
+                self.reaction_manager
+                    .register_reaction(combatant.id.clone(), template);
             }
         }
     }
@@ -695,15 +729,13 @@ impl ActionExecutionEngine {
     /// Check if encounter is complete (all alive combatants are on the same team)
     pub(crate) fn is_encounter_complete(&self) -> bool {
         let alive_combatants = self.context.get_alive_combatants();
-        
+
         if alive_combatants.is_empty() || alive_combatants.len() == 1 {
             return true;
         }
 
         let first_side = alive_combatants[0].side;
-        alive_combatants
-            .iter()
-            .all(|c| c.side == first_side)
+        alive_combatants.iter().all(|c| c.side == first_side)
     }
 
     /// Generate final encounter results
@@ -721,7 +753,8 @@ impl ActionExecutionEngine {
             total_rounds: self.context.round_number,
             total_turns,
             final_combatant_states: {
-                let mut states: Vec<CombattantState> = self.context.combatants.values().cloned().collect();
+                let mut states: Vec<CombattantState> =
+                    self.context.combatants.values().cloned().collect();
                 states.sort_by(|a, b| a.id.cmp(&b.id));
                 states
             },
@@ -734,7 +767,7 @@ impl ActionExecutionEngine {
     /// Determine the winner of the encounter
     pub(crate) fn determine_winner(&self) -> Option<String> {
         let alive_combatants = self.context.get_alive_combatants();
-        
+
         let mut team1_hp = 0;
         let mut team2_hp = 0;
 

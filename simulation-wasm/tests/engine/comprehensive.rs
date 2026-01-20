@@ -1,7 +1,10 @@
-use simulation_wasm::model::{Creature, Combattant, CreatureState, Action, AtkAction, ActionTrigger, Frequency, DiceFormula, TemplateAction, TemplateOptions};
-use simulation_wasm::execution::{ActionExecutionEngine};
-use simulation_wasm::enums::{TriggerCondition, ActionCondition, EnemyTarget, AllyTarget};
+use simulation_wasm::enums::{ActionCondition, AllyTarget, EnemyTarget, TriggerCondition};
 use simulation_wasm::events::Event;
+use simulation_wasm::execution::ActionExecutionEngine;
+use simulation_wasm::model::{
+    Action, ActionTrigger, AtkAction, Combattant, Creature, CreatureState, DiceFormula, Frequency,
+    TemplateAction, TemplateOptions,
+};
 use std::sync::Arc;
 
 fn create_simple_creature(id: &str, name: &str, hp: u32, ac: u32, team: u32) -> Combattant {
@@ -32,7 +35,11 @@ fn create_simple_creature(id: &str, name: &str, hp: u32, ac: u32, team: u32) -> 
         magic_items: vec![],
         max_arcane_ward_hp: None,
         arrival: None,
-        mode: if team == 0 { "player".to_string() } else { "monster".to_string() },
+        mode: if team == 0 {
+            "player".to_string()
+        } else {
+            "monster".to_string()
+        },
         initial_buffs: vec![],
     };
 
@@ -99,7 +106,7 @@ fn test_shield_spell_reaction() {
 
     // 2. Setup Defender (Wizard with Shield)
     let mut defender = create_simple_creature("wizard", "Wizard", 20, 10, 0);
-    
+
     // Shield Trigger: OnBeingAttacked -> +5 AC
     let shield_trigger = ActionTrigger {
         id: "shield_reaction".to_string(),
@@ -132,12 +139,12 @@ fn test_shield_spell_reaction() {
     defender = finalize_combattant(defender);
 
     let mut engine = ActionExecutionEngine::new(vec![attacker, defender], true);
-    
+
     // We need deterministic RNG for this test
-    simulation_wasm::rng::seed_rng(42); 
-    
+    simulation_wasm::rng::seed_rng(42);
+
     let result = engine.execute_encounter();
-    
+
     // Check if Shield was used (search events)
     let shield_used = result.event_history.iter().any(|e| {
         if let Event::ActionStarted { action_id, .. } = e {
@@ -146,14 +153,14 @@ fn test_shield_spell_reaction() {
             false
         }
     });
-    
+
     assert!(shield_used, "Shield spell should have been triggered");
 }
 
 #[test]
 fn test_bless_buff_accuracy() {
     let mut attacker = create_simple_creature("p1", "Player", 30, 10, 0);
-    
+
     // Add Bless Template action
     let bless = Action::Template(TemplateAction {
         id: "bless_action".to_string(),
@@ -172,7 +179,7 @@ fn test_bless_buff_accuracy() {
             amount: None,
         },
     });
-    
+
     // Add basic attack
     let atk = AtkAction {
         id: "hit".to_string(),
@@ -187,9 +194,11 @@ fn test_bless_buff_accuracy() {
         dpr: DiceFormula::Value(10.0),
         to_hit: DiceFormula::Value(0.0),
         target: EnemyTarget::EnemyWithLeastHP,
-        use_saves: None, half_on_save: None, rider_effect: None,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
     };
-    
+
     attacker.creature = Arc::new({
         let mut c = (*attacker.creature).clone();
         c.actions.push(bless);
@@ -201,21 +210,30 @@ fn test_bless_buff_accuracy() {
     let monster = create_simple_creature("m1", "Monster", 100, 15, 1); // 15 AC
 
     let mut engine = ActionExecutionEngine::new(vec![attacker, monster], true);
-    simulation_wasm::rng::seed_rng(42); 
-    
+    simulation_wasm::rng::seed_rng(42);
+
     let result = engine.execute_encounter();
-    
+
     // Verify Bless was applied
-    let bless_applied = result.event_history.iter().any(|e| {
-        matches!(e, Event::BuffApplied { buff_id, .. } if buff_id == "Bless")
-    });
+    let bless_applied = result
+        .event_history
+        .iter()
+        .any(|e| matches!(e, Event::BuffApplied { buff_id, .. } if buff_id == "Bless"));
     assert!(bless_applied, "Bless should be applied");
-    
+
     // Check if attack events show the Bless bonus
     let attack_with_bless = result.event_history.iter().any(|e| {
-        if let Event::AttackHit { attack_roll: Some(roll), .. } = e {
+        if let Event::AttackHit {
+            attack_roll: Some(roll),
+            ..
+        } = e
+        {
             roll.modifiers.iter().any(|(m, _)| m == "Bless")
-        } else if let Event::AttackMissed { attack_roll: Some(roll), .. } = e {
+        } else if let Event::AttackMissed {
+            attack_roll: Some(roll),
+            ..
+        } = e
+        {
             roll.modifiers.iter().any(|(m, _)| m == "Bless")
         } else {
             false
@@ -228,7 +246,7 @@ fn test_bless_buff_accuracy() {
 fn test_tpk_detection() {
     let player = create_simple_creature("p1", "Player", 5, 10, 0);
     let mut monster = create_simple_creature("m1", "Monster", 50, 20, 1);
-    
+
     // Monster kills player in one hit
     let atk = AtkAction {
         id: "kill".to_string(),
@@ -243,7 +261,9 @@ fn test_tpk_detection() {
         dpr: DiceFormula::Value(100.0),
         to_hit: DiceFormula::Value(20.0),
         target: EnemyTarget::EnemyWithLeastHP,
-        use_saves: None, half_on_save: None, rider_effect: None,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
     };
     monster.creature = Arc::new({
         let mut c = (*monster.creature).clone();
@@ -254,7 +274,7 @@ fn test_tpk_detection() {
 
     let mut engine = ActionExecutionEngine::new(vec![player, monster], true);
     let result = engine.execute_encounter();
-    
+
     assert_eq!(result.winner, Some("Monsters".to_string()));
 }
 
@@ -262,12 +282,12 @@ fn test_tpk_detection() {
 fn test_draw_max_rounds() {
     let player = create_simple_creature("p1", "Player", 100, 30, 0);
     let monster = create_simple_creature("m1", "Monster", 100, 30, 1);
-    
+
     let mut engine = ActionExecutionEngine::new(vec![player, monster], true);
     let result = engine.execute_encounter();
-    
+
     assert_eq!(result.winner, None);
-    assert_eq!(result.total_rounds, 50); 
+    assert_eq!(result.total_rounds, 50);
 }
 
 #[test]
@@ -286,7 +306,9 @@ fn test_multiattack_switching() {
         dpr: DiceFormula::Value(20.0),
         to_hit: DiceFormula::Value(20.0),
         target: EnemyTarget::EnemyWithLeastHP,
-        use_saves: None, half_on_save: None, rider_effect: None,
+        use_saves: None,
+        half_on_save: None,
+        rider_effect: None,
     };
     attacker.creature = Arc::new({
         let mut c = (*attacker.creature).clone();
@@ -300,12 +322,26 @@ fn test_multiattack_switching() {
 
     let mut engine = ActionExecutionEngine::new(vec![attacker, p1, p2], true);
     simulation_wasm::rng::seed_rng(42);
-    
+
     let result = engine.execute_encounter();
-    
-    let p1_state = result.final_combatant_states.iter().find(|s| s.id == "p1").unwrap();
-    let p2_state = result.final_combatant_states.iter().find(|s| s.id == "p2").unwrap();
-    
-    assert_eq!(p1_state.current_hp, 0, "P1 should be killed by first attack");
-    assert_eq!(p2_state.current_hp, 0, "P2 should be killed by second attack");
+
+    let p1_state = result
+        .final_combatant_states
+        .iter()
+        .find(|s| s.id == "p1")
+        .unwrap();
+    let p2_state = result
+        .final_combatant_states
+        .iter()
+        .find(|s| s.id == "p2")
+        .unwrap();
+
+    assert_eq!(
+        p1_state.current_hp, 0,
+        "P1 should be killed by first attack"
+    );
+    assert_eq!(
+        p2_state.current_hp, 0,
+        "P2 should be killed by second attack"
+    );
 }

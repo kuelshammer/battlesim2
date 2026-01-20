@@ -3,9 +3,9 @@
 //! This module provides functions for assessing combat situations and calculating
 //! action economy metrics to guide tactical decisions.
 
-use serde::{Deserialize, Serialize};
-use crate::model::Combattant;
 use crate::combat_stats::CombatantStats;
+use crate::model::Combattant;
+use serde::{Deserialize, Serialize};
 
 /// Conservative DPR calculation mode
 ///
@@ -34,9 +34,7 @@ pub fn estimate_dpr_vs_opponents(
     }
 
     // Extract ACs from opponents
-    let mut acs: Vec<f64> = opponents.iter()
-        .map(|c| c.creature.ac as f64)
-        .collect();
+    let mut acs: Vec<f64> = opponents.iter().map(|c| c.creature.ac as f64).collect();
 
     if acs.is_empty() {
         return 0.0;
@@ -127,9 +125,7 @@ impl ActionEconomyStatus {
             ActionEconomyState::EnemyAdvantage => {
                 "Nova! Use AoE and burst damage to reduce their action count fast."
             }
-            ActionEconomyState::Even => {
-                "Normal tactics. Balance damage and resource conservation."
-            }
+            ActionEconomyState::Even => "Normal tactics. Balance damage and resource conservation.",
             ActionEconomyState::PlayerAdvantage => {
                 "Conserve! Use cantrips and basic attacks. Save resources for harder fights."
             }
@@ -140,8 +136,7 @@ impl ActionEconomyStatus {
     pub fn format_rounds(&self) -> String {
         format!(
             "You {:.1} rounds | Them {:.1} rounds",
-            self.rounds_to_kill_monsters,
-            self.rounds_to_kill_players
+            self.rounds_to_kill_monsters, self.rounds_to_kill_players
         )
     }
 }
@@ -159,12 +154,14 @@ pub fn calculate_action_economy(
     monsters: &[&Combattant],
 ) -> ActionEconomyStatus {
     // Filter to conscious combatants only
-    let conscious_players: Vec<&Combattant> = players.iter()
+    let conscious_players: Vec<&Combattant> = players
+        .iter()
         .filter(|p| p.final_state.current_hp > 0)
         .copied()
         .collect();
 
-    let conscious_monsters: Vec<&Combattant> = monsters.iter()
+    let conscious_monsters: Vec<&Combattant> = monsters
+        .iter()
         .filter(|m| m.final_state.current_hp > 0)
         .copied()
         .collect();
@@ -200,23 +197,39 @@ pub fn calculate_action_economy(
     }
 
     // Calculate total HP
-    let total_player_hp: f64 = conscious_players.iter()
+    let total_player_hp: f64 = conscious_players
+        .iter()
         .map(|p| p.final_state.current_hp as f64)
         .sum();
 
-    let total_monster_hp: f64 = conscious_monsters.iter()
+    let total_monster_hp: f64 = conscious_monsters
+        .iter()
         .map(|m| m.final_state.current_hp as f64)
         .sum();
 
     // Calculate DPR (using conservative estimates)
-    let player_dpr: f64 = conscious_players.iter()
+    let player_dpr: f64 = conscious_players
+        .iter()
         .copied()
-        .map(|p| estimate_dpr_vs_opponents(p, conscious_monsters.as_slice(), ConservativeMode::PlayerVsMonsters))
+        .map(|p| {
+            estimate_dpr_vs_opponents(
+                p,
+                conscious_monsters.as_slice(),
+                ConservativeMode::PlayerVsMonsters,
+            )
+        })
         .sum();
 
-    let monster_dpr: f64 = conscious_monsters.iter()
+    let monster_dpr: f64 = conscious_monsters
+        .iter()
         .copied()
-        .map(|m| estimate_dpr_vs_opponents(m, conscious_players.as_slice(), ConservativeMode::MonsterVsPlayers))
+        .map(|m| {
+            estimate_dpr_vs_opponents(
+                m,
+                conscious_players.as_slice(),
+                ConservativeMode::MonsterVsPlayers,
+            )
+        })
         .sum();
 
     // Calculate rounds to exhaustion ("who wins the race?")
@@ -281,8 +294,8 @@ pub fn calculate_action_economy(
 #[allow(clippy::useless_vec)]
 mod tests {
     use super::*;
-    use crate::model::{Creature, Action, AtkAction, Frequency, DiceFormula};
     use crate::enums::EnemyTarget;
+    use crate::model::{Action, AtkAction, Creature, DiceFormula, Frequency};
 
     #[test]
     fn test_estimate_dpr_vs_opponents_empty() {
@@ -328,55 +341,58 @@ mod tests {
         };
 
         let opponents: Vec<&Combattant> = vec![];
-        let result = estimate_dpr_vs_opponents(&combatant, &opponents, ConservativeMode::PlayerVsMonsters);
+        let result =
+            estimate_dpr_vs_opponents(&combatant, &opponents, ConservativeMode::PlayerVsMonsters);
         assert_eq!(result, 0.0);
     }
 
     #[test]
     fn test_estimate_dpr_percentile_calculation() {
         // Create monsters with different ACs: [10, 12, 15, 18, 20]
-        let monsters: Vec<Combattant> = (0..5).map(|i| {
-            let ac = 10 + i * 2 + if i < 3 { 0 } else { 3 }; // 10, 12, 15, 18, 20
-            let creature = Creature {
-                id: format!("m{}", i),
-                name: format!("Monster {}", i),
-                hp: 20,
-                ac,
-                arrival: None,
-                mode: "monster".to_string(),
-                count: 1.0,
-                speed_fly: None,
-                save_bonus: 0.0,
-                str_save_bonus: None,
-                dex_save_bonus: None,
-                con_save_bonus: None,
-                int_save_bonus: None,
-                wis_save_bonus: None,
-                cha_save_bonus: None,
-                con_save_advantage: None,
-                save_advantage: None,
-                initiative_bonus: DiceFormula::Value(0.0),
-                initiative_advantage: false,
-                actions: vec![],
-                triggers: vec![],
-                spell_slots: None,
-                class_resources: None,
-                hit_dice: None,
-                con_modifier: None,
-                magic_items: vec![],
-                max_arcane_ward_hp: None,
-                initial_buffs: vec![],
-            };
-            Combattant {
-                id: format!("monster_{}", i),
-                team: 1,
-                creature: std::sync::Arc::new(creature),
-                initiative: 10.0,
-                initial_state: Default::default(),
-                final_state: Default::default(),
-                actions: vec![],
-            }
-        }).collect();
+        let monsters: Vec<Combattant> = (0..5)
+            .map(|i| {
+                let ac = 10 + i * 2 + if i < 3 { 0 } else { 3 }; // 10, 12, 15, 18, 20
+                let creature = Creature {
+                    id: format!("m{}", i),
+                    name: format!("Monster {}", i),
+                    hp: 20,
+                    ac,
+                    arrival: None,
+                    mode: "monster".to_string(),
+                    count: 1.0,
+                    speed_fly: None,
+                    save_bonus: 0.0,
+                    str_save_bonus: None,
+                    dex_save_bonus: None,
+                    con_save_bonus: None,
+                    int_save_bonus: None,
+                    wis_save_bonus: None,
+                    cha_save_bonus: None,
+                    con_save_advantage: None,
+                    save_advantage: None,
+                    initiative_bonus: DiceFormula::Value(0.0),
+                    initiative_advantage: false,
+                    actions: vec![],
+                    triggers: vec![],
+                    spell_slots: None,
+                    class_resources: None,
+                    hit_dice: None,
+                    con_modifier: None,
+                    magic_items: vec![],
+                    max_arcane_ward_hp: None,
+                    initial_buffs: vec![],
+                };
+                Combattant {
+                    id: format!("monster_{}", i),
+                    team: 1,
+                    creature: std::sync::Arc::new(creature),
+                    initiative: 10.0,
+                    initial_state: Default::default(),
+                    final_state: Default::default(),
+                    actions: vec![],
+                }
+            })
+            .collect();
 
         // Create a player with +10 to hit (80% hit chance vs AC 15)
         // and 10 DPR
@@ -422,7 +438,7 @@ mod tests {
             freq: Frequency::Static("at will".to_string()),
             condition: crate::enums::ActionCondition::Default,
             targets: 1,
-            dpr: DiceFormula::Value(10.0), // 10 DPR vs AC 15
+            dpr: DiceFormula::Value(10.0),   // 10 DPR vs AC 15
             to_hit: DiceFormula::Value(5.0), // +5 to hit
             target: EnemyTarget::EnemyWithLeastHP,
             use_saves: None,
@@ -443,7 +459,8 @@ mod tests {
         let monster_refs: Vec<&Combattant> = monsters.iter().collect();
 
         // Test PlayerVsMonsters (75th percentile = AC 18)
-        let dpr_vs_75th = estimate_dpr_vs_opponents(&player, &monster_refs, ConservativeMode::PlayerVsMonsters);
+        let dpr_vs_75th =
+            estimate_dpr_vs_opponents(&player, &monster_refs, ConservativeMode::PlayerVsMonsters);
 
         // Expected calculation:
         // - to_hit = 5.0, needed_roll vs AC 15 = 10, hit_chance = (21-10)/20 = 0.55
@@ -456,7 +473,8 @@ mod tests {
         // Test MonsterVsPlayers (25th percentile = AC 12)
         // (This would be used when a monster attacks the players)
         // For now just verify it runs and returns a value
-        let _dpr_vs_25th = estimate_dpr_vs_opponents(&player, &monster_refs, ConservativeMode::MonsterVsPlayers);
+        let _dpr_vs_25th =
+            estimate_dpr_vs_opponents(&player, &monster_refs, ConservativeMode::MonsterVsPlayers);
     }
 
     #[test]
@@ -466,101 +484,105 @@ mod tests {
         // Players kill monsters in 6 rounds, monsters kill players in 13 rounds
         // Expected: Even or PlayerAdvantage (NOT EnemyAdvantage!)
 
-        let players: Vec<Combattant> = (0..4).map(|i| {
-            let creature = Creature {
-                id: format!("player_{}", i),
-                name: format!("Player {}", i),
-                hp: 50,
-                ac: 16,
-                arrival: None,
-                mode: "player".to_string(),
-                count: 1.0,
-                speed_fly: None,
-                save_bonus: 0.0,
-                str_save_bonus: None,
-                dex_save_bonus: None,
-                con_save_bonus: None,
-                int_save_bonus: None,
-                wis_save_bonus: None,
-                cha_save_bonus: None,
-                con_save_advantage: None,
-                save_advantage: None,
-                initiative_bonus: DiceFormula::Value(0.0),
-                initiative_advantage: false,
-                actions: vec![],
-                triggers: vec![],
-                spell_slots: None,
-                class_resources: None,
-                hit_dice: None,
-                con_modifier: None,
-                magic_items: vec![],
-                max_arcane_ward_hp: None,
-                initial_buffs: vec![],
-            };
-            Combattant {
-                id: format!("player_{}", i),
-                team: 0,
-                creature: std::sync::Arc::new(creature),
-                initiative: 10.0,
-                initial_state: crate::model::CreatureState {
-                    current_hp: 50,
-                    ..Default::default()
-                },
-                final_state: crate::model::CreatureState {
-                    current_hp: 50,
-                    ..Default::default()
-                },
-                actions: vec![],
-            }
-        }).collect();
+        let players: Vec<Combattant> = (0..4)
+            .map(|i| {
+                let creature = Creature {
+                    id: format!("player_{}", i),
+                    name: format!("Player {}", i),
+                    hp: 50,
+                    ac: 16,
+                    arrival: None,
+                    mode: "player".to_string(),
+                    count: 1.0,
+                    speed_fly: None,
+                    save_bonus: 0.0,
+                    str_save_bonus: None,
+                    dex_save_bonus: None,
+                    con_save_bonus: None,
+                    int_save_bonus: None,
+                    wis_save_bonus: None,
+                    cha_save_bonus: None,
+                    con_save_advantage: None,
+                    save_advantage: None,
+                    initiative_bonus: DiceFormula::Value(0.0),
+                    initiative_advantage: false,
+                    actions: vec![],
+                    triggers: vec![],
+                    spell_slots: None,
+                    class_resources: None,
+                    hit_dice: None,
+                    con_modifier: None,
+                    magic_items: vec![],
+                    max_arcane_ward_hp: None,
+                    initial_buffs: vec![],
+                };
+                Combattant {
+                    id: format!("player_{}", i),
+                    team: 0,
+                    creature: std::sync::Arc::new(creature),
+                    initiative: 10.0,
+                    initial_state: crate::model::CreatureState {
+                        current_hp: 50,
+                        ..Default::default()
+                    },
+                    final_state: crate::model::CreatureState {
+                        current_hp: 50,
+                        ..Default::default()
+                    },
+                    actions: vec![],
+                }
+            })
+            .collect();
 
-        let monsters: Vec<Combattant> = (0..8).map(|i| {
-            let creature = Creature {
-                id: format!("monster_{}", i),
-                name: format!("Monster {}", i),
-                hp: 30,
-                ac: 13,
-                arrival: None,
-                mode: "monster".to_string(),
-                count: 1.0,
-                speed_fly: None,
-                save_bonus: 0.0,
-                str_save_bonus: None,
-                dex_save_bonus: None,
-                con_save_bonus: None,
-                int_save_bonus: None,
-                wis_save_bonus: None,
-                cha_save_bonus: None,
-                con_save_advantage: None,
-                save_advantage: None,
-                initiative_bonus: DiceFormula::Value(0.0),
-                initiative_advantage: false,
-                actions: vec![],
-                triggers: vec![],
-                spell_slots: None,
-                class_resources: None,
-                hit_dice: None,
-                con_modifier: None,
-                magic_items: vec![],
-                max_arcane_ward_hp: None,
-                initial_buffs: vec![],
-            };
-            Combattant {
-                id: format!("monster_{}", i),
-                team: 1,
-                creature: std::sync::Arc::new(creature),
-                initiative: 10.0,
-                initial_state: crate::model::CreatureState {
-                    current_hp: 30,
-                    ..Default::default()
-                },
-                final_state: crate::model::CreatureState {
-                    current_hp: 30,
-                    ..Default::default()
-                },
-                actions: vec![],
-            }
-        }).collect();
+        let monsters: Vec<Combattant> = (0..8)
+            .map(|i| {
+                let creature = Creature {
+                    id: format!("monster_{}", i),
+                    name: format!("Monster {}", i),
+                    hp: 30,
+                    ac: 13,
+                    arrival: None,
+                    mode: "monster".to_string(),
+                    count: 1.0,
+                    speed_fly: None,
+                    save_bonus: 0.0,
+                    str_save_bonus: None,
+                    dex_save_bonus: None,
+                    con_save_bonus: None,
+                    int_save_bonus: None,
+                    wis_save_bonus: None,
+                    cha_save_bonus: None,
+                    con_save_advantage: None,
+                    save_advantage: None,
+                    initiative_bonus: DiceFormula::Value(0.0),
+                    initiative_advantage: false,
+                    actions: vec![],
+                    triggers: vec![],
+                    spell_slots: None,
+                    class_resources: None,
+                    hit_dice: None,
+                    con_modifier: None,
+                    magic_items: vec![],
+                    max_arcane_ward_hp: None,
+                    initial_buffs: vec![],
+                };
+                Combattant {
+                    id: format!("monster_{}", i),
+                    team: 1,
+                    creature: std::sync::Arc::new(creature),
+                    initiative: 10.0,
+                    initial_state: crate::model::CreatureState {
+                        current_hp: 30,
+                        ..Default::default()
+                    },
+                    final_state: crate::model::CreatureState {
+                        current_hp: 30,
+                        ..Default::default()
+                    },
+                    actions: vec![],
+                }
+            })
+            .collect();
 
         let player_refs: Vec<&Combattant> = players.iter().collect();
         let monster_refs: Vec<&Combattant> = monsters.iter().collect();
@@ -575,8 +597,10 @@ mod tests {
         // The state should be Even or PlayerAdvantage
         // (Even makes sense given they're outnumbered but winning)
         assert!(
-            result.state == ActionEconomyState::Even || result.state == ActionEconomyState::PlayerAdvantage,
-            "Expected Even or PlayerAdvantage, got {:?}", result.state
+            result.state == ActionEconomyState::Even
+                || result.state == ActionEconomyState::PlayerAdvantage,
+            "Expected Even or PlayerAdvantage, got {:?}",
+            result.state
         );
     }
 
@@ -698,31 +722,35 @@ mod tests {
         // Due to AC differences (fighters AC 20, goblins AC 15) and to-hit chances,
         // fighters have significant advantage despite action count
 
-        let players: Vec<Combattant> = (0..2).map(|i| {
-            // Lvl 10 fighter: 120 HP, AC 20, ~40 DPR (multiple attacks)
-            create_combatant(
-                format!("fighter_{}", i),
-                format!("Fighter {}", i),
-                120,
-                20,
-                0,
-                40.0,
-                10.0,
-            )
-        }).collect();
+        let players: Vec<Combattant> = (0..2)
+            .map(|i| {
+                // Lvl 10 fighter: 120 HP, AC 20, ~40 DPR (multiple attacks)
+                create_combatant(
+                    format!("fighter_{}", i),
+                    format!("Fighter {}", i),
+                    120,
+                    20,
+                    0,
+                    40.0,
+                    10.0,
+                )
+            })
+            .collect();
 
-        let monsters: Vec<Combattant> = (0..20).map(|i| {
-            // Goblin: 7 HP, AC 15, ~8 DPR
-            create_combatant(
-                format!("goblin_{}", i),
-                format!("Goblin {}", i),
-                7,
-                15,
-                1,
-                8.0,
-                4.0,
-            )
-        }).collect();
+        let monsters: Vec<Combattant> = (0..20)
+            .map(|i| {
+                // Goblin: 7 HP, AC 15, ~8 DPR
+                create_combatant(
+                    format!("goblin_{}", i),
+                    format!("Goblin {}", i),
+                    7,
+                    15,
+                    1,
+                    8.0,
+                    4.0,
+                )
+            })
+            .collect();
 
         let player_refs: Vec<&Combattant> = players.iter().collect();
         let monster_refs: Vec<&Combattant> = monsters.iter().collect();
@@ -746,18 +774,20 @@ mod tests {
         // One very strong monster vs many very weak players
         // Expected: Enemy Advantage (single monster too powerful)
 
-        let players: Vec<Combattant> = (0..4).map(|i| {
-            // Lvl 1 commoner: 8 HP, AC 10, ~4 DPR
-            create_combatant(
-                format!("commoner_{}", i),
-                format!("Commoner {}", i),
-                8,
-                10,
-                0,
-                4.0,
-                2.0,
-            )
-        }).collect();
+        let players: Vec<Combattant> = (0..4)
+            .map(|i| {
+                // Lvl 1 commoner: 8 HP, AC 10, ~4 DPR
+                create_combatant(
+                    format!("commoner_{}", i),
+                    format!("Commoner {}", i),
+                    8,
+                    10,
+                    0,
+                    4.0,
+                    2.0,
+                )
+            })
+            .collect();
 
         let monsters: Vec<Combattant> = vec![
             // Ancient dragon: 400 HP, AC 22, ~120 DPR (breath + multiple attacks)
@@ -769,7 +799,7 @@ mod tests {
                 1,
                 120.0,
                 15.0,
-            )
+            ),
         ];
 
         let player_refs: Vec<&Combattant> = players.iter().collect();
@@ -789,31 +819,35 @@ mod tests {
         // Task case 3: 4 vs 4 balanced match
         // Expected: Even state (balanced action economy and damage)
 
-        let players: Vec<Combattant> = (0..4).map(|i| {
-            // Balanced player: 50 HP, AC 16, ~15 DPR
-            create_combatant(
-                format!("player_{}", i),
-                format!("Player {}", i),
-                50,
-                16,
-                0,
-                15.0,
-                7.0,
-            )
-        }).collect();
+        let players: Vec<Combattant> = (0..4)
+            .map(|i| {
+                // Balanced player: 50 HP, AC 16, ~15 DPR
+                create_combatant(
+                    format!("player_{}", i),
+                    format!("Player {}", i),
+                    50,
+                    16,
+                    0,
+                    15.0,
+                    7.0,
+                )
+            })
+            .collect();
 
-        let monsters: Vec<Combattant> = (0..4).map(|i| {
-            // Balanced monster: 50 HP, AC 15, ~15 DPR
-            create_combatant(
-                format!("monster_{}", i),
-                format!("Monster {}", i),
-                50,
-                15,
-                1,
-                15.0,
-                6.0,
-            )
-        }).collect();
+        let monsters: Vec<Combattant> = (0..4)
+            .map(|i| {
+                // Balanced monster: 50 HP, AC 15, ~15 DPR
+                create_combatant(
+                    format!("monster_{}", i),
+                    format!("Monster {}", i),
+                    50,
+                    15,
+                    1,
+                    15.0,
+                    6.0,
+                )
+            })
+            .collect();
 
         let player_refs: Vec<&Combattant> = players.iter().collect();
         let monster_refs: Vec<&Combattant> = monsters.iter().collect();
@@ -833,44 +867,56 @@ mod tests {
         // time_ratio = (monster_hp / player_dpr) / (player_hp / monster_dpr)
 
         // Helper to create creatures with specific HP/DPR to hit exact ratios
-        let create_test_scenario = |player_hp: u32, player_dpr: f64, monster_hp: u32, monster_dpr: f64| {
-            let players = vec![create_combatant(
-                "player1".to_string(),
-                "Player 1".to_string(),
-                player_hp,
-                15,
-                0,
-                player_dpr,
-                5.0,
-            )];
+        let create_test_scenario =
+            |player_hp: u32, player_dpr: f64, monster_hp: u32, monster_dpr: f64| {
+                let players = vec![create_combatant(
+                    "player1".to_string(),
+                    "Player 1".to_string(),
+                    player_hp,
+                    15,
+                    0,
+                    player_dpr,
+                    5.0,
+                )];
 
-            let monsters = vec![create_combatant(
-                "monster1".to_string(),
-                "Monster 1".to_string(),
-                monster_hp,
-                15,
-                1,
-                monster_dpr,
-                5.0,
-            )];
+                let monsters = vec![create_combatant(
+                    "monster1".to_string(),
+                    "Monster 1".to_string(),
+                    monster_hp,
+                    15,
+                    1,
+                    monster_dpr,
+                    5.0,
+                )];
 
-            let player_refs: Vec<&Combattant> = players.iter().collect();
-            let monster_refs: Vec<&Combattant> = monsters.iter().collect();
+                let player_refs: Vec<&Combattant> = players.iter().collect();
+                let monster_refs: Vec<&Combattant> = monsters.iter().collect();
 
-            calculate_action_economy(&player_refs, &monster_refs)
-        };
+                calculate_action_economy(&player_refs, &monster_refs)
+            };
 
         // Test Player Advantage threshold (< 0.6)
         // time_ratio = (50/100) / (100/100) = 0.5 (players much faster)
         let result = create_test_scenario(100, 100.0, 50, 100.0);
-        assert!(result.combined_ratio < 0.6, "combined_ratio should be < 0.6, got {}", result.combined_ratio);
+        assert!(
+            result.combined_ratio < 0.6,
+            "combined_ratio should be < 0.6, got {}",
+            result.combined_ratio
+        );
         assert_eq!(result.state, ActionEconomyState::PlayerAdvantage);
 
         // Test Even lower boundary (~0.6)
         // time_ratio = (60/100) / (100/100) = 0.6
         let result = create_test_scenario(100, 100.0, 60, 100.0);
-        assert!(result.combined_ratio >= 0.6, "combined_ratio should be >= 0.6, got {}", result.combined_ratio);
-        assert!(result.state == ActionEconomyState::Even || result.state == ActionEconomyState::PlayerAdvantage);
+        assert!(
+            result.combined_ratio >= 0.6,
+            "combined_ratio should be >= 0.6, got {}",
+            result.combined_ratio
+        );
+        assert!(
+            result.state == ActionEconomyState::Even
+                || result.state == ActionEconomyState::PlayerAdvantage
+        );
 
         // Test Even range (0.6 - 1.5)
         // time_ratio = (100/100) / (100/100) = 1.0 (balanced)
@@ -881,13 +927,24 @@ mod tests {
         // Test Enemy Advantage threshold (> 1.5)
         // time_ratio = (150/100) / (100/100) = 1.5 (monsters faster)
         let result = create_test_scenario(100, 100.0, 150, 100.0);
-        assert!(result.combined_ratio >= 1.5, "combined_ratio should be >= 1.5, got {}", result.combined_ratio);
-        assert!(result.state == ActionEconomyState::Even || result.state == ActionEconomyState::EnemyAdvantage);
+        assert!(
+            result.combined_ratio >= 1.5,
+            "combined_ratio should be >= 1.5, got {}",
+            result.combined_ratio
+        );
+        assert!(
+            result.state == ActionEconomyState::Even
+                || result.state == ActionEconomyState::EnemyAdvantage
+        );
 
         // Test clearly Enemy Advantage (> 1.5)
         // time_ratio = (200/100) / (100/100) = 2.0 (monsters much faster)
         let result = create_test_scenario(100, 100.0, 200, 100.0);
-        assert!(result.combined_ratio > 1.5, "combined_ratio should be > 1.5, got {}", result.combined_ratio);
+        assert!(
+            result.combined_ratio > 1.5,
+            "combined_ratio should be > 1.5, got {}",
+            result.combined_ratio
+        );
         assert_eq!(result.state, ActionEconomyState::EnemyAdvantage);
     }
 }

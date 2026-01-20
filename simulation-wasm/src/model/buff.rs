@@ -1,7 +1,9 @@
+use super::formula::DiceFormula;
+use crate::enums::{
+    BuffDuration, CreatureCondition, TriggerCondition, TriggerEffect, TriggerRequirement,
+};
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
-use crate::enums::{TriggerCondition, TriggerRequirement, TriggerEffect, BuffDuration, CreatureCondition};
-use super::formula::DiceFormula;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EffectTrigger {
@@ -36,13 +38,13 @@ impl Hash for EffectTrigger {
                 count.hash(state);
             }
             crate::enums::TriggerCondition::DamageExceedsPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             crate::enums::TriggerCondition::BelowHpPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             crate::enums::TriggerCondition::AboveHpPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             _ => {}
         }
@@ -78,7 +80,11 @@ pub struct Buff {
     pub concentration: bool,
     #[serde(default)]
     pub triggers: Vec<EffectTrigger>,
-    #[serde(rename = "suppressedUntil", default, skip_serializing_if = "Option::is_none")]
+    #[serde(
+        rename = "suppressedUntil",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub suppressed_until: Option<u32>,
 }
 
@@ -90,12 +96,12 @@ impl Hash for Buff {
         self.to_hit.hash(state);
         self.damage.hash(state);
         self.damage_reduction.hash(state);
-        crate::utilities::hash_opt_f64(self.damage_multiplier, state);
-        crate::utilities::hash_opt_f64(self.damage_taken_multiplier, state);
+        crate::utils::hash_opt_f64(self.damage_multiplier, state);
+        crate::utils::hash_opt_f64(self.damage_taken_multiplier, state);
         self.dc.hash(state);
         self.save.hash(state);
         self.condition.hash(state);
-        crate::utilities::hash_opt_f64(self.magnitude, state);
+        crate::utils::hash_opt_f64(self.magnitude, state);
         self.source.hash(state);
         self.concentration.hash(state);
         self.triggers.hash(state);
@@ -111,7 +117,7 @@ pub struct RiderEffect {
 
 impl Hash for RiderEffect {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        crate::utilities::hash_f64(self.dc, state);
+        crate::utils::hash_f64(self.dc, state);
         self.buff.hash(state);
     }
 }

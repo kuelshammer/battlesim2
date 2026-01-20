@@ -6,9 +6,9 @@
 #![allow(unused_comparisons)]
 
 use proptest::prelude::*;
-use simulation_wasm::model::*;
-use simulation_wasm::execution::ActionExecutionEngine;
 use simulation_wasm::enums::EnemyTarget;
+use simulation_wasm::execution::ActionExecutionEngine;
+use simulation_wasm::model::*;
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -22,7 +22,9 @@ fn create_minimal_creature(id: String, hp: u32, ac: u32, damage_dice: &str) -> C
         hp,
         ac,
         count: 1.0,
-        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None,
+        mode: "player".to_string(),
+        magic_items: vec![],
+        max_arcane_ward_hp: None,
         arrival: None,
         speed_fly: None,
         save_bonus: 0.0,
@@ -36,25 +38,23 @@ fn create_minimal_creature(id: String, hp: u32, ac: u32, damage_dice: &str) -> C
         save_advantage: None,
         initiative_bonus: DiceFormula::Value(0.0),
         initiative_advantage: false,
-        actions: vec![
-            Action::Atk(AtkAction {
-                id: "attack".to_string(),
-                name: "Attack".to_string(),
-                action_slot: None,
-                cost: vec![],
-                requirements: vec![],
-                tags: vec![],
-                freq: Frequency::Static("at will".to_string()),
-                condition: ActionCondition::Default,
-                targets: 1,
-                dpr: DiceFormula::Expr(damage_dice.to_string()),
-                target: EnemyTarget::EnemyWithMostHP,
-                to_hit: DiceFormula::Value(5.0),
-                use_saves: None,
-                half_on_save: None,
-                rider_effect: None,
-            })
-        ],
+        actions: vec![Action::Atk(AtkAction {
+            id: "attack".to_string(),
+            name: "Attack".to_string(),
+            action_slot: None,
+            cost: vec![],
+            requirements: vec![],
+            tags: vec![],
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            dpr: DiceFormula::Expr(damage_dice.to_string()),
+            target: EnemyTarget::EnemyWithMostHP,
+            to_hit: DiceFormula::Value(5.0),
+            use_saves: None,
+            half_on_save: None,
+            rider_effect: None,
+        })],
         triggers: vec![],
         spell_slots: None,
         class_resources: None,
@@ -72,8 +72,14 @@ fn create_minimal_combatant(creature: Creature, team: u32, initiative: f64) -> C
         team,
         creature: std::sync::Arc::new(creature),
         initiative,
-        initial_state: CreatureState { current_hp: hp, ..CreatureState::default() },
-        final_state: CreatureState { current_hp: hp, ..CreatureState::default() },
+        initial_state: CreatureState {
+            current_hp: hp,
+            ..CreatureState::default()
+        },
+        final_state: CreatureState {
+            current_hp: hp,
+            ..CreatureState::default()
+        },
         actions: vec![],
     }
 }
@@ -377,7 +383,7 @@ proptest! {
 
         prop_assert_eq!(result1.total_rounds, result2.total_rounds, "Round count mismatch");
         prop_assert_eq!(result1.winner, result2.winner, "Winner mismatch");
-        
+
         for (s1, s2) in result1.final_combatant_states.iter().zip(result2.final_combatant_states.iter()) {
             prop_assert_eq!(s1.current_hp, s2.current_hp, "Final HP mismatch for {}", s1.base_combatant.creature.id);
         }
@@ -418,7 +424,7 @@ proptest! {
         // Check TurnStarted events follow the order (within each round)
         let mut _current_round = 0;
         let mut turn_index = 0;
-        
+
         for event in result.event_history {
             match event {
                 simulation_wasm::events::Event::RoundStarted { round_number } => {
@@ -430,7 +436,7 @@ proptest! {
                     // Note: Some might be dead and skipped
                     while turn_index < expected_order.len() {
                         let expected_id = &expected_order[turn_index];
-                        
+
                         // Check if this combatant is alive at the start of their turn
                         // We'd need to look at the state BEFORE this turn, which is complex.
                         // Simplified check: if it's the one we got, it must be the next ALIVE one.
@@ -543,14 +549,14 @@ proptest! {
                 // If they survived, conservation should be exact (floating point)
                 // Use a small epsilon for float comparison
                 let expected = initial - dmg + heal;
-                prop_assert!((final_hp - expected).abs() < 1.0, 
-                    "HP mismatch for {}: initial={}, dmg={}, heal={}, expected={}, got={}", 
+                prop_assert!((final_hp - expected).abs() < 1.0,
+                    "HP mismatch for {}: initial={}, dmg={}, heal={}, expected={}, got={}",
                     id, initial, dmg, heal, expected, final_hp);
             } else {
                 // If they died, initial - dmg + heal <= 0
                 let expected = initial - dmg + heal;
-                prop_assert!(expected <= 1.0, 
-                    "Died but expected HP was positive for {}: initial={}, dmg={}, heal={}, expected={}", 
+                prop_assert!(expected <= 1.0,
+                    "Died but expected HP was positive for {}: initial={}, dmg={}, heal={}, expected={}",
                     id, initial, dmg, heal, expected);
             }
         }

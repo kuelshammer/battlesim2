@@ -1,11 +1,14 @@
-use simulation_wasm::run_event_driven_simulation_rust;
-use simulation_wasm::decile_analysis::run_decile_analysis;
 use crate::common::load_scenario;
+use simulation_wasm::decile_analysis::run_decile_analysis;
+use simulation_wasm::run_event_driven_simulation_rust;
 
 fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     println!("Running regression test for: {}", scenario_file);
     let (players, timeline) = load_scenario(scenario_file);
-    let sr_count = timeline.iter().filter(|s| matches!(s, simulation_wasm::model::TimelineStep::ShortRest(_))).count();
+    let sr_count = timeline
+        .iter()
+        .filter(|s| matches!(s, simulation_wasm::model::TimelineStep::ShortRest(_)))
+        .count();
 
     // With deterministic RNG, we can use fewer iterations
     // Each run produces the same result when seeded
@@ -16,9 +19,11 @@ fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     let mut results: Vec<_> = runs.into_iter().map(|r| r.result).collect();
 
     // Sort results (required for decile analysis)
-    results.sort_by(|a, b| simulation_wasm::aggregation::calculate_score(a)
-        .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
-        .unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        simulation_wasm::aggregation::calculate_score(a)
+            .partial_cmp(&simulation_wasm::aggregation::calculate_score(b))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     // Analyze
     let party_size = 1; // Assuming 1v1 for these tests
@@ -26,19 +31,28 @@ fn run_regression_test(scenario_file: &str, expected_winner_is_player: bool) {
     let median_decile = &analysis.deciles[4]; // Index 4 is Median (50th percentile)
 
     println!("  Win Rate: {:.1}%", median_decile.win_rate);
-    println!("  Survivors: {}/{}", median_decile.median_survivors, median_decile.party_size);
+    println!(
+        "  Survivors: {}/{}",
+        median_decile.median_survivors, median_decile.party_size
+    );
 
     // With deterministic RNG, we can use the original 50% threshold
     const THRESHOLD: f64 = 50.0;
 
     if expected_winner_is_player {
-        assert!(median_decile.win_rate > THRESHOLD,
+        assert!(
+            median_decile.win_rate > THRESHOLD,
             "Regression Failed: Player should win in '{}', but win rate is {:.1}%",
-            scenario_file, median_decile.win_rate);
+            scenario_file,
+            median_decile.win_rate
+        );
     } else {
-        assert!(median_decile.win_rate < THRESHOLD,
+        assert!(
+            median_decile.win_rate < THRESHOLD,
             "Regression Failed: Monster should win in '{}', but win rate is {:.1}%",
-            scenario_file, median_decile.win_rate);
+            scenario_file,
+            median_decile.win_rate
+        );
     }
 }
 

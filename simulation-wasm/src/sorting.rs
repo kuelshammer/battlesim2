@@ -103,8 +103,7 @@ pub fn assign_party_slots(players: &[Creature], avg_attack_bonus: i32) -> Vec<Pl
 
     // Sort by survivability score DESCENDING, then by player_id for tie-breaking
     scored_players.sort_by(|a, b| {
-        b.1
-            .partial_cmp(&a.1)
+        b.1.partial_cmp(&a.1)
             .unwrap_or(std::cmp::Ordering::Equal)
             .then_with(|| a.0.cmp(&b.0))
     });
@@ -120,4 +119,3 @@ pub fn assign_party_slots(players: &[Creature], avg_attack_bonus: i32) -> Vec<Pl
         })
         .collect()
 }
-

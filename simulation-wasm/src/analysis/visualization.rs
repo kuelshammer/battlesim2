@@ -24,8 +24,14 @@ pub fn extract_combatant_visualization_partial(
     }
 
     if let Some(final_encounter) = slice.last() {
-        if let (Some(first_round), Some(last_round)) = (final_encounter.rounds.first(), final_encounter.rounds.last()) {
-            let start_hps: std::collections::HashMap<String, u32> = first_round.team1.iter().chain(first_round.team2.iter())
+        if let (Some(first_round), Some(last_round)) = (
+            final_encounter.rounds.first(),
+            final_encounter.rounds.last(),
+        ) {
+            let start_hps: std::collections::HashMap<String, u32> = first_round
+                .team1
+                .iter()
+                .chain(first_round.team2.iter())
                 .map(|c| (c.id.clone(), c.initial_state.current_hp))
                 .collect();
 
@@ -39,7 +45,9 @@ pub fn extract_combatant_visualization_partial(
                 combatants.push(CombatantVisualization {
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
-                    start_hp: *start_hps.get(&combatant.id).unwrap_or(&combatant.creature.hp),
+                    start_hp: *start_hps
+                        .get(&combatant.id)
+                        .unwrap_or(&combatant.creature.hp),
                     current_hp: combatant.final_state.current_hp,
                     is_dead: combatant.final_state.current_hp == 0,
                     is_player: true,
@@ -57,7 +65,9 @@ pub fn extract_combatant_visualization_partial(
                 combatants.push(CombatantVisualization {
                     name: combatant.creature.name.clone(),
                     max_hp: combatant.creature.hp,
-                    start_hp: *start_hps.get(&combatant.id).unwrap_or(&combatant.creature.hp),
+                    start_hp: *start_hps
+                        .get(&combatant.id)
+                        .unwrap_or(&combatant.creature.hp),
                     current_hp: combatant.final_state.current_hp,
                     is_dead: combatant.final_state.current_hp == 0,
                     is_player: false,

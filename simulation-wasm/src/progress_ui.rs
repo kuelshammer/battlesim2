@@ -1,5 +1,5 @@
 use crate::background_simulation::BackgroundSimulationId;
-use crate::progress_communication::{ProgressUpdate, ProgressUpdateType, ProgressCommunication};
+use crate::progress_communication::{ProgressCommunication, ProgressUpdate, ProgressUpdateType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -120,11 +120,11 @@ pub struct ProgressColorScheme {
 impl Default for ProgressColorScheme {
     fn default() -> Self {
         Self {
-            normal_color: "#3b82f6".to_string(), // blue-500
-            active_color: "#10b981".to_string(), // emerald-500
-            success_color: "#22c55e".to_string(), // green-500
-            warning_color: "#f59e0b".to_string(), // amber-500
-            error_color: "#ef4444".to_string(), // red-500
+            normal_color: "#3b82f6".to_string(),     // blue-500
+            active_color: "#10b981".to_string(),     // emerald-500
+            success_color: "#22c55e".to_string(),    // green-500
+            warning_color: "#f59e0b".to_string(),    // amber-500
+            error_color: "#ef4444".to_string(),      // red-500
             background_color: "#e5e7eb".to_string(), // gray-200
         }
     }
@@ -180,7 +180,11 @@ impl ProgressInfo {
     }
 
     /// Update from progress update
-    pub fn update_from_progress_update(&mut self, update: &ProgressUpdate, config: &ProgressUIConfig) {
+    pub fn update_from_progress_update(
+        &mut self,
+        update: &ProgressUpdate,
+        config: &ProgressUIConfig,
+    ) {
         // Update state based on update type
         self.state = match update.update_type {
             ProgressUpdateType::Started => ProgressState::Running,
@@ -188,15 +192,15 @@ impl ProgressInfo {
             ProgressUpdateType::Completed => {
                 self.end_time = Some(update.timestamp);
                 ProgressState::Completed
-            },
+            }
             ProgressUpdateType::Failed => {
                 self.end_time = Some(update.timestamp);
                 ProgressState::Failed
-            },
+            }
             ProgressUpdateType::Cancelled => {
                 self.end_time = Some(update.timestamp);
                 ProgressState::Cancelled
-            },
+            }
         };
 
         // Update visual representation
@@ -220,7 +224,11 @@ impl ProgressInfo {
     }
 
     /// Create progress bar segments
-    fn create_progress_segments(&self, percentage: f64, config: &ProgressUIConfig) -> Vec<ProgressSegment> {
+    fn create_progress_segments(
+        &self,
+        percentage: f64,
+        config: &ProgressUIConfig,
+    ) -> Vec<ProgressSegment> {
         let mut segments = Vec::new();
         let segment_size = 1.0 / config.progress_segments as f64;
         let filled_segments = (percentage * config.progress_segments as f64).floor() as usize;
@@ -236,7 +244,9 @@ impl ProgressInfo {
                     ProgressState::Running => ProgressStyle::Active,
                     _ => ProgressStyle::Normal,
                 }
-            } else if i == filled_segments && (percentage * config.progress_segments as f64).fract() > 0.0 {
+            } else if i == filled_segments
+                && (percentage * config.progress_segments as f64).fract() > 0.0
+            {
                 ProgressStyle::Active
             } else {
                 ProgressStyle::Normal
@@ -259,7 +269,10 @@ impl ProgressInfo {
 
     /// Check if progress is complete
     pub fn is_complete(&self) -> bool {
-        matches!(self.state, ProgressState::Completed | ProgressState::Failed | ProgressState::Cancelled)
+        matches!(
+            self.state,
+            ProgressState::Completed | ProgressState::Failed | ProgressState::Cancelled
+        )
     }
 
     /// Check if progress is active
@@ -301,7 +314,7 @@ impl ProgressUIManager {
     /// Create a new progress UI manager
     pub fn new(config: ProgressUIConfig) -> Self {
         let (progress_comm, _) = ProgressCommunication::new();
-        
+
         Self {
             config,
             active_progress: Arc::new(Mutex::new(HashMap::new())),
@@ -312,30 +325,42 @@ impl ProgressUIManager {
 
     /// Start tracking a new simulation
     pub fn start_tracking(&self, simulation_id: BackgroundSimulationId) {
-        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         active.insert(simulation_id.clone(), ProgressInfo::new(simulation_id));
     }
 
     /// Stop tracking a simulation
     pub fn stop_tracking(&self, simulation_id: &BackgroundSimulationId) {
-        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         active.remove(simulation_id);
     }
 
     /// Update progress from a progress update
     pub fn update_progress(&self, update: ProgressUpdate) -> Result<(), ProgressUIError> {
-        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
-        
+        let mut active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
         if let Some(progress_info) = active.get_mut(&update.simulation_id) {
             progress_info.update_from_progress_update(&update, &self.config);
-            
+
             // Update last update timestamp
-            let mut last_update = self.last_update.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut last_update = self
+                .last_update
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             *last_update = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs();
-                
+
             Ok(())
         } else {
             Err(ProgressUIError::SimulationNotFound)
@@ -344,19 +369,28 @@ impl ProgressUIManager {
 
     /// Get progress info for a specific simulation
     pub fn get_progress(&self, simulation_id: &BackgroundSimulationId) -> Option<ProgressInfo> {
-        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         active.get(simulation_id).cloned()
     }
 
     /// Get all active progress
     pub fn get_all_progress(&self) -> Vec<ProgressInfo> {
-        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         active.values().cloned().collect()
     }
 
     /// Get progress summary for dashboard
     pub fn get_progress_summary(&self) -> ProgressSummary {
-        let active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         let mut summary = ProgressSummary::default();
 
         for progress_info in active.values() {
@@ -381,10 +415,6 @@ impl ProgressUIManager {
         summary
     }
 
-
-
-
-
     /// Update configuration
     pub fn update_config(&mut self, config: ProgressUIConfig) {
         self.config = config;
@@ -397,7 +427,10 @@ impl ProgressUIManager {
 
     /// Clear all progress tracking
     pub fn clear_all(&self) {
-        let mut active = self.active_progress.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut active = self
+            .active_progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         active.clear();
     }
 
@@ -443,7 +476,9 @@ impl std::fmt::Display for ProgressUIError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ProgressUIError::SimulationNotFound => write!(f, "Simulation not found"),
-            ProgressUIError::InvalidProgressData(msg) => write!(f, "Invalid progress data: {}", msg),
+            ProgressUIError::InvalidProgressData(msg) => {
+                write!(f, "Invalid progress data: {}", msg)
+            }
             ProgressUIError::CommunicationError(msg) => write!(f, "Communication error: {}", msg),
         }
     }
@@ -479,7 +514,13 @@ mod tests {
         let segments = progress_info.create_progress_segments(0.75, &config);
 
         assert_eq!(segments.len(), 10);
-        assert_eq!(segments.iter().filter(|s| matches!(s.style, ProgressStyle::Active)).count(), 1);
+        assert_eq!(
+            segments
+                .iter()
+                .filter(|s| matches!(s.style, ProgressStyle::Active))
+                .count(),
+            1
+        );
     }
 
     #[test]
@@ -491,8 +532,6 @@ mod tests {
         assert_eq!(summary.completed, 0);
         assert_eq!(summary.average_progress, 0.0);
     }
-
-
 }
 
 // WASM bindings for JavaScript integration
@@ -508,7 +547,7 @@ impl ProgressUIManagerWrapper {
         let config = ProgressUIConfig::default();
         let manager = ProgressUIManager::new(config);
         Ok(ProgressUIManagerWrapper {
-            inner: Arc::new(Mutex::new(manager))
+            inner: Arc::new(Mutex::new(manager)),
         })
     }
 
@@ -516,8 +555,10 @@ impl ProgressUIManagerWrapper {
     pub fn start_tracking(&self, simulation_id: String) -> Result<(), JsValue> {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .start_tracking(sim_id);
         Ok(())
     }
@@ -526,8 +567,10 @@ impl ProgressUIManagerWrapper {
     pub fn stop_tracking(&self, simulation_id: String) -> Result<(), JsValue> {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .stop_tracking(&sim_id);
         Ok(())
     }
@@ -536,8 +579,10 @@ impl ProgressUIManagerWrapper {
     pub fn get_progress(&self, simulation_id: String) -> Result<JsValue, JsValue> {
         let sim_id = BackgroundSimulationId::from_string(&simulation_id)
             .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .get_progress(&sim_id)
             .ok_or_else(|| JsValue::from_str("Progress not found"))
             .and_then(|progress| {
@@ -548,27 +593,33 @@ impl ProgressUIManagerWrapper {
 
     #[wasm_bindgen(js_name = getAllProgress)]
     pub fn get_all_progress(&self) -> Result<JsValue, JsValue> {
-        let progress_list = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        let progress_list = self
+            .inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .get_all_progress();
-        
+
         serde_wasm_bindgen::to_value(&progress_list)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
 
     #[wasm_bindgen(js_name = getProgressSummary)]
     pub fn get_progress_summary(&self) -> Result<JsValue, JsValue> {
-        let summary = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        let summary = self
+            .inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .get_progress_summary();
-        
+
         serde_wasm_bindgen::to_value(&summary)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
 
-
-
     #[wasm_bindgen(js_name = clearAll)]
     pub fn clear_all(&self) -> Result<(), JsValue> {
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .clear_all();
         Ok(())
     }

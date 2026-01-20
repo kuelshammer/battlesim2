@@ -103,11 +103,11 @@ pub struct ProgressColorScheme {
 impl Default for ProgressColorScheme {
     fn default() -> Self {
         Self {
-            normal_color: "#3b82f6".to_string(), // blue-500
-            active_color: "#10b981".to_string(), // emerald-500
-            success_color: "#22c55e".to_string(), // green-500
-            warning_color: "#f59e0b".to_string(), // amber-500
-            error_color: "#ef4444".to_string(), // red-500
+            normal_color: "#3b82f6".to_string(),     // blue-500
+            active_color: "#10b981".to_string(),     // emerald-500
+            success_color: "#22c55e".to_string(),    // green-500
+            warning_color: "#f59e0b".to_string(),    // amber-500
+            error_color: "#ef4444".to_string(),      // red-500
             background_color: "#e5e7eb".to_string(), // gray-200
         }
     }
@@ -348,7 +348,9 @@ impl ConfigManager {
         let mut errors = Vec::new();
 
         // Validate display preferences
-        if self.preferences.display.similarity_threshold < 0.0 || self.preferences.display.similarity_threshold > 1.0 {
+        if self.preferences.display.similarity_threshold < 0.0
+            || self.preferences.display.similarity_threshold > 1.0
+        {
             errors.push("Similarity threshold must be between 0.0 and 1.0".to_string());
         }
 
@@ -423,20 +425,22 @@ impl ConfigManagerWrapper {
     pub fn update_preferences(&mut self, preferences: &JsValue) -> Result<(), JsValue> {
         let prefs: UserPreferences = serde_wasm_bindgen::from_value(preferences.clone())
             .map_err(|e| JsValue::from_str(&format!("Failed to parse preferences: {}", e)))?;
-        
+
         self.inner.update_preferences(prefs);
         Ok(())
     }
 
     #[wasm_bindgen(js_name = exportToJson)]
     pub fn export_to_json(&self) -> Result<String, JsValue> {
-        self.inner.export_to_json()
+        self.inner
+            .export_to_json()
             .map_err(|e| JsValue::from_str(&format!("Export error: {}", e)))
     }
 
     #[wasm_bindgen(js_name = importFromJson)]
     pub fn import_from_json(&mut self, json: &str) -> Result<(), JsValue> {
-        self.inner.import_from_json(json)
+        self.inner
+            .import_from_json(json)
             .map_err(|e| JsValue::from_str(&format!("Import error: {}", e)))
     }
 
@@ -493,7 +497,7 @@ mod tests {
     fn test_preferences_validation() {
         let mut prefs = UserPreferences::default();
         prefs.display.similarity_threshold = 1.5; // Invalid
-        
+
         let manager = ConfigManager::with_preferences(prefs);
         let errors = manager.validate_preferences();
         assert!(!errors.is_empty());
@@ -504,10 +508,10 @@ mod tests {
     fn test_json_export_import() {
         let manager = ConfigManager::new();
         let json = manager.export_to_json().unwrap();
-        
+
         let mut manager2 = ConfigManager::new();
         manager2.import_from_json(&json).unwrap();
-        
+
         assert_eq!(
             manager.get_preferences().display.default_mode,
             manager2.get_preferences().display.default_mode

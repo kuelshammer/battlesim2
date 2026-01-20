@@ -368,7 +368,8 @@ impl Event {
 
                 if !decision_trace.is_empty() {
                     let mut scores: Vec<_> = decision_trace.iter().collect();
-                    scores.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
+                    scores
+                        .sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
 
                     output.push_str("\n      [AI Trace: ");
                     let debug_scores: Vec<_> = scores
@@ -395,7 +396,10 @@ impl Event {
                 range: _,
             } => {
                 let attack_details = if let Some(roll) = attack_roll {
-                    format!(" (Roll: {} = {:.0} vs AC {:.0})", roll.formula, roll.total, target_ac)
+                    format!(
+                        " (Roll: {} = {:.0} vs AC {:.0})",
+                        roll.formula, roll.total, target_ac
+                    )
                 } else {
                     "".to_string()
                 };
@@ -420,7 +424,10 @@ impl Event {
                 target_ac,
             } => {
                 let attack_details = if let Some(roll) = attack_roll {
-                    format!(" (Roll: {} = {:.0} vs AC {:.0})", roll.formula, roll.total, target_ac)
+                    format!(
+                        " (Roll: {} = {:.0} vs AC {:.0})",
+                        roll.formula, roll.total, target_ac
+                    )
                 } else {
                     "".to_string()
                 };

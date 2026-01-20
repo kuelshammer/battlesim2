@@ -1,7 +1,7 @@
+use crate::context::CombattantState;
+use crate::events::Event;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::events::Event;
-use crate::context::CombattantState;
 
 /// Result of executing a single action
 #[derive(Debug, Clone, Serialize, Deserialize)]

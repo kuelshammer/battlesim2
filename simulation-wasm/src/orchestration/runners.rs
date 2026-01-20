@@ -5,11 +5,11 @@
 //! - Selection (identify interesting seeds)
 //! - Deep dive (full events for selected runs)
 
-use std::collections::HashMap;
-use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun, LightweightRun};
-use crate::aggregation::{calculate_score, calculate_cumulative_score};
+use crate::aggregation::{calculate_cumulative_score, calculate_score};
+use crate::model::{Creature, LightweightRun, SimulationResult, SimulationRun, TimelineStep};
 use crate::utils::summarize_result;
 use js_sys::Function;
+use std::collections::HashMap;
 
 /// Run event-driven simulation (Rust-native, for CLI/testing)
 /// Returns all simulation runs with their results and events
@@ -21,7 +21,7 @@ pub fn run_event_driven_simulation_rust(
     seed: Option<u64>,
 ) -> Vec<SimulationRun> {
     let iterations = iterations.max(100);
-    
+
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     let _ = console_log::init_with_level(log::Level::Info);
 
@@ -47,14 +47,16 @@ pub fn run_event_driven_simulation_rust(
     all_runs.sort_by(|a, b| {
         let score_a = calculate_score(&a.result);
         let score_b = calculate_score(&b.result);
-        score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+        score_a
+            .partial_cmp(&score_b)
+            .unwrap_or(std::cmp::Ordering::Equal)
     });
 
     all_runs
 }
 
 /// Three-phase simulation with progress callback support
-/// 
+///
 /// Phase 1: Survey Pass - Run all iterations, collect lightweight results
 /// Phase 2: Selection - Identify interesting seeds using 1% granularity
 /// Phase 3: Deep Dive - Re-run interesting seeds with full event logging
@@ -83,7 +85,8 @@ impl ThreePhaseSimulation {
             let seed = i as u64;
             crate::rng::seed_rng(seed);
 
-            let (result, _) = crate::run_single_event_driven_simulation(&self.players, &self.timeline, false);
+            let (result, _) =
+                crate::run_single_event_driven_simulation(&self.players, &self.timeline, false);
             let score = calculate_score(&result);
 
             // Create lightweight representation for seed selection
@@ -93,7 +96,8 @@ impl ThreePhaseSimulation {
             }
 
             let has_death = result.encounters.iter().any(|e| {
-                e.rounds.last()
+                e.rounds
+                    .last()
                     .map(|r| r.team1.iter().any(|c| c.final_state.current_hp == 0))
                     .unwrap_or(false)
             });
@@ -123,12 +127,16 @@ impl ThreePhaseSimulation {
 
     /// Run Phase 3: Deep dive on selected seeds
     /// Returns map of seed -> events
-    pub fn run_deep_dive(&self, interesting_seeds: &[u64]) -> HashMap<u64, Vec<crate::events::Event>> {
+    pub fn run_deep_dive(
+        &self,
+        interesting_seeds: &[u64],
+    ) -> HashMap<u64, Vec<crate::events::Event>> {
         let mut seed_to_events = HashMap::new();
 
         for &seed in interesting_seeds {
             crate::rng::seed_rng(seed);
-            let (_, events) = crate::run_single_event_driven_simulation(&self.players, &self.timeline, true);
+            let (_, events) =
+                crate::run_single_event_driven_simulation(&self.players, &self.timeline, true);
             seed_to_events.insert(seed, events);
         }
 
@@ -137,13 +145,14 @@ impl ThreePhaseSimulation {
 
     /// Find the median seed from lightweight runs
     pub fn find_median_seed(&self, lightweight_runs: &[LightweightRun]) -> u64 {
-        let mut global_scores: Vec<(usize, f64)> = lightweight_runs.iter()
+        let mut global_scores: Vec<(usize, f64)> = lightweight_runs
+            .iter()
             .enumerate()
             .map(|(i, r)| (i, r.final_score))
             .collect();
-        
+
         global_scores.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         lightweight_runs[global_scores[global_scores.len() / 2].0].seed
     }
 }
@@ -154,7 +163,8 @@ pub fn combine_results_with_events(
     lightweight_runs: Vec<LightweightRun>,
     seed_to_events: &HashMap<u64, Vec<crate::events::Event>>,
 ) -> Vec<SimulationRun> {
-    summarized_results.into_iter()
+    summarized_results
+        .into_iter()
         .zip(lightweight_runs)
         .map(|(result, light)| {
             let events = seed_to_events.get(&light.seed).cloned().unwrap_or_default();
@@ -176,7 +186,8 @@ pub fn run_survey_with_progress(
         let seed = i as u64;
         crate::rng::seed_rng(seed);
 
-        let (result, _) = crate::run_single_event_driven_simulation(&sim.players, &sim.timeline, false);
+        let (result, _) =
+            crate::run_single_event_driven_simulation(&sim.players, &sim.timeline, false);
         let score = calculate_score(&result);
 
         // Create lightweight representation for seed selection
@@ -186,7 +197,8 @@ pub fn run_survey_with_progress(
         }
 
         let has_death = result.encounters.iter().any(|e| {
-            e.rounds.last()
+            e.rounds
+                .last()
                 .map(|r| r.team1.iter().any(|c| c.final_state.current_hp == 0))
                 .unwrap_or(false)
         });
@@ -223,7 +235,8 @@ pub fn run_deep_dive_with_progress(
 
     for (idx, &seed) in interesting_seeds.iter().enumerate() {
         crate::rng::seed_rng(seed);
-        let (_, events) = crate::run_single_event_driven_simulation(&sim.players, &sim.timeline, true);
+        let (_, events) =
+            crate::run_single_event_driven_simulation(&sim.players, &sim.timeline, true);
         seed_to_events.insert(seed, events);
 
         let progress = 0.8 + ((idx + 1) as f64 / interesting_seeds.len() as f64) * 0.2;
@@ -245,7 +258,8 @@ pub fn extract_representative_results(final_runs: &[SimulationRun]) -> Vec<Simul
         (decile * 9.5) as usize,
     ];
 
-    indices.iter()
+    indices
+        .iter()
         .filter(|&&idx| idx < total_runs)
         .map(|&idx| final_runs[idx].result.clone())
         .collect()

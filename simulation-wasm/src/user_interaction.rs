@@ -1,10 +1,10 @@
-use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
-use crate::background_simulation::{BackgroundSimulationId, SimulationPriority};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::background_simulation::BackgroundSimulationEngine;
-use crate::progress_ui::{ProgressUIManager, ProgressInfo};
-use crate::queue_manager::QueueManager;
+use crate::background_simulation::{BackgroundSimulationId, SimulationPriority};
+use crate::display_manager::{DisplayManager, DisplayMode, DisplayResult};
 use crate::model::{Creature, TimelineStep};
+use crate::progress_ui::{ProgressInfo, ProgressUIManager};
+use crate::queue_manager::QueueManager;
 // Simple scenario parameters since storage module was removed
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ScenarioParameters {
@@ -27,9 +27,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UserEvent {
     /// Parameters were changed
-    ParametersChanged {
-        parameters: ScenarioParameters,
-    },
+    ParametersChanged { parameters: ScenarioParameters },
     /// User requested a new simulation
     RequestSimulation {
         parameters: ScenarioParameters,
@@ -38,9 +36,7 @@ pub enum UserEvent {
     /// User selected a display mode
     SetDisplayMode(DisplayMode),
     /// User selected a specific slot
-    SelectSlot {
-        slot_selection: SlotSelection,
-    },
+    SelectSlot { slot_selection: SlotSelection },
     /// User cancelled a simulation
     CancelSimulation {
         simulation_id: BackgroundSimulationId,
@@ -268,7 +264,10 @@ impl UserInteractionManager {
     pub fn handle_event(&self, event: UserEvent) -> UserEventResult {
         // Store event in history
         {
-            let mut history = self.event_history.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut history = self
+                .event_history
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             history.push(event.clone());
             // Keep only last 100 events
             if history.len() > 100 {
@@ -279,36 +278,28 @@ impl UserInteractionManager {
         match event {
             UserEvent::ParametersChanged { parameters } => {
                 self.handle_parameters_changed(parameters)
-            },
-            UserEvent::RequestSimulation { parameters, priority } => {
-                self.handle_simulation_request(parameters, priority)
-            },
-            UserEvent::SetDisplayMode(mode) => {
-                self.handle_set_display_mode(mode)
-            },
-            UserEvent::SelectSlot { slot_selection } => {
-                self.handle_select_slot(slot_selection)
-            },
+            }
+            UserEvent::RequestSimulation {
+                parameters,
+                priority,
+            } => self.handle_simulation_request(parameters, priority),
+            UserEvent::SetDisplayMode(mode) => self.handle_set_display_mode(mode),
+            UserEvent::SelectSlot { slot_selection } => self.handle_select_slot(slot_selection),
             UserEvent::CancelSimulation { simulation_id } => {
                 self.handle_cancel_simulation(simulation_id)
-            },
-            UserEvent::ClearCache => {
-                self.handle_clear_cache()
-            },
-            UserEvent::CleanupStorage => {
-                self.handle_cleanup_storage()
-            },
-            UserEvent::UpdateConfiguration { display_config, progress_config, queue_config } => {
-                self.handle_update_configuration(display_config, progress_config, queue_config)
-            },
+            }
+            UserEvent::ClearCache => self.handle_clear_cache(),
+            UserEvent::CleanupStorage => self.handle_cleanup_storage(),
+            UserEvent::UpdateConfiguration {
+                display_config,
+                progress_config,
+                queue_config,
+            } => self.handle_update_configuration(display_config, progress_config, queue_config),
         }
     }
 
     /// Handle parameter changes
-    fn handle_parameters_changed(
-        &self,
-        parameters: ScenarioParameters,
-    ) -> UserEventResult {
+    fn handle_parameters_changed(&self, parameters: ScenarioParameters) -> UserEventResult {
         let mut messages = Vec::new();
         let requires_ui_refresh = true;
 
@@ -324,40 +315,49 @@ impl UserInteractionManager {
 
         // Get display results
         let display_result = {
-            let mut display_manager = self.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
-            display_manager.get_display_results(&parameters.players, &parameters.timeline, parameters.iterations)
+            let mut display_manager = self
+                .display_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            display_manager.get_display_results(
+                &parameters.players,
+                &parameters.timeline,
+                parameters.iterations,
+            )
         };
-
 
         // Auto-simulate if enabled and no cached results
-        let simulation_id = if self.config.auto_simulate_on_change && display_result.results.is_none() {
-            // Check if we're under the concurrent limit
-            let state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-            if state.active_simulations.len() < self.config.max_concurrent_simulations {
-                drop(state);
+        let simulation_id =
+            if self.config.auto_simulate_on_change && display_result.results.is_none() {
+                // Check if we're under the concurrent limit
+                let state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
+                if state.active_simulations.len() < self.config.max_concurrent_simulations {
+                    drop(state);
 
-                #[cfg(not(target_arch = "wasm32"))]
-                let sim_result = self.start_background_simulation(&parameters, SimulationPriority::Normal);
-                #[cfg(target_arch = "wasm32")]
-                let sim_result: Result<BackgroundSimulationId, String> = Err("Background simulation not available in WASM".to_string());
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let sim_result =
+                        self.start_background_simulation(&parameters, SimulationPriority::Normal);
+                    #[cfg(target_arch = "wasm32")]
+                    let sim_result: Result<BackgroundSimulationId, String> =
+                        Err("Background simulation not available in WASM".to_string());
 
-                match sim_result {
-                    Ok(sim_id) => {
-                        messages.push("Background simulation started".to_string());
-                        Some(sim_id)
-                    },
-                    Err(e) => {
-                        messages.push(format!("Failed to start simulation: {}", e));
-                        None
+                    match sim_result {
+                        Ok(sim_id) => {
+                            messages.push("Background simulation started".to_string());
+                            Some(sim_id)
+                        }
+                        Err(e) => {
+                            messages.push(format!("Failed to start simulation: {}", e));
+                            None
+                        }
                     }
+                } else {
+                    messages.push("Maximum concurrent simulations reached".to_string());
+                    None
                 }
             } else {
-                messages.push("Maximum concurrent simulations reached".to_string());
                 None
-            }
-        } else {
-            None
-        };
+            };
 
         UserEventResult {
             success: true,
@@ -396,15 +396,22 @@ impl UserInteractionManager {
         #[cfg(not(target_arch = "wasm32"))]
         let sim_result = self.start_background_simulation(&_parameters, priority);
         #[cfg(target_arch = "wasm32")]
-        let sim_result: Result<BackgroundSimulationId, String> = Err("Background simulation not available in WASM".to_string());
+        let sim_result: Result<BackgroundSimulationId, String> =
+            Err("Background simulation not available in WASM".to_string());
 
         match sim_result {
             Ok(simulation_id) => {
-                messages.push(format!("Simulation {} started with priority {:?}", simulation_id.0, priority));
+                messages.push(format!(
+                    "Simulation {} started with priority {:?}",
+                    simulation_id.0, priority
+                ));
 
                 // Get progress info
                 let progress_info = {
-                    let progress_ui = self.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
+                    let progress_ui = self
+                        .progress_ui_manager
+                        .lock()
+                        .unwrap_or_else(PoisonError::into_inner);
                     progress_ui.get_progress(&simulation_id)
                 };
 
@@ -416,7 +423,7 @@ impl UserInteractionManager {
                     simulation_id: Some(simulation_id),
                     requires_ui_refresh: true,
                 }
-            },
+            }
             Err(e) => {
                 let error_msg = if self.config.show_detailed_errors {
                     format!("Failed to start simulation: {}", e)
@@ -441,7 +448,10 @@ impl UserInteractionManager {
         let mut messages = Vec::new();
 
         {
-            let mut display_manager = self.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut display_manager = self
+                .display_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             display_manager.set_display_mode(mode);
         }
 
@@ -468,7 +478,10 @@ impl UserInteractionManager {
         let mut messages = Vec::new();
 
         let display_result = {
-            let mut display_manager = self.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut display_manager = self
+                .display_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             display_manager.user_selected_slot(slot_selection.clone())
         };
 
@@ -496,7 +509,10 @@ impl UserInteractionManager {
 
         // Stop progress tracking
         {
-            let progress_ui = self.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
+            let progress_ui = self
+                .progress_ui_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             progress_ui.stop_tracking(&simulation_id);
         }
 
@@ -522,13 +538,17 @@ impl UserInteractionManager {
         if self.config.show_confirmations {
             // Add confirmation request
             let confirmation = ConfirmationRequest {
-                id: format!("clear_cache_{}", SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_nanos()),
+                id: format!(
+                    "clear_cache_{}",
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_nanos()
+                ),
                 confirmation_type: ConfirmationType::ClearCache,
                 message: "Clear all cached simulation results?".to_string(),
-                description: "This will remove all stored simulation data from memory and disk.".to_string(),
+                description: "This will remove all stored simulation data from memory and disk."
+                    .to_string(),
                 created_at: SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap_or_default()
@@ -547,7 +567,7 @@ impl UserInteractionManager {
             match self.clear_cache_internal() {
                 Ok(_) => {
                     messages.push("Cache cleared successfully".to_string());
-                },
+                }
                 Err(e) => {
                     messages.push(format!("Failed to clear cache: {}", e));
                 }
@@ -571,13 +591,17 @@ impl UserInteractionManager {
         if self.config.show_confirmations {
             // Add confirmation request
             let confirmation = ConfirmationRequest {
-                id: format!("cleanup_storage_{}", SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_nanos()),
+                id: format!(
+                    "cleanup_storage_{}",
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_nanos()
+                ),
                 confirmation_type: ConfirmationType::CleanupStorage,
                 message: "Clean up old storage files?".to_string(),
-                description: "This will remove old simulation data files to free up disk space.".to_string(),
+                description: "This will remove old simulation data files to free up disk space."
+                    .to_string(),
                 created_at: SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap_or_default()
@@ -596,7 +620,7 @@ impl UserInteractionManager {
             match self.cleanup_storage_internal() {
                 Ok(_) => {
                     messages.push("Storage cleanup completed".to_string());
-                },
+                }
                 Err(e) => {
                     messages.push(format!("Failed to cleanup storage: {}", e));
                 }
@@ -624,7 +648,10 @@ impl UserInteractionManager {
 
         if let Some(config) = display_config {
             {
-                let mut display_manager = self.display_manager.lock().unwrap_or_else(PoisonError::into_inner);
+                let mut display_manager = self
+                    .display_manager
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
                 display_manager.update_config(config.clone());
             }
             messages.push("Display configuration updated".to_string());
@@ -632,7 +659,10 @@ impl UserInteractionManager {
 
         if let Some(config) = progress_config {
             {
-                let mut progress_ui = self.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
+                let mut progress_ui = self
+                    .progress_ui_manager
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
                 progress_ui.update_config(config);
             }
             messages.push("Progress UI configuration updated".to_string());
@@ -640,7 +670,10 @@ impl UserInteractionManager {
 
         if let Some(config) = queue_config {
             {
-                let mut queue_manager = self.queue_manager.lock().unwrap_or_else(PoisonError::into_inner);
+                let mut queue_manager = self
+                    .queue_manager
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
                 queue_manager.update_config(config);
             }
             messages.push("Queue configuration updated".to_string());
@@ -663,13 +696,12 @@ impl UserInteractionManager {
         parameters: &ScenarioParameters,
         priority: SimulationPriority,
     ) -> Result<BackgroundSimulationId, String> {
-
         // Start simulation directly
-        let mut engine = self.simulation_engine.lock().unwrap_or_else(PoisonError::into_inner);
-        let simulation_id = engine.start_simulation(
-            parameters.clone(),
-            priority,
-        )?;
+        let mut engine = self
+            .simulation_engine
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let simulation_id = engine.start_simulation(parameters.clone(), priority)?;
 
         // Add to active simulations
         {
@@ -679,7 +711,10 @@ impl UserInteractionManager {
 
         // Start progress tracking
         {
-            let progress_ui = self.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
+            let progress_ui = self
+                .progress_ui_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             progress_ui.start_tracking(simulation_id.clone());
         }
 
@@ -690,7 +725,10 @@ impl UserInteractionManager {
     fn clear_cache_internal(&self) -> Result<(), String> {
         // Since storage functionality is removed, just clear progress tracking
         {
-            let progress_ui = self.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
+            let progress_ui = self
+                .progress_ui_manager
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             progress_ui.clear_all();
         }
 
@@ -706,7 +744,6 @@ impl UserInteractionManager {
         Ok(())
     }
 
-    
     /// Answer a confirmation request
     pub fn answer_confirmation(&self, confirmation_id: &str, confirmed: bool) -> UserEventResult {
         let mut messages = Vec::new();
@@ -715,7 +752,8 @@ impl UserInteractionManager {
         // Find and remove the confirmation
         let confirmation = {
             let mut state = self.state.lock().unwrap_or_else(PoisonError::into_inner);
-            state.pending_confirmations
+            state
+                .pending_confirmations
                 .iter()
                 .position(|c| c.id == confirmation_id)
                 .map(|i| state.pending_confirmations.remove(i))
@@ -724,42 +762,38 @@ impl UserInteractionManager {
         if let Some(confirmation) = confirmation {
             if confirmed {
                 match confirmation.confirmation_type {
-                    ConfirmationType::ClearCache => {
-                        match self.clear_cache_internal() {
-                            Ok(_) => {
-                                messages.push("Cache cleared successfully".to_string());
-                                requires_ui_refresh = true;
-                            },
-                            Err(e) => {
-                                messages.push(format!("Failed to clear cache: {}", e));
-                            }
+                    ConfirmationType::ClearCache => match self.clear_cache_internal() {
+                        Ok(_) => {
+                            messages.push("Cache cleared successfully".to_string());
+                            requires_ui_refresh = true;
+                        }
+                        Err(e) => {
+                            messages.push(format!("Failed to clear cache: {}", e));
                         }
                     },
-                    ConfirmationType::CleanupStorage => {
-                        match self.cleanup_storage_internal() {
-                            Ok(_) => {
-                                messages.push("Storage cleanup completed".to_string());
-                                requires_ui_refresh = true;
-                            },
-                            Err(e) => {
-                                messages.push(format!("Failed to cleanup storage: {}", e));
-                            }
+                    ConfirmationType::CleanupStorage => match self.cleanup_storage_internal() {
+                        Ok(_) => {
+                            messages.push("Storage cleanup completed".to_string());
+                            requires_ui_refresh = true;
+                        }
+                        Err(e) => {
+                            messages.push(format!("Failed to cleanup storage: {}", e));
                         }
                     },
                     ConfirmationType::CancelSimulation => {
                         // This would be handled by the specific simulation cancellation
                         messages.push("Simulation cancellation confirmed".to_string());
                         requires_ui_refresh = true;
-                    },
+                    }
                     ConfirmationType::SwitchSlot => {
                         // This would be handled by the specific slot selection
                         messages.push("Slot switch confirmed".to_string());
                         requires_ui_refresh = true;
-                    },
+                    }
                     ConfirmationType::Custom(_) => {
                         messages.push("Custom action confirmed".to_string());
                         requires_ui_refresh = true;
-                    },
+                    }
                 }
             } else {
                 messages.push("Action cancelled".to_string());
@@ -780,17 +814,27 @@ impl UserInteractionManager {
 
     /// Get current state
     pub fn get_state(&self) -> UserInteractionState {
-        self.state.lock().unwrap_or_else(PoisonError::into_inner).clone()
+        self.state
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 
     /// Get pending confirmations
     pub fn get_pending_confirmations(&self) -> Vec<ConfirmationRequest> {
-        self.state.lock().unwrap_or_else(PoisonError::into_inner).pending_confirmations.clone()
+        self.state
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .pending_confirmations
+            .clone()
     }
 
     /// Get event history
     pub fn get_event_history(&self) -> Vec<UserEvent> {
-        self.event_history.lock().unwrap_or_else(PoisonError::into_inner).clone()
+        self.event_history
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 
     /// Update configuration
@@ -837,7 +881,10 @@ mod tests {
 
         assert_eq!(confirmation.id, "test");
         assert!(!confirmation.answered);
-        assert!(matches!(confirmation.confirmation_type, ConfirmationType::ClearCache));
+        assert!(matches!(
+            confirmation.confirmation_type,
+            ConfirmationType::ClearCache
+        ));
     }
 
     #[test]
@@ -845,7 +892,10 @@ mod tests {
         let event = UserEvent::SetDisplayMode(DisplayMode::ShowMostSimilar);
         let serialized = serde_json::to_string(&event).unwrap();
         let deserialized: UserEvent = serde_json::from_str(&serialized).unwrap();
-        
-        assert!(matches!(deserialized, UserEvent::SetDisplayMode(DisplayMode::ShowMostSimilar)));
+
+        assert!(matches!(
+            deserialized,
+            UserEvent::SetDisplayMode(DisplayMode::ShowMostSimilar)
+        ));
     }
 }

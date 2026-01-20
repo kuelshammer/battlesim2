@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use crate::model::*;
     use crate::aggregation::calculate_efficiency_score;
     use crate::events::Event;
+    use crate::model::*;
     use std::collections::HashMap;
 
     fn create_mock_combattant(id: &str, current_hp: u32) -> Combattant {
@@ -55,7 +55,7 @@ mod tests {
     fn test_efficiency_scoring_logic() {
         // Run A: High HP, High Resource Spend (1st level spell)
         // Run B: Slightly Lower HP, Low Resource Spend (Cantrips only)
-        
+
         let run_a_result = SimulationResult {
             encounters: vec![EncounterResult {
                 stats: HashMap::new(),
@@ -69,9 +69,11 @@ mod tests {
             num_combat_encounters: 1,
             seed: 12345,
         };
-        let run_a_events = vec![
-            Event::SpellCast { caster_id: "p1".to_string(), spell_id: "cure_wounds".to_string(), spell_level: 1 }
-        ];
+        let run_a_events = vec![Event::SpellCast {
+            caster_id: "p1".to_string(),
+            spell_id: "cure_wounds".to_string(),
+            spell_level: 1,
+        }];
 
         let run_b_result = SimulationResult {
             encounters: vec![EncounterResult {
@@ -93,11 +95,14 @@ mod tests {
 
         // Score A: 1,000,000 + 100 - 15 (Lvl 1 Spell) = 1,000,085
         // Score B: 1,000,000 + 90 - 0 = 1,000,090
-        
+
         println!("Score A (Spell): {}", score_a);
         println!("Score B (Low HP): {}", score_b);
-        
-        assert!(score_b > score_a, "Run B (more efficient) should score higher than Run A despite lower HP");
+
+        assert!(
+            score_b > score_a,
+            "Run B (more efficient) should score higher than Run A despite lower HP"
+        );
     }
 
     #[test]
@@ -115,13 +120,11 @@ mod tests {
             num_combat_encounters: 1,
             seed: 12347,
         };
-        let events = vec![
-            Event::ResourceConsumed {
-                unit_id: "p1".to_string(),
-                resource_type: "HitDice".to_string(),
-                amount: 2.0,
-            }
-        ];
+        let events = vec![Event::ResourceConsumed {
+            unit_id: "p1".to_string(),
+            resource_type: "HitDice".to_string(),
+            amount: 2.0,
+        }];
 
         let score = calculate_efficiency_score(&result, &events);
         // Base: 100,000 + 100 - (2 * 15) = 100,070
@@ -164,7 +167,11 @@ mod tests {
 
         // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 = 181.8 EHP -> Rounded to 182
         let score = fighter.max_survivability_score();
-        assert_eq!(score, 182.0, "Fighter with AC 15 should have EHP of 182, got {}", score);
+        assert_eq!(
+            score, 182.0,
+            "Fighter with AC 15 should have EHP of 182, got {}",
+            score
+        );
     }
 
     #[test]
@@ -206,7 +213,11 @@ mod tests {
 
         // Expected: AC 15 vs +5 → 55% hit chance → 100 / 0.55 × 2 = 363.6 EHP -> Rounded to 364
         let score = barbarian.max_survivability_score();
-        assert_eq!(score, 364.0, "Barbarian with Rage should have 364 EHP, got {}", score);
+        assert_eq!(
+            score, 364.0,
+            "Barbarian with Rage should have 364 EHP, got {}",
+            score
+        );
     }
 
     #[test]
@@ -326,24 +337,27 @@ mod tests {
 
         // Create a combatant with Rage active (current HP reduced to 80)
         let mut rage_buffs = HashMap::new();
-        rage_buffs.insert("Rage".to_string(), Buff {
-            display_name: Some("Rage".to_string()),
-            duration: crate::enums::BuffDuration::OneRound,
-            ac: None,
-            to_hit: None,
-            damage: None,
-            damage_reduction: None,
-            damage_multiplier: None,
-            damage_taken_multiplier: Some(0.5), // Barbarians take half damage from physical attacks
-            dc: None,
-            save: None,
-            condition: None,
-            magnitude: None,
-            source: Some("barbarian".to_string()),
-            concentration: false,
-            triggers: vec![],
-            suppressed_until: None,
-        });
+        rage_buffs.insert(
+            "Rage".to_string(),
+            Buff {
+                display_name: Some("Rage".to_string()),
+                duration: crate::enums::BuffDuration::OneRound,
+                ac: None,
+                to_hit: None,
+                damage: None,
+                damage_reduction: None,
+                damage_multiplier: None,
+                damage_taken_multiplier: Some(0.5), // Barbarians take half damage from physical attacks
+                dc: None,
+                save: None,
+                condition: None,
+                magnitude: None,
+                source: Some("barbarian".to_string()),
+                concentration: false,
+                triggers: vec![],
+                suppressed_until: None,
+            },
+        );
 
         let mut rage_resources = HashMap::new();
         rage_resources.insert("Rage".to_string(), 2.0);
@@ -369,7 +383,11 @@ mod tests {
 
         // Expected: 80 HP / 0.55 hit chance × 2 (Rage) = 290.9 EHP -> Rounded to 291
         let score = combatant.current_survivability_score();
-        assert_eq!(score, 291.0, "Barbarian with Rage active should have 291 EHP on current HP, got {}", score);
+        assert_eq!(
+            score, 291.0,
+            "Barbarian with Rage active should have 291 EHP on current HP, got {}",
+            score
+        );
     }
 
     #[test]
@@ -430,7 +448,11 @@ mod tests {
         // Expected: 80 HP / 0.55 hit chance × 1 (no Rage) = 145.5 EHP -> Rounded to 145
         // (No Rage multiplier since it's not active)
         let score = combatant.current_survivability_score();
-        assert_eq!(score, 145.0, "Barbarian without Rage active should have 145 EHP, got {}", score);
+        assert_eq!(
+            score, 145.0,
+            "Barbarian without Rage active should have 145 EHP, got {}",
+            score
+        );
     }
 
     #[test]
@@ -469,7 +491,10 @@ mod tests {
 
         // Expected: AC 26 vs +5 → need 21+ → only nat 20 hits (5%) → 80 / 0.05 = 1600 EHP
         let score = monk.max_survivability_score();
-        assert_eq!(score, 1600.0, "Monk with AC 26 should have EHP of 1600 (nat 20 only)");
+        assert_eq!(
+            score, 1600.0,
+            "Monk with AC 26 should have EHP of 1600 (nat 20 only)"
+        );
     }
 
     #[test]
@@ -509,7 +534,11 @@ mod tests {
 
         // Expected: AC 4 vs +5 → need -1 or better → hit on 2-20 (95%) → 20 / 0.95 = 21.05 EHP -> Rounded to 21
         let score = commoner.max_survivability_score();
-        assert_eq!(score, 21.0, "Commoner with AC 4 should have EHP of 21, got {}", score);
+        assert_eq!(
+            score, 21.0,
+            "Commoner with AC 4 should have EHP of 21, got {}",
+            score
+        );
     }
 
     #[test]
@@ -548,6 +577,9 @@ mod tests {
 
         // Expected: AC 15 vs +10 → need 5+ → hit on 5-20 (80%) → 100 / 0.8 = 125 EHP
         let score = fighter.max_survivability_score_vs_attack(10);
-        assert_eq!(score, 125.0, "Fighter AC 15 vs +10 attack should have EHP of 125");
+        assert_eq!(
+            score, 125.0,
+            "Fighter AC 15 vs +10 attack should have EHP of 125"
+        );
     }
 }

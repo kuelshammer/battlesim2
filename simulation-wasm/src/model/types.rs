@@ -1,6 +1,6 @@
+use crate::resources::ResourceLedger;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::resources::ResourceLedger;
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Position {
@@ -11,7 +11,11 @@ pub struct Position {
 
 impl Default for Position {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, z: 0.0 }
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
     }
 }
 

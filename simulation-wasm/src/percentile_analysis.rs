@@ -3,10 +3,10 @@
 //! This module provides functions to aggregate simulation results into 100 buckets
 //! (one per percentile), with per-character HP and resource metrics for visualization.
 
-use crate::model::*;
+use crate::aggregation::{calculate_encounter_score, calculate_score};
 use crate::intensity_calculation::*;
-use crate::aggregation::{calculate_score, calculate_encounter_score};
-use crate::resources::{ResourceLedger, ResetType};
+use crate::model::*;
+use crate::resources::{ResetType, ResourceLedger};
 use serde::{Deserialize, Serialize};
 
 /// Per-character bucket data for one percentile
@@ -95,14 +95,16 @@ impl SkylineAnalysis {
     /// Create a new SkylineAnalysis with 100 empty buckets
     fn new(party_size: usize, encounter_index: Option<usize>) -> Self {
         Self {
-            buckets: (1..=100).map(|p| PercentileBucket {
-                percentile: p,
-                run_count: 0,
-                characters: Vec::new(),
-                party_hp_percent: 0.0,
-                party_resource_percent: 0.0,
-                death_count: 0,
-            }).collect(),
+            buckets: (1..=100)
+                .map(|p| PercentileBucket {
+                    percentile: p,
+                    run_count: 0,
+                    characters: Vec::new(),
+                    party_hp_percent: 0.0,
+                    party_resource_percent: 0.0,
+                    death_count: 0,
+                })
+                .collect(),
             total_runs: 0,
             party_size,
             encounter_index,
@@ -150,12 +152,8 @@ pub fn run_skyline_analysis(
         let median_run = &bucket_runs[median_idx];
 
         // Compute bucket data from median run
-        let bucket = compute_bucket_from_median(
-            median_run,
-            percentile,
-            bucket_runs.len(),
-            encounter_index,
-        );
+        let bucket =
+            compute_bucket_from_median(median_run, percentile, bucket_runs.len(), encounter_index);
 
         analysis.buckets[percentile - 1] = bucket;
     }
@@ -197,7 +195,8 @@ fn compute_bucket_from_median(
 
         if let (Some(init_round), Some(fin_round)) = (initial_round, final_round) {
             // Create ID -> initial resources map
-            let mut initial_resources: std::collections::HashMap<String, _> = std::collections::HashMap::new();
+            let mut initial_resources: std::collections::HashMap<String, _> =
+                std::collections::HashMap::new();
             for c in &init_round.team1 {
                 initial_resources.insert(c.id.clone(), c.initial_state.resources.clone());
             }
@@ -231,14 +230,12 @@ fn compute_bucket_from_median(
                 };
 
                 // Determine death round
-                let (death_round, is_dead) = find_death_round(&encounter_slice.iter().collect::<Vec<_>>(), &c.id);
+                let (death_round, is_dead) =
+                    find_death_round(&encounter_slice.iter().collect::<Vec<_>>(), &c.id);
 
                 // Extract resource breakdown
-                let breakdown = extract_resource_breakdown(
-                    &c.final_state.resources,
-                    &initial_ledger,
-                    max_hp,
-                );
+                let breakdown =
+                    extract_resource_breakdown(&c.final_state.resources, &initial_ledger, max_hp);
 
                 party_hp_sum += hp_percent;
                 party_resource_sum += resource_percent;
@@ -265,17 +262,22 @@ fn compute_bucket_from_median(
         percentile,
         run_count,
         characters,
-        party_hp_percent: if char_count > 0.0 { party_hp_sum / char_count } else { 0.0 },
-        party_resource_percent: if char_count > 0.0 { party_resource_sum / char_count } else { 0.0 },
+        party_hp_percent: if char_count > 0.0 {
+            party_hp_sum / char_count
+        } else {
+            0.0
+        },
+        party_resource_percent: if char_count > 0.0 {
+            party_resource_sum / char_count
+        } else {
+            0.0
+        },
         death_count,
     }
 }
 
 /// Find the round in which a character died
-fn find_death_round(
-    encounters: &[&EncounterResult],
-    character_id: &str,
-) -> (Option<usize>, bool) {
+fn find_death_round(encounters: &[&EncounterResult], character_id: &str) -> (Option<usize>, bool) {
     let mut global_round = 0;
 
     for enc in encounters {
@@ -331,14 +333,21 @@ fn extract_resource_breakdown(
         } else if key.starts_with("ClassResource") || key.starts_with("Custom") {
             // Categorize by reset rule
             if let Some(reset) = ledger.reset_rules.get(key) {
-                let feature_name = key.replace("ClassResource(", "")
+                let feature_name = key
+                    .replace("ClassResource(", "")
                     .replace("Custom(", "")
                     .replace(")", "")
                     .replace("_", " ");
 
                 match reset {
-                    ResetType::ShortRest => short_rest_features.push(format!("{}: {}/{}", feature_name, current_val as i32, max_val as i32)),
-                    ResetType::LongRest => long_rest_features.push(format!("{}: {}/{}", feature_name, current_val as i32, max_val as i32)),
+                    ResetType::ShortRest => short_rest_features.push(format!(
+                        "{}: {}/{}",
+                        feature_name, current_val as i32, max_val as i32
+                    )),
+                    ResetType::LongRest => long_rest_features.push(format!(
+                        "{}: {}/{}",
+                        feature_name, current_val as i32, max_val as i32
+                    )),
                     _ => {}
                 }
             }
@@ -349,18 +358,8 @@ fn extract_resource_breakdown(
     spell_slots.sort_by_key(|s| s.level);
 
     // Calculate total EHP for debugging
-    let total_ehp = calculate_ehp_points(
-        0,
-        0,
-        &resources.current,
-        &ledger.reset_rules,
-    );
-    let max_ehp = calculate_ehp_points(
-        max_hp,
-        0,
-        &resources.max,
-        &ledger.reset_rules,
-    );
+    let total_ehp = calculate_ehp_points(0, 0, &resources.current, &ledger.reset_rules);
+    let max_ehp = calculate_ehp_points(max_hp, 0, &resources.max, &ledger.reset_rules);
 
     ResourceBreakdown {
         spell_slots,
@@ -404,7 +403,9 @@ pub fn run_skyline_analysis_sorted(
                 (Some(ea), Some(eb)) => {
                     let score_a = calculate_encounter_score(ea);
                     let score_b = calculate_encounter_score(eb);
-                    score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+                    score_a
+                        .partial_cmp(&score_b)
+                        .unwrap_or(std::cmp::Ordering::Equal)
                 }
                 (Some(_), None) => std::cmp::Ordering::Less,
                 (None, Some(_)) => std::cmp::Ordering::Greater,
@@ -416,11 +417,17 @@ pub fn run_skyline_analysis_sorted(
         results.sort_by(|a, b| {
             let score_a = calculate_score(a);
             let score_b = calculate_score(b);
-            score_a.partial_cmp(&score_b).unwrap_or(std::cmp::Ordering::Equal)
+            score_a
+                .partial_cmp(&score_b)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
     }
 
-    run_skyline_analysis(&results.iter().collect::<Vec<_>>(), party_size, encounter_index)
+    run_skyline_analysis(
+        &results.iter().collect::<Vec<_>>(),
+        party_size,
+        encounter_index,
+    )
 }
 
 #[cfg(test)]

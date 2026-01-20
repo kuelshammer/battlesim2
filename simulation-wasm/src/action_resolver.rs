@@ -1,9 +1,9 @@
+use crate::combat_stats::CombatStatsCache;
 use crate::context::{EffectType, TurnContext};
 use crate::dice;
 use crate::events::{Event, RollResult};
 use crate::model::{Action, AtkAction};
 use crate::rng;
-use crate::combat_stats::CombatStatsCache;
 use serde::{Deserialize, Serialize};
 
 /// Event-driven action resolver that converts actions into events
@@ -42,7 +42,7 @@ impl Default for ActionResolver {
 impl ActionResolver {
     /// Create a new action resolver
     pub fn new() -> Self {
-        Self { 
+        Self {
             rng_seed: None,
             combat_stats_cache: CombatStatsCache::new(),
         }
@@ -129,7 +129,6 @@ impl ActionResolver {
         crate::resolvers::resolve_attack(self, attack, context, actor_id)
     }
 
-
     /// Trigger reactions for all alive combatants based on a condition
     fn trigger_global_reactions(
         &self,
@@ -161,7 +160,12 @@ impl ActionResolver {
                     let mut can_pay = true;
                     if let Some(cost_slot) = trigger.cost {
                         if let Some(reactor) = context.get_combatant(&reactor_id) {
-                            if reactor.base_combatant.final_state.used_actions.contains(&cost_slot.to_string()) {
+                            if reactor
+                                .base_combatant
+                                .final_state
+                                .used_actions
+                                .contains(&cost_slot.to_string())
+                            {
                                 can_pay = false;
                             }
                         }
@@ -171,7 +175,11 @@ impl ActionResolver {
                         // Consume cost
                         if let Some(cost_slot) = trigger.cost {
                             if let Some(reactor_mut) = context.get_combatant_mut(&reactor_id) {
-                                reactor_mut.base_combatant.final_state.used_actions.insert(cost_slot.to_string());
+                                reactor_mut
+                                    .base_combatant
+                                    .final_state
+                                    .used_actions
+                                    .insert(cost_slot.to_string());
                             }
                         }
 
@@ -183,7 +191,8 @@ impl ActionResolver {
                         });
 
                         // Resolve trigger action
-                        let reaction_events = self.resolve_action(&trigger.action, context, &reactor_id);
+                        let reaction_events =
+                            self.resolve_action(&trigger.action, context, &reactor_id);
                         events.extend(reaction_events);
 
                         if context.action_interrupted {
@@ -281,20 +290,28 @@ impl ActionResolver {
                                     // Grant an immediate action outside normal turn order
                                     if let Some(combatant) = context.get_combatant(reactor_id) {
                                         // Look for the action in the combatant's known actions
-                                        let action = combatant.base_combatant.creature.actions.iter()
+                                        let action = combatant
+                                            .base_combatant
+                                            .creature
+                                            .actions
+                                            .iter()
                                             .find(|a| a.base().id == *action_id)
                                             .cloned();
 
                                         if let Some(action) = action {
                                             // Emit action start event for the granted action
-                                            context.record_event(crate::events::Event::ActionStarted {
-                                                actor_id: reactor_id.to_string(),
-                                                action_id: action_id.clone(),
-                                                decision_trace: std::collections::HashMap::new(),
-                                            });
+                                            context.record_event(
+                                                crate::events::Event::ActionStarted {
+                                                    actor_id: reactor_id.to_string(),
+                                                    action_id: action_id.clone(),
+                                                    decision_trace: std::collections::HashMap::new(
+                                                    ),
+                                                },
+                                            );
 
                                             // Resolve the granted action recursively
-                                            let nested_events = self.resolve_action(&action, context, reactor_id);
+                                            let nested_events =
+                                                self.resolve_action(&action, context, reactor_id);
                                             events.extend(nested_events);
                                         }
                                     }
@@ -303,7 +320,10 @@ impl ActionResolver {
                                     // Set the interrupt flag to stop the current action sequence
                                     context.action_interrupted = true;
                                 }
-                                crate::enums::TriggerEffect::AddToRoll { amount, roll_type: _ } => {
+                                crate::enums::TriggerEffect::AddToRoll {
+                                    amount,
+                                    roll_type: _,
+                                } => {
                                     // Add a pending roll bonus
                                     context.roll_modifications.add(
                                         reactor_id,
@@ -393,12 +413,22 @@ impl ActionResolver {
                                     };
 
                                     if !target_id_resolved.is_empty() {
-                                        if let Some(target_mut) = context.get_combatant_mut(target_id_resolved) {
-                                            let reaction_slot_id = crate::enums::ActionSlot::Reaction as i32;
-                                            target_mut.base_combatant.final_state.used_actions.insert(reaction_slot_id.to_string());
-                                            
+                                        if let Some(target_mut) =
+                                            context.get_combatant_mut(target_id_resolved)
+                                        {
+                                            let reaction_slot_id =
+                                                crate::enums::ActionSlot::Reaction as i32;
+                                            target_mut
+                                                .base_combatant
+                                                .final_state
+                                                .used_actions
+                                                .insert(reaction_slot_id.to_string());
+
                                             let mut data = std::collections::HashMap::new();
-                                            data.insert("target_id".to_string(), target_id_resolved.to_string());
+                                            data.insert(
+                                                "target_id".to_string(),
+                                                target_id_resolved.to_string(),
+                                            );
                                             events.push(Event::Custom {
                                                 event_type: "ConsumeReaction".to_string(),
                                                 data,
@@ -410,7 +440,7 @@ impl ActionResolver {
                                 crate::enums::TriggerEffect::RedirectAttack { new_target_id } => {
                                     let mut data = std::collections::HashMap::new();
                                     data.insert("new_target_id".to_string(), new_target_id.clone());
-                                    
+
                                     events.push(Event::Custom {
                                         event_type: "RedirectAttack".to_string(),
                                         data,
@@ -421,7 +451,7 @@ impl ActionResolver {
                                     let mut data = std::collections::HashMap::new();
                                     data.insert("target_id".to_string(), target_id.clone());
                                     data.insert("percent".to_string(), percent.to_string());
-                                    
+
                                     events.push(Event::Custom {
                                         event_type: "SplitDamage".to_string(),
                                         data,
@@ -443,11 +473,15 @@ impl ActionResolver {
     /// Roll a saving throw for a combatant
     pub fn roll_save(&self, target_id: &str, context: &mut TurnContext) -> f64 {
         let mut roll = rng::roll_d20();
-        
+
         // Apply rerolls
         let mods = context.roll_modifications.take_all(target_id);
         for modif in &mods {
-            if let crate::context::RollModification::Reroll { roll_type, must_use_second } = modif {
+            if let crate::context::RollModification::Reroll {
+                roll_type,
+                must_use_second,
+            } = modif
+            {
                 if roll_type == "save" {
                     let roll2 = rng::roll_d20();
                     if *must_use_second {
@@ -578,15 +612,23 @@ mod tests {
 
         let mut context = TurnContext::new(
             vec![
-                Combattant { team: 1,
+                Combattant {
+                    team: 1,
                     id: "orc".to_string(),
                     creature: std::sync::Arc::new(attacker),
                     initiative: 10.0,
-                    initial_state: CreatureState { current_hp: 20, ..CreatureState::default() },
-                    final_state: CreatureState { current_hp: 20, ..CreatureState::default() },
+                    initial_state: CreatureState {
+                        current_hp: 20,
+                        ..CreatureState::default()
+                    },
+                    final_state: CreatureState {
+                        current_hp: 20,
+                        ..CreatureState::default()
+                    },
                     actions: vec![],
                 },
-                Combattant { team: 0,
+                Combattant {
+                    team: 0,
                     id: "warlock".to_string(),
                     creature: std::sync::Arc::new(defender.clone()),
                     initiative: 10.0,
@@ -701,7 +743,7 @@ mod tests {
     fn test_multiattack_retargeting() {
         use crate::context::TurnContext;
         use crate::enums::{ActionCondition, EnemyTarget};
-        use crate::model::{Combattant, Creature, CreatureState, AtkAction};
+        use crate::model::{AtkAction, Combattant, Creature, CreatureState};
 
         // Setup: Attacker (3 attacks), 3 Victims (10 HP each)
         // Damage = 5 (Fixed). 2 Hits to kill.
@@ -769,36 +811,64 @@ mod tests {
 
         let mut context = TurnContext::new(
             vec![
-                Combattant { team: 0,
+                Combattant {
+                    team: 0,
                     id: "attacker".to_string(),
                     creature: std::sync::Arc::new(attacker_c),
                     initiative: 20.0,
-                    initial_state: CreatureState { current_hp: 100, ..CreatureState::default() },
-                    final_state: CreatureState { current_hp: 100, ..CreatureState::default() },
+                    initial_state: CreatureState {
+                        current_hp: 100,
+                        ..CreatureState::default()
+                    },
+                    final_state: CreatureState {
+                        current_hp: 100,
+                        ..CreatureState::default()
+                    },
                     actions: vec![],
                 },
-                Combattant { team: 1,
+                Combattant {
+                    team: 1,
                     id: "v1".to_string(),
                     creature: std::sync::Arc::new(victim_tpl.clone()),
                     initiative: 10.0,
-                    initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
-                    final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
+                    initial_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
+                    final_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
                     actions: vec![],
                 },
-                Combattant { team: 1,
+                Combattant {
+                    team: 1,
                     id: "v2".to_string(),
                     creature: std::sync::Arc::new(victim_tpl.clone()),
                     initiative: 10.0,
-                    initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
-                    final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
+                    initial_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
+                    final_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
                     actions: vec![],
                 },
-                Combattant { team: 1,
+                Combattant {
+                    team: 1,
                     id: "v3".to_string(),
                     creature: std::sync::Arc::new(victim_tpl.clone()),
                     initiative: 10.0,
-                    initial_state: CreatureState { current_hp: 10, ..CreatureState::default() },
-                    final_state: CreatureState { current_hp: 10, ..CreatureState::default() },
+                    initial_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
+                    final_state: CreatureState {
+                        current_hp: 10,
+                        ..CreatureState::default()
+                    },
                     actions: vec![],
                 },
             ],
@@ -850,7 +920,7 @@ mod tests {
         // 2. Hits distribution should be [1, 1, 1] if no misses
         let mut hits = vec![v1_hits, v2_hits, v3_hits];
         hits.sort();
-        
+
         if dead_count == 3 {
             assert_eq!(hits, vec![1, 1, 1]);
         }

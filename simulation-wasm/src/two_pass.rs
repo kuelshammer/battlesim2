@@ -76,8 +76,7 @@ pub fn run_simulation_with_rolling_stats(
     crate::rng::clear_rng();
 
     // Calculate statistics from lightweight runs
-    let mut sorted_scores: Vec<f64> =
-        lightweight_runs.iter().map(|r| r.final_score).collect();
+    let mut sorted_scores: Vec<f64> = lightweight_runs.iter().map(|r| r.final_score).collect();
     sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
     let mut score_sum = 0.0;
@@ -209,10 +208,8 @@ pub fn run_simulation_with_three_tier(
     crate::rng::clear_rng();
 
     // Calculate statistics from lightweight runs
-    let mut sorted_scores: Vec<f64> =
-        lightweight_runs.iter().map(|r| r.final_score).collect();
-    sorted_scores
-        .sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let mut sorted_scores: Vec<f64> = lightweight_runs.iter().map(|r| r.final_score).collect();
+    sorted_scores.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
     let mut score_sum = 0.0;
     let mut score_sum_squared = 0.0;

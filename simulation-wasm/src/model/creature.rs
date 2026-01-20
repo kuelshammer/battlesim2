@@ -1,12 +1,12 @@
-use serde::{Deserialize, Serialize, Deserializer, Serializer};
+use super::action::{Action, ActionTrigger, Frequency};
+use super::buff::Buff;
+use super::formula::DiceFormula;
+use super::types::{AcKnowledge, SerializableResourceLedger};
+use crate::resources::{ResetType, ResourceLedger, ResourceType};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::Arc;
-use crate::resources::{ResourceLedger, ResourceType, ResetType};
-use super::formula::DiceFormula;
-use super::buff::Buff;
-use super::action::{Action, ActionTrigger, Frequency};
-use super::types::{AcKnowledge, SerializableResourceLedger};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Creature {
@@ -114,24 +114,24 @@ impl Hash for Creature {
         self.arrival.hash(state);
         self.mode.hash(state);
         self.name.hash(state);
-        crate::utilities::hash_f64(self.count, state);
+        crate::utils::hash_f64(self.count, state);
         self.hp.hash(state);
         self.ac.hash(state);
-        crate::utilities::hash_opt_f64(self.speed_fly, state);
-        crate::utilities::hash_f64(self.save_bonus, state);
-        crate::utilities::hash_opt_f64(self.str_save_bonus, state);
-        crate::utilities::hash_opt_f64(self.dex_save_bonus, state);
-        crate::utilities::hash_opt_f64(self.con_save_bonus, state);
-        crate::utilities::hash_opt_f64(self.int_save_bonus, state);
-        crate::utilities::hash_opt_f64(self.wis_save_bonus, state);
-        crate::utilities::hash_opt_f64(self.cha_save_bonus, state);
+        crate::utils::hash_opt_f64(self.speed_fly, state);
+        crate::utils::hash_f64(self.save_bonus, state);
+        crate::utils::hash_opt_f64(self.str_save_bonus, state);
+        crate::utils::hash_opt_f64(self.dex_save_bonus, state);
+        crate::utils::hash_opt_f64(self.con_save_bonus, state);
+        crate::utils::hash_opt_f64(self.int_save_bonus, state);
+        crate::utils::hash_opt_f64(self.wis_save_bonus, state);
+        crate::utils::hash_opt_f64(self.cha_save_bonus, state);
         self.con_save_advantage.hash(state);
         self.save_advantage.hash(state);
         self.initiative_bonus.hash(state);
         self.initiative_advantage.hash(state);
         self.actions.hash(state);
         self.triggers.hash(state);
-        
+
         // HashMap hashing needs sorting for determinism
         if let Some(slots) = &self.spell_slots {
             let mut sorted_slots: Vec<_> = slots.iter().collect();
@@ -150,7 +150,7 @@ impl Hash for Creature {
         }
 
         self.hit_dice.hash(state);
-        crate::utilities::hash_opt_f64(self.con_modifier, state);
+        crate::utils::hash_opt_f64(self.con_modifier, state);
         self.magic_items.hash(state);
         self.max_arcane_ward_hp.hash(state);
         self.initial_buffs.hash(state);
@@ -162,38 +162,21 @@ impl Creature {
         let mut ledger = ResourceLedger::new();
 
         // Add standard resources
-        ledger.register_resource(
-            ResourceType::Action,
-            None,
-            1.0,
-            Some(ResetType::Turn),
-        );
-        ledger.register_resource(
-            ResourceType::BonusAction,
-            None,
-            1.0,
-            Some(ResetType::Turn),
-        );
-        ledger.register_resource(
-            ResourceType::Reaction,
-            None,
-            1.0,
-            Some(ResetType::Round),
-        );
-        ledger.register_resource(
-            ResourceType::Movement,
-            None,
-            30.0,
-            Some(ResetType::Turn),
-        ); // Default 30ft, should use self.speed if available
+        ledger.register_resource(ResourceType::Action, None, 1.0, Some(ResetType::Turn));
+        ledger.register_resource(ResourceType::BonusAction, None, 1.0, Some(ResetType::Turn));
+        ledger.register_resource(ResourceType::Reaction, None, 1.0, Some(ResetType::Round));
+        ledger.register_resource(ResourceType::Movement, None, 30.0, Some(ResetType::Turn)); // Default 30ft, should use self.speed if available
 
         // Add spell slots
         if let Some(slots) = &self.spell_slots {
             for (level_str, count) in slots {
                 // Try to extract digit from string (e.g. "1st" -> 1)
-                let cleaned_level = level_str.chars().filter(|c| c.is_ascii_digit()).collect::<String>();
+                let cleaned_level = level_str
+                    .chars()
+                    .filter(|c| c.is_ascii_digit())
+                    .collect::<String>();
                 if let Ok(level) = cleaned_level.parse::<u8>() {
-                    let resource_type = ResourceType::SpellSlot; 
+                    let resource_type = ResourceType::SpellSlot;
                     ledger.register_resource(
                         resource_type,
                         Some(&level.to_string()),
@@ -208,18 +191,21 @@ impl Creature {
         if let Some(resources) = &self.class_resources {
             for (name, count) in resources {
                 let resource_type = ResourceType::ClassResource;
-                
+
                 // Identify common short rest resources
                 let reset_type = match name.as_str() {
-                    "Ki" | "Action Surge" | "Superiority Dice" | "Wild Shape" | 
-                    "Channel Divinity" | "Warlock Spell Slot" | "Bardic Inspiration" |
-                    "Second Wind" | "Frenzy" | "Rage" => {
+                    "Ki" | "Action Surge" | "Superiority Dice" | "Wild Shape"
+                    | "Channel Divinity" | "Warlock Spell Slot" | "Bardic Inspiration"
+                    | "Second Wind" | "Frenzy" | "Rage" => {
                         // Note: Rage is usually LR, but some implementations might use it differently.
-                        // For 5e 2014/2024, Rage is Long Rest. 
+                        // For 5e 2014/2024, Rage is Long Rest.
                         // Let's stick to the most common SR ones.
-                        if name == "Rage" { ResetType::LongRest }
-                        else { ResetType::ShortRest }
-                    },
+                        if name == "Rage" {
+                            ResetType::LongRest
+                        } else {
+                            ResetType::ShortRest
+                        }
+                    }
                     _ => ResetType::LongRest,
                 };
 
@@ -261,8 +247,11 @@ impl Creature {
                 Frequency::Static(s) if s == "1/day" => Some(ResetType::LongRest),
                 Frequency::Recharge { .. } => Some(ResetType::Encounter),
                 Frequency::Limited { reset, .. } => {
-                    if reset == "lr" { Some(ResetType::LongRest) }
-                    else { Some(ResetType::ShortRest) }
+                    if reset == "lr" {
+                        Some(ResetType::LongRest)
+                    } else {
+                        Some(ResetType::ShortRest)
+                    }
                 }
                 _ => None,
             };
@@ -341,12 +330,7 @@ fn register_hit_dice_term(ledger: &mut ResourceLedger, term: &str) {
                 }
             };
 
-            ledger.register_resource(
-                resource_type,
-                None,
-                count as f64,
-                Some(ResetType::LongRest),
-            );
+            ledger.register_resource(resource_type, None, count as f64, Some(ResetType::LongRest));
         }
     }
 }
@@ -518,8 +502,13 @@ impl Combattant {
 
     pub fn current_survivability_score_vs_attack(&self, monster_attack_bonus: i32) -> f64 {
         let hit_chance = calculate_hit_chance(self.creature.ac, monster_attack_bonus);
-        let rage_multiplier = if self.final_state.has_rage_active() { 2.0 } else { 1.0 };
-        let total_hp = self.final_state.current_hp as f64 + self.final_state.temp_hp.unwrap_or(0) as f64;
+        let rage_multiplier = if self.final_state.has_rage_active() {
+            2.0
+        } else {
+            1.0
+        };
+        let total_hp =
+            self.final_state.current_hp as f64 + self.final_state.temp_hp.unwrap_or(0) as f64;
         (total_hp / hit_chance * rage_multiplier).round()
     }
 }

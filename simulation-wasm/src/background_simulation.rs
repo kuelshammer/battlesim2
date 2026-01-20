@@ -5,7 +5,7 @@ use crate::model::SimulationResult;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::user_interaction::ScenarioParameters;
 #[cfg(not(target_arch = "wasm32"))]
-use std::sync::{Arc, Mutex, mpsc, PoisonError};
+use std::sync::{mpsc, Arc, Mutex, PoisonError};
 #[cfg(not(target_arch = "wasm32"))]
 use std::thread;
 #[cfg(not(target_arch = "wasm32"))]
@@ -17,10 +17,13 @@ pub struct BackgroundSimulationId(pub String);
 
 impl BackgroundSimulationId {
     pub fn new() -> Self {
-        Self(format!("sim_{}", SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos()))
+        Self(format!(
+            "sim_{}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos()
+        ))
     }
 
     pub fn from_string(s: &str) -> Result<Self, String> {
@@ -39,7 +42,19 @@ impl Default for BackgroundSimulationId {
 }
 
 /// Priority level for simulation requests
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize, Default)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    Default,
+)]
 pub enum SimulationPriority {
     Low = 0,
     #[default]
@@ -117,7 +132,10 @@ impl BackgroundSimulation {
     pub fn new(mut parameters: ScenarioParameters, priority: SimulationPriority) -> Self {
         parameters.iterations = parameters.iterations.max(100);
         let id = BackgroundSimulationId::new();
-        let progress = Arc::new(Mutex::new(SimulationProgress::new(id.clone(), parameters.iterations)));
+        let progress = Arc::new(Mutex::new(SimulationProgress::new(
+            id.clone(),
+            parameters.iterations,
+        )));
 
         Self {
             id: id.clone(),
@@ -131,17 +149,26 @@ impl BackgroundSimulation {
 
     /// Check if cancellation has been requested
     pub fn is_cancelled(&self) -> bool {
-        *self.cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner)
+        *self
+            .cancellation_requested
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Request cancellation of this simulation
     pub fn request_cancellation(&self) {
-        *self.cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner) = true;
+        *self
+            .cancellation_requested
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = true;
     }
 
     /// Get current progress as a clone
     pub fn get_progress(&self) -> SimulationProgress {
-        self.progress.lock().unwrap_or_else(PoisonError::into_inner).clone()
+        self.progress
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 }
 
@@ -242,7 +269,7 @@ impl BackgroundSimulationEngine {
             prog.update_progress(0, "Starting simulation");
             prog.add_message("Simulation initialized".to_string());
         }
-        
+
         // Send initial progress update
         if let Ok(prog) = progress.lock() {
             let _ = progress_sender.send(prog.clone());
@@ -251,7 +278,10 @@ impl BackgroundSimulationEngine {
         // Run simulation with progress tracking
         for i in 0..parameters.iterations {
             // Check for cancellation
-            if *cancellation_requested.lock().unwrap_or_else(PoisonError::into_inner) {
+            if *cancellation_requested
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+            {
                 error_message = Some("Simulation cancelled by user".to_string());
                 break;
             }
@@ -260,17 +290,21 @@ impl BackgroundSimulationEngine {
             if i % 10 == 0 || i == parameters.iterations - 1 {
                 {
                     let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
-                    prog.update_progress(i, format!("Running iteration {}/{}", i + 1, parameters.iterations).as_str());
-                    
+                    prog.update_progress(
+                        i,
+                        format!("Running iteration {}/{}", i + 1, parameters.iterations).as_str(),
+                    );
+
                     // Estimate time remaining
                     if i > 0 {
                         let elapsed = start_time.elapsed().as_millis() as u64;
                         let avg_time_per_iteration = elapsed / i as u64;
                         let remaining_iterations = parameters.iterations.saturating_sub(i);
-                        prog.estimated_time_remaining_ms = Some(avg_time_per_iteration * remaining_iterations as u64);
+                        prog.estimated_time_remaining_ms =
+                            Some(avg_time_per_iteration * remaining_iterations as u64);
                     }
                 }
-                
+
                 // Send progress update
                 if let Ok(prog) = progress.lock() {
                     let _ = progress_sender.send(prog.clone());
@@ -289,17 +323,17 @@ impl BackgroundSimulationEngine {
 
         // Create final result
         let _execution_time = start_time.elapsed().as_millis() as u64;
-        
+
         if error_message.is_none() {
             success = true;
-            
+
             // Update final progress
             {
                 let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
                 prog.update_progress(parameters.iterations, "Storing results");
                 prog.add_message("Simulation completed successfully".to_string());
             }
-            
+
             // Send final progress update
             if let Ok(prog) = progress.lock() {
                 let _ = progress_sender.send(prog.clone());
@@ -310,7 +344,7 @@ impl BackgroundSimulationEngine {
 
         // Note: In a real implementation, we'd send this through a completion channel
         // For now, the progress updates and storage integration are the main focus
-        
+
         // Update final progress with completion status
         {
             let mut prog = progress.lock().unwrap_or_else(PoisonError::into_inner);
@@ -324,7 +358,7 @@ impl BackgroundSimulationEngine {
                 }
             }
         }
-        
+
         // Send final progress update
         if let Ok(prog) = progress.lock() {
             let _ = progress_sender.send(prog.clone());
@@ -337,11 +371,11 @@ impl BackgroundSimulationEngine {
         let runs = crate::run_event_driven_simulation_rust(
             parameters.players.clone(),
             parameters.timeline.clone(),
-            1, // Single iteration
+            1,     // Single iteration
             false, // log_enabled
             None,
         );
-        
+
         runs.into_iter()
             .next()
             .map(|run| run.result)
@@ -359,7 +393,10 @@ impl BackgroundSimulationEngine {
 
     /// Wait for a completed simulation (blocking)
     pub fn wait_for_completed(&self) -> BackgroundSimulationResult {
-        let receiver = self.completion_receiver.lock().unwrap_or_else(PoisonError::into_inner);
+        let receiver = self
+            .completion_receiver
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         receiver.recv().unwrap()
     }
 }
@@ -411,7 +448,7 @@ mod tests {
         };
 
         let simulation = BackgroundSimulation::new(parameters, SimulationPriority::High);
-        
+
         assert_eq!(simulation.priority, SimulationPriority::High);
         assert_eq!(simulation.parameters.iterations, 100);
         assert!(!simulation.is_cancelled());
@@ -421,10 +458,10 @@ mod tests {
     fn test_simulation_progress() {
         let id = BackgroundSimulationId::new();
         let mut progress = SimulationProgress::new(id.clone(), 100);
-        
+
         assert_eq!(progress.progress_percentage, 0.0);
         assert_eq!(progress.iterations_completed, 0);
-        
+
         progress.update_progress(50, "Running");
         assert_eq!(progress.progress_percentage, 0.5);
         assert_eq!(progress.iterations_completed, 50);
@@ -440,7 +477,7 @@ mod tests {
         };
 
         let simulation = BackgroundSimulation::new(parameters, SimulationPriority::Normal);
-        
+
         assert!(!simulation.is_cancelled());
         simulation.request_cancellation();
         assert!(simulation.is_cancelled());

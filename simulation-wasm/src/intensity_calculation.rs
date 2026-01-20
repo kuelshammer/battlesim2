@@ -1,4 +1,4 @@
-use crate::resources::{ResourceLedger, ResetType};
+use crate::resources::{ResetType, ResourceLedger};
 use std::collections::HashMap;
 
 pub const HP_WEIGHT: f64 = 1.0;
@@ -8,16 +8,26 @@ pub const SR_FEATURE_WEIGHT: f64 = 15.0;
 pub const LR_FEATURE_WEIGHT: f64 = 30.0;
 
 pub fn get_hit_die_average(key: &str, con_modifier: f64) -> f64 {
-    let die_size = if key.contains("D6") { 6.0 }
-        else if key.contains("D8") { 8.0 }
-        else if key.contains("D10") { 10.0 }
-        else if key.contains("D12") { 12.0 }
-        else { 8.0 };
-    
+    let die_size = if key.contains("D6") {
+        6.0
+    } else if key.contains("D8") {
+        8.0
+    } else if key.contains("D10") {
+        10.0
+    } else if key.contains("D12") {
+        12.0
+    } else {
+        8.0
+    };
+
     die_size / 2.0 + 0.5 + con_modifier
 }
 
-pub fn get_resource_weight(key: &str, reset_rules: &HashMap<String, ResetType>, con_modifier: f64) -> f64 {
+pub fn get_resource_weight(
+    key: &str,
+    reset_rules: &HashMap<String, ResetType>,
+    con_modifier: f64,
+) -> f64 {
     if key.starts_with("HitDice") {
         return get_hit_die_average(key, con_modifier);
     } else if key.starts_with("SpellSlot") {
@@ -26,7 +36,10 @@ pub fn get_resource_weight(key: &str, reset_rules: &HashMap<String, ResetType>, 
                 return (SPELL_SLOT_BASE * 1.6_f64.powf(level)).round();
             }
         }
-    } else if key.starts_with("ClassResource") || key.starts_with("Custom") || reset_rules.contains_key(key) {
+    } else if key.starts_with("ClassResource")
+        || key.starts_with("Custom")
+        || reset_rules.contains_key(key)
+    {
         if let Some(reset) = reset_rules.get(key) {
             return match reset {
                 ResetType::ShortRest => 10.0,
@@ -55,7 +68,7 @@ pub fn calculate_daily_budget(creature: &crate::model::Creature, sr_count: usize
             total += max_amt * weight * multiplier;
         }
     }
-    
+
     total.round()
 }
 
@@ -63,13 +76,15 @@ pub fn calculate_daily_budget(creature: &crate::model::Creature, sr_count: usize
 pub fn calculate_ehp_points(
     hp: u32,
     temp_hp: u32,
-    current: &HashMap<String, f64>, 
-    reset_rules: &HashMap<String, ResetType>
+    current: &HashMap<String, f64>,
+    reset_rules: &HashMap<String, ResetType>,
 ) -> f64 {
     let mut total = (hp as f64 + temp_hp as f64) * HP_WEIGHT;
 
     for (key, &amount) in current {
-        if amount <= 0.0 { continue; }
+        if amount <= 0.0 {
+            continue;
+        }
 
         if key.starts_with("HitDice") {
             total += amount * HIT_DIE_WEIGHT;
@@ -117,8 +132,8 @@ pub fn calculate_ledger_max_ehp(creature: &crate::model::Creature, ledger: &Reso
 pub fn calculate_serializable_ehp(
     hp: u32,
     temp_hp: u32,
-    ledger: &crate::model::SerializableResourceLedger, 
-    reset_rules: &HashMap<String, ResetType>
+    ledger: &crate::model::SerializableResourceLedger,
+    reset_rules: &HashMap<String, ResetType>,
 ) -> f64 {
     calculate_ehp_points(hp, temp_hp, &ledger.current, reset_rules)
 }
@@ -135,12 +150,18 @@ pub fn calculate_vitality(
 
     for (key, &max_amt) in max {
         if key.starts_with("HitDice") {
-            let die_size = if key.contains("D6") { 6.0 }
-                else if key.contains("D8") { 8.0 }
-                else if key.contains("D10") { 10.0 }
-                else if key.contains("D12") { 12.0 }
-                else { 8.0 };
-            
+            let die_size = if key.contains("D6") {
+                6.0
+            } else if key.contains("D8") {
+                8.0
+            } else if key.contains("D10") {
+                10.0
+            } else if key.contains("D12") {
+                12.0
+            } else {
+                8.0
+            };
+
             let avg_val = die_size / 2.0 + 0.5 + con_modifier;
             current_hd_val += current.get(key).cloned().unwrap_or(0.0) * avg_val;
             max_hd_val += max_amt * avg_val;
@@ -170,15 +191,21 @@ pub fn calculate_power(
             if let Some(level_str) = extract_level(key) {
                 if let Ok(level) = level_str.parse::<f64>() {
                     (15.0 * 1.6_f64.powf(level)).round()
-                } else { 0.0 }
-            } else { 0.0 }
+                } else {
+                    0.0
+                }
+            } else {
+                0.0
+            }
         } else if key.starts_with("ClassResource") || key.starts_with("Custom") {
             match reset_rules.get(key) {
                 Some(ResetType::ShortRest) => 10.0,
                 Some(ResetType::LongRest) => 30.0,
-                _ => 0.0
+                _ => 0.0,
             }
-        } else { 0.0 };
+        } else {
+            0.0
+        };
 
         if weight > 0.0 {
             current_val += current.get(key).cloned().unwrap_or(0.0) * weight;
@@ -193,10 +220,7 @@ pub fn calculate_power(
     }
 }
 
-pub fn calculate_strategic_power(
-    cumulative_spent: f64,
-    daily_budget: f64,
-) -> f64 {
+pub fn calculate_strategic_power(cumulative_spent: f64, daily_budget: f64) -> f64 {
     if daily_budget > 0.0 {
         ((daily_budget - cumulative_spent) / daily_budget * 100.0).max(0.0)
     } else {

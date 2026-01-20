@@ -6,8 +6,8 @@
 // Error: RuntimeError: unreachable at __rg_oom
 // Root cause: Storing all 2511 results in Vec<SimulationResult> causes O(N) memory usage
 
+use simulation_wasm::model::{Creature, DiceFormula, Encounter, TargetRole, TimelineStep};
 use simulation_wasm::run_event_driven_simulation_rust;
-use simulation_wasm::model::{Creature, TimelineStep, TargetRole, DiceFormula, Encounter};
 use std::mem::size_of;
 
 // Helper to calculate deep size of heap-allocated data
@@ -29,7 +29,10 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         actions: vec![],
         triggers: vec![],
         arrival: None,
-        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![],
+        mode: "player".to_string(),
+        magic_items: vec![],
+        max_arcane_ward_hp: None,
+        initial_buffs: vec![],
         speed_fly: None,
         save_bonus: 0.0,
         str_save_bonus: None,
@@ -64,20 +67,41 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
 
 #[test]
 fn measure_structure_sizes() {
-    use simulation_wasm::model::{SimulationResult, Combattant, SimulationRun, EncounterResult};
     use simulation_wasm::context::CombattantState;
+    use simulation_wasm::model::{Combattant, EncounterResult, SimulationResult, SimulationRun};
 
     println!("=== Memory Footprint Analysis ===");
     println!("Size of Creature: {} bytes", size_of::<Creature>());
-    println!("Size of Vec<Creature>: {} bytes", size_of::<Vec<Creature>>());
+    println!(
+        "Size of Vec<Creature>: {} bytes",
+        size_of::<Vec<Creature>>()
+    );
     println!("Size of TimelineStep: {} bytes", size_of::<TimelineStep>());
-    println!("Size of Vec<TimelineStep>: {} bytes", size_of::<Vec<TimelineStep>>());
+    println!(
+        "Size of Vec<TimelineStep>: {} bytes",
+        size_of::<Vec<TimelineStep>>()
+    );
     println!("Size of Combattant: {} bytes", size_of::<Combattant>());
-    println!("Size of CombattantState: {} bytes", size_of::<CombattantState>());
-    println!("Size of EncounterResult: {} bytes", size_of::<EncounterResult>());
-    println!("Size of SimulationResult: {} bytes", size_of::<SimulationResult>());
-    println!("Size of SimulationRun: {} bytes", size_of::<SimulationRun>());
-    println!("Size of Vec<SimulationRun>: {} bytes (empty)", size_of::<Vec<SimulationRun>>());
+    println!(
+        "Size of CombattantState: {} bytes",
+        size_of::<CombattantState>()
+    );
+    println!(
+        "Size of EncounterResult: {} bytes",
+        size_of::<EncounterResult>()
+    );
+    println!(
+        "Size of SimulationResult: {} bytes",
+        size_of::<SimulationResult>()
+    );
+    println!(
+        "Size of SimulationRun: {} bytes",
+        size_of::<SimulationRun>()
+    );
+    println!(
+        "Size of Vec<SimulationRun>: {} bytes (empty)",
+        size_of::<Vec<SimulationRun>>()
+    );
     println!("====================================");
 
     // Rough memory usage per iteration calculation:
@@ -97,7 +121,7 @@ fn estimate_memory_for_iterations() {
     let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, Some(42));
 
     // Calculate theoretical memory based on structure sizes and content
-    use simulation_wasm::model::{SimulationRun, SimulationResult, EncounterResult};
+    use simulation_wasm::model::{EncounterResult, SimulationResult, SimulationRun};
 
     let mut total_estimated_bytes = 0;
     for run in &runs {
@@ -113,11 +137,13 @@ fn estimate_memory_for_iterations() {
             total_estimated_bytes += size_of::<EncounterResult>();
             // HashMap overhead (bucket array + entries)
             total_estimated_bytes += encounter_res.stats.len() * (size_of::<String>() + 64); // rough estimate
-            // Rounds with combattants
+                                                                                             // Rounds with combattants
             for round in &encounter_res.rounds {
                 total_estimated_bytes += size_of::<Vec<simulation_wasm::model::Combattant>>() * 2; // two teams
-                total_estimated_bytes += round.team1.len() * size_of::<simulation_wasm::model::Combattant>();
-                total_estimated_bytes += round.team2.len() * size_of::<simulation_wasm::model::Combattant>();
+                total_estimated_bytes +=
+                    round.team1.len() * size_of::<simulation_wasm::model::Combattant>();
+                total_estimated_bytes +=
+                    round.team2.len() * size_of::<simulation_wasm::model::Combattant>();
             }
         }
 
@@ -128,7 +154,10 @@ fn estimate_memory_for_iterations() {
     let per_iteration = total_estimated_bytes / iterations;
 
     println!("=== Deep Memory Estimation ===");
-    println!("Total estimated for {} iterations: {} bytes", iterations, total_estimated_bytes);
+    println!(
+        "Total estimated for {} iterations: {} bytes",
+        iterations, total_estimated_bytes
+    );
     println!("Estimated per iteration: {} bytes", per_iteration);
     println!("==============================");
 
@@ -152,7 +181,11 @@ fn test_small_iteration_count() {
     let runs = run_event_driven_simulation_rust(players, timeline, requested, false, Some(42));
 
     assert_eq!(runs.len(), expected);
-    println!("✓ Requested {} iterations, received {} (minimum enforced)", requested, runs.len());
+    println!(
+        "✓ Requested {} iterations, received {} (minimum enforced)",
+        requested,
+        runs.len()
+    );
 }
 
 #[test]
@@ -175,12 +208,18 @@ fn test_high_iteration_count_oom_trigger() {
     // Precise iterations (2511) - this may trigger OOM in WASM
     let iterations = 2511;
 
-    println!("Attempting {} iterations - this may OOM in WASM environment...", iterations);
+    println!(
+        "Attempting {} iterations - this may OOM in WASM environment...",
+        iterations
+    );
 
     let runs = run_event_driven_simulation_rust(players, timeline, iterations, false, Some(42));
 
     assert_eq!(runs.len(), iterations);
-    println!("✓ {} iterations completed successfully (OOM may have been fixed!)", iterations);
+    println!(
+        "✓ {} iterations completed successfully (OOM may have been fixed!)",
+        iterations
+    );
 }
 
 #[test]
@@ -210,7 +249,8 @@ fn demonstrate_memory_growth() {
             for enc in &run.result.encounters {
                 total_size += enc.stats.len() * 128; // HashMap entry estimate
                 for round in &enc.rounds {
-                    total_size += (round.team1.len() + round.team2.len()) * size_of::<simulation_wasm::model::Combattant>();
+                    total_size += (round.team1.len() + round.team2.len())
+                        * size_of::<simulation_wasm::model::Combattant>();
                 }
             }
             total_size += run.events.len() * 64; // Event estimate

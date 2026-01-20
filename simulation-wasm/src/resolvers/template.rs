@@ -1,7 +1,7 @@
 use crate::context::{ActiveEffect, EffectType, TurnContext};
 use crate::events::Event;
-use crate::model::{Action, TemplateAction, Buff};
-use crate::{targeting, action_resolver::ActionResolver};
+use crate::model::{Action, Buff, TemplateAction};
+use crate::{action_resolver::ActionResolver, targeting};
 use std::collections::HashMap;
 
 pub fn resolve(
@@ -23,18 +23,23 @@ pub fn resolve(
     };
 
     let actor_side = context.get_combatant(actor_id).unwrap().side;
-    
+
     let all_combatants = context.get_alive_combatants();
-    let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
+    let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants
+        .into_iter()
         .map(|c| c.base_combatant.clone())
         .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
 
     // 2. Get smart targets from targeting module
     let mut template_action_to_resolve = template_action.clone();
-    
+
     // Ensure default target type if missing
     if template_action_to_resolve.template_options.target.is_none() {
-        let default_target = if template_name == "bane" || template_name == "hex" || template_name == "hunter's mark" || template_name == "hypnotic pattern" {
+        let default_target = if template_name == "bane"
+            || template_name == "hex"
+            || template_name == "hunter's mark"
+            || template_name == "hypnotic pattern"
+        {
             use crate::enums::{EnemyTarget, TargetType};
             TargetType::Enemy(EnemyTarget::EnemyWithLeastHP)
         } else {
@@ -44,7 +49,12 @@ pub fn resolve(
         template_action_to_resolve.template_options.target = Some(default_target);
     }
 
-    let target_indices = targeting::get_targets(&actor, &Action::Template(template_action_to_resolve.clone()), &allies, &enemies);
+    let target_indices = targeting::get_targets(
+        &actor,
+        &Action::Template(template_action_to_resolve.clone()),
+        &allies,
+        &enemies,
+    );
 
     for (is_enemy, idx) in target_indices {
         // Check for interruption
@@ -53,11 +63,15 @@ pub fn resolve(
         }
 
         let target_id = if is_enemy {
-            if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+            if idx < enemies.len() {
+                enemies[idx].id.clone()
+            } else {
+                continue;
+            }
         } else if idx < allies.len() {
             allies[idx].id.clone()
         } else {
-            continue
+            continue;
         };
 
         // Apply effect based on template name
@@ -106,7 +120,7 @@ pub fn resolve(
         if template_name == "bane" {
             let total_save = resolver.roll_save(&target_id, context);
             let save_dc = template_action.template_options.save_dc.unwrap_or(13.0);
-            
+
             if total_save >= save_dc {
                 should_apply = false;
                 events.push(Event::SpellSaved {
@@ -118,7 +132,10 @@ pub fn resolve(
 
         if should_apply {
             let effect = ActiveEffect {
-                id: format!("{}-{}-{}", template_action.template_options.template_name, actor_id, target_id),
+                id: format!(
+                    "{}-{}-{}",
+                    template_action.template_options.template_name, actor_id, target_id
+                ),
                 source_id: actor_id.to_string(),
                 target_id: target_id.clone(),
                 effect_type: EffectType::Buff(Box::new(buff)),
@@ -130,12 +147,14 @@ pub fn resolve(
         }
     }
 
-
     events.push(Event::Custom {
         event_type: "TemplateActionExecuted".to_string(),
         data: {
             let mut data = HashMap::new();
-            data.insert("template_name".to_string(), template_action.template_options.template_name.clone());
+            data.insert(
+                "template_name".to_string(),
+                template_action.template_options.template_name.clone(),
+            );
             data.insert("actor_id".to_string(), actor_id.to_string());
             data
         },

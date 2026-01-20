@@ -1,6 +1,6 @@
+use super::creature::Creature;
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
-use super::creature::Creature;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 pub enum MonsterRole {
@@ -81,7 +81,11 @@ impl EncounterMetrics {
         let challenging_deaths_p1 = self.deaths_p1 <= 2;
         let challenging_drain = (30.0..=50.0).contains(&self.resource_drain_percent);
 
-        if challenging_deaths_p99 && challenging_deaths_p50 && challenging_deaths_p1 && challenging_drain {
+        if challenging_deaths_p99
+            && challenging_deaths_p50
+            && challenging_deaths_p1
+            && challenging_drain
+        {
             return EncounterTier::Challenging;
         }
 

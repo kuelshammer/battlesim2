@@ -1,9 +1,9 @@
+use super::buff::{Buff, RiderEffect};
+use super::formula::DiceFormula;
+use crate::enums::{ActionCondition, AllyTarget, EnemyTarget, TargetType, TriggerCondition};
+use crate::resources::{ActionCost, ActionRequirement, ActionTag};
 use serde::{Deserialize, Serialize};
 use std::hash::Hash;
-use crate::enums::{ActionCondition, EnemyTarget, AllyTarget, TargetType, TriggerCondition};
-use crate::resources::{ActionCost, ActionRequirement, ActionTag};
-use super::formula::DiceFormula;
-use super::buff::{Buff, RiderEffect};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
 #[serde(untagged)]
@@ -241,7 +241,7 @@ impl Hash for DebuffAction {
         self.condition.hash(state);
         self.targets.hash(state);
         self.target.hash(state);
-        crate::utilities::hash_f64(self.save_dc, state);
+        crate::utils::hash_f64(self.save_dc, state);
         self.buff.hash(state);
     }
 }
@@ -318,7 +318,7 @@ impl Hash for TemplateOptions {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.template_name.hash(state);
         self.target.hash(state);
-        crate::utilities::hash_opt_f64(self.save_dc, state);
+        crate::utils::hash_opt_f64(self.save_dc, state);
         self.amount.hash(state);
     }
 }
@@ -380,13 +380,13 @@ impl Hash for ActionTrigger {
                 count.hash(state);
             }
             crate::enums::TriggerCondition::DamageExceedsPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             crate::enums::TriggerCondition::BelowHpPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             crate::enums::TriggerCondition::AboveHpPercent { threshold } => {
-                crate::utilities::hash_f64(*threshold, state);
+                crate::utils::hash_f64(*threshold, state);
             }
             _ => {}
         }

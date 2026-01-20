@@ -1,7 +1,7 @@
 use crate::background_simulation::{BackgroundSimulationId, SimulationProgress};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, mpsc, PoisonError};
+use std::sync::{mpsc, Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Types of progress updates that can be sent
@@ -50,10 +50,13 @@ impl ProgressUpdate {
     /// Create a new progress update from simulation progress
     pub fn from_progress(progress: &SimulationProgress, update_type: ProgressUpdateType) -> Self {
         Self {
-            update_id: format!("update_{}", SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos()),
+            update_id: format!(
+                "update_{}",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos()
+            ),
             simulation_id: progress.simulation_id.clone(),
             update_type,
             progress_percentage: progress.progress_percentage,
@@ -78,10 +81,13 @@ impl ProgressUpdate {
         phase: &str,
     ) -> Self {
         Self {
-            update_id: format!("update_{}", SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos()),
+            update_id: format!(
+                "update_{}",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos()
+            ),
             simulation_id,
             update_type,
             progress_percentage,
@@ -112,12 +118,20 @@ impl ProgressUpdate {
 
     /// Check if this update represents a completion state
     pub fn is_completion(&self) -> bool {
-        matches!(self.update_type, ProgressUpdateType::Completed | ProgressUpdateType::Failed | ProgressUpdateType::Cancelled)
+        matches!(
+            self.update_type,
+            ProgressUpdateType::Completed
+                | ProgressUpdateType::Failed
+                | ProgressUpdateType::Cancelled
+        )
     }
 
     /// Check if this update represents an error state
     pub fn is_error(&self) -> bool {
-        matches!(self.update_type, ProgressUpdateType::Failed | ProgressUpdateType::Cancelled)
+        matches!(
+            self.update_type,
+            ProgressUpdateType::Failed | ProgressUpdateType::Cancelled
+        )
     }
 
     /// Get a formatted progress string
@@ -132,7 +146,11 @@ impl ProgressUpdate {
                 self.format_time_remaining()
             )
         } else {
-            format!("{}: {:.1}%", self.current_phase, self.progress_percentage * 100.0)
+            format!(
+                "{}: {:.1}%",
+                self.current_phase,
+                self.progress_percentage * 100.0
+            )
         }
     }
 
@@ -226,7 +244,7 @@ impl ProgressSubscription {
     }
 
     /// Add custom filter
-    pub fn with_filter<F>(mut self, filter: F) -> Self 
+    pub fn with_filter<F>(mut self, filter: F) -> Self
     where
         F: Fn(&ProgressUpdate) -> bool + Send + Sync + 'static,
     {
@@ -266,14 +284,12 @@ impl ProgressSubscription {
     /// Simple priority-based type checking
     fn meets_min_type(&self, update_type: &ProgressUpdateType) -> bool {
         // Define priority order (higher = more significant)
-        let type_priority = |t: &ProgressUpdateType| {
-            match t {
-                ProgressUpdateType::Started => 0,
-                ProgressUpdateType::Progress => 1,
-                ProgressUpdateType::Completed => 2,
-                ProgressUpdateType::Failed => 3,
-                ProgressUpdateType::Cancelled => 4,
-            }
+        let type_priority = |t: &ProgressUpdateType| match t {
+            ProgressUpdateType::Started => 0,
+            ProgressUpdateType::Progress => 1,
+            ProgressUpdateType::Completed => 2,
+            ProgressUpdateType::Failed => 3,
+            ProgressUpdateType::Cancelled => 4,
         };
 
         type_priority(update_type) >= type_priority(&self.min_update_type)
@@ -294,7 +310,7 @@ impl ProgressCommunication {
     /// Create a new progress communication system
     pub fn new() -> (Self, mpsc::Receiver<ProgressUpdate>) {
         let (update_sender, update_receiver) = mpsc::channel();
-        
+
         let system = Self {
             update_sender,
             subscriptions: Arc::new(Mutex::new(HashMap::new())),
@@ -307,12 +323,19 @@ impl ProgressCommunication {
     /// Send a progress update to all matching subscribers
     pub fn send_update(&self, update: ProgressUpdate) -> Result<(), ProgressError> {
         // Send to the main broadcast channel
-        self.update_sender.send(update.clone())
+        self.update_sender
+            .send(update.clone())
             .map_err(|_| ProgressError::SendError)?;
 
         // Send to matching subscriptions
-        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
-        let channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
+        let subscriptions = self
+            .subscriptions
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let channels = self
+            .subscription_channels
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
 
         for (subscription_id, subscription) in subscriptions.iter() {
             if subscription.matches(&update) {
@@ -327,19 +350,28 @@ impl ProgressCommunication {
     }
 
     /// Subscribe to progress updates
-    pub fn subscribe(&self, subscription: ProgressSubscription) -> Result<mpsc::Receiver<ProgressUpdate>, ProgressError> {
+    pub fn subscribe(
+        &self,
+        subscription: ProgressSubscription,
+    ) -> Result<mpsc::Receiver<ProgressUpdate>, ProgressError> {
         let (sender, receiver) = mpsc::channel();
         let subscription_id = subscription.subscription_id.clone();
 
         // Add subscription
         {
-            let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut subscriptions = self
+                .subscriptions
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             subscriptions.insert(subscription_id.clone(), subscription);
         }
 
         // Add channel
         {
-            let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut channels = self
+                .subscription_channels
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             channels.insert(subscription_id, sender);
         }
 
@@ -350,13 +382,19 @@ impl ProgressCommunication {
     pub fn unsubscribe(&self, subscription_id: &str) -> Result<(), ProgressError> {
         // Remove subscription
         {
-            let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut subscriptions = self
+                .subscriptions
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             subscriptions.remove(subscription_id);
         }
 
         // Remove channel
         {
-            let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut channels = self
+                .subscription_channels
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             channels.remove(subscription_id);
         }
 
@@ -365,21 +403,33 @@ impl ProgressCommunication {
 
     /// Get all active subscriptions
     pub fn get_subscriptions(&self) -> Vec<ProgressSubscription> {
-        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+        let subscriptions = self
+            .subscriptions
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         subscriptions.values().cloned().collect()
     }
 
     /// Get subscription count
     pub fn subscription_count(&self) -> usize {
-        let subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
+        let subscriptions = self
+            .subscriptions
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         subscriptions.len()
     }
 
     /// Clear all subscriptions
     pub fn clear_subscriptions(&self) {
-        let mut subscriptions = self.subscriptions.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut channels = self.subscription_channels.lock().unwrap_or_else(PoisonError::into_inner);
-        
+        let mut subscriptions = self
+            .subscriptions
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let mut channels = self
+            .subscription_channels
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
         subscriptions.clear();
         channels.clear();
     }
@@ -447,7 +497,6 @@ impl std::error::Error for ProgressError {}
 
 /// Utility functions for progress calculation and formatting
 pub mod progress_utils {
-    
 
     /// Calculate progress percentage with safe division
     pub fn calculate_percentage(completed: usize, total: usize) -> f64 {
@@ -459,18 +508,14 @@ pub mod progress_utils {
     }
 
     /// Estimate time remaining based on current progress
-    pub fn estimate_time_remaining(
-        elapsed_ms: u64,
-        completed: usize,
-        total: usize,
-    ) -> Option<u64> {
+    pub fn estimate_time_remaining(elapsed_ms: u64, completed: usize, total: usize) -> Option<u64> {
         if completed == 0 || total == 0 {
             return None;
         }
 
         let avg_time_per_iteration = elapsed_ms as f64 / completed as f64;
         let remaining_iterations = total.saturating_sub(completed) as f64;
-        
+
         Some((avg_time_per_iteration * remaining_iterations) as u64)
     }
 
@@ -518,12 +563,8 @@ mod tests {
     #[test]
     fn test_progress_update_creation() {
         let sim_id = BackgroundSimulationId::new();
-        let update = ProgressUpdate::new(
-            sim_id.clone(),
-            ProgressUpdateType::Progress,
-            0.5,
-            "Running",
-        );
+        let update =
+            ProgressUpdate::new(sim_id.clone(), ProgressUpdateType::Progress, 0.5, "Running");
 
         assert_eq!(update.simulation_id, sim_id);
         assert_eq!(update.progress_percentage, 0.5);
@@ -561,12 +602,8 @@ mod tests {
         assert!(subscription.completions_only);
 
         // Test matching
-        let progress_update = ProgressUpdate::new(
-            sim_id.clone(),
-            ProgressUpdateType::Progress,
-            0.5,
-            "Running",
-        );
+        let progress_update =
+            ProgressUpdate::new(sim_id.clone(), ProgressUpdateType::Progress, 0.5, "Running");
         assert!(!subscription.matches(&progress_update)); // Not a completion
 
         let completion_update = ProgressUpdate::new(
@@ -588,12 +625,7 @@ mod tests {
         let sub_receiver = comm.subscribe(subscription).unwrap();
 
         // Send an update
-        let update = ProgressUpdate::new(
-            sim_id,
-            ProgressUpdateType::Started,
-            0.0,
-            "Starting",
-        );
+        let update = ProgressUpdate::new(sim_id, ProgressUpdateType::Started, 0.0, "Starting");
         comm.send_update(update).unwrap();
 
         // Receive the update

@@ -1,15 +1,14 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use super::creature::Combattant;
 use super::encounter::TargetRole;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // Re-export API DTOs for backward compatibility
 pub use crate::api::dto::{
-    SimulationResult, SimulationRunData, SimulationRun,
-    LightweightRun, SelectedSeed, InterestingSeedTier,
-    LeanRunLog, LeanRoundSummary, LeanDeathEvent,
-    SimulationSummary, ScorePercentiles,
-    BatchSimulationJob, BatchSimulationRequest, BatchSimulationResult, BatchSimulationResponse,
+    BatchSimulationJob, BatchSimulationRequest, BatchSimulationResponse, BatchSimulationResult,
+    InterestingSeedTier, LeanDeathEvent, LeanRoundSummary, LeanRunLog, LightweightRun,
+    ScorePercentiles, SelectedSeed, SimulationResult, SimulationRun, SimulationRunData,
+    SimulationSummary,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

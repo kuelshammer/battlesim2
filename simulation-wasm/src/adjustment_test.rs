@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::model::*;
     use crate::creature_adjustment::detect_role;
+    use crate::model::*;
 
     fn create_test_creature(name: &str, hp: u32, ac: u32, count: f64) -> Creature {
         Creature {
@@ -89,7 +89,11 @@ mod tests {
             // Currently this will FAIL because adjust_damage ignores Template
             assert!(t.template_options.amount.is_some());
             if let Some(DiceFormula::Value(v)) = t.template_options.amount {
-                assert!(v > 54.0, "Expected damage {} to be greater than 54.0 after adjustment", v);
+                assert!(
+                    v > 54.0,
+                    "Expected damage {} to be greater than 54.0 after adjustment",
+                    v
+                );
             }
         }
     }

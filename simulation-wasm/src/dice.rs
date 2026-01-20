@@ -1,5 +1,5 @@
+use crate::events::{DieRoll, RollResult};
 use crate::model::DiceFormula;
-use crate::events::{RollResult, DieRoll};
 use crate::rng;
 
 pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
@@ -11,13 +11,11 @@ pub fn evaluate(formula: &DiceFormula, dice_multiplier: u32) -> f64 {
 
 pub fn evaluate_detailed(formula: &DiceFormula, dice_multiplier: u32) -> RollResult {
     match formula {
-        DiceFormula::Value(v) => {
-            RollResult {
-                total: *v,
-                rolls: Vec::new(),
-                modifiers: vec![("Base".to_string(), *v)],
-                formula: v.to_string(),
-            }
+        DiceFormula::Value(v) => RollResult {
+            total: *v,
+            rolls: Vec::new(),
+            modifiers: vec![("Base".to_string(), *v)],
+            formula: v.to_string(),
         },
         DiceFormula::Expr(s) => parse_and_roll_detailed(s, dice_multiplier),
     }
@@ -95,7 +93,8 @@ fn parse_and_roll_detailed(expr: &str, dice_multiplier: u32) -> RollResult {
     for c in s.chars() {
         if c == '+' || c == '-' {
             if !current_term.is_empty() {
-                let (val, term_rolls, term_mods) = parse_term_detailed(&current_term, dice_multiplier, sign);
+                let (val, term_rolls, term_mods) =
+                    parse_term_detailed(&current_term, dice_multiplier, sign);
                 total += val;
                 rolls.extend(term_rolls);
                 modifiers.extend(term_mods);
@@ -107,7 +106,8 @@ fn parse_and_roll_detailed(expr: &str, dice_multiplier: u32) -> RollResult {
         }
     }
     if !current_term.is_empty() {
-        let (val, term_rolls, term_mods) = parse_term_detailed(&current_term, dice_multiplier, sign);
+        let (val, term_rolls, term_mods) =
+            parse_term_detailed(&current_term, dice_multiplier, sign);
         total += val;
         rolls.extend(term_rolls);
         modifiers.extend(term_mods);
@@ -121,7 +121,11 @@ fn parse_and_roll_detailed(expr: &str, dice_multiplier: u32) -> RollResult {
     }
 }
 
-fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec<DieRoll>, Vec<(String, f64)>) {
+fn parse_term_detailed(
+    term: &str,
+    dice_multiplier: u32,
+    sign: f64,
+) -> (f64, Vec<DieRoll>, Vec<(String, f64)>) {
     let (cleaned_term, name) = if let Some(bracket_pos) = term.find('[') {
         let name = term[bracket_pos + 1..term.len() - 1].to_string();
         (&term[..bracket_pos], Some(name))
@@ -133,7 +137,11 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
         let parts: Vec<&str> = cleaned_term.split('d').collect();
         if parts.len() == 2 {
             let count = parts[0].parse::<i32>().unwrap_or(1);
-            let count = if count == 0 && parts[0].is_empty() { 1 } else { count };
+            let count = if count == 0 && parts[0].is_empty() {
+                1
+            } else {
+                count
+            };
             let sides = parts[1].parse::<i32>().unwrap_or(6);
 
             let mut term_total = 0.0;
@@ -141,16 +149,19 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
             for _ in 0..(count * dice_multiplier as i32) {
                 let val = rng::roll_dice(sides as u32);
                 term_total += val as f64;
-                term_rolls.push(DieRoll { sides: sides as u32, value: val });
+                term_rolls.push(DieRoll {
+                    sides: sides as u32,
+                    value: val,
+                });
             }
-            
+
             let val = sign * term_total;
             let mut modifiers = Vec::new();
             // ALWAYS add to modifiers, even if no bracket name exists
             // Use the roll result as the value, and the term string as the name if missing
             let modifier_name = name.unwrap_or_else(|| cleaned_term.to_string());
             modifiers.push((modifier_name, val));
-            
+
             return (val, term_rolls, modifiers);
         }
     }
@@ -159,7 +170,7 @@ fn parse_term_detailed(term: &str, dice_multiplier: u32, sign: f64) -> (f64, Vec
     let mut modifiers = Vec::new();
     let modifier_name = name.unwrap_or_else(|| cleaned_term.to_string());
     modifiers.push((modifier_name, val));
-    
+
     (val, Vec::new(), modifiers)
 }
 

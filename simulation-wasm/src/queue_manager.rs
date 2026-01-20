@@ -1,4 +1,4 @@
-use crate::background_simulation::{SimulationPriority};
+use crate::background_simulation::SimulationPriority;
 use crate::user_interaction::ScenarioParameters;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -25,10 +25,13 @@ impl SimulationRequest {
     /// Create a new simulation request
     pub fn new(parameters: ScenarioParameters, priority: SimulationPriority) -> Self {
         Self {
-            request_id: format!("req_{}", SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_nanos()),
+            request_id: format!(
+                "req_{}",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos()
+            ),
             parameters,
             priority,
             timestamp: SystemTime::now()
@@ -38,7 +41,6 @@ impl SimulationRequest {
             progress_callback: None,
             allow_deduplication: true,
         }
-
     }
 
     /// Create a request with custom callback
@@ -57,21 +59,21 @@ impl SimulationRequest {
     pub fn deduplication_hash(&self) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
-        
+
         // Hash key parameters that determine if simulations are equivalent
         self.parameters.players.len().hash(&mut hasher);
         self.parameters.timeline.len().hash(&mut hasher);
         self.parameters.iterations.hash(&mut hasher);
-        
+
         // Hash player characteristics
         for player in &self.parameters.players {
             player.name.hash(&mut hasher);
             player.hp.hash(&mut hasher); // hp is u32
             player.ac.hash(&mut hasher); // ac is u32
         }
-        
+
         // Hash timeline characteristics
         for step in &self.parameters.timeline {
             match step {
@@ -83,14 +85,14 @@ impl SimulationRequest {
                         monster.hp.hash(&mut hasher);
                         monster.ac.hash(&mut hasher);
                     }
-                },
+                }
                 crate::model::TimelineStep::ShortRest(rest) => {
                     1.hash(&mut hasher);
                     rest.id.hash(&mut hasher);
                 }
             }
         }
-        
+
         format!("{:x}", hasher.finish())
     }
 }
@@ -105,8 +107,8 @@ struct PriorityRequest {
 
 impl PartialEq for PriorityRequest {
     fn eq(&self, other: &Self) -> bool {
-        self.request.priority == other.request.priority && 
-        self.insertion_order == other.insertion_order
+        self.request.priority == other.request.priority
+            && self.insertion_order == other.insertion_order
     }
 }
 
@@ -115,7 +117,9 @@ impl Eq for PriorityRequest {}
 impl Ord for PriorityRequest {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         // Standard ordering for max-heap (higher priority value first)
-        self.request.priority.cmp(&other.request.priority)
+        self.request
+            .priority
+            .cmp(&other.request.priority)
             .then_with(|| self.insertion_order.cmp(&other.insertion_order))
     }
 }
@@ -156,7 +160,10 @@ impl SimulationQueue {
     pub fn enqueue(&self, request: SimulationRequest) -> Result<(), QueueError> {
         // Check queue size limit
         {
-            let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+            let pending = self
+                .pending_requests
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             if pending.len() >= self.max_queue_size {
                 return Err(QueueError::QueueFull);
             }
@@ -165,26 +172,41 @@ impl SimulationQueue {
         // Check for deduplication
         if request.allow_deduplication {
             let dedup_hash = request.deduplication_hash();
-            let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
-            
+            let mut dedup_map = self
+                .deduplication_map
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+
             if let Some(existing_request_id) = dedup_map.get(&dedup_hash) {
                 // Check if the existing request is still pending or processing
-                let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
-                let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
-                
-                if pending.iter().any(|pr| pr.request.request_id == *existing_request_id) ||
-                   processing.contains(existing_request_id) {
+                let pending = self
+                    .pending_requests
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
+                let processing = self
+                    .processing_requests
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner);
+
+                if pending
+                    .iter()
+                    .any(|pr| pr.request.request_id == *existing_request_id)
+                    || processing.contains(existing_request_id)
+                {
                     return Err(QueueError::DuplicateRequest(existing_request_id.clone()));
                 }
             }
-            
+
             // Add to deduplication map
             dedup_map.insert(dedup_hash, request.request_id.clone());
         }
 
         // Add to priority queue
         let insertion_order = {
-            let mut counter = self.insertion_counter.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut counter = self
+                .insertion_counter
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             *counter += 1;
             *counter
         };
@@ -194,7 +216,10 @@ impl SimulationQueue {
             insertion_order,
         };
 
-        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         pending.push(priority_request);
 
         Ok(())
@@ -202,15 +227,21 @@ impl SimulationQueue {
 
     /// Get the next request from the queue (highest priority first)
     pub fn dequeue(&self) -> Option<SimulationRequest> {
-        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
-        
+        let mut pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+
         if let Some(priority_request) = pending.pop() {
             let request = priority_request.request;
-            
+
             // Mark as processing
-            let mut processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut processing = self
+                .processing_requests
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             processing.insert(request.request_id.clone());
-            
+
             Some(request)
         } else {
             None
@@ -219,18 +250,27 @@ impl SimulationQueue {
 
     /// Mark a request as completed (remove from processing set)
     pub fn mark_completed(&self, request_id: &str) {
-        let mut processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut processing = self
+            .processing_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         processing.remove(request_id);
 
         // Remove from deduplication map
-        let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut dedup_map = self
+            .deduplication_map
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         dedup_map.retain(|_, existing_id| existing_id != request_id);
     }
 
     /// Cancel a pending request
     pub fn cancel_request(&self, request_id: &str) -> Result<(), QueueError> {
         // Remove from pending queue (need to rebuild since BinaryHeap doesn't support removal)
-        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         let mut new_pending = BinaryHeap::new();
         let mut found = false;
 
@@ -247,12 +287,18 @@ impl SimulationQueue {
 
         if found {
             // Remove from deduplication map
-            let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
+            let mut dedup_map = self
+                .deduplication_map
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             dedup_map.retain(|_, existing_id| existing_id != request_id);
             Ok(())
         } else {
             // Check if it's being processed
-            let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+            let processing = self
+                .processing_requests
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             if processing.contains(request_id) {
                 Err(QueueError::RequestAlreadyProcessing)
             } else {
@@ -263,13 +309,24 @@ impl SimulationQueue {
 
     /// Get queue statistics
     pub fn get_stats(&self) -> QueueStats {
-        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
-        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
-        let dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
+        let pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let processing = self
+            .processing_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let dedup_map = self
+            .deduplication_map
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
 
         let mut priority_counts = HashMap::new();
         for priority_request in pending.iter() {
-            *priority_counts.entry(priority_request.request.priority).or_insert(0) += 1;
+            *priority_counts
+                .entry(priority_request.request.priority)
+                .or_insert(0) += 1;
         }
 
         QueueStats {
@@ -283,42 +340,66 @@ impl SimulationQueue {
 
     /// Clear all pending requests
     pub fn clear_pending(&self) {
-        let mut pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let mut pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         pending.clear();
 
         // Clear deduplication map for pending requests only
-        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
-        let mut dedup_map = self.deduplication_map.lock().unwrap_or_else(PoisonError::into_inner);
+        let processing = self
+            .processing_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let mut dedup_map = self
+            .deduplication_map
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         dedup_map.retain(|_, existing_id| !processing.contains(existing_id));
     }
 
     /// Check if a specific request is pending
     pub fn is_pending(&self, request_id: &str) -> bool {
-        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         pending.iter().any(|pr| pr.request.request_id == request_id)
     }
 
     /// Check if a specific request is being processed
     pub fn is_processing(&self, request_id: &str) -> bool {
-        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let processing = self
+            .processing_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         processing.contains(request_id)
     }
 
     /// Get the next request without removing it from the queue
     pub fn peek_next(&self) -> Option<SimulationRequest> {
-        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         pending.peek().map(|pr| pr.request.clone())
     }
 
     /// Get all pending requests (for debugging/monitoring)
     pub fn get_pending_requests(&self) -> Vec<SimulationRequest> {
-        let pending = self.pending_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let pending = self
+            .pending_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         pending.iter().map(|pr| pr.request.clone()).collect()
     }
 
     /// Get all processing request IDs
     pub fn get_processing_request_ids(&self) -> Vec<String> {
-        let processing = self.processing_requests.lock().unwrap_or_else(PoisonError::into_inner);
+        let processing = self
+            .processing_requests
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         processing.iter().cloned().collect()
     }
 }
@@ -363,7 +444,9 @@ impl std::fmt::Display for QueueError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             QueueError::QueueFull => write!(f, "Queue is at maximum capacity"),
-            QueueError::DuplicateRequest(id) => write!(f, "Duplicate request already exists: {}", id),
+            QueueError::DuplicateRequest(id) => {
+                write!(f, "Duplicate request already exists: {}", id)
+            }
             QueueError::RequestNotFound => write!(f, "Request not found"),
             QueueError::RequestAlreadyProcessing => write!(f, "Request is already being processed"),
             QueueError::InvalidRequest(msg) => write!(f, "Invalid request: {}", msg),
@@ -535,13 +618,14 @@ mod tests {
     #[test]
     fn test_queue_basic_operations() {
         let queue = SimulationQueue::new(10);
-        
+
         // Initially empty
         assert!(queue.dequeue().is_none());
         assert_eq!(queue.get_stats().pending_count, 0);
 
         // Add a request
-        let request = SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
+        let request =
+            SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
         queue.enqueue(request).unwrap();
 
         // Should have one pending
@@ -559,7 +643,7 @@ mod tests {
     #[test]
     fn test_priority_ordering() {
         let queue = SimulationQueue::new(10);
-        
+
         // Add requests in different order
         let low = SimulationRequest::new(create_test_parameters(10), SimulationPriority::Low);
         let high = SimulationRequest::new(create_test_parameters(20), SimulationPriority::High);
@@ -585,10 +669,10 @@ mod tests {
     #[test]
     fn test_deduplication() {
         let queue = SimulationQueue::new(10);
-        
+
         let params1 = create_test_parameters(100);
         let params2 = create_test_parameters(100); // Same parameters
-        
+
         let request1 = SimulationRequest::new(params1.clone(), SimulationPriority::Normal);
         let request2 = SimulationRequest::new(params2, SimulationPriority::High);
 
@@ -603,12 +687,13 @@ mod tests {
     #[test]
     fn test_cancellation() {
         let queue = SimulationQueue::new(10);
-        
-        let request = SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
+
+        let request =
+            SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
         let request_id = request.request_id.clone();
-        
+
         queue.enqueue(request).unwrap();
-        
+
         // Cancel before processing
         assert!(queue.cancel_request(&request_id).is_ok());
         assert!(queue.dequeue().is_none());
@@ -617,33 +702,47 @@ mod tests {
     #[test]
     fn test_queue_capacity() {
         let queue = SimulationQueue::new(2);
-        
+
         // Fill to capacity
-        queue.enqueue(SimulationRequest::new(create_test_parameters(10), SimulationPriority::Normal)).unwrap();
-        queue.enqueue(SimulationRequest::new(create_test_parameters(20), SimulationPriority::Normal)).unwrap();
-        
+        queue
+            .enqueue(SimulationRequest::new(
+                create_test_parameters(10),
+                SimulationPriority::Normal,
+            ))
+            .unwrap();
+        queue
+            .enqueue(SimulationRequest::new(
+                create_test_parameters(20),
+                SimulationPriority::Normal,
+            ))
+            .unwrap();
+
         // Should fail when over capacity
-        let result = queue.enqueue(SimulationRequest::new(create_test_parameters(30), SimulationPriority::Normal));
+        let result = queue.enqueue(SimulationRequest::new(
+            create_test_parameters(30),
+            SimulationPriority::Normal,
+        ));
         assert!(matches!(result, Err(QueueError::QueueFull)));
     }
 
     #[test]
     fn test_request_completion() {
         let queue = SimulationQueue::new(10);
-        
-        let request = SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
+
+        let request =
+            SimulationRequest::new(create_test_parameters(100), SimulationPriority::Normal);
         let request_id = request.request_id.clone();
-        
+
         queue.enqueue(request).unwrap();
         let _dequeued = queue.dequeue().unwrap();
-        
+
         // Should be processing
         assert!(queue.is_processing(&request_id));
         assert!(!queue.is_pending(&request_id));
-        
+
         // Mark as completed
         queue.mark_completed(&request_id);
-        
+
         // Should no longer be processing
         assert!(!queue.is_processing(&request_id));
     }

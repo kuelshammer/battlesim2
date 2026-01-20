@@ -1,9 +1,11 @@
 use clap::{Parser, Subcommand};
 use simulation_wasm::aggregation::calculate_score;
+use simulation_wasm::decile_analysis::run_decile_analysis;
 use simulation_wasm::dice;
 use simulation_wasm::events::Event;
-use simulation_wasm::model::{Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun, TimelineStep};
-use simulation_wasm::decile_analysis::run_decile_analysis;
+use simulation_wasm::model::{
+    Action, Creature, DiceFormula, Encounter, SimulationResult, SimulationRun, TimelineStep,
+};
 use simulation_wasm::run_event_driven_simulation_rust;
 use std::collections::HashMap;
 use std::fs;
@@ -177,32 +179,60 @@ fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
     } as usize;
 
     // Calculate Short Rest count from timeline
-    let sr_count = timeline.iter().filter(|s| match s {
-        TimelineStep::ShortRest(_) => true,
-        _ => false
-    }).count();
+    let sr_count = timeline
+        .iter()
+        .filter(|s| match s {
+            TimelineStep::ShortRest(_) => true,
+            _ => false,
+        })
+        .count();
 
-    println!("Running {} iterations (K={}) for Adventuring Day: {}...", iterations, k_factor, scenario_name);
+    println!(
+        "Running {} iterations (K={}) for Adventuring Day: {}...",
+        iterations, k_factor, scenario_name
+    );
     let mut results = run_event_driven_simulation_rust(players, timeline, iterations, false, None);
 
     // Sort results by score from worst to best performance
-    results.sort_by(|a, b| calculate_score(&a.result).partial_cmp(&calculate_score(&b.result)).unwrap_or(std::cmp::Ordering::Equal));
+    results.sort_by(|a, b| {
+        calculate_score(&a.result)
+            .partial_cmp(&calculate_score(&b.result))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let raw_results: Vec<_> = results.iter().map(|r| r.result.clone()).collect();
 
     // 1. Run Per-Encounter Analysis
     let num_encounters = raw_results.first().map(|r| r.encounters.len()).unwrap_or(0);
-    
+
     if num_encounters > 1 {
         println!("\n--- Individual Encounter Breakdown ---");
         for i in 0..num_encounters {
-            let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(&raw_results, i, &format!("Encounter {}", i + 1), party_size, sr_count);
-            println!("Encounter {}: {:<20} | Archetype: {:<15} | Tier: {:<15} | {}", 
-                i + 1, 
+            let enc_analysis = simulation_wasm::decile_analysis::run_encounter_analysis(
+                &raw_results,
+                i,
+                &format!("Encounter {}", i + 1),
+                party_size,
+                sr_count,
+            );
+            println!(
+                "Encounter {}: {:<20} | Archetype: {:<15} | Tier: {:<15} | {}",
+                i + 1,
                 format!("{}", enc_analysis.encounter_label),
-                format!("{}", enc_analysis.vitals.as_ref().map(|v| v.archetype.to_string()).unwrap_or("Unknown".to_string())),
+                format!(
+                    "{}",
+                    enc_analysis
+                        .vitals
+                        .as_ref()
+                        .map(|v| v.archetype.to_string())
+                        .unwrap_or("Unknown".to_string())
+                ),
                 format!("{}", enc_analysis.intensity_tier),
-                if enc_analysis.is_good_design { "✅ Good" } else { "⚠️ Review" }
+                if enc_analysis.is_good_design {
+                    "✅ Good"
+                } else {
+                    "⚠️ Review"
+                }
             );
         }
         println!("---------------------------------------\n");
@@ -214,15 +244,31 @@ fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
     // Output summary and rating
     println!("OVERALL ADVENTURING DAY RATING: {}", output.scenario_name);
     println!("=====================================");
-    println!("Archetype:      {}", output.vitals.as_ref().map(|v| v.archetype.to_string()).unwrap_or("Unknown".to_string()));
+    println!(
+        "Archetype:      {}",
+        output
+            .vitals
+            .as_ref()
+            .map(|v| v.archetype.to_string())
+            .unwrap_or("Unknown".to_string())
+    );
     println!("Intensity:      {}", output.intensity_tier);
     println!("Description:    {}", output.analysis_summary);
-    println!("Result:         {}", if output.is_good_design { "🏆 PERFECT DAY" } else { "⚠️ Imbalanced" });
+    println!(
+        "Result:         {}",
+        if output.is_good_design {
+            "🏆 PERFECT DAY"
+        } else {
+            "⚠️ Imbalanced"
+        }
+    );
     println!("=====================================\n");
 
     // Output table format
-    println!("{:>15} | {:>12} | {:>12} | {:>12} | {:>10}", 
-              "Decile / %ile", "Survivors", "HP Lost", "HP Lost %", "Win Rate");
+    println!(
+        "{:>15} | {:>12} | {:>12} | {:>12} | {:>10}",
+        "Decile / %ile", "Survivors", "HP Lost", "HP Lost %", "Win Rate"
+    );
     println!("----------------|--------------|--------------|------------|----------");
     for (i, decile) in output.deciles.iter().enumerate() {
         let percentile = match i {
@@ -231,13 +277,13 @@ fn run_aggregate(scenario_path: &PathBuf, k_factor: u32) {
             9 => "95th %ile",
             _ => "",
         };
-        
+
         println!(
             "{:>15} | {:>13} | {:>12.1} | {:>10.1}% | {:>8.1}%",
             format!("{} ({})", decile.label, percentile),
             format!("{}/{}", decile.median_survivors, decile.party_size),
-            decile.total_hp_lost, 
-            decile.hp_lost_percent, 
+            decile.total_hp_lost,
+            decile.hp_lost_percent,
             decile.win_rate
         );
     }
@@ -254,20 +300,25 @@ fn run_benchmark(scenario_path: &PathBuf) {
     let k_factors = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50];
 
     for k in k_factors {
-        let iterations = if k > 1 {
-            (2 * k - 1) * 100
-        } else {
-            100
-        } as usize;
+        let iterations = if k > 1 { (2 * k - 1) * 100 } else { 100 } as usize;
 
         let start = std::time::Instant::now();
-        let _ = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, false, None);
+        let _ = run_event_driven_simulation_rust(
+            players.clone(),
+            timeline.clone(),
+            iterations,
+            false,
+            None,
+        );
         let duration = start.elapsed();
 
         let ms = duration.as_millis();
         let avg_ms = ms as f64 / iterations as f64;
 
-        println!("| {:>8} | {:>14} | {:>13} | {:>10.3} |", k, iterations, ms, avg_ms);
+        println!(
+            "| {:>8} | {:>14} | {:>13} | {:>10.3} |",
+            k, iterations, ms, avg_ms
+        );
     }
 }
 
@@ -388,8 +439,12 @@ fn run_find_median(scenario_path: &PathBuf) {
     // Use K=51 (10100 iterations) for precise median finding
     let k_factor = 51;
     let iterations = (2 * k_factor - 1) * 100;
-    println!("Running {} iterations (K={}) to find median...", iterations, k_factor);
-    let runs = run_event_driven_simulation_rust(players, timeline, iterations as usize, false, None);
+    println!(
+        "Running {} iterations (K={}) to find median...",
+        iterations, k_factor
+    );
+    let runs =
+        run_event_driven_simulation_rust(players, timeline, iterations as usize, false, None);
 
     // Results are sorted by score.
     let total_runs = runs.len();
@@ -492,7 +547,8 @@ fn run_breakdown(scenario_path: &PathBuf, run_index: Option<usize>) {
 
     // Run simulation
     let iterations = run_index.map(|idx| (idx + 1).max(100)).unwrap_or(100);
-    let runs = run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, true, None);
+    let runs =
+        run_event_driven_simulation_rust(players.clone(), timeline.clone(), iterations, true, None);
 
     // Extract results and events from the runs
     let results: Vec<SimulationResult> = runs.iter().map(|run| run.result.clone()).collect();
@@ -758,12 +814,13 @@ fn load_scenario(path: &PathBuf) -> (Vec<Creature>, Vec<TimelineStep>, String) {
         .to_string();
     let players: Vec<Creature> =
         serde_json::from_value(data["players"].clone()).expect("Failed to parse players");
-    
+
     let timeline: Vec<TimelineStep> = if let Some(t) = data.get("timeline") {
         serde_json::from_value(t.clone()).expect("Failed to parse timeline")
     } else {
         // Fallback to legacy encounters field
-        let encounters: Vec<Encounter> = serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
+        let encounters: Vec<Encounter> =
+            serde_json::from_value(data["encounters"].clone()).expect("Failed to parse encounters");
         encounters.into_iter().map(TimelineStep::Combat).collect()
     };
 
@@ -845,7 +902,11 @@ fn run_sweep(scenario_path: &PathBuf, target_name: &str, stat: &str, range_str: 
                     if team1_alive && !team2_alive {
                         wins += 1;
                     }
-                    total_rounds += result.encounters.iter().map(|e| e.rounds.len()).sum::<usize>();
+                    total_rounds += result
+                        .encounters
+                        .iter()
+                        .map(|e| e.rounds.len())
+                        .sum::<usize>();
                 }
             }
         }
@@ -965,7 +1026,11 @@ fn calculate_scenario_stats(results: &[SimulationResult]) -> ScenarioStats {
     for result in results {
         if let Some(encounter) = result.encounters.last() {
             if let Some(last_round) = encounter.rounds.last() {
-                total_rounds += result.encounters.iter().map(|e| e.rounds.len() as f64).sum::<f64>();
+                total_rounds += result
+                    .encounters
+                    .iter()
+                    .map(|e| e.rounds.len() as f64)
+                    .sum::<f64>();
 
                 let team1_alive = last_round
                     .team1
@@ -1137,8 +1202,6 @@ fn validate_creature(
         *warnings += 1;
     }
 }
-
-
 
 fn run_batch_log(scenario_path: &PathBuf, count: usize) {
     let (players, timeline, _) = load_scenario(scenario_path);
