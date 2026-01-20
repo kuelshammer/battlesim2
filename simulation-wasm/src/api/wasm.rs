@@ -3,6 +3,7 @@ use crate::model::{Creature, SimulationResult, TimelineStep, SimulationRun};
 use crate::sorting::{PlayerSlot, calculate_average_attack_bonus, assign_party_slots};
 use crate::aggregation::{calculate_score, calculate_cumulative_score};
 use crate::api::runner::{run_single_event_driven_simulation};
+
 use std::collections::HashMap;
 
 #[derive(serde::Serialize)]

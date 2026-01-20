@@ -4,21 +4,8 @@
 //! Keep this file minimal - all business logic belongs in orchestration/.
 
 use wasm_bindgen::prelude::*;
-use js_sys::Function;
 use crate::model::{Creature, SimulationResult, TimelineStep};
-use crate::orchestration::{gui, runners, simulation, balancer};
-use crate::api::wasm::*;
-
-// ============================================================================
-// Data Types
-// ============================================================================
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AutoAdjustmentResult {
-    pub monsters: Vec<Creature>,
-    pub analysis: crate::decile_analysis::AggregateOutput,
-}
+use crate::orchestration::{runners, simulation, balancer};
 
 // ============================================================================
 // Core Simulation WASM Bindings
@@ -99,8 +86,11 @@ pub fn run_event_driven_simulation(
 
 #[wasm_bindgen]
 pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
-    // This would need to be implemented in orchestration layer
-    Ok(JsValue::from_str("Not implemented"))
+    let events = crate::orchestration::state::get_stored_simulation_events();
+    match events {
+        Some(events) => serialize_result(&events),
+        None => Ok(JsValue::from_str("No simulation events stored")),
+    }
 }
 
 
@@ -149,11 +139,7 @@ pub fn run_decile_analysis_wasm(
 
 
 
-// ============================================================================
-// Re-export for backward compatibility
-// ============================================================================
 
-pub use crate::orchestration::runners::run_event_driven_simulation_rust;
 
 // ============================================================================
 // Helper Functions
