@@ -1,5 +1,4 @@
-use crate::storage::{ScenarioParameters, SlotSelection};
-use crate::storage_manager::StorageManager;
+use crate::user_interaction::{ScenarioParameters, SlotSelection};
 use crate::model::{Creature, Encounter, SimulationResult, TimelineStep};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc;
@@ -35,6 +34,8 @@ impl std::fmt::Display for DisplayMode {
         }
     }
 }
+
+
 
 /// Configuration for display behavior
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -119,8 +120,6 @@ type ProgressCommunicatorRef = std::sync::Arc<std::sync::Mutex<crate::progress_c
 
 /// Manager for displaying simulation results with various modes
 pub struct DisplayManager {
-    /// Storage manager for accessing simulation data
-    _storage_manager: std::sync::Arc<std::sync::Mutex<StorageManager>>,
     /// Display configuration
     config: DisplayConfig,
     /// Current display mode
@@ -139,9 +138,8 @@ pub struct DisplayManager {
 
 impl DisplayManager {
     /// Create a new display manager
-    pub fn new(storage_manager: StorageManager, config: DisplayConfig) -> Self {
+    pub fn new(config: DisplayConfig) -> Self {
         Self {
-            _storage_manager: std::sync::Arc::new(std::sync::Mutex::new(storage_manager)),
             config: config.clone(),
             current_mode: config.default_mode,
             last_parameters: None,
@@ -612,10 +610,7 @@ mod tests {
 
     #[test]
     fn test_creature_similarity() {
-        let manager = DisplayManager::new(
-            StorageManager::default(),
-            DisplayConfig::default(),
-        );
+        let manager = DisplayManager::new(DisplayConfig::default());
 
         let c1 = create_test_creature("Fighter", 50.0, 16.0);
         let c2 = create_test_creature("Fighter", 50.0, 16.0);
@@ -631,10 +626,7 @@ mod tests {
 
     #[test]
     fn test_parameter_differences() {
-        let manager = DisplayManager::new(
-            StorageManager::default(),
-            DisplayConfig::default(),
-        );
+        let manager = DisplayManager::new(DisplayConfig::default());
 
         let params1 = ScenarioParameters {
             players: vec![create_test_creature("Fighter", 50.0, 16.0)],
@@ -667,8 +659,7 @@ pub struct DisplayManagerWrapper {
 impl DisplayManagerWrapper {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Result<DisplayManagerWrapper, JsValue> {
-        let storage_manager = StorageManager::default();
-        let display_manager = DisplayManager::new(storage_manager, DisplayConfig::default());
+        let display_manager = DisplayManager::new(DisplayConfig::default());
         Ok(DisplayManagerWrapper { 
             inner: std::sync::Arc::new(std::sync::Mutex::new(display_manager))
         })

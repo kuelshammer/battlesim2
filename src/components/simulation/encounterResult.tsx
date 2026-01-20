@@ -1,5 +1,5 @@
 import { FC, useState, memo, useMemo } from "react"
-import { Combattant, EncounterResult as EncounterResultType, AggregateOutput } from "@/model/model"
+import { Combattant, EncounterResult as EncounterResultType, AggregateOutput, FullAnalysisOutput } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import ActionEconomyDisplay from "./ActionEconomyDisplay"
 import styles from './encounterResult.module.scss'

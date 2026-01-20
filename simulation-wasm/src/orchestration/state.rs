@@ -2,19 +2,11 @@
 //!
 //! Centralizes all global/static state used by the WASM API.
 
-use std::sync::{Mutex, OnceLock};
-use crate::storage_manager::StorageManager;
+use std::sync::Mutex;
 
 /// Global storage for last simulation events (thread-safe)
+/// Since storage is removed, this is kept for API compatibility but always returns None
 pub static LAST_SIMULATION_EVENTS: Mutex<Option<Vec<String>>> = Mutex::new(None);
-
-/// Global storage manager for WASM interface
-static STORAGE_MANAGER: OnceLock<Mutex<StorageManager>> = OnceLock::new();
-
-/// Initialize or get the global storage manager
-pub fn get_storage_manager() -> &'static Mutex<StorageManager> {
-    STORAGE_MANAGER.get_or_init(|| Mutex::new(StorageManager::default()))
-}
 
 /// Store simulation events for later retrieval
 pub fn store_simulation_events(events: Vec<String>) {
