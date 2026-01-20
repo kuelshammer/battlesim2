@@ -57,17 +57,17 @@ impl ErrorContext {
                 .as_secs(),
         }
     }
-    
+
     pub fn with_round(mut self, round: usize) -> Self {
         self.round = Some(round);
         self
     }
-    
+
     pub fn with_combatant(mut self, combatant_id: String) -> Self {
         self.combatant_id = Some(combatant_id);
         self
     }
-    
+
     pub fn with_action(mut self, action_id: String) -> Self {
         self.action_id = Some(action_id);
         self
@@ -93,13 +93,13 @@ impl ErrorLog {
             stack_trace: None,
         }
     }
-    
+
     pub fn with_recovery(mut self, attempted: bool, successful: bool) -> Self {
         self.recovery_attempted = attempted;
         self.recovery_successful = successful;
         self
     }
-    
+
     pub fn with_stack_trace(mut self, trace: String) -> Self {
         self.stack_trace = Some(trace);
         self
@@ -118,13 +118,13 @@ impl ErrorLogger {
             max_logs,
         }
     }
-    
+
     pub fn log_error(&mut self, error: SimulationError, context: ErrorContext) {
         let log = ErrorLog::new(error, context);
-        
+
         #[cfg(debug_assertions)]
         eprintln!("SIMULATION_ERROR: {}", log.error);
-        
+
         if self.logs.len() < self.max_logs {
             self.logs.push(log);
         } else {
@@ -133,16 +133,22 @@ impl ErrorLogger {
             self.logs.push(log);
         }
     }
-    
-    pub fn log_recovery_attempt(&mut self, error: SimulationError, context: ErrorContext, successful: bool) {
+
+    pub fn log_recovery_attempt(
+        &mut self,
+        error: SimulationError,
+        context: ErrorContext,
+        successful: bool,
+    ) {
         let log = ErrorLog::new(error, context).with_recovery(true, successful);
-        
+
         #[cfg(debug_assertions)]
-        eprintln!("RECOVERY_{}: {}", 
-            if successful { "SUCCESS" } else { "FAILED" }, 
+        eprintln!(
+            "RECOVERY_{}: {}",
+            if successful { "SUCCESS" } else { "FAILED" },
             log.error
         );
-        
+
         if self.logs.len() < self.max_logs {
             self.logs.push(log);
         } else {
@@ -150,14 +156,14 @@ impl ErrorLogger {
             self.logs.push(log);
         }
     }
-    
+
     pub fn get_logs(&self) -> &[ErrorLog] {
         &self.logs
     }
-    
+
     pub fn get_error_summary(&self) -> HashMap<String, usize> {
         let mut summary = HashMap::new();
-        
+
         for log in &self.logs {
             let error_type = match &log.error {
                 SimulationError::EmptyResult(_) => "EmptyResult",
@@ -169,13 +175,13 @@ impl ErrorLogger {
                 SimulationError::ValidationFailed(_) => "ValidationFailed",
                 SimulationError::RetryExhausted(_) => "RetryExhausted",
             };
-            
+
             *summary.entry(error_type.to_string()).or_insert(0) += 1;
         }
-        
+
         summary
     }
-    
+
     pub fn clear(&mut self) {
         self.logs.clear();
     }
@@ -204,58 +210,58 @@ pub fn log_recovery_attempt(error: SimulationError, context: ErrorContext, succe
 pub fn log_empty_result(context: ErrorContext, details: &str) {
     log_simulation_error(
         SimulationError::EmptyResult(format!("Empty simulation result: {}", details)),
-        context
+        context,
     );
 }
 
 pub fn log_invalid_combatant(context: ErrorContext, combatant_id: &str, details: &str) {
     log_simulation_error(
         SimulationError::InvalidCombatant(format!("Combatant '{}': {}", combatant_id, details)),
-        context.with_combatant(combatant_id.to_string())
+        context.with_combatant(combatant_id.to_string()),
     );
 }
 
 pub fn log_index_out_of_bounds(context: ErrorContext, index: usize, bounds: usize) {
     log_simulation_error(
         SimulationError::IndexOutOfBounds(format!("Index {} out of bounds (0..{})", index, bounds)),
-        context
+        context,
     );
 }
 
 pub fn log_unexpected_state(context: ErrorContext, state: &str) {
     log_simulation_error(
         SimulationError::UnexpectedState(format!("Unexpected state: {}", state)),
-        context
+        context,
     );
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_error_logger() {
         let mut logger = ErrorLogger::new(10);
         let context = ErrorContext::new("test_sim".to_string(), 0, 0);
-        
+
         logger.log_error(
             SimulationError::EmptyResult("Test error".to_string()),
-            context.clone()
+            context.clone(),
         );
-        
+
         assert_eq!(logger.get_logs().len(), 1);
-        
+
         let summary = logger.get_error_summary();
         assert_eq!(summary.get("EmptyResult"), Some(&1));
     }
-    
+
     #[test]
     fn test_error_context_builder() {
         let context = ErrorContext::new("test_sim".to_string(), 5, 2)
             .with_round(3)
             .with_combatant("player1".to_string())
             .with_action("attack".to_string());
-        
+
         assert_eq!(context.simulation_id, "test_sim");
         assert_eq!(context.iteration, 5);
         assert_eq!(context.encounter_idx, 2);

@@ -9,31 +9,45 @@ pub fn assess_archetype(vitals: &Vitals) -> EncounterArchetype {
 
 /// Assess encounter archetype using custom game balance configuration
 pub fn assess_archetype_with_config(vitals: &Vitals, config: &GameBalance) -> EncounterArchetype {
-    if vitals.tpk_risk > config.tpk_broken_threshold { return EncounterArchetype::Broken; }
+    if vitals.tpk_risk > config.tpk_broken_threshold {
+        return EncounterArchetype::Broken;
+    }
 
     // Check for High Volatility (Coin Flip)
     // High chance of death/failure, but not necessarily a guaranteed grind.
     // Volatility index > threshold means P10 and P50 are very different.
-    if vitals.volatility_index > config.volatility_high_threshold && vitals.lethality_index > config.coin_flip_lethality_threshold {
+    if vitals.volatility_index > config.volatility_high_threshold
+        && vitals.lethality_index > config.coin_flip_lethality_threshold
+    {
         return EncounterArchetype::CoinFlip;
     }
 
-    if vitals.tpk_risk > config.tpk_meat_grinder_threshold { return EncounterArchetype::MeatGrinder; }
+    if vitals.tpk_risk > config.tpk_meat_grinder_threshold {
+        return EncounterArchetype::MeatGrinder;
+    }
 
-    if vitals.lethality_index > config.lethality_boss_threshold { return EncounterArchetype::MeatGrinder; }
+    if vitals.lethality_index > config.lethality_boss_threshold {
+        return EncounterArchetype::MeatGrinder;
+    }
 
     if vitals.lethality_index > config.lethality_elite_threshold {
-        if vitals.attrition_score < config.attrition_nova_trap_threshold { return EncounterArchetype::NovaTrap; }
+        if vitals.attrition_score < config.attrition_nova_trap_threshold {
+            return EncounterArchetype::NovaTrap;
+        }
         return EncounterArchetype::BossFight;
     }
 
     if vitals.lethality_index > config.lethality_standard_threshold {
-        if vitals.attrition_score > config.attrition_grind_high_threshold { return EncounterArchetype::TheGrind; }
+        if vitals.attrition_score > config.attrition_grind_high_threshold {
+            return EncounterArchetype::TheGrind;
+        }
         return EncounterArchetype::EliteChallenge;
     }
 
     if vitals.lethality_index > config.lethality_skirmish_threshold {
-        if vitals.attrition_score > config.attrition_grind_low_threshold { return EncounterArchetype::TheGrind; }
+        if vitals.attrition_score > config.attrition_grind_low_threshold {
+            return EncounterArchetype::TheGrind;
+        }
         return EncounterArchetype::Standard;
     }
 
@@ -61,7 +75,11 @@ pub fn get_encounter_label(archetype: &EncounterArchetype) -> EncounterLabel {
 }
 
 /// Generate analysis summary text
-pub fn generate_analysis_summary(archetype: &EncounterArchetype, vitals: &Vitals, typical: &DecileStats) -> String {
+pub fn generate_analysis_summary(
+    archetype: &EncounterArchetype,
+    vitals: &Vitals,
+    typical: &DecileStats,
+) -> String {
     let archetype_desc = match archetype {
         EncounterArchetype::Trivial => "Negligible challenge.",
         EncounterArchetype::Skirmish => "A light warm-up.",
@@ -75,18 +93,30 @@ pub fn generate_analysis_summary(archetype: &EncounterArchetype, vitals: &Vitals
         EncounterArchetype::CoinFlip => "High volatility. Swingy.",
     };
 
-    format!("{}: {} | Attrition: {}% | Typical Survivors: {}/{}",
-        archetype, archetype_desc, (vitals.attrition_score * 100.0).round(), typical.median_survivors, typical.party_size)
+    format!(
+        "{}: {} | Attrition: {}% | Typical Survivors: {}/{}",
+        archetype,
+        archetype_desc,
+        (vitals.attrition_score * 100.0).round(),
+        typical.median_survivors,
+        typical.party_size
+    )
 }
 
 /// Generate tuning suggestions based on archetype
 pub fn generate_tuning_suggestions(archetype: &EncounterArchetype) -> Vec<String> {
     let mut suggestions = Vec::new();
     match archetype {
-        EncounterArchetype::Broken => suggestions.push("Mathematically impossible. Reduce monster damage or count.".to_string()),
-        EncounterArchetype::MeatGrinder => suggestions.push("Extremely lethal. High chance of TPK.".to_string()),
-        EncounterArchetype::NovaTrap => suggestions.push("Burst damage threat. Consider smoothing out damage across rounds.".to_string()),
-        EncounterArchetype::Trivial => suggestions.push("Under-tuned. Increase monster stats for more impact.".to_string()),
+        EncounterArchetype::Broken => suggestions
+            .push("Mathematically impossible. Reduce monster damage or count.".to_string()),
+        EncounterArchetype::MeatGrinder => {
+            suggestions.push("Extremely lethal. High chance of TPK.".to_string())
+        }
+        EncounterArchetype::NovaTrap => suggestions
+            .push("Burst damage threat. Consider smoothing out damage across rounds.".to_string()),
+        EncounterArchetype::Trivial => {
+            suggestions.push("Under-tuned. Increase monster stats for more impact.".to_string())
+        }
         _ => {}
     }
     suggestions
@@ -114,7 +144,9 @@ pub fn calculate_day_pacing_with_config(
         20.0 // TPK/Total Exhaustion
     } else if end_res_pct < config.pacing_tense_pct {
         70.0 // Tense, maybe too much
-    } else if end_res_pct < config.pacing_sweet_spot_high_pct && end_res_pct >= config.pacing_sweet_spot_low_pct {
+    } else if end_res_pct < config.pacing_sweet_spot_high_pct
+        && end_res_pct >= config.pacing_sweet_spot_low_pct
+    {
         100.0 // Sweet spot
     } else if end_res_pct < config.pacing_easy_pct {
         60.0 // A bit easy
@@ -198,20 +230,32 @@ pub fn assess_intensity_tier_dynamic_with_config(
     encounter_weight: f64,
     config: &GameBalance,
 ) -> IntensityTier {
-    if tdnw <= 0.0 { return IntensityTier::Tier1; }
+    if tdnw <= 0.0 {
+        return IntensityTier::Tier1;
+    }
 
     // Cost % relative to TDNW
     let cost_percent = typical_metrics.burned / tdnw;
 
     // Target Drain = Weight / Total Weight
-    let total_w = if total_weight <= 0.0 { 1.0 } else { total_weight };
+    let total_w = if total_weight <= 0.0 {
+        1.0
+    } else {
+        total_weight
+    };
     let target = encounter_weight / total_w;
 
-    if cost_percent < (config.intensity_tier1_multiplier * target) { IntensityTier::Tier1 }
-    else if cost_percent < (config.intensity_tier2_multiplier * target) { IntensityTier::Tier2 }
-    else if cost_percent < (config.intensity_tier3_multiplier * target) { IntensityTier::Tier3 }
-    else if cost_percent < (config.intensity_tier4_multiplier * target) { IntensityTier::Tier4 }
-    else { IntensityTier::Tier5 }
+    if cost_percent < (config.intensity_tier1_multiplier * target) {
+        IntensityTier::Tier1
+    } else if cost_percent < (config.intensity_tier2_multiplier * target) {
+        IntensityTier::Tier2
+    } else if cost_percent < (config.intensity_tier3_multiplier * target) {
+        IntensityTier::Tier3
+    } else if cost_percent < (config.intensity_tier4_multiplier * target) {
+        IntensityTier::Tier4
+    } else {
+        IntensityTier::Tier5
+    }
 }
 
 /// Assess intensity tier dynamically based on resource cost vs target
@@ -224,25 +268,43 @@ pub fn assess_intensity_tier_dynamic(
     total_weight: f64,
     encounter_weight: f64,
 ) -> IntensityTier {
-    assess_intensity_tier_dynamic_with_config(typical_metrics, tdnw, total_weight, encounter_weight, &GameBalance::default())
+    assess_intensity_tier_dynamic_with_config(
+        typical_metrics,
+        tdnw,
+        total_weight,
+        encounter_weight,
+        &GameBalance::default(),
+    )
 }
 
 /// Calculate difficulty grade (S-F) for backward compatibility and coloring
 pub fn calculate_difficulty_grade(lethality_index: f64) -> String {
-    if lethality_index < 0.05 { "S".to_string() }
-    else if lethality_index < 0.15 { "A".to_string() }
-    else if lethality_index < 0.30 { "B".to_string() }
-    else if lethality_index < 0.50 { "C".to_string() }
-    else if lethality_index < 0.70 { "D".to_string() }
-    else { "F".to_string() }
+    if lethality_index < 0.05 {
+        "S".to_string()
+    } else if lethality_index < 0.15 {
+        "A".to_string()
+    } else if lethality_index < 0.30 {
+        "B".to_string()
+    } else if lethality_index < 0.50 {
+        "C".to_string()
+    } else if lethality_index < 0.70 {
+        "D".to_string()
+    } else {
+        "F".to_string()
+    }
 }
 
 /// Calculate safety grade (A-D) for banner coloring
 pub fn calculate_safety_grade(vitals: &Vitals) -> String {
-    if vitals.tpk_risk > 0.1 { "D".to_string() }
-    else if vitals.lethality_index > 0.3 { "C".to_string() }
-    else if vitals.lethality_index > 0.1 { "B".to_string() }
-    else { "A".to_string() }
+    if vitals.tpk_risk > 0.1 {
+        "D".to_string()
+    } else if vitals.lethality_index > 0.3 {
+        "C".to_string()
+    } else if vitals.lethality_index > 0.1 {
+        "B".to_string()
+    } else {
+        "A".to_string()
+    }
 }
 
 /// Generate narrative pacing label

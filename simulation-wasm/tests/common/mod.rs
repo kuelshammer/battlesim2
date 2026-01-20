@@ -8,7 +8,7 @@ pub fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<TimelineStep>) {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("tests/scenarios");
     if !filename.contains('/') && !filename.ends_with(".json") {
-         // Fallback for names without extension if needed, but usually we pass full filename
+        // Fallback for names without extension if needed, but usually we pass full filename
     }
     path.push(filename);
 
@@ -22,7 +22,8 @@ pub fn load_scenario(filename: &str) -> (Vec<Creature>, Vec<TimelineStep>) {
         }
     }
 
-    let content = fs::read_to_string(&path).unwrap_or_else(|_| panic!("Failed to read scenario file: {:?}", path));
+    let content = fs::read_to_string(&path)
+        .unwrap_or_else(|_| panic!("Failed to read scenario file: {:?}", path));
     let data: serde_json::Value = serde_json::from_str(&content).expect("Failed to parse JSON");
 
     let players: Vec<Creature> =

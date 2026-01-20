@@ -1,6 +1,6 @@
-use crate::execution::engine::ActionExecutionEngine;
-use crate::model::{LeanRunLog, LeanRoundSummary, LeanDeathEvent};
 use crate::events::Event;
+use crate::execution::engine::ActionExecutionEngine;
+use crate::model::{LeanDeathEvent, LeanRoundSummary, LeanRunLog};
 use std::collections::HashMap;
 
 #[cfg(all(debug_assertions, not(target_arch = "wasm32")))]
@@ -22,14 +22,19 @@ impl ActionExecutionEngine {
         // Main combat loop (same as execute_encounter but with lean collection)
         const MAX_ROUNDS: u32 = 50;
         const MAX_TURNS: u32 = 200;
-        while !self.is_encounter_complete() && self.context.round_number < MAX_ROUNDS && total_turns < MAX_TURNS {
+        while !self.is_encounter_complete()
+            && self.context.round_number < MAX_ROUNDS
+            && total_turns < MAX_TURNS
+        {
             self.context.advance_round();
 
             let initiative_order = self.initiative_order.clone();
             let round_number = self.context.round_number;
 
             // Track state at start of round for death detection
-            let combatants_before_round: HashMap<String, u32> = self.context.combatants
+            let combatants_before_round: HashMap<String, u32> = self
+                .context
+                .combatants
                 .values()
                 .map(|c| (c.id.clone(), c.current_hp))
                 .collect();
@@ -62,10 +67,14 @@ impl ActionExecutionEngine {
 
             for event in all_events.iter() {
                 match event {
-                    Event::DamageTaken { target_id, damage, .. } => {
+                    Event::DamageTaken {
+                        target_id, damage, ..
+                    } => {
                         *total_damage.entry(target_id.clone()).or_insert(0.0) += damage;
                     }
-                    Event::HealingApplied { target_id, amount, .. } => {
+                    Event::HealingApplied {
+                        target_id, amount, ..
+                    } => {
                         *total_healing.entry(target_id.clone()).or_insert(0.0) += amount;
                     }
                     _ => {}
@@ -87,7 +96,9 @@ impl ActionExecutionEngine {
                         deaths_this_round.push(combatant_id.clone());
 
                         // Check for TPK (all players dead)
-                        let remaining_players: Vec<String> = self.context.combatants
+                        let remaining_players: Vec<String> = self
+                            .context
+                            .combatants
                             .values()
                             .filter(|c| c.side == 0 && c.current_hp > 0)
                             .map(|c| c.id.clone())
@@ -150,9 +161,9 @@ impl ActionExecutionEngine {
 
         // Note: We don't have access to seed and scores here, those are added by the caller
         LeanRunLog {
-            seed: 0,  // Will be set by caller
-            final_score: 0.0,  // Will be set by caller
-            encounter_scores: Vec::new(),  // Will be set by caller
+            seed: 0,                      // Will be set by caller
+            final_score: 0.0,             // Will be set by caller
+            encounter_scores: Vec::new(), // Will be set by caller
             round_summaries,
             deaths: death_events,
             tpk_encounter,

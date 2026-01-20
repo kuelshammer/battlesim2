@@ -1,8 +1,8 @@
+use crate::combat_stats::{CombatStatsCache, CombatantStats};
 use crate::enums::CreatureCondition;
 use crate::events::{Event, EventBus};
 use crate::model::{Action, Combattant};
 use crate::resources::{ActionCost, ResetType, ResourceLedger};
-use crate::combat_stats::{CombatStatsCache, CombatantStats};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ pub struct TurnContext {
 
     // Roll Manipulation System
     pub roll_modifications: RollModificationQueue, // Per-combatant pending roll mods
-    
+
     // Interrupt System
     pub action_interrupted: bool, // Flag to signal that current action should stop
 }
@@ -89,7 +89,7 @@ pub struct CombattantState {
     pub conditions: Vec<CreatureCondition>,
     pub concentration: Option<String>, // ID of spell/concentration source
     pub position: crate::model::Position,
-    pub resources: ResourceLedger,     // Per-combatant resource tracking
+    pub resources: ResourceLedger, // Per-combatant resource tracking
     #[serde(default)]
     pub arcane_ward_hp: Option<u32>,
     pub known_ac: HashMap<String, crate::model::AcKnowledge>,
@@ -162,7 +162,7 @@ impl TurnContext {
                     cumulative_spent: c.initial_state.cumulative_spent,
                     cached_stats: None,
                 };
-                
+
                 // Sync initial state to base_combatant for immediate use in targeting logic
                 state.base_combatant.final_state.current_hp = state.current_hp;
                 state.base_combatant.final_state.temp_hp = Some(state.temp_hp);
@@ -346,7 +346,11 @@ impl TurnContext {
                     let weight = crate::intensity_calculation::get_resource_weight(
                         &key,
                         &combatant.resources.reset_rules,
-                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                        combatant
+                            .base_combatant
+                            .creature
+                            .con_modifier
+                            .unwrap_or(0.0),
                     );
                     combatant.cumulative_spent += *amount * weight;
                 }
@@ -388,7 +392,11 @@ impl TurnContext {
                     let weight = crate::intensity_calculation::get_resource_weight(
                         &key,
                         &combatant.resources.reset_rules,
-                        combatant.base_combatant.creature.con_modifier.unwrap_or(0.0)
+                        combatant
+                            .base_combatant
+                            .creature
+                            .con_modifier
+                            .unwrap_or(0.0),
                     );
                     combatant.cumulative_spent += *max * weight;
                 }
@@ -426,7 +434,8 @@ impl TurnContext {
                     if let Some(source) = self.combatants.get_mut(&effect.source_id) {
                         // If already concentrating on something else, we should break it
                         // But for now, just overwrite the concentration ID
-                        source.concentration = Some(buff.display_name.clone().unwrap_or(effect.id.clone()));
+                        source.concentration =
+                            Some(buff.display_name.clone().unwrap_or(effect.id.clone()));
                     }
                 }
 
@@ -559,7 +568,8 @@ impl TurnContext {
         }
 
         // 2. Check active effects (temporary buffs/debuffs)
-        self.active_effects.values()
+        self.active_effects
+            .values()
             .filter(|e| e.target_id == target_id)
             .any(|e| {
                 if let EffectType::Condition(c) = &e.effect_type {
@@ -581,11 +591,12 @@ impl TurnContext {
 
     /// Get all alive combatants (using standardized HP threshold >= 0.5)
     pub fn get_alive_combatants(&self) -> Vec<&CombattantState> {
-        let mut combatants: Vec<&CombattantState> = self.combatants
+        let mut combatants: Vec<&CombattantState> = self
+            .combatants
             .values()
             .filter(|c| c.current_hp > 0)
             .collect();
-        
+
         // Sort by ID for deterministic order (HashMap iteration is random in Rust)
         combatants.sort_by(|a, b| a.id.cmp(&b.id));
         combatants
@@ -625,8 +636,10 @@ impl TurnContext {
 
             // 3. Apply remaining damage to HP
             let actual_damage = remaining_damage;
-            combatant.current_hp = ((combatant.current_hp as f64) - actual_damage).max(0.0).round() as u32;
-            
+            combatant.current_hp = ((combatant.current_hp as f64) - actual_damage)
+                .max(0.0)
+                .round() as u32;
+
             // Sync with base_combatant for targeting modules
             combatant.base_combatant.final_state.current_hp = combatant.current_hp;
             combatant.base_combatant.final_state.temp_hp = Some(combatant.temp_hp);
@@ -647,7 +660,7 @@ impl TurnContext {
 
                 // Immediately remove all buffs from the dead combatant
                 self.remove_all_buffs_from_source(target_id);
-                
+
                 // Remove from combat stats cache to optimize targeting
                 self.remove_combatant_from_cache(target_id);
             }
@@ -684,11 +697,11 @@ impl TurnContext {
                 let current_hp = combatant.current_hp as f64;
                 // Calculate healing amount, capping at max HP
                 let actual_healing = (current_hp + amount).min(max_hp) - current_hp;
-                
+
                 // Update HP
                 combatant.current_hp = (current_hp + actual_healing).round() as u32;
                 combatant.base_combatant.final_state.current_hp = combatant.current_hp;
-                
+
                 Event::HealingApplied {
                     target_id: target_id.to_string(),
                     amount: actual_healing,
@@ -756,13 +769,15 @@ impl TurnContext {
     pub fn get_combatant_stats(&mut self, combatant_id: &str) -> Option<&CombatantStats> {
         if let Some(combatant_state) = self.combatants.get(combatant_id) {
             // Get or calculate stats through the cache
-            let stats = self.combat_stats_cache.get_stats(&combatant_state.base_combatant);
-            
+            let stats = self
+                .combat_stats_cache
+                .get_stats(&combatant_state.base_combatant);
+
             // Also cache in the combatant state for quick access
             if let Some(state) = self.combatants.get_mut(combatant_id) {
                 state.cached_stats = Some(stats.clone());
             }
-            
+
             Some(stats)
         } else {
             None
@@ -771,16 +786,21 @@ impl TurnContext {
 
     /// Pre-calculate combat statistics for all combatants
     pub fn precalculate_combat_stats(&mut self) {
-        let combatants: Vec<Combattant> = self.combatants
+        let combatants: Vec<Combattant> = self
+            .combatants
             .values()
             .map(|state| state.base_combatant.clone())
             .collect();
-        
-        self.combat_stats_cache.precalculate_for_combatants(&combatants);
-        
+
+        self.combat_stats_cache
+            .precalculate_for_combatants(&combatants);
+
         // Update cached stats in each combatant state
         for state in self.combatants.values_mut() {
-            if let Some(stats) = self.combat_stats_cache.get_stats_by_id(&state.base_combatant.creature.id) {
+            if let Some(stats) = self
+                .combat_stats_cache
+                .get_stats_by_id(&state.base_combatant.creature.id)
+            {
                 state.cached_stats = Some(stats.clone());
             }
         }
@@ -789,7 +809,7 @@ impl TurnContext {
     /// Invalidate combat stats cache (call when combatants die or state changes significantly)
     pub fn invalidate_combat_stats_cache(&mut self) {
         self.combat_stats_cache.mark_dirty();
-        
+
         // Clear cached stats from all combatant states
         for state in self.combatants.values_mut() {
             state.cached_stats = None;
@@ -802,7 +822,7 @@ impl TurnContext {
             let creature_id = &combatant_state.base_combatant.creature.id;
             self.combat_stats_cache.remove_creature(creature_id);
         }
-        
+
         // Clear cached stats from the combatant state
         if let Some(state) = self.combatants.get_mut(combatant_id) {
             state.cached_stats = None;
@@ -865,12 +885,19 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0,
+        let combatants = vec![Combattant {
+            team: 0,
             id: "player1".to_string(),
             creature: std::sync::Arc::new(creature),
             initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            initial_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
+            final_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
             actions: Vec::new(),
         }];
 
@@ -915,16 +942,24 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0,
+        let combatants = vec![Combattant {
+            team: 0,
             id: "player1".to_string(),
             creature: std::sync::Arc::new(creature),
             initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            initial_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
+            final_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
+        let mut context =
+            TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         context.start_new_turn("player1".to_string());
         assert_eq!(context.current_turn_owner, Some("player1".to_string()));
@@ -969,16 +1004,24 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0,
+        let combatants = vec![Combattant {
+            team: 0,
             id: "player1".to_string(),
             creature: std::sync::Arc::new(creature),
             initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            initial_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
+            final_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
+        let mut context =
+            TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         let costs = vec![ActionCost::Discrete {
             resource_type: crate::resources::ResourceType::Action,
@@ -1026,16 +1069,24 @@ mod tests {
             mode: "monster".to_string(),
         };
 
-        let combatants = vec![Combattant { team: 0,
+        let combatants = vec![Combattant {
+            team: 0,
             id: "player1".to_string(),
             creature: std::sync::Arc::new(creature),
             initiative: 10.0,
-            initial_state: CreatureState { current_hp: 30, ..CreatureState::default() },
-            final_state: CreatureState { current_hp: 30, ..CreatureState::default() },
+            initial_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
+            final_state: CreatureState {
+                current_hp: 30,
+                ..CreatureState::default()
+            },
             actions: Vec::new(),
         }];
 
-        let mut context = TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
+        let mut context =
+            TurnContext::new(combatants, Vec::new(), None, "Plains".to_string(), true);
 
         let effect = ActiveEffect {
             id: "test_effect".to_string(),
@@ -1057,7 +1108,8 @@ mod tests {
 
         // Update effects (should apply damage)
         context.update_effects();
-        let combatant = context.get_combatant("player1")
+        let combatant = context
+            .get_combatant("player1")
             .expect("player1 combatant should exist in test context");
         assert_eq!(combatant.current_hp, 25); // 30 - 5 = 25
     }

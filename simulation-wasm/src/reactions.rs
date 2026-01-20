@@ -513,7 +513,9 @@ mod tests {
         manager.current_round = 5;
         let mut test_set = std::collections::HashSet::new();
         test_set.insert("test".to_string());
-        manager.used_reactions.insert("player1".to_string(), test_set);
+        manager
+            .used_reactions
+            .insert("player1".to_string(), test_set);
 
         manager.reset_encounter();
 
@@ -618,7 +620,7 @@ mod tests {
     // Helper function to create a test TurnContext
     #[allow(dead_code)]
     fn create_test_context() -> crate::context::TurnContext {
-        use crate::model::{Creature, Combattant};
+        use crate::model::{Combattant, Creature};
 
         let creature = Creature {
             initial_buffs: vec![],

@@ -2,10 +2,10 @@
 //!
 //! These types are serialized and sent across the WASM/JavaScript boundary.
 
+use crate::events::Event;
+use crate::model::{Creature, TimelineStep};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::model::{Creature, TimelineStep};
-use crate::events::Event;
 
 // ============================================================================
 // Core Simulation Results
@@ -195,7 +195,9 @@ pub struct BatchSimulationResponse {
 // ============================================================================
 
 /// Per-encounter statistics (re-exported from model)
-pub use crate::model::simulation::{EncounterStats, Round, EncounterResult as ModelEncounterResult};
+pub use crate::model::simulation::{
+    EncounterResult as ModelEncounterResult, EncounterStats, Round,
+};
 
 /// Alias for model's EncounterResult (used in SimulationRunData)
 pub type EncounterResult = ModelEncounterResult;

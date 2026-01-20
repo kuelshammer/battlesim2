@@ -1,5 +1,5 @@
-use crate::user_interaction::{ScenarioParameters, SlotSelection};
 use crate::model::{Creature, Encounter, SimulationResult, TimelineStep};
+use crate::user_interaction::{ScenarioParameters, SlotSelection};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc;
 use std::sync::PoisonError;
@@ -34,8 +34,6 @@ impl std::fmt::Display for DisplayMode {
         }
     }
 }
-
-
 
 /// Configuration for display behavior
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,7 +114,8 @@ pub struct DisplayResult {
     pub messages: Vec<String>,
 }
 
-type ProgressCommunicatorRef = std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>;
+type ProgressCommunicatorRef =
+    std::sync::Arc<std::sync::Mutex<crate::progress_communication::ProgressCommunication>>;
 
 /// Manager for displaying simulation results with various modes
 pub struct DisplayManager {
@@ -164,7 +163,9 @@ impl DisplayManager {
         };
 
         // Check if parameters have changed
-        let parameters_changed = self.last_parameters.as_ref()
+        let parameters_changed = self
+            .last_parameters
+            .as_ref()
             .map(|last| !self.parameters_equal(last, &parameters))
             .unwrap_or(true);
 
@@ -186,7 +187,9 @@ impl DisplayManager {
             DisplayMode::ShowMostSimilar => self.get_most_similar_results(&parameters),
             DisplayMode::LetUserChoose => self.present_user_choice(&parameters),
             DisplayMode::PrimaryOnly => self.get_slot_results(&parameters, SlotSelection::Primary),
-            DisplayMode::SecondaryOnly => self.get_slot_results(&parameters, SlotSelection::Secondary),
+            DisplayMode::SecondaryOnly => {
+                self.get_slot_results(&parameters, SlotSelection::Secondary)
+            }
         }
     }
 
@@ -199,7 +202,9 @@ impl DisplayManager {
             mode_used: DisplayMode::ShowNewest,
             user_interaction_required: false,
             available_slots: vec![],
-            messages: vec!["Storage functionality removed - no cached results available".to_string()],
+            messages: vec![
+                "Storage functionality removed - no cached results available".to_string(),
+            ],
         }
     }
 
@@ -212,7 +217,9 @@ impl DisplayManager {
             mode_used: DisplayMode::ShowMostSimilar,
             user_interaction_required: false,
             available_slots: vec![],
-            messages: vec!["Storage functionality removed - no cached results available".to_string()],
+            messages: vec![
+                "Storage functionality removed - no cached results available".to_string(),
+            ],
         }
     }
 
@@ -225,12 +232,18 @@ impl DisplayManager {
             mode_used: DisplayMode::LetUserChoose,
             user_interaction_required: false,
             available_slots: vec![],
-            messages: vec!["Storage functionality removed - no cached results available".to_string()],
+            messages: vec![
+                "Storage functionality removed - no cached results available".to_string(),
+            ],
         }
     }
 
     /// Get results from a specific slot
-    fn get_slot_results(&self, _parameters: &ScenarioParameters, slot_selection: SlotSelection) -> DisplayResult {
+    fn get_slot_results(
+        &self,
+        _parameters: &ScenarioParameters,
+        slot_selection: SlotSelection,
+    ) -> DisplayResult {
         // Since storage is removed, return empty results
         DisplayResult {
             results: None,
@@ -242,7 +255,10 @@ impl DisplayManager {
             },
             user_interaction_required: false,
             available_slots: vec![],
-            messages: vec![format!("Storage functionality removed - no data available in {:?} slot", slot_selection)],
+            messages: vec![format!(
+                "Storage functionality removed - no data available in {:?} slot",
+                slot_selection
+            )],
         }
     }
 
@@ -290,22 +306,35 @@ impl DisplayManager {
     /// Set progress communicator for background simulation updates
     pub fn set_progress_communicator(&mut self, communicator_arc: ProgressCommunicatorRef) {
         {
-            let communicator = communicator_arc.lock().unwrap_or_else(PoisonError::into_inner);
+            let communicator = communicator_arc
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
             // Create a unique subscription ID for this display manager
-            let subscription_id = format!("display_manager_sub_{}", SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos());
-            let subscription = crate::progress_communication::ProgressSubscription::new(subscription_id);
+            let subscription_id = format!(
+                "display_manager_sub_{}",
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_nanos()
+            );
+            let subscription =
+                crate::progress_communication::ProgressSubscription::new(subscription_id);
 
             if let Ok(receiver) = communicator.subscribe(subscription) {
                 self.progress_receiver = Some(receiver);
             } else {
-                console::error_1(&"Failed to subscribe DisplayManager to ProgressCommunication".into());
+                console::error_1(
+                    &"Failed to subscribe DisplayManager to ProgressCommunication".into(),
+                );
             }
         }
         self.progress_communicator = Some(communicator_arc);
     }
 
     /// Get current progress from background simulations
-    pub fn get_current_progress(&mut self) -> Option<crate::progress_communication::ProgressUpdate> {
+    pub fn get_current_progress(
+        &mut self,
+    ) -> Option<crate::progress_communication::ProgressUpdate> {
         // Drain all available updates from the receiver and store the latest
         if let Some(receiver) = self.progress_receiver.as_ref() {
             while let Ok(update) = receiver.try_recv() {
@@ -316,9 +345,12 @@ impl DisplayManager {
     }
 
     /// Handle simulation completion
-    pub fn handle_simulation_completed(&mut self, slot_selection: SlotSelection) -> Result<(), String> {
+    pub fn handle_simulation_completed(
+        &mut self,
+        slot_selection: SlotSelection,
+    ) -> Result<(), String> {
         console::log_1(&format!("Simulation completed for slot {:?}", slot_selection).into());
-        
+
         if self.config.auto_switch_similar {
             self.active_slot = Some(slot_selection);
             self.current_mode = DisplayMode::ShowNewest;
@@ -337,14 +369,20 @@ impl DisplayManager {
     pub fn generate_status_text(&mut self) -> String {
         if let Some(progress) = self.get_current_progress() {
             match progress.update_type {
-                crate::progress_communication::ProgressUpdateType::Started => "Starting".to_string(),
+                crate::progress_communication::ProgressUpdateType::Started => {
+                    "Starting".to_string()
+                }
                 crate::progress_communication::ProgressUpdateType::Progress => {
                     let percentage = (progress.progress_percentage * 100.0) as u32;
                     format!("Simulating: {}%", percentage)
                 }
-                crate::progress_communication::ProgressUpdateType::Completed => "Completed".to_string(),
+                crate::progress_communication::ProgressUpdateType::Completed => {
+                    "Completed".to_string()
+                }
                 crate::progress_communication::ProgressUpdateType::Failed => "Failed".to_string(),
-                crate::progress_communication::ProgressUpdateType::Cancelled => "Cancelled".to_string(),
+                crate::progress_communication::ProgressUpdateType::Cancelled => {
+                    "Cancelled".to_string()
+                }
             }
         } else {
             "Ready".to_string()
@@ -358,27 +396,37 @@ impl DisplayManager {
     }
 
     /// Calculate similarity between two parameter sets (0.0 to 1.0)
-    fn calculate_similarity(&self, params1: &ScenarioParameters, params2: &ScenarioParameters) -> f64 {
+    fn calculate_similarity(
+        &self,
+        params1: &ScenarioParameters,
+        params2: &ScenarioParameters,
+    ) -> f64 {
         let mut similarity = 1.0;
         let mut factors = 0;
 
         // Compare iterations
         if params1.iterations > 0 && params2.iterations > 0 {
             let iter_diff = (params1.iterations as f64 - params2.iterations as f64).abs();
-            let iter_similarity = 1.0 - (iter_diff / params1.iterations.max(params2.iterations) as f64).min(1.0);
+            let iter_similarity =
+                1.0 - (iter_diff / params1.iterations.max(params2.iterations) as f64).min(1.0);
             similarity *= iter_similarity;
             factors += 1;
         }
 
         // Compare player count
         let player_count_diff = (params1.players.len() as f64 - params2.players.len() as f64).abs();
-        let player_similarity = 1.0 - (player_count_diff / params1.players.len().max(params2.players.len()) as f64).min(1.0);
+        let player_similarity = 1.0
+            - (player_count_diff / params1.players.len().max(params2.players.len()) as f64)
+                .min(1.0);
         similarity *= player_similarity;
         factors += 1;
 
         // Compare encounter count
-        let encounter_count_diff = (params1.timeline.len() as f64 - params2.timeline.len() as f64).abs();
-        let encounter_similarity = 1.0 - (encounter_count_diff / params1.timeline.len().max(params2.timeline.len()) as f64).min(1.0);
+        let encounter_count_diff =
+            (params1.timeline.len() as f64 - params2.timeline.len() as f64).abs();
+        let encounter_similarity = 1.0
+            - (encounter_count_diff / params1.timeline.len().max(params2.timeline.len()) as f64)
+                .min(1.0);
         similarity *= encounter_similarity;
         factors += 1;
 
@@ -391,7 +439,8 @@ impl DisplayManager {
 
         // Simple encounter comparison (could be enhanced)
         if !params1.timeline.is_empty() && !params2.timeline.is_empty() {
-            let encounter_similarity = self.compare_encounter_lists(&params1.timeline, &params2.timeline);
+            let encounter_similarity =
+                self.compare_encounter_lists(&params1.timeline, &params2.timeline);
             similarity *= encounter_similarity;
             factors += 1;
         }
@@ -515,7 +564,11 @@ impl DisplayManager {
 
     /// Calculate parameter differences for display
     #[allow(dead_code)]
-    fn calculate_parameter_differences(&self, params1: &ScenarioParameters, params2: &ScenarioParameters) -> Vec<ParameterDifference> {
+    fn calculate_parameter_differences(
+        &self,
+        params1: &ScenarioParameters,
+        params2: &ScenarioParameters,
+    ) -> Vec<ParameterDifference> {
         let mut differences = Vec::new();
 
         // Iterations difference
@@ -525,7 +578,9 @@ impl DisplayManager {
                 current_value: params1.iterations.to_string(),
                 stored_value: params2.iterations.to_string(),
                 severity: if params1.iterations > 0 && params2.iterations > 0 {
-                    ((params1.iterations as f64 - params2.iterations as f64).abs() / params1.iterations.max(params2.iterations) as f64).min(1.0)
+                    ((params1.iterations as f64 - params2.iterations as f64).abs()
+                        / params1.iterations.max(params2.iterations) as f64)
+                        .min(1.0)
                 } else {
                     1.0
                 },
@@ -538,7 +593,9 @@ impl DisplayManager {
                 parameter_name: "Player Count".to_string(),
                 current_value: params1.players.len().to_string(),
                 stored_value: params2.players.len().to_string(),
-                severity: ((params1.players.len() as f64 - params2.players.len() as f64).abs() / params1.players.len().max(params2.players.len()) as f64).min(1.0),
+                severity: ((params1.players.len() as f64 - params2.players.len() as f64).abs()
+                    / params1.players.len().max(params2.players.len()) as f64)
+                    .min(1.0),
             });
         }
 
@@ -548,7 +605,9 @@ impl DisplayManager {
                 parameter_name: "Encounter Count".to_string(),
                 current_value: params1.timeline.len().to_string(),
                 stored_value: params2.timeline.len().to_string(),
-                severity: ((params1.timeline.len() as f64 - params2.timeline.len() as f64).abs() / params1.timeline.len().max(params2.timeline.len()) as f64).min(1.0),
+                severity: ((params1.timeline.len() as f64 - params2.timeline.len() as f64).abs()
+                    / params1.timeline.len().max(params2.timeline.len()) as f64)
+                    .min(1.0),
             });
         }
 
@@ -635,7 +694,10 @@ mod tests {
         };
 
         let params2 = ScenarioParameters {
-            players: vec![create_test_creature("Fighter", 50.0, 16.0), create_test_creature("Cleric", 40.0, 14.0)],
+            players: vec![
+                create_test_creature("Fighter", 50.0, 16.0),
+                create_test_creature("Cleric", 40.0, 14.0),
+            ],
             timeline: vec![],
             iterations: 200,
         };
@@ -643,7 +705,10 @@ mod tests {
         let differences = manager.calculate_parameter_differences(&params1, &params2);
         assert_eq!(differences.len(), 2); // Player count and iterations
 
-        let iter_diff = differences.iter().find(|d| d.parameter_name == "Iterations").unwrap();
+        let iter_diff = differences
+            .iter()
+            .find(|d| d.parameter_name == "Iterations")
+            .unwrap();
         assert_eq!(iter_diff.current_value, "100");
         assert_eq!(iter_diff.stored_value, "200");
     }
@@ -660,8 +725,8 @@ impl DisplayManagerWrapper {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Result<DisplayManagerWrapper, JsValue> {
         let display_manager = DisplayManager::new(DisplayConfig::default());
-        Ok(DisplayManagerWrapper { 
-            inner: std::sync::Arc::new(std::sync::Mutex::new(display_manager))
+        Ok(DisplayManagerWrapper {
+            inner: std::sync::Arc::new(std::sync::Mutex::new(display_manager)),
         })
     }
 
@@ -675,8 +740,10 @@ impl DisplayManagerWrapper {
             "SecondaryOnly" => DisplayMode::SecondaryOnly,
             _ => return Err(JsValue::from_str("Invalid display mode")),
         };
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .set_display_mode(display_mode);
         Ok(())
     }
@@ -693,9 +760,12 @@ impl DisplayManagerWrapper {
         let timeline: Vec<TimelineStep> = serde_wasm_bindgen::from_value(timeline.clone())
             .map_err(|e| JsValue::from_str(&format!("Failed to parse timeline: {}", e)))?;
 
-        let result = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        let result = self
+            .inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .get_display_results(&players, &timeline, iterations);
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
@@ -708,21 +778,31 @@ impl DisplayManagerWrapper {
             _ => return Err(JsValue::from_str("Invalid slot selection")),
         };
 
-        let result = self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        let result = self
+            .inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .user_selected_slot(slot_selection);
-        
+
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
 
     #[wasm_bindgen(js_name = getDisplayMode)]
     pub fn get_display_mode(&self) -> String {
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner).get_display_mode().to_string()
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get_display_mode()
+            .to_string()
     }
 
     #[wasm_bindgen(js_name = getStatusText)]
     pub fn get_status_text(&self) -> String {
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner).generate_status_text()
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .generate_status_text()
     }
 
     #[wasm_bindgen(js_name = handleSimulationCompleted)]
@@ -733,14 +813,18 @@ impl DisplayManagerWrapper {
             _ => return Err(JsValue::from_str("Invalid slot selection")),
         };
 
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .handle_simulation_completed(slot_selection)
             .map_err(|e| JsValue::from_str(&e))
     }
 
     #[wasm_bindgen(js_name = handleSimulationFailed)]
     pub fn handle_simulation_failed(&self, error: String) -> Result<(), JsValue> {
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
+        self.inner
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
             .handle_simulation_failed(&error)
             .map_err(|e| JsValue::from_str(&e))
     }

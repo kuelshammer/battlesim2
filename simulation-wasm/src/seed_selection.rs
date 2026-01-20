@@ -3,7 +3,7 @@
 //! This module provides algorithms for identifying interesting seeds from
 //! lightweight simulation runs for re-simulation with full event logging.
 
-use crate::model::{LightweightRun, SelectedSeed, InterestingSeedTier};
+use crate::model::{InterestingSeedTier, LightweightRun, SelectedSeed};
 use std::collections::HashSet;
 
 /// Selects interesting seeds with 1% granularity and three-tier classification
@@ -56,7 +56,11 @@ pub fn select_interesting_seeds_with_tiers(
     global_scored_runs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
     // Helper closure to add seed if not already seen
-    let add_seed = |seed: u64, tier: InterestingSeedTier, label: String, selected_seeds: &mut Vec<SelectedSeed>, seen_seeds: &mut HashSet<u64>| {
+    let add_seed = |seed: u64,
+                    tier: InterestingSeedTier,
+                    label: String,
+                    selected_seeds: &mut Vec<SelectedSeed>,
+                    seen_seeds: &mut HashSet<u64>| {
         if !seen_seeds.contains(&seed) {
             selected_seeds.push(SelectedSeed {
                 seed,
@@ -78,10 +82,10 @@ pub fn select_interesting_seeds_with_tiers(
                 let run = &lightweight_runs[*run_idx];
                 add_seed(
                     run.seed,
-                    InterestingSeedTier::TierB,  // Lean events for 1% medians
+                    InterestingSeedTier::TierB, // Lean events for 1% medians
                     format!("P{}-{}", i, i + 1),
                     &mut selected_seeds,
-                    &mut seen_seeds
+                    &mut seen_seeds,
                 );
             }
         }
@@ -96,10 +100,10 @@ pub fn select_interesting_seeds_with_tiers(
             let run = &lightweight_runs[*run_idx];
             add_seed(
                 run.seed,
-                InterestingSeedTier::TierA,  // Full events for decile logs
+                InterestingSeedTier::TierA, // Full events for decile logs
                 format!("P{}", percentile),
                 &mut selected_seeds,
-                &mut seen_seeds
+                &mut seen_seeds,
             );
         }
     }
@@ -111,7 +115,8 @@ pub fn select_interesting_seeds_with_tiers(
             .iter()
             .enumerate()
             .filter_map(|(i, run)| {
-                run.encounter_scores.get(encounter_idx)
+                run.encounter_scores
+                    .get(encounter_idx)
                     .copied()
                     .map(|score| (i, score))
             })
@@ -120,7 +125,9 @@ pub fn select_interesting_seeds_with_tiers(
         encounter_scored.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
         let len = encounter_scored.len();
-        if len == 0 { continue; }
+        if len == 0 {
+            continue;
+        }
 
         // Select P0, P50, P100 for this encounter
         for &percentile in &[0, 50, 100] {
@@ -129,10 +136,10 @@ pub fn select_interesting_seeds_with_tiers(
                 let run = &lightweight_runs[*run_idx];
                 add_seed(
                     run.seed,
-                    InterestingSeedTier::TierC,  // No events, use lightweight data
+                    InterestingSeedTier::TierC, // No events, use lightweight data
                     format!("E{}-P{}", encounter_idx, percentile),
                     &mut selected_seeds,
-                    &mut seen_seeds
+                    &mut seen_seeds,
                 );
             }
         }
@@ -143,10 +150,10 @@ pub fn select_interesting_seeds_with_tiers(
         if run.has_death {
             add_seed(
                 run.seed,
-                InterestingSeedTier::TierB,  // Lean events to track deaths
+                InterestingSeedTier::TierB, // Lean events to track deaths
                 format!("DEATH-E{}", run.first_death_encounter.unwrap_or(0)),
                 &mut selected_seeds,
-                &mut seen_seeds
+                &mut seen_seeds,
             );
         }
     }

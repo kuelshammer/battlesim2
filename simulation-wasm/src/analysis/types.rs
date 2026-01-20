@@ -113,7 +113,7 @@ pub struct DecileStats {
     pub battle_duration_rounds: usize,
     pub resource_timeline: Vec<f64>, // Array of EHP % after each step
     pub vitality_timeline: Vec<f64>, // Array of Vitality % after each step
-    pub power_timeline: Vec<f64>, // Array of Power % after each step
+    pub power_timeline: Vec<f64>,    // Array of Power % after each step
 }
 
 /// Percentile range for timelines
@@ -128,17 +128,17 @@ pub struct TimelineRange {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Vitals {
-    pub lethality_index: f64, // Probability of 1+ death/KO (0.0 - 1.0)
-    pub tpk_risk: f64,        // Probability of TPK (0.0 - 1.0)
-    pub attrition_score: f64, // % of daily budget burned (0.0 - 1.0)
-    pub volatility_index: f64, // Difference between P10 and P50 cost
-    pub doom_horizon: f64,    // Projected encounters until failure
+    pub lethality_index: f64,   // Probability of 1+ death/KO (0.0 - 1.0)
+    pub tpk_risk: f64,          // Probability of TPK (0.0 - 1.0)
+    pub attrition_score: f64,   // % of daily budget burned (0.0 - 1.0)
+    pub volatility_index: f64,  // Difference between P10 and P50 cost
+    pub doom_horizon: f64,      // Projected encounters until failure
     pub deaths_door_index: f64, // Average rounds spent at <25% HP (Thrilling metric)
 
     // NEW: Experience-based metrics
     pub near_death_survivors: f64, // Average characters ending at 1-10 HP (0.0 - party_size)
     pub crisis_participation_rate: f64, // % of party who hit <25% HP at some point (0.0 - 1.0)
-    pub min_hp_threshold: f64, // Lowest HP % anyone reached during fight (0.0 - 1.0)
+    pub min_hp_threshold: f64,     // Lowest HP % anyone reached during fight (0.0 - 1.0)
     pub avg_unconscious_rounds: f64, // Average rounds per player at 0 HP (agency loss measure)
 
     pub archetype: EncounterArchetype,
@@ -223,7 +223,6 @@ impl RunMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameBalance {
     // === Archetype Assessment Thresholds ===
-
     /// TPK risk threshold for "Broken" archetype
     pub tpk_broken_threshold: f64,
 
@@ -250,7 +249,6 @@ pub struct GameBalance {
     pub attrition_skirmish_threshold: f64,
 
     // === Pacing/Attrition Scoring Thresholds ===
-
     /// Resource percentage considered "TPK/Total Exhaustion"
     pub pacing_exhaustion_pct: f64,
 
@@ -267,7 +265,6 @@ pub struct GameBalance {
     pub pacing_easy_pct: f64,
 
     // === Rhythm/Difficulty Escalation ===
-
     /// Tolerance factor for detecting "dips" in difficulty (0.0-1.0)
     /// A dip is when weight < max_weight_so_far * dip_tolerance
     pub dip_tolerance: f64,
@@ -276,12 +273,10 @@ pub struct GameBalance {
     pub dip_penalty: f64,
 
     // === Volatility Detection ===
-
     /// Volatility index threshold for marking an encounter as "volatile"
     pub is_volatile_threshold: f64,
 
     // === Scoring Weights ===
-
     /// Weight for rhythm score in Director's Score calculation
     pub director_rhythm_weight: f64,
 
@@ -292,12 +287,11 @@ pub struct GameBalance {
     pub director_recovery_weight: f64,
 
     // === Intensity Tier Thresholds ===
-
     /// Multipliers for intensity tier boundaries
-    pub intensity_tier1_multiplier: f64,  // < 0.2 * target
-    pub intensity_tier2_multiplier: f64,  // < 0.6 * target
-    pub intensity_tier3_multiplier: f64,  // < 1.3 * target
-    pub intensity_tier4_multiplier: f64,  // < 2.0 * target
+    pub intensity_tier1_multiplier: f64, // < 0.2 * target
+    pub intensity_tier2_multiplier: f64, // < 0.6 * target
+    pub intensity_tier3_multiplier: f64, // < 1.3 * target
+    pub intensity_tier4_multiplier: f64, // < 2.0 * target
 }
 
 impl Default for GameBalance {

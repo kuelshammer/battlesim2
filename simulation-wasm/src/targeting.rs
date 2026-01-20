@@ -1,7 +1,7 @@
+use crate::combat_stats::CombatantStats;
 use crate::dice;
 use crate::enums::*;
 use crate::model::*;
-use crate::combat_stats::CombatantStats;
 use std::cmp::Ordering;
 
 pub fn get_targets(
@@ -103,13 +103,9 @@ pub fn get_targets(
                     c.creature.name
                 );
                 let self_idx = allies.iter().position(|a| a.id == c.id).unwrap_or(0);
-                if let Some(idx) = select_ally_target(
-                    a.target,
-                    allies,
-                    self_idx,
-                    &targets,
-                    Some(&a.base().id),
-                ) {
+                if let Some(idx) =
+                    select_ally_target(a.target, allies, self_idx, &targets, Some(&a.base().id))
+                {
                     #[cfg(debug_assertions)]
                     eprintln!(
                         "            Target selected for {}: Ally {}",
@@ -157,7 +153,11 @@ pub fn get_targets(
         Action::Template(a) => {
             let target_type = a.template_options.target.clone().unwrap_or_else(|| {
                 let name = a.template_options.template_name.to_lowercase();
-                if name == "bane" || name == "hex" || name == "hunter's mark" || name == "hypnotic pattern" {
+                if name == "bane"
+                    || name == "hex"
+                    || name == "hunter's mark"
+                    || name == "hypnotic pattern"
+                {
                     TargetType::Enemy(EnemyTarget::EnemyWithLeastHP)
                 } else {
                     TargetType::Ally(AllyTarget::AllyWithLeastHP)
@@ -276,16 +276,22 @@ pub fn select_enemy_target(
         let est_ac2 = get_estimated_ac(e2);
 
         let get_attacker_to_hit = |attacker: &Combattant| -> f64 {
-            attacker.creature.actions.iter().filter_map(|a| {
-                if let Action::Atk(atk) = a {
-                    Some(match &atk.to_hit {
-                        DiceFormula::Value(v) => *v,
-                        DiceFormula::Expr(e) => crate::dice::parse_average(e),
-                    })
-                } else {
-                    None
-                }
-            }).max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal)).unwrap_or(5.0)
+            attacker
+                .creature
+                .actions
+                .iter()
+                .filter_map(|a| {
+                    if let Action::Atk(atk) = a {
+                        Some(match &atk.to_hit {
+                            DiceFormula::Value(v) => *v,
+                            DiceFormula::Expr(e) => crate::dice::parse_average(e),
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal))
+                .unwrap_or(5.0)
         };
 
         let atk_to_hit = get_attacker_to_hit(attacker);
@@ -302,7 +308,9 @@ pub fn select_enemy_target(
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e1),
             EnemyTarget::EnemyWithLowestAC => e1.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e1.creature.ac as f64),
-            EnemyTarget::EnemyWithHighestSurvivability => -e1.current_survivability_score_vs_attack(atk_to_hit_int),
+            EnemyTarget::EnemyWithHighestSurvivability => {
+                -e1.current_survivability_score_vs_attack(atk_to_hit_int)
+            }
         };
 
         let v2 = match strategy {
@@ -311,7 +319,9 @@ pub fn select_enemy_target(
             EnemyTarget::EnemyWithHighestDPR => -estimate_dpr(e2),
             EnemyTarget::EnemyWithLowestAC => e2.creature.ac as f64,
             EnemyTarget::EnemyWithHighestAC => -(e2.creature.ac as f64),
-            EnemyTarget::EnemyWithHighestSurvivability => -e2.current_survivability_score_vs_attack(atk_to_hit_int),
+            EnemyTarget::EnemyWithHighestSurvivability => {
+                -e2.current_survivability_score_vs_attack(atk_to_hit_int)
+            }
         };
 
         // Using partial_cmp for floats. We want strict ordering.
@@ -377,7 +387,9 @@ pub fn select_enemy_target_cached(
     eprintln!("            Selecting enemy target (CACHED - Strategy: {:?}). Enemies available: {}. Excluded: {:?}", strategy, enemies.len(), excluded);
 
     // Collect valid candidates first, then get cached stats in separate step
-    let valid_indices: Vec<usize> = enemies.iter().enumerate()
+    let valid_indices: Vec<usize> = enemies
+        .iter()
+        .enumerate()
         .filter_map(|(i, e)| {
             // Check exclusion (true = enemy)
             if excluded.contains(&(true, i)) {
@@ -433,35 +445,41 @@ pub fn select_enemy_target_cached(
 
         // 1. Primary Strategy Comparison using cached stats
         let get_attacker_to_hit = |attacker: &Combattant| -> f64 {
-            attacker.creature.actions.iter().filter_map(|a| {
-                if let Action::Atk(atk) = a {
-                    Some(match &atk.to_hit {
-                        DiceFormula::Value(v) => *v,
-                        DiceFormula::Expr(e) => crate::dice::parse_average(e),
-                    })
-                } else {
-                    None
-                }
-            }).max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal)).unwrap_or(5.0)
+            attacker
+                .creature
+                .actions
+                .iter()
+                .filter_map(|a| {
+                    if let Action::Atk(atk) = a {
+                        Some(match &atk.to_hit {
+                            DiceFormula::Value(v) => *v,
+                            DiceFormula::Expr(e) => crate::dice::parse_average(e),
+                        })
+                    } else {
+                        None
+                    }
+                })
+                .max_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal))
+                .unwrap_or(5.0)
         };
 
         let atk_to_hit = get_attacker_to_hit(attacker);
 
         let v1 = calculate_target_score_cached(
-            &strategy, 
-            stats1, 
-            e1.final_state.current_hp as f64 + e1.final_state.temp_hp.unwrap_or(0) as f64, 
-            e1.final_state.concentrating_on.is_some(), 
-            est_ac1, 
-            atk_to_hit
+            &strategy,
+            stats1,
+            e1.final_state.current_hp as f64 + e1.final_state.temp_hp.unwrap_or(0) as f64,
+            e1.final_state.concentrating_on.is_some(),
+            est_ac1,
+            atk_to_hit,
         );
         let v2 = calculate_target_score_cached(
-            &strategy, 
-            stats2, 
-            e2.final_state.current_hp as f64 + e2.final_state.temp_hp.unwrap_or(0) as f64, 
-            e2.final_state.concentrating_on.is_some(), 
-            est_ac2, 
-            atk_to_hit
+            &strategy,
+            stats2,
+            e2.final_state.current_hp as f64 + e2.final_state.temp_hp.unwrap_or(0) as f64,
+            e2.final_state.concentrating_on.is_some(),
+            est_ac2,
+            atk_to_hit,
         );
 
         // Using partial_cmp for floats. We want strict ordering.
@@ -498,7 +516,10 @@ pub fn select_enemy_target_cached(
 
         // 5. Tie-Breaker: DPR (Higher DPR > Lower) using cached stats
         if stats1.total_dpr != stats2.total_dpr {
-            return stats2.total_dpr.partial_cmp(&stats1.total_dpr).unwrap_or(Ordering::Equal);
+            return stats2
+                .total_dpr
+                .partial_cmp(&stats1.total_dpr)
+                .unwrap_or(Ordering::Equal);
         }
 
         // 6. Tie-Breaker: Name (Alphabetical) - Deterministic fallback
@@ -683,7 +704,7 @@ fn calculate_target_score_cached(
     // Note: target_current_hp passed here should already be synced.
     // For Most/Least HP, we should ideally include THP if we want monsters to be smart.
     // However, the caller only passes current_hp.
-    
+
     match strategy {
         EnemyTarget::EnemyWithLeastHP => target_current_hp,
         EnemyTarget::EnemyWithMostHP => -target_current_hp,
@@ -694,10 +715,14 @@ fn calculate_target_score_cached(
             let ac = target_stats.ac as i32;
             let to_hit = attacker_to_hit.round() as i32;
             let roll_needed = ac - to_hit;
-            let hit_chance = if roll_needed <= 1 { 0.95 }
-                else if roll_needed >= 20 { 0.05 }
-                else { (21 - roll_needed) as f64 / 20.0 };
-            
+            let hit_chance = if roll_needed <= 1 {
+                0.95
+            } else if roll_needed >= 20 {
+                0.05
+            } else {
+                (21 - roll_needed) as f64 / 20.0
+            };
+
             -(target_current_hp / hit_chance)
         }
     }

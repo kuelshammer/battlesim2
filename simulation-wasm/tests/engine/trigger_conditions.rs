@@ -9,10 +9,7 @@ mod composite_trigger_tests {
     fn test_and_condition_both_true() {
         // TriggerCondition::And with two OnHit conditions should return true only if both evaluate true
         let and_condition = TriggerCondition::And {
-            conditions: vec![
-                TriggerCondition::OnHit,
-                TriggerCondition::OnHit,
-            ],
+            conditions: vec![TriggerCondition::OnHit, TriggerCondition::OnHit],
         };
 
         let hit_event = Event::AttackHit {
@@ -32,10 +29,7 @@ mod composite_trigger_tests {
     fn test_and_condition_one_false() {
         // And condition with OnHit and OnMiss should return false when only hit occurs
         let and_condition = TriggerCondition::And {
-            conditions: vec![
-                TriggerCondition::OnHit,
-                TriggerCondition::OnMiss,
-            ],
+            conditions: vec![TriggerCondition::OnHit, TriggerCondition::OnMiss],
         };
 
         let hit_event = Event::AttackHit {
@@ -55,10 +49,7 @@ mod composite_trigger_tests {
     fn test_or_condition_hit_matches() {
         // TriggerCondition::Or with OnHit and OnMiss should return true if either matches
         let or_condition = TriggerCondition::Or {
-            conditions: vec![
-                TriggerCondition::OnHit,
-                TriggerCondition::OnMiss,
-            ],
+            conditions: vec![TriggerCondition::OnHit, TriggerCondition::OnMiss],
         };
 
         let hit_event = Event::AttackHit {
@@ -78,10 +69,7 @@ mod composite_trigger_tests {
     fn test_or_condition_miss_matches() {
         // Or condition should return true for miss event
         let or_condition = TriggerCondition::Or {
-            conditions: vec![
-                TriggerCondition::OnHit,
-                TriggerCondition::OnMiss,
-            ],
+            conditions: vec![TriggerCondition::OnHit, TriggerCondition::OnMiss],
         };
 
         let miss_event = Event::AttackMissed {
@@ -98,10 +86,7 @@ mod composite_trigger_tests {
     fn test_or_condition_unrelated_event() {
         // Or condition should return false when neither condition matches
         let or_condition = TriggerCondition::Or {
-            conditions: vec![
-                TriggerCondition::OnHit,
-                TriggerCondition::OnMiss,
-            ],
+            conditions: vec![TriggerCondition::OnHit, TriggerCondition::OnMiss],
         };
 
         let damage_event = Event::DamageTaken {

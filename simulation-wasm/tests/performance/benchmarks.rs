@@ -36,7 +36,10 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "player".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![],
+        mode: "player".to_string(),
+        magic_items: vec![],
+        max_arcane_ward_hp: None,
+        initial_buffs: vec![],
     };
 
     let monster = Creature {
@@ -64,7 +67,10 @@ fn create_test_scenario() -> (Vec<Creature>, Vec<TimelineStep>) {
         hit_dice: None,
         con_modifier: None,
         arrival: None,
-        mode: "monster".to_string(), magic_items: vec![], max_arcane_ward_hp: None, initial_buffs: vec![],
+        mode: "monster".to_string(),
+        magic_items: vec![],
+        max_arcane_ward_hp: None,
+        initial_buffs: vec![],
     };
 
     let encounter = simulation_wasm::model::Encounter {
@@ -89,18 +95,17 @@ fn benchmark_phase_1_lightweight_survey() {
     const ITERATIONS: usize = 10_100;
 
     let start = Instant::now();
-    let lightweight_runs = simulation_wasm::run_survey_pass(
-        players.clone(),
-        timeline.clone(),
-        ITERATIONS,
-        Some(42),
-    );
+    let lightweight_runs =
+        simulation_wasm::run_survey_pass(players.clone(), timeline.clone(), ITERATIONS, Some(42));
     let duration = start.elapsed();
 
     println!("\n=== Phase 1 Benchmark (10,100 runs) ===");
     println!("Duration: {:?}", duration);
     println!("Runs: {}", lightweight_runs.len());
-    println!("Time per run: {:.2} ms", duration.as_millis() as f64 / ITERATIONS as f64);
+    println!(
+        "Time per run: {:.2} ms",
+        duration.as_millis() as f64 / ITERATIONS as f64
+    );
 
     // Expected: ~10s total, ~1ms per run
     // Allow 3× margin for CI/variability (can be 30s+ in CI)
@@ -119,12 +124,8 @@ fn benchmark_phase_2_seed_selection() {
     const ITERATIONS: usize = 10_100;
 
     // Run Phase 1 first
-    let lightweight_runs = simulation_wasm::run_survey_pass(
-        players.clone(),
-        timeline.clone(),
-        ITERATIONS,
-        Some(42),
-    );
+    let lightweight_runs =
+        simulation_wasm::run_survey_pass(players.clone(), timeline.clone(), ITERATIONS, Some(42));
 
     // Benchmark Phase 2
     let start = Instant::now();
@@ -135,9 +136,18 @@ fn benchmark_phase_2_seed_selection() {
     println!("Duration: {:?}", duration);
 
     // Count seeds by tier
-    let tier_a_count = selected_seeds.iter().filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierA).count();
-    let tier_b_count = selected_seeds.iter().filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierB).count();
-    let tier_c_count = selected_seeds.iter().filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierC).count();
+    let tier_a_count = selected_seeds
+        .iter()
+        .filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierA)
+        .count();
+    let tier_b_count = selected_seeds
+        .iter()
+        .filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierB)
+        .count();
+    let tier_c_count = selected_seeds
+        .iter()
+        .filter(|s| s.tier == simulation_wasm::model::InterestingSeedTier::TierC)
+        .count();
 
     println!("Total selected seeds: {}", selected_seeds.len());
     println!("  Tier A (full events): {}", tier_a_count);
@@ -149,12 +159,28 @@ fn benchmark_phase_2_seed_selection() {
     // - 11 from global deciles (Tier A)
     // - 3 from per-encounter extremes (Tier C) - 1 encounter × 3 percentiles
     // - Plus any death runs
-    assert!(selected_seeds.len() <= 200, "Selected too many seeds: {}", selected_seeds.len());
-    assert!(tier_a_count == 11, "Expected 11 Tier A seeds, got {}", tier_a_count);
-    assert!(tier_b_count >= 100, "Expected at least 100 Tier B seeds, got {}", tier_b_count);
+    assert!(
+        selected_seeds.len() <= 200,
+        "Selected too many seeds: {}",
+        selected_seeds.len()
+    );
+    assert!(
+        tier_a_count == 11,
+        "Expected 11 Tier A seeds, got {}",
+        tier_a_count
+    );
+    assert!(
+        tier_b_count >= 100,
+        "Expected at least 100 Tier B seeds, got {}",
+        tier_b_count
+    );
 
     // Phase 2 should be very fast (< 100ms)
-    assert!(duration.as_millis() < 100, "Phase 2 took too long: {:?}", duration);
+    assert!(
+        duration.as_millis() < 100,
+        "Phase 2 took too long: {:?}",
+        duration
+    );
 }
 
 #[test]
@@ -207,12 +233,8 @@ fn validate_1_percentile_buckets() {
 
     const ITERATIONS: usize = 10_100; // 100 buckets × 101 runs
 
-    let lightweight_runs = simulation_wasm::run_survey_pass(
-        players.clone(),
-        timeline.clone(),
-        ITERATIONS,
-        Some(42),
-    );
+    let lightweight_runs =
+        simulation_wasm::run_survey_pass(players.clone(), timeline.clone(), ITERATIONS, Some(42));
 
     let selected_seeds = simulation_wasm::select_interesting_seeds_with_tiers(&lightweight_runs);
 
@@ -238,6 +260,9 @@ fn validate_1_percentile_buckets() {
     // Check bucket labels format
     for seed in bucket_seeds.iter().take(5) {
         println!("  {}", seed.bucket_label);
-        assert!(seed.bucket_label.contains("-"), "Bucket label should contain '-'");
+        assert!(
+            seed.bucket_label.contains("-"),
+            "Bucket label should contain '-'"
+        );
     }
 }

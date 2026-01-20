@@ -1,7 +1,7 @@
 //! Deterministic RNG management for simulation tests
 //!
 //! This module provides thread-local RNG storage that can be optionally seeded
-//! for deterministic simulation results. It also supports "Forced Rolls" for 
+//! for deterministic simulation results. It also supports "Forced Rolls" for
 //! testing specific sequences.
 
 use rand::prelude::*;
@@ -78,7 +78,7 @@ pub fn roll_dice(sides: u32) -> u32 {
     if let Some(val) = forced {
         return val;
     }
-    
+
     let mut rng = get_rng();
     rng.gen_range(1..=sides)
 }

@@ -25,7 +25,7 @@ impl SimulationMetrics {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-            
+
         Self {
             total_iterations: 0,
             successful_iterations: 0,
@@ -39,7 +39,6 @@ impl SimulationMetrics {
         }
     }
 
-    
     pub fn success_rate(&self) -> f64 {
         if self.total_iterations == 0 {
             0.0
@@ -47,11 +46,11 @@ impl SimulationMetrics {
             self.successful_iterations as f64 / self.total_iterations as f64
         }
     }
-    
+
     pub fn failure_rate(&self) -> f64 {
         1.0 - self.success_rate()
     }
-    
+
     pub fn retry_rate(&self) -> f64 {
         if self.failed_iterations == 0 {
             0.0
@@ -59,23 +58,23 @@ impl SimulationMetrics {
             self.retried_iterations as f64 / self.failed_iterations as f64
         }
     }
-    
+
     pub fn reliability_score(&self) -> f64 {
         // Complex score considering success rate, retries, error types
         let base_score = self.success_rate();
         let retry_penalty = (self.retried_iterations as f64 / self.total_iterations as f64) * 0.1;
         let error_penalty = self.error_types.len() as f64 * 0.05;
-        
+
         (base_score - retry_penalty - error_penalty).max(0.0)
     }
-    
+
     pub fn mark_completed(&mut self) {
         self.end_time = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
     }
-    
+
     pub fn duration(&self) -> Duration {
         Duration::from_secs(self.end_time.saturating_sub(self.start_time))
     }
@@ -100,12 +99,12 @@ pub enum Alert {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertThresholds {
-    pub min_success_rate: f64,      // Default: 0.95 (95%)
-    pub max_retry_rate: f64,        // Default: 0.10 (10%)
-    pub max_error_types: usize,     // Default: 5
-    pub max_execution_time: f64,    // Default: 30s per iteration
-    pub max_memory_usage: usize,    // Default: 1GB
-    pub max_stall_time: u64,         // Default: 60s
+    pub min_success_rate: f64,   // Default: 0.95 (95%)
+    pub max_retry_rate: f64,     // Default: 0.10 (10%)
+    pub max_error_types: usize,  // Default: 5
+    pub max_execution_time: f64, // Default: 30s per iteration
+    pub max_memory_usage: usize, // Default: 1GB
+    pub max_stall_time: u64,     // Default: 60s
 }
 
 impl Default for AlertThresholds {
@@ -124,37 +123,37 @@ impl Default for AlertThresholds {
 impl AlertThresholds {
     pub fn check_alerts(&self, metrics: &SimulationMetrics) -> Vec<Alert> {
         let mut alerts = Vec::new();
-        
+
         if metrics.success_rate() < self.min_success_rate {
             alerts.push(Alert::LowSuccessRate(metrics.success_rate()));
         }
-        
+
         if metrics.retry_rate() > self.max_retry_rate {
             alerts.push(Alert::HighRetryRate);
         }
-        
+
         if metrics.error_types.len() > self.max_error_types {
             alerts.push(Alert::TooManyErrorTypes(metrics.error_types.len()));
         }
-        
+
         if metrics.average_execution_time > self.max_execution_time {
             alerts.push(Alert::SlowExecution(metrics.average_execution_time));
         }
-        
+
         if metrics.memory_usage_peak > self.max_memory_usage {
             alerts.push(Alert::HighMemoryUsage(metrics.memory_usage_peak));
         }
-        
+
         // Check for stall (no progress for too long)
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        
+
         if now > metrics.end_time && (now - metrics.end_time) > self.max_stall_time {
             alerts.push(Alert::SimulationStalled);
         }
-        
+
         alerts
     }
 }
@@ -165,7 +164,7 @@ pub struct SimulationMonitor {
     #[cfg(not(target_arch = "wasm32"))]
     start_time: Instant,
     #[cfg(target_arch = "wasm32")]
-    _start_time: (),  // Phantom field for WASM compatibility
+    _start_time: (), // Phantom field for WASM compatibility
     alerts: Vec<Alert>,
     error_logger: ErrorLogger,
 }
@@ -193,18 +192,18 @@ impl SimulationMonitor {
             }
         }
     }
-    
+
     pub fn start_iteration(&mut self) {
         self.metrics.total_iterations += 1;
     }
-    
+
     pub fn record_success(&mut self) {
         self.metrics.successful_iterations += 1;
     }
-    
+
     pub fn record_failure(&mut self, error: &SimulationError) {
         self.metrics.failed_iterations += 1;
-        
+
         // Track error types
         let error_type = match error {
             SimulationError::EmptyResult(_) => "EmptyResult",
@@ -216,20 +215,25 @@ impl SimulationMonitor {
             SimulationError::ValidationFailed(_) => "ValidationFailed",
             SimulationError::RetryExhausted(_) => "RetryExhausted",
         };
-        
-        *self.metrics.error_types.entry(error_type.to_string()).or_insert(0) += 1;
+
+        *self
+            .metrics
+            .error_types
+            .entry(error_type.to_string())
+            .or_insert(0) += 1;
     }
-    
+
     pub fn record_retry(&mut self) {
         self.metrics.retried_iterations += 1;
     }
-    
+
     pub fn update_execution_time(&mut self) {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let elapsed = self.start_time.elapsed().as_secs_f64();
             if self.metrics.total_iterations > 0 {
-                self.metrics.average_execution_time = elapsed / self.metrics.total_iterations as f64;
+                self.metrics.average_execution_time =
+                    elapsed / self.metrics.total_iterations as f64;
             }
         }
         #[cfg(target_arch = "wasm32")]
@@ -240,49 +244,53 @@ impl SimulationMonitor {
             }
         }
     }
-    
+
     pub fn update_memory_usage(&mut self, usage: usize) {
         if usage > self.metrics.memory_usage_peak {
             self.metrics.memory_usage_peak = usage;
         }
     }
-    
+
     pub fn check_alerts(&mut self) -> &[Alert] {
         self.update_execution_time();
         let new_alerts = self.thresholds.check_alerts(&self.metrics);
-        
+
         // Only add new alerts that weren't already present
         for alert in new_alerts {
-            if !self.alerts.iter().any(|existing| std::mem::discriminant(existing) == std::mem::discriminant(&alert)) {
+            if !self
+                .alerts
+                .iter()
+                .any(|existing| std::mem::discriminant(existing) == std::mem::discriminant(&alert))
+            {
                 self.alerts.push(alert);
             }
         }
-        
+
         &self.alerts
     }
-    
+
     pub fn get_metrics(&self) -> &SimulationMetrics {
         &self.metrics
     }
-    
+
     pub fn get_metrics_mut(&mut self) -> &mut SimulationMetrics {
         &mut self.metrics
     }
-    
+
     pub fn finalize(&mut self) -> SimulationMetrics {
         self.metrics.mark_completed();
         self.update_execution_time();
         self.metrics.clone()
     }
-    
+
     pub fn get_error_summary(&self) -> HashMap<String, usize> {
         self.error_logger.get_error_summary()
     }
-    
+
     pub fn is_healthy(&self) -> bool {
         self.alerts.is_empty() && self.metrics.success_rate() >= self.thresholds.min_success_rate
     }
-    
+
     pub fn get_health_status(&self) -> HealthStatus {
         if self.is_healthy() {
             HealthStatus::Healthy
@@ -327,7 +335,7 @@ impl MonitoringReport {
         let health_status = monitor.get_health_status();
         let error_summary = monitor.get_error_summary();
         let recommendations = Self::generate_recommendations(&metrics, &alerts);
-        
+
         Self {
             metrics,
             alerts,
@@ -336,38 +344,38 @@ impl MonitoringReport {
             recommendations,
         }
     }
-    
+
     fn generate_recommendations(metrics: &SimulationMetrics, alerts: &[Alert]) -> Vec<String> {
         let mut recommendations = Vec::new();
-        
+
         if metrics.success_rate() < 0.95 {
             recommendations.push(format!(
                 "Success rate ({:.1}%) below target. Consider reviewing scenario complexity.",
                 metrics.success_rate() * 100.0
             ));
         }
-        
+
         if metrics.retry_rate() > 0.1 {
             recommendations.push(format!(
                 "High retry rate ({:.1}%). Consider investigating transient failures.",
                 metrics.retry_rate() * 100.0
             ));
         }
-        
+
         if metrics.error_types.len() > 5 {
             recommendations.push(format!(
                 "Too many error types ({}). Consider comprehensive error handling review.",
                 metrics.error_types.len()
             ));
         }
-        
+
         if metrics.average_execution_time > 30.0 {
             recommendations.push(format!(
                 "Slow execution time ({:.1}s per iteration). Consider performance optimization.",
                 metrics.average_execution_time
             ));
         }
-        
+
         for alert in alerts {
             match alert {
                 Alert::LowSuccessRate(rate) => {
@@ -405,7 +413,7 @@ impl MonitoringReport {
                 }
             }
         }
-        
+
         recommendations
     }
 }
@@ -413,54 +421,64 @@ impl MonitoringReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_simulation_metrics() {
         let mut metrics = SimulationMetrics::new();
-        
+
         assert_eq!(metrics.success_rate(), 0.0);
         assert_eq!(metrics.failure_rate(), 1.0);
         assert_eq!(metrics.reliability_score(), 0.0);
-        
+
         metrics.total_iterations = 100;
         metrics.successful_iterations = 95;
         metrics.failed_iterations = 5;
         metrics.retried_iterations = 2;
-        
+
         assert_eq!(metrics.success_rate(), 0.95);
         assert!((metrics.failure_rate() - 0.05).abs() < 0.001);
         assert_eq!(metrics.retry_rate(), 0.4);
         assert!(metrics.reliability_score() > 0.79); // Allow for floating point precision
     }
-    
+
     #[test]
     fn test_alert_thresholds() {
         let thresholds = AlertThresholds::default();
-        
+
         let mut metrics = SimulationMetrics::new();
         metrics.total_iterations = 100;
         metrics.successful_iterations = 90; // 90% success rate
         metrics.error_types.insert("EmptyResult".to_string(), 5);
-        metrics.error_types.insert("InvalidCombatant".to_string(), 5);
-        metrics.error_types.insert("ResourceExhausted".to_string(), 5);
-        metrics.error_types.insert("IndexOutOfBounds".to_string(), 5);
-        metrics.error_types.insert("SerializationError".to_string(), 5);
+        metrics
+            .error_types
+            .insert("InvalidCombatant".to_string(), 5);
+        metrics
+            .error_types
+            .insert("ResourceExhausted".to_string(), 5);
+        metrics
+            .error_types
+            .insert("IndexOutOfBounds".to_string(), 5);
+        metrics
+            .error_types
+            .insert("SerializationError".to_string(), 5);
         metrics.error_types.insert("UnexpectedState".to_string(), 5);
-        
+
         let alerts = thresholds.check_alerts(&metrics);
-        
+
         // Should have alert for low success rate
         assert!(alerts.iter().any(|a| matches!(a, Alert::LowSuccessRate(_))));
-        
+
         // Should have alert for too many error types
-        assert!(alerts.iter().any(|a| matches!(a, Alert::TooManyErrorTypes(_))));
+        assert!(alerts
+            .iter()
+            .any(|a| matches!(a, Alert::TooManyErrorTypes(_))));
     }
-    
+
     #[test]
     fn test_simulation_monitor() {
         let thresholds = AlertThresholds::default();
         let mut monitor = SimulationMonitor::new(thresholds);
-        
+
         // Simulate some iterations
         for i in 0..100 {
             monitor.start_iteration();
@@ -470,22 +488,22 @@ mod tests {
                 monitor.record_failure(&SimulationError::EmptyResult("Test".to_string()));
             }
         }
-        
+
         let metrics = monitor.get_metrics();
         assert_eq!(metrics.total_iterations, 100);
         assert_eq!(metrics.successful_iterations, 95);
         assert_eq!(metrics.failed_iterations, 5);
         assert_eq!(metrics.success_rate(), 0.95);
-        
+
         let health = monitor.get_health_status();
         assert!(matches!(health, HealthStatus::Healthy));
     }
-    
+
     #[test]
     fn test_monitoring_report() {
         let thresholds = AlertThresholds::default();
         let mut monitor = SimulationMonitor::new(thresholds);
-        
+
         // Add some data
         for i in 0..100 {
             monitor.start_iteration();
@@ -495,9 +513,9 @@ mod tests {
                 monitor.record_failure(&SimulationError::EmptyResult("Test".to_string()));
             }
         }
-        
+
         let report = MonitoringReport::generate(&mut monitor);
-        
+
         assert_eq!(report.metrics.total_iterations, 100);
         assert_eq!(report.metrics.successful_iterations, 90);
         assert!(matches!(report.health_status, HealthStatus::Degraded));

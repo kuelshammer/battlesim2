@@ -57,7 +57,7 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
         }
 
         let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
-        
+
         for round_idx in 0..max_rounds {
             let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
             let mut team2_map: HashMap<String, AggregationData> = HashMap::new();
@@ -74,36 +74,54 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
                     if let Some(round) = round_opt {
                         count += 1;
                         for c in &round.team1 {
-                            let entry = team1_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
+                            let entry = team1_map
+                                .entry(c.id.clone())
+                                .or_insert_with(AggregationData::new);
                             entry.total_hp += c.final_state.current_hp as f64;
                             let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                             *entry.action_counts.entry(action_key).or_insert(0) += 1;
                             for (buff_id, buff) in &c.final_state.buffs {
                                 *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                                entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                                entry
+                                    .buff_definitions
+                                    .entry(buff_id.clone())
+                                    .or_insert_with(|| buff.clone());
                             }
                             if let Some(conc_id) = &c.final_state.concentrating_on {
-                                *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
+                                *entry
+                                    .concentration_counts
+                                    .entry(conc_id.clone())
+                                    .or_insert(0) += 1;
                             }
                         }
                         for c in &round.team2 {
-                            let entry = team2_map.entry(c.id.clone()).or_insert_with(AggregationData::new);
+                            let entry = team2_map
+                                .entry(c.id.clone())
+                                .or_insert_with(AggregationData::new);
                             entry.total_hp += c.final_state.current_hp as f64;
                             let action_key = serde_json::to_string(&c.actions).unwrap_or_default();
                             *entry.action_counts.entry(action_key).or_insert(0) += 1;
                             for (buff_id, buff) in &c.final_state.buffs {
                                 *entry.buff_counts.entry(buff_id.clone()).or_insert(0) += 1;
-                                entry.buff_definitions.entry(buff_id.clone()).or_insert_with(|| buff.clone());
+                                entry
+                                    .buff_definitions
+                                    .entry(buff_id.clone())
+                                    .or_insert_with(|| buff.clone());
                             }
                             if let Some(conc_id) = &c.final_state.concentrating_on {
-                                *entry.concentration_counts.entry(conc_id.clone()).or_insert(0) += 1;
+                                *entry
+                                    .concentration_counts
+                                    .entry(conc_id.clone())
+                                    .or_insert(0) += 1;
                             }
                         }
                     }
                 }
             }
 
-            if count == 0 { continue; }
+            if count == 0 {
+                continue;
+            }
             let threshold = count / 2;
             let template_round = if round_idx < template_encounter.rounds.len() {
                 Some(&template_encounter.rounds[round_idx])
@@ -121,14 +139,39 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
                 if let Some(data) = team1_map.get(&c_template.id) {
                     let mut c = c_template.clone();
                     c.final_state.current_hp = (data.total_hp / count as f64).round() as u32;
-                    let best_action_json = data.action_counts.iter().max_by_key(|e| e.1).map(|(k,_)| k.as_str()).unwrap_or("[]");
+                    let best_action_json = data
+                        .action_counts
+                        .iter()
+                        .max_by_key(|e| e.1)
+                        .map(|(k, _)| k.as_str())
+                        .unwrap_or("[]");
                     c.actions = serde_json::from_str(best_action_json).unwrap_or_default();
                     c.final_state.buffs.clear();
                     for (bid, bcount) in &data.buff_counts {
-                        if *bcount > threshold { if let Some(bdef) = data.buff_definitions.get(bid) { c.final_state.buffs.insert(bid.clone(), bdef.clone()); } }
+                        if *bcount > threshold {
+                            if let Some(bdef) = data.buff_definitions.get(bid) {
+                                c.final_state.buffs.insert(bid.clone(), bdef.clone());
+                            }
+                        }
                     }
-                    c.final_state.concentrating_on = data.concentration_counts.iter().max_by_key(|e| e.1).and_then(|(cid, ccount)| if *ccount > threshold { Some(cid.clone()) } else { None });
-                    if round_idx > 0 { if let Some(prev) = aggregated_rounds.get(round_idx - 1) { if let Some(pc) = prev.team1.iter().find(|x| x.id == c.id) { c.initial_state = pc.final_state.clone(); } } }
+                    c.final_state.concentrating_on = data
+                        .concentration_counts
+                        .iter()
+                        .max_by_key(|e| e.1)
+                        .and_then(|(cid, ccount)| {
+                            if *ccount > threshold {
+                                Some(cid.clone())
+                            } else {
+                                None
+                            }
+                        });
+                    if round_idx > 0 {
+                        if let Some(prev) = aggregated_rounds.get(round_idx - 1) {
+                            if let Some(pc) = prev.team1.iter().find(|x| x.id == c.id) {
+                                c.initial_state = pc.final_state.clone();
+                            }
+                        }
+                    }
                     t1.push(c);
                 }
             }
@@ -138,14 +181,39 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
                 if let Some(data) = team2_map.get(&c_template.id) {
                     let mut c = c_template.clone();
                     c.final_state.current_hp = (data.total_hp / count as f64).round() as u32;
-                    let best_action_json = data.action_counts.iter().max_by_key(|e| e.1).map(|(k,_)| k.as_str()).unwrap_or("[]");
+                    let best_action_json = data
+                        .action_counts
+                        .iter()
+                        .max_by_key(|e| e.1)
+                        .map(|(k, _)| k.as_str())
+                        .unwrap_or("[]");
                     c.actions = serde_json::from_str(best_action_json).unwrap_or_default();
                     c.final_state.buffs.clear();
                     for (bid, bcount) in &data.buff_counts {
-                        if *bcount > threshold { if let Some(bdef) = data.buff_definitions.get(bid) { c.final_state.buffs.insert(bid.clone(), bdef.clone()); } }
+                        if *bcount > threshold {
+                            if let Some(bdef) = data.buff_definitions.get(bid) {
+                                c.final_state.buffs.insert(bid.clone(), bdef.clone());
+                            }
+                        }
                     }
-                    c.final_state.concentrating_on = data.concentration_counts.iter().max_by_key(|e| e.1).and_then(|(cid, ccount)| if *ccount > threshold { Some(cid.clone()) } else { None });
-                    if round_idx > 0 { if let Some(prev) = aggregated_rounds.get(round_idx - 1) { if let Some(pc) = prev.team2.iter().find(|x| x.id == c.id) { c.initial_state = pc.final_state.clone(); } } }
+                    c.final_state.concentrating_on = data
+                        .concentration_counts
+                        .iter()
+                        .max_by_key(|e| e.1)
+                        .and_then(|(cid, ccount)| {
+                            if *ccount > threshold {
+                                Some(cid.clone())
+                            } else {
+                                None
+                            }
+                        });
+                    if round_idx > 0 {
+                        if let Some(prev) = aggregated_rounds.get(round_idx - 1) {
+                            if let Some(pc) = prev.team2.iter().find(|x| x.id == c.id) {
+                                c.initial_state = pc.final_state.clone();
+                            }
+                        }
+                    }
                     t2.push(c);
                 }
             }
@@ -158,13 +226,18 @@ pub fn aggregate_results(results: &[SimulationResult]) -> Vec<EncounterResult> {
                     dead_ids.insert(c.id.clone());
                 }
             }
-            
+
             // Simplified cleanup for brevity
             for c in t1.iter_mut().chain(t2.iter_mut()) {
-                c.final_state.buffs.retain(|_, b| b.source.as_ref().is_none_or(|s| !dead_ids.contains(s)));
+                c.final_state
+                    .buffs
+                    .retain(|_, b| b.source.as_ref().is_none_or(|s| !dead_ids.contains(s)));
             }
 
-            aggregated_rounds.push(Round { team1: t1, team2: t2 });
+            aggregated_rounds.push(Round {
+                team1: t1,
+                team2: t2,
+            });
         }
 
         aggregated_encounters.push(EncounterResult {
@@ -192,7 +265,7 @@ pub fn calculate_cumulative_score(result: &SimulationResult, encounter_idx: usiz
         Some(e) => e,
         None => return -1_000_000.0,
     };
-    
+
     calculate_encounter_score(encounter)
 }
 
@@ -202,33 +275,52 @@ pub fn calculate_encounter_score(encounter: &EncounterResult) -> f64 {
         None => return -1_000_000.0,
     };
 
-    let player_hp: f64 = last_round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
-    let monster_hp: f64 = last_round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
-    
-    let survivors = last_round.team1.iter().filter(|c| c.final_state.current_hp > 0).count() as f64;
-    
+    let player_hp: f64 = last_round
+        .team1
+        .iter()
+        .map(|c| c.final_state.current_hp as f64)
+        .sum();
+    let monster_hp: f64 = last_round
+        .team2
+        .iter()
+        .map(|c| c.final_state.current_hp as f64)
+        .sum();
+
+    let survivors = last_round
+        .team1
+        .iter()
+        .filter(|c| c.final_state.current_hp > 0)
+        .count() as f64;
+
     // Calculate total max HP of the party to weight the survivors
     let party_max_hp: f64 = last_round.team1.iter().map(|c| c.creature.hp as f64).sum();
-    
+
     // NEW SCORING FORMULA:
-    // 1. Survivors are still paramount. Weight them by the Party's total HP pool. 
+    // 1. Survivors are still paramount. Weight them by the Party's total HP pool.
     //    This means 1 survivor is worth "1 party of HP".
     // 2. Add actual remaining HP.
     // 3. Subtract Monster HP * 2 to prioritize finishing the fight.
-    
-    let survival_weight = if party_max_hp > 0.0 { party_max_hp } else { 100.0 };
-    
+
+    let survival_weight = if party_max_hp > 0.0 {
+        party_max_hp
+    } else {
+        100.0
+    };
+
     (survivors * survival_weight * 1000.0) + player_hp - (monster_hp * 2.0)
 }
 
 /// Calculate efficiency-aware score based on survival and resource consumption
-pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::events::Event]) -> f64 {
+pub fn calculate_efficiency_score(
+    result: &SimulationResult,
+    events: &[crate::events::Event],
+) -> f64 {
     // 1. Base Survival Score
     let last_encounter = match result.encounters.last() {
         Some(e) => e,
         None => return -1_000_000.0,
     };
-    
+
     let base_score = calculate_encounter_score(last_encounter);
 
     // 2. Resource Penalty Calculation
@@ -242,12 +334,19 @@ pub fn calculate_efficiency_score(result: &SimulationResult, events: &[crate::ev
                 let cost = 15.0 * (*spell_level as f64).powf(1.6);
                 resource_penalty += cost;
             }
-            crate::events::Event::ResourceConsumed { resource_type, amount, .. } => {
+            crate::events::Event::ResourceConsumed {
+                resource_type,
+                amount,
+                ..
+            } => {
                 // Identify resources by name/type
                 let r_type = resource_type.to_lowercase();
                 if r_type.contains("potion") {
                     resource_penalty += *amount * 20.0;
-                } else if r_type.contains("action surge") || r_type.contains("ki") || r_type.contains("channel divinity") {
+                } else if r_type.contains("action surge")
+                    || r_type.contains("ki")
+                    || r_type.contains("channel divinity")
+                {
                     resource_penalty += *amount * 20.0; // Short rest
                 } else if r_type.contains("rage") || r_type.contains("indomitable") {
                     resource_penalty += *amount * 40.0; // Long rest
@@ -273,7 +372,7 @@ pub fn generate_combat_log(result: &SimulationResult) -> String {
 
     for (enc_idx, encounter) in result.encounters.iter().enumerate() {
         writeln!(&mut log, "=== Encounter {} ===\n", enc_idx + 1).unwrap();
-        
+
         // Build ID -> Name map
         let mut id_to_name = HashMap::new();
         if let Some(first_round) = encounter.rounds.first() {

@@ -18,14 +18,16 @@ pub fn resolve(
     };
 
     let actor_side = context.get_combatant(actor_id).unwrap().side;
-    
+
     let all_combatants = context.get_alive_combatants();
-    let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants.into_iter()
+    let (allies, enemies): (Vec<_>, Vec<_>) = all_combatants
+        .into_iter()
         .map(|c| c.base_combatant.clone())
         .partition(|c| context.get_combatant(&c.id).unwrap().side == actor_side);
 
     // 2. Get smart targets from targeting module
-    let target_indices = targeting::get_targets(&actor, &Action::Heal(heal.clone()), &allies, &enemies);
+    let target_indices =
+        targeting::get_targets(&actor, &Action::Heal(heal.clone()), &allies, &enemies);
 
     let heal_amount = dice::evaluate(&heal.amount, 1);
     let is_temp_hp = heal.temp_hp.unwrap_or(false);
@@ -37,11 +39,15 @@ pub fn resolve(
         }
 
         let target_id = if is_enemy {
-            if idx < enemies.len() { enemies[idx].id.clone() } else { continue }
+            if idx < enemies.len() {
+                enemies[idx].id.clone()
+            } else {
+                continue;
+            }
         } else if idx < allies.len() {
             allies[idx].id.clone()
         } else {
-            continue
+            continue;
         };
 
         // Apply healing through TurnContext (unified method)

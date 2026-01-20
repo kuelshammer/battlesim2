@@ -3,8 +3,8 @@
 //! These functions check that simulation results maintain "impossible" states -
 //! things that should NEVER be true regardless of encounter outcome.
 
-use simulation_wasm::model::{EncounterResult, SimulationResult};
 use simulation_wasm::events::Event;
+use simulation_wasm::model::{EncounterResult, SimulationResult};
 
 /// Check that no combatant has negative HP (below 0 = dead, not negative)
 #[allow(dead_code)]
@@ -137,11 +137,9 @@ pub fn assert_action_economy(events: &[Event]) -> Result<(), String> {
 pub fn assert_all_invariants(result: &SimulationResult) -> Result<(), String> {
     // Check each encounter
     for (idx, encounter) in result.encounters.iter().enumerate() {
-        assert_no_negative_hp(encounter)
-            .map_err(|e| format!("Encounter {}: {}", idx, e))?;
+        assert_no_negative_hp(encounter).map_err(|e| format!("Encounter {}: {}", idx, e))?;
 
-        assert_no_negative_resources(encounter)
-            .map_err(|e| format!("Encounter {}: {}", idx, e))?;
+        assert_no_negative_resources(encounter).map_err(|e| format!("Encounter {}: {}", idx, e))?;
     }
 
     Ok(())

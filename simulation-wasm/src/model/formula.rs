@@ -13,7 +13,7 @@ impl Hash for DiceFormula {
         match self {
             DiceFormula::Value(v) => {
                 0.hash(state);
-                crate::utilities::hash_f64(*v, state);
+                crate::utils::hash_f64(*v, state);
             }
             DiceFormula::Expr(s) => {
                 1.hash(state);

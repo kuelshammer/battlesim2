@@ -64,12 +64,15 @@ pub fn calculate_required_isolated_tier(
     target_contextual: EncounterTier,
     resources_remaining_percent: f64,
 ) -> Option<EncounterTier> {
-    crate::model::required_isolated_tier_for_contextual(target_contextual, resources_remaining_percent)
+    crate::model::required_isolated_tier_for_contextual(
+        target_contextual,
+        resources_remaining_percent,
+    )
 }
 
 /// Project encounter metrics by running simulations
 ///
-    /// Runs the actual simulation engine to get percentile death rates and resource drain.
+/// Runs the actual simulation engine to get percentile death rates and resource drain.
 pub fn project_encounter_metrics(
     encounter: &Encounter,
     party: &[crate::model::Creature],
@@ -157,7 +160,11 @@ pub enum TuningKnob {
 ///
 /// # Returns
 /// Adjusted encounter copy
-pub fn adjust_encounter_parameter(encounter: &Encounter, knob: TuningKnob, _amount: f64) -> Encounter {
+pub fn adjust_encounter_parameter(
+    encounter: &Encounter,
+    knob: TuningKnob,
+    _amount: f64,
+) -> Encounter {
     let mut adjusted = encounter.clone();
 
     match knob {
@@ -257,7 +264,10 @@ pub fn validate_balanced_day(
     let mut errors = Vec::new();
 
     // Check 1: No TPK before final encounter
-    let num_combats = timeline.iter().filter(|t| matches!(t, TimelineStep::Combat(_))).count();
+    let num_combats = timeline
+        .iter()
+        .filter(|t| matches!(t, TimelineStep::Combat(_)))
+        .count();
     for (i, metric) in metrics.iter().enumerate() {
         let is_final = i == num_combats - 1;
         if !is_final && metric.contextual_tier == EncounterTier::Failed {
@@ -270,7 +280,8 @@ pub fn validate_balanced_day(
 
     // Check 2: Final resources within target range
     if let Some(last_metric) = metrics.last() {
-        let final_resources = 100.0 - last_metric.cumulative_hp_lost / last_metric.total_party_hp * 100.0;
+        let final_resources =
+            100.0 - last_metric.cumulative_hp_lost / last_metric.total_party_hp * 100.0;
         if final_resources > config.target_final_resources_percent + 20.0 {
             errors.push(format!(
                 "Party too fresh at end: {:.1}% resources remaining (target < {:.1}%)",
@@ -314,25 +325,21 @@ pub fn balance_adventuring_day(
     // Process each combat encounter
     for step in initial_timeline.iter() {
         if let TimelineStep::Combat(encounter) = step {
-            let target_tier = target_tiers.get(position).copied()
+            let target_tier = target_tiers
+                .get(position)
+                .copied()
                 .unwrap_or(EncounterTier::Safe);
 
             // Estimate current resources
             let resources_remaining = (100.0_f64 - cumulative_drain).max(0.0);
 
             // Calculate required isolated tier
-            let required_isolated = calculate_required_isolated_tier(
-                target_tier,
-                resources_remaining,
-            );
+            let required_isolated =
+                calculate_required_isolated_tier(target_tier, resources_remaining);
 
             // Check if we need a short rest before this encounter
-            if should_insert_short_rest(
-                position,
-                required_isolated,
-                cumulative_drain,
-                target_tier,
-            ) {
+            if should_insert_short_rest(position, required_isolated, cumulative_drain, target_tier)
+            {
                 // Add short rest
                 new_timeline.push(TimelineStep::ShortRest(crate::model::ShortRest {
                     id: format!("auto_rest_{}", rest_counter),
@@ -343,10 +350,8 @@ pub fn balance_adventuring_day(
                 cumulative_drain = (cumulative_drain * 0.6_f64).max(0.0);
 
                 // Recalculate required isolated tier after rest
-                let _required_isolated_after_rest = calculate_required_isolated_tier(
-                    target_tier,
-                    100.0 - cumulative_drain,
-                );
+                let _required_isolated_after_rest =
+                    calculate_required_isolated_tier(target_tier, 100.0 - cumulative_drain);
             }
 
             // Project metrics for this encounter
@@ -495,28 +500,20 @@ mod tests {
         // Too hard for resources - should insert
         let result = should_insert_short_rest(
             3,
-            None,  // impossible
+            None, // impossible
             65.0,
             EncounterTier::Challenging,
         );
         assert!(result);
 
         // High drain with Challenging target - should insert
-        let result = should_insert_short_rest(
-            3,
-            Some(EncounterTier::Safe),
-            65.0,
-            EncounterTier::Boss,
-        );
+        let result =
+            should_insert_short_rest(3, Some(EncounterTier::Safe), 65.0, EncounterTier::Boss);
         assert!(result);
 
         // Low drain with Safe target - no rest needed
-        let result = should_insert_short_rest(
-            1,
-            Some(EncounterTier::Safe),
-            15.0,
-            EncounterTier::Safe,
-        );
+        let result =
+            should_insert_short_rest(1, Some(EncounterTier::Safe), 15.0, EncounterTier::Safe);
         assert!(!result);
     }
 
@@ -564,9 +561,9 @@ mod tests {
             },
             ContextualEncounterMetrics {
                 position_in_day: 2,
-                resources_remaining_percent: 15.0,  // Only 15% resources remaining
+                resources_remaining_percent: 15.0, // Only 15% resources remaining
                 isolated_tier: EncounterTier::Safe,
-                contextual_tier: EncounterTier::Boss,  // Safe becomes Boss at low resources
+                contextual_tier: EncounterTier::Boss, // Safe becomes Boss at low resources
                 cumulative_hp_lost: 85.0,
                 total_party_hp: 100.0,
                 survivors_entering: 4,
@@ -591,7 +588,7 @@ mod tests {
             ContextualEncounterMetrics::from_isolated_metrics(
                 1,
                 100.0,
-                EncounterTier::Failed,  // TPK
+                EncounterTier::Failed, // TPK
                 0.0,
                 100.0,
                 4,
@@ -614,10 +611,7 @@ mod tests {
     #[test]
     fn test_balance_adventuring_day_simple() {
         let config = BalancerConfig::default();
-        let targets = vec![
-            EncounterTier::Safe,
-            EncounterTier::Challenging,
-        ];
+        let targets = vec![EncounterTier::Safe, EncounterTier::Challenging];
 
         let timeline = vec![
             TimelineStep::Combat(create_test_encounter(1.0, 3.0)),
@@ -655,7 +649,7 @@ mod tests {
     #[test]
     fn test_get_recommended_adjustment_tpk() {
         let metrics = EncounterMetrics {
-            deaths_p1: 4,  // TPK
+            deaths_p1: 4, // TPK
             deaths_p50: 3,
             deaths_p99: 2,
             resource_drain_percent: 80.0,

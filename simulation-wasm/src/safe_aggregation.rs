@@ -1,5 +1,5 @@
-use crate::model::*;
 use crate::error_handling::SimulationError;
+use crate::model::*;
 use std::collections::{HashMap, HashSet};
 
 struct AggregationData {
@@ -27,7 +27,9 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
     eprintln!("AGGREGATION: Starting with {} results", results.len());
 
     if results.is_empty() {
-        return Err(SimulationError::EmptyResult("No simulation results to aggregate".to_string()));
+        return Err(SimulationError::EmptyResult(
+            "No simulation results to aggregate".to_string(),
+        ));
     }
 
     let max_rounds = results
@@ -41,8 +43,9 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
 
     let mut aggregated_rounds: Vec<Round> = Vec::with_capacity(max_rounds);
 
-    let template_encounter = results.first().and_then(|r| r.first())
-        .ok_or_else(|| SimulationError::EmptyResult("No template encounter found in results".to_string()))?;
+    let template_encounter = results.first().and_then(|r| r.first()).ok_or_else(|| {
+        SimulationError::EmptyResult("No template encounter found in results".to_string())
+    })?;
 
     for round_idx in 0..max_rounds {
         let mut team1_map: HashMap<String, AggregationData> = HashMap::new();
@@ -142,7 +145,9 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                     .max_by_key(|entry| entry.1)
                     .map(|(k, _)| k)
                     .ok_or_else(|| {
-                        SimulationError::UnexpectedState("No actions found for combatant".to_string())
+                        SimulationError::UnexpectedState(
+                            "No actions found for combatant".to_string(),
+                        )
                     })?;
                 let actions: Vec<CombattantAction> =
                     serde_json::from_str(best_action_json).unwrap_or_default();
@@ -197,7 +202,9 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                     .max_by_key(|entry| entry.1)
                     .map(|(k, _)| k)
                     .ok_or_else(|| {
-                        SimulationError::UnexpectedState("No actions found for combatant".to_string())
+                        SimulationError::UnexpectedState(
+                            "No actions found for combatant".to_string(),
+                        )
                     })?;
                 let actions: Vec<CombattantAction> =
                     serde_json::from_str(best_action_json).unwrap_or_default();
@@ -315,7 +322,7 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
                             if dead_source_ids.contains(source) {
                                 return false;
                             }
-                        
+
                         // Handle concentration buffs specifically
                             if buff.concentration {
                                 if let Some(source_concentrating) = concentration_map.get(source) {
@@ -367,7 +374,9 @@ pub fn aggregate_results_safe(results: &[SimulationResult]) -> Result<Vec<Round>
 
 pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, SimulationError> {
     if result.is_empty() {
-        return Err(SimulationError::EmptyResult("Cannot calculate score for empty result".to_string()));
+        return Err(SimulationError::EmptyResult(
+            "Cannot calculate score for empty result".to_string(),
+        ));
     }
 
     let last_encounter = result.encounters.last().ok_or_else(|| {
@@ -376,26 +385,40 @@ pub fn calculate_score_safe(result: &SimulationResult) -> Result<f64, Simulation
     let last_round = last_encounter.rounds.last();
 
     if let Some(round) = last_round {
-        let player_hp: f64 = round.team1.iter().map(|c| c.final_state.current_hp as f64).sum();
-        let monster_hp: f64 = round.team2.iter().map(|c| c.final_state.current_hp as f64).sum();
+        let player_hp: f64 = round
+            .team1
+            .iter()
+            .map(|c| c.final_state.current_hp as f64)
+            .sum();
+        let monster_hp: f64 = round
+            .team2
+            .iter()
+            .map(|c| c.final_state.current_hp as f64)
+            .sum();
 
         // Count survivors (creatures with HP > 0)
-        let survivors: f64 = round.team1.iter()
+        let survivors: f64 = round
+            .team1
+            .iter()
             .filter(|c| c.final_state.current_hp > 0)
             .count() as f64;
 
         // Tiered scoring: (Survivors × 1,000,000) + Total Party HP - Total Monster HP
         // This ensures that keeping players alive is mathematically more valuable than any amount of HP or resources
         let score = (survivors * 1_000_000.0) + player_hp - monster_hp;
-        
+
         if score.is_nan() {
-            return Err(SimulationError::UnexpectedState("Score calculation resulted in NaN".to_string()));
+            return Err(SimulationError::UnexpectedState(
+                "Score calculation resulted in NaN".to_string(),
+            ));
         }
-        
+
         return Ok(score);
     }
 
-    Err(SimulationError::EmptyResult("No rounds found in last encounter".to_string()))
+    Err(SimulationError::EmptyResult(
+        "No rounds found in last encounter".to_string(),
+    ))
 }
 
 pub fn calculate_lightweight_score(final_states: &[crate::context::CombattantState]) -> f64 {
@@ -418,7 +441,11 @@ pub fn calculate_lightweight_score(final_states: &[crate::context::CombattantSta
 
     // Match the formula in calculate_encounter_score (aggregation.rs:221)
     // (survivors * party_max_hp * 1000.0) + player_hp - (monster_hp * 2.0)
-    let survival_weight = if party_max_hp > 0.0 { party_max_hp } else { 100.0 };
+    let survival_weight = if party_max_hp > 0.0 {
+        party_max_hp
+    } else {
+        100.0
+    };
     (survivors * survival_weight * 1000.0) + player_hp - (monster_hp * 2.0)
 }
 
@@ -428,7 +455,9 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
     let mut log = String::new();
 
     if result.encounters.is_empty() {
-        return Err(SimulationError::EmptyResult("No encounters found for combat log".to_string()));
+        return Err(SimulationError::EmptyResult(
+            "No encounters found for combat log".to_string(),
+        ));
     }
 
     for (enc_idx, encounter) in result.encounters.iter().enumerate() {
@@ -473,7 +502,10 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
 
                 if c.actions.is_empty() && c.final_state.current_hp > 0 {
                     writeln!(&mut log, "  - No actions taken.").map_err(|e| {
-                        SimulationError::SerializationError(format!("Failed to write to log: {}", e))
+                        SimulationError::SerializationError(format!(
+                            "Failed to write to log: {}",
+                            e
+                        ))
                     })?;
                 }
 
@@ -497,7 +529,10 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
                         target_names
                     )
                     .map_err(|e| {
-                        SimulationError::SerializationError(format!("Failed to write to log: {}", e))
+                        SimulationError::SerializationError(format!(
+                            "Failed to write to log: {}",
+                            e
+                        ))
                     })?;
                 }
             }
@@ -509,6 +544,6 @@ pub fn generate_combat_log_safe(result: &SimulationResult) -> Result<String, Sim
             SimulationError::SerializationError(format!("Failed to write to log: {}", e))
         })?;
     }
-    
+
     Ok(log)
 }

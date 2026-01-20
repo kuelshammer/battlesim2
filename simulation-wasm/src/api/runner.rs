@@ -1,5 +1,5 @@
-use crate::model::{Creature, SimulationResult, Combattant, CreatureState};
 use crate::execution::ActionExecutionEngine;
+use crate::model::{Combattant, Creature, CreatureState, SimulationResult};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -64,11 +64,17 @@ pub fn run_single_event_driven_simulation(
                 );
                 encounter_results.push(legacy_result);
 
-                players_with_state =
-                    crate::simulation::update_player_states_for_next_encounter(&players_with_state, &encounter_result, false);
+                players_with_state = crate::simulation::update_player_states_for_next_encounter(
+                    &players_with_state,
+                    &encounter_result,
+                    false,
+                );
             }
             crate::model::TimelineStep::ShortRest(_) => {
-                players_with_state = crate::simulation::apply_short_rest_standalone(&players_with_state, &mut all_events);
+                players_with_state = crate::simulation::apply_short_rest_standalone(
+                    &players_with_state,
+                    &mut all_events,
+                );
 
                 let after_rest_team1 = players_with_state.to_vec();
 
@@ -143,7 +149,8 @@ pub fn run_single_lightweight_simulation(
                 );
             }
             crate::model::TimelineStep::ShortRest(_) => {
-                players_with_state = crate::simulation::apply_short_rest_standalone_no_events(&players_with_state);
+                players_with_state =
+                    crate::simulation::apply_short_rest_standalone_no_events(&players_with_state);
             }
         }
     }
@@ -155,7 +162,10 @@ pub fn run_single_lightweight_simulation(
 
     let final_score = encounter_scores.last().copied().unwrap_or(0.0);
 
-    let sr_count = timeline.iter().filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_))).count();
+    let sr_count = timeline
+        .iter()
+        .filter(|s| matches!(s, crate::model::TimelineStep::ShortRest(_)))
+        .count();
     let tdnw = crate::decile_analysis::calculate_tdnw_lightweight(players, sr_count);
     let mut final_ehp = 0.0;
     for p in &players_with_state {
@@ -221,14 +231,19 @@ fn create_player_combatant(group_idx: usize, i: i32, player: &Creature) -> Comba
         team: 0,
         id: id.clone(),
         creature: Arc::new(p.clone()),
-        initiative: crate::utilities::roll_initiative(&p),
+        initiative: crate::utils::roll_initiative(&p),
         initial_state: state.clone(),
         final_state: state,
         actions: Vec::new(),
     }
 }
 
-fn create_enemy_combatant(step_idx: usize, group_idx: usize, i: i32, monster: &Creature) -> Combattant {
+fn create_enemy_combatant(
+    step_idx: usize,
+    group_idx: usize,
+    i: i32,
+    monster: &Creature,
+) -> Combattant {
     let name = if monster.count > 1.0 {
         format!("{} {}", monster.name, i + 1)
     } else {
@@ -244,7 +259,7 @@ fn create_enemy_combatant(step_idx: usize, group_idx: usize, i: i32, monster: &C
         team: 1,
         id: id.clone(),
         creature: Arc::new(m.clone()),
-        initiative: crate::utilities::roll_initiative(&m),
+        initiative: crate::utils::roll_initiative(&m),
         initial_state: state.clone(),
         final_state: state,
         actions: Vec::new(),
@@ -257,7 +272,8 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
         temp_hp: None,
         buffs: HashMap::new(),
         resources: {
-            let mut r = crate::model::SerializableResourceLedger::from(creature.initialize_ledger());
+            let mut r =
+                crate::model::SerializableResourceLedger::from(creature.initialize_ledger());
             let action_uses = crate::actions::get_remaining_uses(creature, "long rest", None);
             for (action_id, uses) in action_uses {
                 r.current.insert(action_id, uses);
@@ -276,7 +292,9 @@ fn create_creature_state(creature: &Creature) -> CreatureState {
     };
 
     for (index, buff) in creature.initial_buffs.iter().enumerate() {
-        let buff_id = buff.display_name.clone()
+        let buff_id = buff
+            .display_name
+            .clone()
             .unwrap_or_else(|| format!("initial-buff-{}", index));
         state.buffs.insert(buff_id, buff.clone());
     }

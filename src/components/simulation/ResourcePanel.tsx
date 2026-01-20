@@ -3,6 +3,7 @@ import { FC, memo } from 'react';
 import { Combattant } from '@/model/model';
 import styles from './resourcePanel.module.scss';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { 
     faBolt, faDiceD6, faHandPaper, faHatWizard, 
     faHeart, faPlus, faStar, faShoePrints,
@@ -47,7 +48,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
         return { type: 'Other', label: key, icon: faDiceD6, color: '#aaa' };
     };
 
-    const groups: Record<string, Array<{ key: string; value: number; max: number; type: string; label: string; icon: any; color: string; sort?: number }>> = {
+    const groups: Record<string, Array<{ key: string; value: number; max: number; type: string; label: string; icon: IconDefinition; color: string; sort?: number }>> = {
         'Main': [],
         'SpellSlot': [],
         'ClassResource': [],

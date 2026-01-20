@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize, Deserializer};
-use serde::de::{Error, Visitor, MapAccess};
+use serde::de::{Error, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize};
 
 // Custom deserializer for TriggerRequirement to handle both string and object formats
 mod trigger_requirement_serde {
@@ -44,7 +44,10 @@ mod trigger_requirement_serde {
                     let dist = dist_str.parse().unwrap_or(0.0);
                     Ok(super::TriggerRequirement::WithinRange { max_distance: dist })
                 }
-                _ => Err(Error::custom(format!("unknown TriggerRequirement: {}", value))),
+                _ => Err(Error::custom(format!(
+                    "unknown TriggerRequirement: {}",
+                    value
+                ))),
             }
         }
 
@@ -135,13 +138,19 @@ pub enum EnemyTarget {
     EnemyWithLeastHP,
     #[serde(rename = "enemy with most HP", alias = "enemy with the most HP")]
     EnemyWithMostHP,
-    #[serde(rename = "enemy with highest DPR", alias = "enemy with the highest DPR")]
+    #[serde(
+        rename = "enemy with highest DPR",
+        alias = "enemy with the highest DPR"
+    )]
     EnemyWithHighestDPR,
     #[serde(rename = "enemy with lowest AC", alias = "enemy with the lowest AC")]
     EnemyWithLowestAC,
     #[serde(rename = "enemy with highest AC", alias = "enemy with the highest AC")]
     EnemyWithHighestAC,
-    #[serde(rename = "enemy with highest survivability", alias = "enemy with the highest survivability")]
+    #[serde(
+        rename = "enemy with highest survivability",
+        alias = "enemy with the highest survivability"
+    )]
     EnemyWithHighestSurvivability,
 }
 
@@ -288,21 +297,21 @@ pub enum BuffDuration {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub enum TriggerCondition {
-    OnHit, // e.g. Divine Smite
-    OnBeingAttacked, // e.g. Shield Spell, Cutting Words
-    OnMiss, // e.g. Precision Attack
-    OnBeingDamaged, // e.g. Hellish Rebuke
-    OnAllyAttacked, // e.g. Sentinel
-    OnEnemyDeath, // e.g. Great Weapon Master, Dark One's Blessing
-    OnCriticalHit, // e.g. Divine Smite (crit fishing)
-    OnBeingHit, // e.g. Armor of Agathys that requires a hit but not necessarily damage
-    OnCastSpell, // e.g. Counterspell, Silvery Barbs
-    OnSaveFailed, // e.g. Portent, Silvery Barbs
-    OnSaveSucceeded, // e.g. Lucky, Magic Resonance
-    OnEnemyMoved, // e.g. Opportunity Attack
-    EnemyEnteredReach, // e.g. Polearm Master - enemy moved from >5ft to <=5ft
-    EnemyLeftReach, // e.g. Opportunity Attack - enemy moved from <=5ft to >5ft
-    OnAbilityCheck, // e.g. Bardic Inspiration, Luck
+    OnHit,                 // e.g. Divine Smite
+    OnBeingAttacked,       // e.g. Shield Spell, Cutting Words
+    OnMiss,                // e.g. Precision Attack
+    OnBeingDamaged,        // e.g. Hellish Rebuke
+    OnAllyAttacked,        // e.g. Sentinel
+    OnEnemyDeath,          // e.g. Great Weapon Master, Dark One's Blessing
+    OnCriticalHit,         // e.g. Divine Smite (crit fishing)
+    OnBeingHit,            // e.g. Armor of Agathys that requires a hit but not necessarily damage
+    OnCastSpell,           // e.g. Counterspell, Silvery Barbs
+    OnSaveFailed,          // e.g. Portent, Silvery Barbs
+    OnSaveSucceeded,       // e.g. Lucky, Magic Resonance
+    OnEnemyMoved,          // e.g. Opportunity Attack
+    EnemyEnteredReach,     // e.g. Polearm Master - enemy moved from >5ft to <=5ft
+    EnemyLeftReach,        // e.g. Opportunity Attack - enemy moved from <=5ft to >5ft
+    OnAbilityCheck,        // e.g. Bardic Inspiration, Luck
     OnConcentrationBroken, // e.g. War Caster, Concentration focus
 
     // Composite triggers
@@ -339,17 +348,34 @@ impl TriggerCondition {
                 matches!(event, Event::CastSpell { .. } | Event::SpellCast { .. })
             }
             TriggerCondition::OnSaveFailed => {
-                matches!(event, Event::SaveResult { succeeded: false, .. })
+                matches!(
+                    event,
+                    Event::SaveResult {
+                        succeeded: false,
+                        ..
+                    }
+                )
             }
             TriggerCondition::OnSaveSucceeded => {
-                matches!(event, Event::SaveResult { succeeded: true, .. })
+                matches!(
+                    event,
+                    Event::SaveResult {
+                        succeeded: true,
+                        ..
+                    }
+                )
             }
             TriggerCondition::OnEnemyMoved => {
                 matches!(event, Event::UnitMoved { .. })
             }
             TriggerCondition::EnemyEnteredReach => {
                 // Check if enemy moved from >5ft to <=5ft (for Polearm Master)
-                if let Event::UnitMoved { from_position, to_position, .. } = event {
+                if let Event::UnitMoved {
+                    from_position,
+                    to_position,
+                    ..
+                } = event
+                {
                     // Calculate distances from origin (0,0) - 5ft reach in D&D is one 5ft square
                     // In grid terms, adjacent squares are 5ft apart (Manhattan-like distance)
                     let from_dist = from_position
@@ -367,7 +393,12 @@ impl TriggerCondition {
             }
             TriggerCondition::EnemyLeftReach => {
                 // Check if enemy moved from <=5ft to >5ft (for Opportunity Attack)
-                if let Event::UnitMoved { from_position, to_position, .. } = event {
+                if let Event::UnitMoved {
+                    from_position,
+                    to_position,
+                    ..
+                } = event
+                {
                     // Calculate distances from origin (0,0)
                     let from_dist = from_position
                         .map(|(x, y)| (x.abs() + y.abs()) as f64 * 5.0)
@@ -390,15 +421,9 @@ impl TriggerCondition {
             }
 
             // Composite triggers - recursive evaluation
-            TriggerCondition::And { conditions } => {
-                conditions.iter().all(|c| c.evaluate(event))
-            }
-            TriggerCondition::Or { conditions } => {
-                conditions.iter().any(|c| c.evaluate(event))
-            }
-            TriggerCondition::Not { condition } => {
-                !condition.evaluate(event)
-            }
+            TriggerCondition::And { conditions } => conditions.iter().all(|c| c.evaluate(event)),
+            TriggerCondition::Or { conditions } => conditions.iter().any(|c| c.evaluate(event)),
+            TriggerCondition::Not { condition } => !condition.evaluate(event),
 
             // State conditions - require additional context
             // These return false for now as they need combat state
@@ -407,7 +432,13 @@ impl TriggerCondition {
                 matches!(event, Event::DamageTaken { .. })
             }
             TriggerCondition::AttackWasMelee => {
-                matches!(event, Event::AttackHit { range: Some(AttackRange::Melee), .. })
+                matches!(
+                    event,
+                    Event::AttackHit {
+                        range: Some(AttackRange::Melee),
+                        ..
+                    }
+                )
             }
             TriggerCondition::BelowHpPercent { threshold: _ } => {
                 // TODO: Requires combat state to check HP percentage
@@ -454,7 +485,7 @@ impl std::hash::Hash for TriggerRequirement {
             }
             TriggerRequirement::WithinRange { max_distance } => {
                 discriminant(self).hash(state);
-                crate::utilities::hash_f64(*max_distance, state);
+                crate::utils::hash_f64(*max_distance, state);
             }
         }
     }
@@ -478,8 +509,13 @@ pub enum TriggerEffect {
         #[serde(rename = "damageType")]
         damage_type: String,
     },
-    ReduceDamage { amount: String },
-    RestoreResource { resource: String, amount: String },
+    ReduceDamage {
+        amount: String,
+    },
+    RestoreResource {
+        resource: String,
+        amount: String,
+    },
     SuppressBuff {
         #[serde(rename = "buffId")]
         buff_id: String,
@@ -550,7 +586,10 @@ impl std::hash::Hash for TriggerEffect {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         std::mem::discriminant(self).hash(state);
         match self {
-            TriggerEffect::DealDamage { amount, damage_type } => {
+            TriggerEffect::DealDamage {
+                amount,
+                damage_type,
+            } => {
                 amount.hash(state);
                 damage_type.hash(state);
             }
@@ -578,25 +617,37 @@ impl std::hash::Hash for TriggerEffect {
                 amount.hash(state);
                 roll_type.hash(state);
             }
-            TriggerEffect::ForceSelfReroll { roll_type, must_use_second } => {
+            TriggerEffect::ForceSelfReroll {
+                roll_type,
+                must_use_second,
+            } => {
                 roll_type.hash(state);
                 must_use_second.hash(state);
             }
-            TriggerEffect::ForceTargetReroll { roll_type, must_use_second } => {
+            TriggerEffect::ForceTargetReroll {
+                roll_type,
+                must_use_second,
+            } => {
                 roll_type.hash(state);
                 must_use_second.hash(state);
             }
             TriggerEffect::InterruptAction { action_id } => action_id.hash(state),
-            TriggerEffect::GrantImmediateAction { action_id, action_slot } => {
+            TriggerEffect::GrantImmediateAction {
+                action_id,
+                action_slot,
+            } => {
                 action_id.hash(state);
                 action_slot.hash(state);
             }
             TriggerEffect::RedirectAttack { new_target_id } => new_target_id.hash(state),
             TriggerEffect::SplitDamage { target_id, percent } => {
                 target_id.hash(state);
-                crate::utilities::hash_f64(*percent, state);
+                crate::utils::hash_f64(*percent, state);
             }
-            TriggerEffect::SetAdvantageOnNext { roll_type, advantage } => {
+            TriggerEffect::SetAdvantageOnNext {
+                roll_type,
+                advantage,
+            } => {
                 roll_type.hash(state);
                 advantage.hash(state);
             }
@@ -626,10 +677,16 @@ impl TriggerEffect {
         _context: &mut crate::context::TurnContext,
     ) -> Result<(), String> {
         match self {
-            TriggerEffect::DealDamage { amount, damage_type } => {
+            TriggerEffect::DealDamage {
+                amount,
+                damage_type,
+            } => {
                 // TODO: Parse damage formula and apply damage to target
                 // This requires integration with the damage resolution system
-                Err(format!("DealDamage not yet implemented: {} {}", amount, damage_type))
+                Err(format!(
+                    "DealDamage not yet implemented: {} {}",
+                    amount, damage_type
+                ))
             }
             TriggerEffect::ReduceDamage { amount } => {
                 // TODO: Parse reduction formula and apply to next damage
@@ -637,7 +694,10 @@ impl TriggerEffect {
             }
             TriggerEffect::RestoreResource { resource, amount } => {
                 // TODO: Parse amount formula and restore to resource
-                Err(format!("RestoreResource not yet implemented: {} {}", resource, amount))
+                Err(format!(
+                    "RestoreResource not yet implemented: {} {}",
+                    resource, amount
+                ))
             }
             TriggerEffect::SuppressBuff { buff_id, duration } => {
                 // Calculate the round when suppression should end
@@ -654,62 +714,110 @@ impl TriggerEffect {
 
                 // Access the target combatant's buffs and set suppressed_until
                 if let Some(combatant_state) = _context.combatants.get_mut(_target_id) {
-                    if let Some(buff) = combatant_state.base_combatant.final_state.buffs.get_mut(buff_id) {
+                    if let Some(buff) = combatant_state
+                        .base_combatant
+                        .final_state
+                        .buffs
+                        .get_mut(buff_id)
+                    {
                         buff.suppressed_until = suppressed_until;
                         return Ok(());
                     }
                 }
-                Err(format!("SuppressBuff failed: buff '{}' not found on target '{}'", buff_id, _target_id))
+                Err(format!(
+                    "SuppressBuff failed: buff '{}' not found on target '{}'",
+                    buff_id, _target_id
+                ))
             }
             TriggerEffect::ApplyBuff { buff, target } => {
                 // TODO: Apply buff to target (Self_, Attacker, or Target)
-                Err(format!("ApplyBuff not yet implemented: {} {:?}", buff, target))
+                Err(format!(
+                    "ApplyBuff not yet implemented: {} {:?}",
+                    buff, target
+                ))
             }
             TriggerEffect::RemoveBuff { buff_id, target } => {
                 // TODO: Remove buff from target
-                Err(format!("RemoveBuff not yet implemented: {} {:?}", buff_id, target))
+                Err(format!(
+                    "RemoveBuff not yet implemented: {} {:?}",
+                    buff_id, target
+                ))
             }
             TriggerEffect::Chain { effects } => {
                 // TODO: Apply each effect in sequence
-                Err(format!("Chain not yet implemented: {} effects", effects.len()))
+                Err(format!(
+                    "Chain not yet implemented: {} effects",
+                    effects.len()
+                ))
             }
             TriggerEffect::AddToRoll { amount, roll_type } => {
                 // TODO: Add bonus to next roll of specified type
                 // Requires tracking pending roll modifiers in combat state
-                Err(format!("AddToRoll not yet implemented: +{} to {}", amount, roll_type))
+                Err(format!(
+                    "AddToRoll not yet implemented: +{} to {}",
+                    amount, roll_type
+                ))
             }
-            TriggerEffect::ForceSelfReroll { roll_type, must_use_second } => {
+            TriggerEffect::ForceSelfReroll {
+                roll_type,
+                must_use_second,
+            } => {
                 // TODO: Force the triggering combatant to reroll
                 // Requires roll modification system
-                Err(format!("ForceSelfReroll not yet implemented: {} (must_use: {})", roll_type, must_use_second))
+                Err(format!(
+                    "ForceSelfReroll not yet implemented: {} (must_use: {})",
+                    roll_type, must_use_second
+                ))
             }
-            TriggerEffect::ForceTargetReroll { roll_type, must_use_second } => {
+            TriggerEffect::ForceTargetReroll {
+                roll_type,
+                must_use_second,
+            } => {
                 // TODO: Force the target to reroll
                 // Requires roll modification system
-                Err(format!("ForceTargetReroll not yet implemented: {} (must_use: {})", roll_type, must_use_second))
+                Err(format!(
+                    "ForceTargetReroll not yet implemented: {} (must_use: {})",
+                    roll_type, must_use_second
+                ))
             }
             TriggerEffect::InterruptAction { action_id } => {
                 // TODO: Interrupt the specified action
                 // Requires action interruption system
-                Err(format!("InterruptAction not yet implemented: {}", action_id))
+                Err(format!(
+                    "InterruptAction not yet implemented: {}",
+                    action_id
+                ))
             }
-            TriggerEffect::GrantImmediateAction { action_id, action_slot } => {
+            TriggerEffect::GrantImmediateAction {
+                action_id,
+                action_slot,
+            } => {
                 // TODO: Grant an immediate action outside normal turn order
                 // Requires action grant system
-                Err(format!("GrantImmediateAction not yet implemented: {} ({})", action_id, action_slot))
+                Err(format!(
+                    "GrantImmediateAction not yet implemented: {} ({})",
+                    action_id, action_slot
+                ))
             }
-            TriggerEffect::RedirectAttack { new_target_id } => {
-                Err(format!("RedirectAttack not yet implemented: {}", new_target_id))
-            }
-            TriggerEffect::SplitDamage { target_id, percent } => {
-                Err(format!("SplitDamage not yet implemented: {} ({}%)", target_id, percent))
-            }
-            TriggerEffect::SetAdvantageOnNext { roll_type, advantage } => {
-                Err(format!("SetAdvantageOnNext not yet implemented: {} ({})", roll_type, advantage))
-            }
-            TriggerEffect::ConsumeReaction { target_id } => {
-                Err(format!("ConsumeReaction not yet implemented: {}", target_id))
-            }
+            TriggerEffect::RedirectAttack { new_target_id } => Err(format!(
+                "RedirectAttack not yet implemented: {}",
+                new_target_id
+            )),
+            TriggerEffect::SplitDamage { target_id, percent } => Err(format!(
+                "SplitDamage not yet implemented: {} ({}%)",
+                target_id, percent
+            )),
+            TriggerEffect::SetAdvantageOnNext {
+                roll_type,
+                advantage,
+            } => Err(format!(
+                "SetAdvantageOnNext not yet implemented: {} ({})",
+                roll_type, advantage
+            )),
+            TriggerEffect::ConsumeReaction { target_id } => Err(format!(
+                "ConsumeReaction not yet implemented: {}",
+                target_id
+            )),
         }
     }
 }

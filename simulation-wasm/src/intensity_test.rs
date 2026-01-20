@@ -11,19 +11,22 @@ mod tests {
 
         // 10 HP
         current.insert("HP".to_string(), 10.0);
-        
+
         // 1 Hit Die (d8)
         current.insert("HitDice(d8)".to_string(), 1.0);
-        
+
         // 1 Lvl 1 Spell Slot
         current.insert("SpellSlot(1)".to_string(), 1.0);
-        
+
         // 1 Action Surge (SR)
         current.insert("ClassResource(Action Surge)".to_string(), 1.0);
-        rules.insert("ClassResource(Action Surge)".to_string(), ResetType::ShortRest);
+        rules.insert(
+            "ClassResource(Action Surge)".to_string(),
+            ResetType::ShortRest,
+        );
 
         let ehp = calculate_ehp_points(10, 0, &current, &rules);
-        
+
         // HP: 10 * 1 = 10
         // HD: 1 * 8 = 8
         // Slot: 1 * 15 * 1^1.5 = 15
@@ -39,9 +42,9 @@ mod tests {
 
         // 1 Lvl 3 Spell Slot
         current.insert("SpellSlot(3)".to_string(), 1.0);
-        
+
         let ehp = calculate_ehp_points(0, 0, &current, &rules);
-        
+
         // 15 * 3^1.5 = 15 * 5.196 = 77.94 -> Rounded to 78.0
         assert_eq!(ehp, 78.0);
     }

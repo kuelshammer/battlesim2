@@ -3,9 +3,9 @@
 //! These tests load JSON encounter files, run simulations, and validate
 //! that the results maintain expected invariants (no impossible states).
 
-use std::path::Path;
-use std::fs;
 use simulation_wasm::model::{Creature, TimelineStep};
+use std::fs;
+use std::path::Path;
 
 /// Test configuration for scenarios
 #[allow(dead_code)]
@@ -29,14 +29,16 @@ impl Default for ScenarioTest {
 fn run_scenarios_in_dir(dir: &str) {
     let mut scenarios_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     scenarios_path.push(dir);
-    
+
     if !scenarios_path.exists() {
-        println!("Skipping scenario tests: {:?} directory not found", scenarios_path);
+        println!(
+            "Skipping scenario tests: {:?} directory not found",
+            scenarios_path
+        );
         return;
     }
 
-    let entries = fs::read_dir(scenarios_path)
-        .expect("Failed to read scenarios directory");
+    let entries = fs::read_dir(scenarios_path).expect("Failed to read scenarios directory");
 
     let mut scenario_count = 0;
     for entry in entries.flatten() {
@@ -64,11 +66,10 @@ struct TestScenario {
 
 /// Parse a scenario JSON file
 fn load_local_scenario(path: &Path) -> Result<TestScenario, String> {
-    let json_content = fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
+    let json_content =
+        fs::read_to_string(path).map_err(|e| format!("Failed to read file: {}", e))?;
 
-    serde_json::from_str(&json_content)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))
+    serde_json::from_str(&json_content).map_err(|e| format!("Failed to parse JSON: {}", e))
 }
 
 /// Run a single scenario and validate invariants
@@ -131,7 +132,7 @@ fn validate_creature(creature: &Creature) -> Result<(), String> {
 fn test_basic_attack_scenario() {
     let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("tests/scenarios/basic/01_single_attack.json");
-    
+
     if !path.exists() {
         println!("Skipping: scenario file not found: {:?}", path);
         return;

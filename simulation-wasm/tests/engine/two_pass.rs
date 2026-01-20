@@ -5,9 +5,12 @@
 // 2. Re-simulated runs match original results
 // 3. Decile selection accuracy (we get true percentiles)
 
-use simulation_wasm::model::*;
 use simulation_wasm::enums::EnemyTarget;
-use simulation_wasm::{run_single_lightweight_simulation, run_survey_pass, select_interesting_seeds_with_tiers, run_single_event_driven_simulation};
+use simulation_wasm::model::*;
+use simulation_wasm::{
+    run_single_event_driven_simulation, run_single_lightweight_simulation, run_survey_pass,
+    select_interesting_seeds_with_tiers,
+};
 
 fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &str) -> Creature {
     Creature {
@@ -33,25 +36,23 @@ fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &
         save_advantage: None,
         initiative_bonus: DiceFormula::Value(0.0),
         initiative_advantage: false,
-        actions: vec![
-            Action::Atk(AtkAction {
-                id: "attack".to_string(),
-                name: "Attack".to_string(),
-                action_slot: None,
-                cost: vec![],
-                requirements: vec![],
-                tags: vec![],
-                freq: Frequency::Static("at will".to_string()),
-                condition: ActionCondition::Default,
-                targets: 1,
-                dpr: DiceFormula::Expr(damage_dice.to_string()),
-                target: EnemyTarget::EnemyWithMostHP,
-                to_hit: DiceFormula::Value(5.0),
-                use_saves: None,
-                half_on_save: None,
-                rider_effect: None,
-            })
-        ],
+        actions: vec![Action::Atk(AtkAction {
+            id: "attack".to_string(),
+            name: "Attack".to_string(),
+            action_slot: None,
+            cost: vec![],
+            requirements: vec![],
+            tags: vec![],
+            freq: Frequency::Static("at will".to_string()),
+            condition: ActionCondition::Default,
+            targets: 1,
+            dpr: DiceFormula::Expr(damage_dice.to_string()),
+            target: EnemyTarget::EnemyWithMostHP,
+            to_hit: DiceFormula::Value(5.0),
+            use_saves: None,
+            half_on_save: None,
+            rider_effect: None,
+        })],
         triggers: vec![],
         spell_slots: None,
         class_resources: None,
@@ -62,36 +63,34 @@ fn create_test_creature(name: &str, hp: u32, ac: u32, damage_dice: &str, mode: &
 
 #[allow(dead_code)]
 fn create_test_timeline(num_encounters: usize) -> Vec<TimelineStep> {
-    (0..num_encounters).map(|_| {
-        TimelineStep::Combat(Encounter {
-            monsters: vec![],
-            players_surprised: None,
-            monsters_surprised: None,
-            players_precast: None,
-            monsters_precast: None,
-            target_role: TargetRole::Standard,
+    (0..num_encounters)
+        .map(|_| {
+            TimelineStep::Combat(Encounter {
+                monsters: vec![],
+                players_surprised: None,
+                monsters_surprised: None,
+                players_precast: None,
+                monsters_precast: None,
+                target_role: TargetRole::Standard,
+            })
         })
-    }).collect()
+        .collect()
 }
 
 fn create_simple_timeline() -> Vec<TimelineStep> {
-    vec![
-        TimelineStep::Combat(Encounter {
-            monsters: vec![create_test_creature("Monster", 20, 10, "1d4", "monster")],
-            players_surprised: None,
-            monsters_surprised: None,
-            players_precast: None,
-            monsters_precast: None,
-            target_role: TargetRole::Standard,
-        }),
-    ]
+    vec![TimelineStep::Combat(Encounter {
+        monsters: vec![create_test_creature("Monster", 20, 10, "1d4", "monster")],
+        players_surprised: None,
+        monsters_surprised: None,
+        players_precast: None,
+        monsters_precast: None,
+        target_role: TargetRole::Standard,
+    })]
 }
 
 #[test]
 fn test_lightweight_simulation_determinism() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let seed = 12345u64;
 
@@ -112,34 +111,34 @@ fn test_different_seeds_produce_different_results() {
         create_test_creature("Fighter", 50, 12, "1d20", "player"), // Very swingy damage
     ];
     // Need a monster to actually take damage and change scores
-    let timeline = vec![
-        TimelineStep::Combat(Encounter {
-            monsters: vec![create_test_creature("Monster", 100, 10, "1d20", "monster")], // High HP to survive multiple rounds
-            players_surprised: None,
-            monsters_surprised: None,
-            players_precast: None,
-            monsters_precast: None,
-            target_role: TargetRole::Standard,
-        }),
-    ];
+    let timeline = vec![TimelineStep::Combat(Encounter {
+        monsters: vec![create_test_creature("Monster", 100, 10, "1d20", "monster")], // High HP to survive multiple rounds
+        players_surprised: None,
+        monsters_surprised: None,
+        players_precast: None,
+        monsters_precast: None,
+        target_role: TargetRole::Standard,
+    })];
 
     let mut scores = Vec::new();
     for seed in 0..10 {
         let run = run_single_lightweight_simulation(&players, &timeline, seed * 1000);
         scores.push(run.final_score);
     }
-    
+
     scores.sort_by(|a, b| a.partial_cmp(b).unwrap());
     scores.dedup();
 
-    assert!(scores.len() >= 2, "Expected at least 2 different scores from different seeds, got {:?}", scores);
+    assert!(
+        scores.len() >= 2,
+        "Expected at least 2 different scores from different seeds, got {:?}",
+        scores
+    );
 }
 
 #[test]
 fn test_survey_pass_returns_correct_count() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let iterations = 100;
 
@@ -150,9 +149,7 @@ fn test_survey_pass_returns_correct_count() {
 
 #[test]
 fn test_survey_pass_seeds_are_unique() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let iterations = 100;
     let expected = 100;
@@ -166,9 +163,7 @@ fn test_survey_pass_seeds_are_unique() {
 
 #[test]
 fn test_decile_selection_includes_extremes() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let iterations = 100;
 
@@ -186,15 +181,19 @@ fn test_decile_selection_includes_extremes() {
     let seed_values: Vec<u64> = interesting_seeds.iter().map(|s| s.seed).collect();
 
     // Both extremes should be included
-    assert!(seed_values.contains(&worst_seed), "Worst run should be in interesting seeds");
-    assert!(seed_values.contains(&best_seed), "Best run should be in interesting seeds");
+    assert!(
+        seed_values.contains(&worst_seed),
+        "Worst run should be in interesting seeds"
+    );
+    assert!(
+        seed_values.contains(&best_seed),
+        "Best run should be in interesting seeds"
+    );
 }
 
 #[test]
 fn test_decile_selection_size_is_reasonable() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let iterations = 101; // Use 10n + 1
 
@@ -203,22 +202,25 @@ fn test_decile_selection_size_is_reasonable() {
 
     // Now we select 11 global deciles + 100 1% bucket medians + per-encounter extremes
     // For 1 encounter: 11 (Tier A) + 100 (Tier B) + 3 (Tier C) = ~114 with possible overlaps
-    let expected_max = 150; 
+    let expected_max = 150;
 
-    assert!(interesting_seeds.len() <= expected_max,
+    assert!(
+        interesting_seeds.len() <= expected_max,
         "Interesting seeds ({}) should not exceed expected max ({})",
-        interesting_seeds.len(), expected_max
+        interesting_seeds.len(),
+        expected_max
     );
 
     // Should have at least the 11 decile seeds
-    assert!(interesting_seeds.len() >= 11, "Should have at least 11 interesting seeds");
+    assert!(
+        interesting_seeds.len() >= 11,
+        "Should have at least 11 interesting seeds"
+    );
 }
 
 #[test]
 fn test_re_simulation_matches_lightweight_scores() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let seed = 54321u64;
 
@@ -232,7 +234,8 @@ fn test_re_simulation_matches_lightweight_scores() {
     simulation_wasm::rng::clear_rng();
 
     // Scores should match exactly
-    assert_eq!(lightweight.final_score, full_score,
+    assert_eq!(
+        lightweight.final_score, full_score,
         "Lightweight score ({}) should match full simulation score ({})",
         lightweight.final_score, full_score
     );
@@ -240,20 +243,20 @@ fn test_re_simulation_matches_lightweight_scores() {
 
 #[test]
 fn test_encounter_scores_cumulative() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     // Create timeline with 3 encounters
-    let timeline: Vec<TimelineStep> = (0..3).map(|_| {
-        TimelineStep::Combat(Encounter {
-            monsters: vec![],
-            players_surprised: None,
-            monsters_surprised: None,
-            players_precast: None,
-            monsters_precast: None,
-            target_role: TargetRole::Standard,
+    let timeline: Vec<TimelineStep> = (0..3)
+        .map(|_| {
+            TimelineStep::Combat(Encounter {
+                monsters: vec![],
+                players_surprised: None,
+                monsters_surprised: None,
+                players_precast: None,
+                monsters_precast: None,
+                target_role: TargetRole::Standard,
+            })
         })
-    }).collect();
+        .collect();
 
     let result = run_single_lightweight_simulation(&players, &timeline, 99999);
 
@@ -273,16 +276,20 @@ fn test_lightweight_run_tracks_deaths() {
         create_test_creature("WeakFighter", 5, 5, "1d1", "player"), // Very low HP/AC
     ];
 
-    let timeline = vec![
-        TimelineStep::Combat(Encounter {
-            monsters: vec![create_test_creature("DeadlyMonster", 200, 20, "20d20", "monster")], // Absolute unit
-            players_surprised: None,
-            monsters_surprised: None,
-            players_precast: None,
-            monsters_precast: None,
-            target_role: TargetRole::Standard,
-        }),
-    ];
+    let timeline = vec![TimelineStep::Combat(Encounter {
+        monsters: vec![create_test_creature(
+            "DeadlyMonster",
+            200,
+            20,
+            "20d20",
+            "monster",
+        )], // Absolute unit
+        players_surprised: None,
+        monsters_surprised: None,
+        players_precast: None,
+        monsters_precast: None,
+        target_role: TargetRole::Standard,
+    })];
 
     // Run multiple times to find a death scenario
     let mut found_death = false;
@@ -294,21 +301,23 @@ fn test_lightweight_run_tracks_deaths() {
         }
     }
 
-    assert!(found_death, "Should find at least one death in 50 runs with absolute unit monster");
+    assert!(
+        found_death,
+        "Should find at least one death in 50 runs with absolute unit monster"
+    );
 }
 
 #[test]
 fn test_two_pass_consistency() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
     let iterations = 100;
     let expected = 100;
     let base_seed = Some(77777);
 
     // Run survey pass
-    let lightweight_runs = run_survey_pass(players.clone(), timeline.clone(), iterations, base_seed);
+    let lightweight_runs =
+        run_survey_pass(players.clone(), timeline.clone(), iterations, base_seed);
     assert_eq!(lightweight_runs.len(), expected);
 
     // Select interesting seeds
@@ -317,16 +326,17 @@ fn test_two_pass_consistency() {
     // For each interesting seed, verify full re-simulation matches
     for selected_seed in interesting_seeds {
         let seed = selected_seed.seed;
-        let lightweight = lightweight_runs.iter()
-            .find(|r| r.seed == seed)
-            .expect("Seed from select_interesting_seeds_with_tiers should exist in lightweight_runs");
+        let lightweight = lightweight_runs.iter().find(|r| r.seed == seed).expect(
+            "Seed from select_interesting_seeds_with_tiers should exist in lightweight_runs",
+        );
 
         simulation_wasm::rng::seed_rng(seed);
         let (full_result, _events) = run_single_event_driven_simulation(&players, &timeline, false);
         let full_score = simulation_wasm::aggregation::calculate_score(&full_result);
         simulation_wasm::rng::clear_rng();
 
-        assert_eq!(lightweight.final_score, full_score,
+        assert_eq!(
+            lightweight.final_score, full_score,
             "Seed {}: lightweight score {} should match full score {}",
             seed, lightweight.final_score, full_score
         );
@@ -335,17 +345,15 @@ fn test_two_pass_consistency() {
 
 #[test]
 fn test_lightweight_run_serialization() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d8+3", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d8+3", "player")];
     let timeline = create_simple_timeline();
 
     let run = run_single_lightweight_simulation(&players, &timeline, 42);
 
     // Should be serializable
     let serialized = serde_json::to_string(&run).expect("LightweightRun should be serializable");
-    let deserialized: LightweightRun = serde_json::from_str(&serialized)
-        .expect("LightweightRun should be deserializable");
+    let deserialized: LightweightRun =
+        serde_json::from_str(&serialized).expect("LightweightRun should be deserializable");
 
     assert_eq!(run.seed, deserialized.seed);
     assert_eq!(run.encounter_scores, deserialized.encounter_scores);
@@ -355,9 +363,7 @@ fn test_lightweight_run_serialization() {
 
 #[test]
 fn test_decile_approximation_accuracy() {
-    let players = vec![
-        create_test_creature("Fighter", 50, 15, "1d10+5", "player"),
-    ];
+    let players = vec![create_test_creature("Fighter", 50, 15, "1d10+5", "player")];
     let timeline = create_simple_timeline();
     let iterations = 200;
     let seed = 123456;
@@ -368,14 +374,15 @@ fn test_decile_approximation_accuracy() {
         timeline.clone(),
         iterations,
         false,
-        Some(seed)
+        Some(seed),
     );
 
     // 2. Run full simulation (One-Pass) manually for comparison
     let mut full_scores = Vec::new();
     for i in 0..iterations {
         simulation_wasm::rng::seed_rng(seed + i as u64);
-        let (res, _) = simulation_wasm::run_single_event_driven_simulation(&players, &timeline, false);
+        let (res, _) =
+            simulation_wasm::run_single_event_driven_simulation(&players, &timeline, false);
         full_scores.push(simulation_wasm::aggregation::calculate_score(&res));
     }
     simulation_wasm::rng::clear_rng();
@@ -387,16 +394,25 @@ fn test_decile_approximation_accuracy() {
 
     // Approximation should be within 2.0 (due to 100-bucket quantization for scores 0-100)
     let tolerance = 2.0;
-    
-    assert!((summary.score_percentiles.median - true_median).abs() <= tolerance,
-        "Median approximation {} should be close to true median {}", 
-        summary.score_percentiles.median, true_median);
-    
-    assert!((summary.score_percentiles.p25 - true_p25).abs() <= tolerance,
-        "P25 approximation {} should be close to true p25 {}", 
-        summary.score_percentiles.p25, true_p25);
 
-    assert!((summary.score_percentiles.p75 - true_p75).abs() <= tolerance,
-        "P75 approximation {} should be close to true p75 {}", 
-        summary.score_percentiles.p75, true_p75);
+    assert!(
+        (summary.score_percentiles.median - true_median).abs() <= tolerance,
+        "Median approximation {} should be close to true median {}",
+        summary.score_percentiles.median,
+        true_median
+    );
+
+    assert!(
+        (summary.score_percentiles.p25 - true_p25).abs() <= tolerance,
+        "P25 approximation {} should be close to true p25 {}",
+        summary.score_percentiles.p25,
+        true_p25
+    );
+
+    assert!(
+        (summary.score_percentiles.p75 - true_p75).abs() <= tolerance,
+        "P75 approximation {} should be close to true p75 {}",
+        summary.score_percentiles.p75,
+        true_p75
+    );
 }

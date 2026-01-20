@@ -3,9 +3,9 @@
 //! This module provides WASM bindings that delegate to the orchestration layer.
 //! Keep this file minimal - all business logic belongs in orchestration/.
 
-use wasm_bindgen::prelude::*;
 use crate::model::{Creature, SimulationResult, TimelineStep};
-use crate::orchestration::{runners, simulation, balancer};
+use crate::orchestration::{balancer, runners, simulation};
+use wasm_bindgen::prelude::*;
 
 // ============================================================================
 // Core Simulation WASM Bindings
@@ -22,8 +22,13 @@ pub fn auto_adjust_encounter_wasm(
     let monsters: Vec<Creature> = parse_js_value(monsters, "monsters")?;
     let timeline: Vec<TimelineStep> = parse_js_value(timeline, "timeline")?;
 
-    let result = balancer::run_auto_adjust_encounter_orchestration(players, monsters, timeline, encounter_index)
-        .map_err(|e| JsValue::from_str(&format!("Auto-adjustment failed: {}", e)))?;
+    let result = balancer::run_auto_adjust_encounter_orchestration(
+        players,
+        monsters,
+        timeline,
+        encounter_index,
+    )
+    .map_err(|e| JsValue::from_str(&format!("Auto-adjustment failed: {}", e)))?;
 
     serialize_result(&result)
 }
@@ -47,7 +52,8 @@ pub fn run_simulation_wasm(
     let players: Vec<Creature> = parse_js_value(players, "players")?;
     let timeline: Vec<TimelineStep> = parse_js_value(timeline, "timeline")?;
 
-    let runs = runners::run_event_driven_simulation_rust(players, timeline, iterations, false, None);
+    let runs =
+        runners::run_event_driven_simulation_rust(players, timeline, iterations, false, None);
     let results: Vec<SimulationResult> = runs.into_iter().map(|run| run.result).collect();
 
     serialize_result(&results)
@@ -63,8 +69,10 @@ pub fn run_simulation_with_callback(
     let players: Vec<Creature> = parse_js_value(players, "players")?;
     let timeline: Vec<TimelineStep> = parse_js_value(timeline, "timeline")?;
 
-    let output = simulation::run_simulation_with_callback_orchestration(players, timeline, iterations, callback)
-        .map_err(|e| JsValue::from_str(&format!("Simulation failed: {}", e)))?;
+    let output = simulation::run_simulation_with_callback_orchestration(
+        players, timeline, iterations, callback,
+    )
+    .map_err(|e| JsValue::from_str(&format!("Simulation failed: {}", e)))?;
 
     serialize_result(&output)
 }
@@ -93,8 +101,6 @@ pub fn get_last_simulation_events() -> Result<JsValue, JsValue> {
     }
 }
 
-
-
 #[wasm_bindgen]
 pub fn clear_simulation_cache() {
     crate::cache::clear_cache();
@@ -103,10 +109,13 @@ pub fn clear_simulation_cache() {
 #[wasm_bindgen]
 pub fn get_cache_stats() -> JsValue {
     let (entry_count, estimated_bytes) = crate::cache::get_cache_stats();
-    JsValue::from_str(&serde_json::json!({
-        "entryCount": entry_count,
-        "estimatedBytes": estimated_bytes
-    }).to_string())
+    JsValue::from_str(
+        &serde_json::json!({
+            "entryCount": entry_count,
+            "estimatedBytes": estimated_bytes
+        })
+        .to_string(),
+    )
 }
 
 #[wasm_bindgen]
@@ -117,8 +126,9 @@ pub fn run_skyline_analysis_wasm(
 ) -> Result<JsValue, JsValue> {
     let results: Vec<SimulationResult> = parse_js_value(results, "results")?;
 
-    let analysis = simulation::run_skyline_analysis_orchestration(results, party_size, encounter_index)
-        .map_err(|e| JsValue::from_str(&format!("Skyline analysis failed: {}", e)))?;
+    let analysis =
+        simulation::run_skyline_analysis_orchestration(results, party_size, encounter_index)
+            .map_err(|e| JsValue::from_str(&format!("Skyline analysis failed: {}", e)))?;
 
     serialize_result(&analysis)
 }
@@ -131,21 +141,21 @@ pub fn run_decile_analysis_wasm(
 ) -> Result<JsValue, JsValue> {
     let results: Vec<SimulationResult> = parse_js_value(results, "results")?;
 
-    let analysis = simulation::run_decile_analysis_orchestration(results, scenario_name, party_size)
-        .map_err(|e| JsValue::from_str(&format!("Decile analysis failed: {}", e)))?;
+    let analysis =
+        simulation::run_decile_analysis_orchestration(results, scenario_name, party_size)
+            .map_err(|e| JsValue::from_str(&format!("Decile analysis failed: {}", e)))?;
 
     serialize_result(&analysis)
 }
-
-
-
-
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
-fn parse_js_value<T: serde::de::DeserializeOwned>(value: JsValue, name: &str) -> Result<T, JsValue> {
+fn parse_js_value<T: serde::de::DeserializeOwned>(
+    value: JsValue,
+    name: &str,
+) -> Result<T, JsValue> {
     serde_wasm_bindgen::from_value(value)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse {}: {}", name, e)))
 }

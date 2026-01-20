@@ -1,4 +1,4 @@
-use simulation_wasm::enums::{BuffDuration, TriggerCondition, TriggerEffect, AttackRange};
+use simulation_wasm::enums::{AttackRange, BuffDuration, TriggerCondition, TriggerEffect};
 use simulation_wasm::events::Event;
 
 #[test]
@@ -182,7 +182,10 @@ fn test_roll_manipulation_effects() {
         must_use_second: true,
     };
     match &force_self_reroll {
-        TriggerEffect::ForceSelfReroll { roll_type, must_use_second } => {
+        TriggerEffect::ForceSelfReroll {
+            roll_type,
+            must_use_second,
+        } => {
             assert_eq!(roll_type, "save");
             assert_eq!(must_use_second, &true);
         }
@@ -194,7 +197,10 @@ fn test_roll_manipulation_effects() {
         must_use_second: false,
     };
     match &force_target_reroll {
-        TriggerEffect::ForceTargetReroll { roll_type, must_use_second } => {
+        TriggerEffect::ForceTargetReroll {
+            roll_type,
+            must_use_second,
+        } => {
             assert_eq!(roll_type, "abilityCheck");
             assert_eq!(must_use_second, &false);
         }
@@ -221,7 +227,10 @@ fn test_interrupt_system_effects() {
         action_slot: "reaction".to_string(),
     };
     match &grant_immediate {
-        TriggerEffect::GrantImmediateAction { action_id, action_slot } => {
+        TriggerEffect::GrantImmediateAction {
+            action_id,
+            action_slot,
+        } => {
             assert_eq!(action_id, "opportunity-attack");
             assert_eq!(action_slot, "reaction");
         }
