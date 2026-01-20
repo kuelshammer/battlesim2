@@ -8,7 +8,7 @@ class MockWorker {
   postMessage = vi.fn();
   terminate = vi.fn();
 
-  constructor(_scriptURL: string | URL, _options?: WorkerOptions) {
+  constructor() {
     // Mock constructor
   }
 }
