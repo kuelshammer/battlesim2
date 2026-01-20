@@ -381,76 +381,9 @@ impl ProgressUIManager {
         summary
     }
 
-    /// Create a progress bar HTML representation
-    pub fn create_progress_bar_html(&self, progress_info: &ProgressInfo) -> String {
-        let mut html = String::new();
-        let config = &self.config;
 
-        html.push_str(&format!(
-            r#"<div class="progress-container" data-simulation-id="{}">"#,
-            progress_info.simulation_id.0
-        ));
 
-        // Progress bar
-        html.push_str(r#"<div class="progress-bar">"#);
-        
-        for segment in &progress_info.visual.progress_segments {
-            let color = match segment.style {
-                ProgressStyle::Normal => &config.color_scheme.normal_color,
-                ProgressStyle::Active => &config.color_scheme.active_color,
-                ProgressStyle::Success => &config.color_scheme.success_color,
-                ProgressStyle::Warning => &config.color_scheme.warning_color,
-                ProgressStyle::Error => &config.color_scheme.error_color,
-                ProgressStyle::Custom(ref color) => color,
-            };
 
-            html.push_str(&format!(
-                r#"<div class="progress-segment" style="left: {:.1}%; width: {:.1}%; background-color: {};""#,
-                segment.start * 100.0,
-                (segment.end - segment.start) * 100.0,
-                color
-            ));
-
-            if !segment.label.is_empty() {
-                html.push_str(&format!(r#" title="{}""#, segment.label));
-            }
-
-            html.push_str(r#"></div>"#);
-        }
-
-        html.push_str(r#"</div>"#);
-
-        // Progress text
-        if config.show_detailed {
-            html.push_str(&format!(
-                r#"<div class="progress-text">{} - {}</div>"#,
-                progress_info.visual.formatted_progress,
-                progress_info.visual.phase
-            ));
-        }
-
-        html.push_str(r#"</div>"#);
-        html
-    }
-
-    /// Create a compact progress indicator
-    pub fn create_compact_indicator(&self, progress_info: &ProgressInfo) -> String {
-        let state_class = match progress_info.state {
-            ProgressState::Idle => "idle",
-            ProgressState::Running => "running",
-            ProgressState::Completed => "completed",
-            ProgressState::Failed => "failed",
-            ProgressState::Cancelled => "cancelled",
-        };
-
-        format!(
-            r#"<div class="progress-indicator {}" data-simulation-id="{}" title="{}">{:.1}%</div>"#,
-            state_class,
-            progress_info.simulation_id.0,
-            progress_info.visual.phase,
-            progress_info.visual.percentage * 100.0
-        )
-    }
 
     /// Update configuration
     pub fn update_config(&mut self, config: ProgressUIConfig) {
@@ -559,49 +492,7 @@ mod tests {
         assert_eq!(summary.average_progress, 0.0);
     }
 
-    #[test]
-    fn test_progress_bar_html() {
-        let sim_id = BackgroundSimulationId::new();
-        let mut progress_info = ProgressInfo::new(sim_id);
-        progress_info.visual.percentage = 0.5;
-        progress_info.visual.progress_segments = vec![
-            ProgressSegment {
-                start: 0.0,
-                end: 0.5,
-                style: ProgressStyle::Success,
-                label: "50%".to_string(),
-            },
-            ProgressSegment {
-                start: 0.5,
-                end: 1.0,
-                style: ProgressStyle::Normal,
-                label: "".to_string(),
-            },
-        ];
 
-        let manager = ProgressUIManager::new(ProgressUIConfig::default());
-        let html = manager.create_progress_bar_html(&progress_info);
-
-        assert!(html.contains("progress-container"));
-        assert!(html.contains("progress-bar"));
-        assert!(html.contains("progress-segment"));
-    }
-
-    #[test]
-    fn test_compact_indicator() {
-        let sim_id = BackgroundSimulationId::new();
-        let mut progress_info = ProgressInfo::new(sim_id);
-        progress_info.state = ProgressState::Running;
-        progress_info.visual.percentage = 0.75;
-        progress_info.visual.phase = "Running".to_string();
-
-        let manager = ProgressUIManager::new(ProgressUIConfig::default());
-        let indicator = manager.create_compact_indicator(&progress_info);
-
-        assert!(indicator.contains("progress-indicator"));
-        assert!(indicator.contains("75.0%"));
-        assert!(indicator.contains("running"));
-    }
 }
 
 // WASM bindings for JavaScript integration
@@ -673,27 +564,7 @@ impl ProgressUIManagerWrapper {
             .map_err(|e| JsValue::from_str(&format!("Serialization error: {}", e)))
     }
 
-    #[wasm_bindgen(js_name = createProgressBarHtml)]
-    pub fn create_progress_bar_html(&self, simulation_id: String) -> Result<String, JsValue> {
-        let sim_id = BackgroundSimulationId::from_string(&simulation_id)
-            .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
-            .get_progress(&sim_id)
-            .ok_or_else(|| JsValue::from_str("Progress not found"))
-            .map(|progress| self.inner.lock().unwrap_or_else(PoisonError::into_inner).create_progress_bar_html(&progress))
-    }
 
-    #[wasm_bindgen(js_name = createCompactIndicator)]
-    pub fn create_compact_indicator(&self, simulation_id: String) -> Result<String, JsValue> {
-        let sim_id = BackgroundSimulationId::from_string(&simulation_id)
-            .map_err(|e| JsValue::from_str(&format!("Invalid simulation ID: {}", e)))?;
-        
-        self.inner.lock().unwrap_or_else(PoisonError::into_inner)
-            .get_progress(&sim_id)
-            .ok_or_else(|| JsValue::from_str("Progress not found"))
-            .map(|progress| self.inner.lock().unwrap_or_else(PoisonError::into_inner).create_compact_indicator(&progress))
-    }
 
     #[wasm_bindgen(js_name = clearAll)]
     pub fn clear_all(&self) -> Result<(), JsValue> {
