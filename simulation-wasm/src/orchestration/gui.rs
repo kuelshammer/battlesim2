@@ -153,27 +153,7 @@ pub fn get_simulation_progress(simulation_id: &BackgroundSimulationId) -> Option
     progress_ui.get_progress(simulation_id)
 }
 
-/// Create HTML progress bar for a simulation
-pub fn create_progress_bar_html(simulation_id: &BackgroundSimulationId) -> String {
-    let gui = get_gui().lock().unwrap_or_else(PoisonError::into_inner);
-    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
-    
-    match progress_ui.get_progress(simulation_id) {
-        Some(info) => progress_ui.create_progress_bar_html(&info),
-        None => String::new(),
-    }
-}
 
-/// Create compact progress indicator
-pub fn create_compact_indicator(simulation_id: &BackgroundSimulationId) -> String {
-    let gui = get_gui().lock().unwrap_or_else(PoisonError::into_inner);
-    let progress_ui = gui.progress_ui_manager.lock().unwrap_or_else(PoisonError::into_inner);
-    
-    match progress_ui.get_progress(simulation_id) {
-        Some(info) => progress_ui.create_compact_indicator(&info),
-        None => String::new(),
-    }
-}
 
 /// Cancel a running simulation
 pub fn cancel_simulation(simulation_id: BackgroundSimulationId) -> crate::user_interaction::UserEventResult {
