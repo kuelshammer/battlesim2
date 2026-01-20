@@ -1,8 +1,16 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Simulation from './simulation';
 import React from 'react';
-import { useSimulationWorker } from '@/model/useSimulationWorker';
+import { useSimulationWorker, SimulationWorkerState } from '@/model/useSimulationWorker';
+import { Creature, TimelineEvent, AutoAdjustmentResult } from '@/model/model';
+
+type SimulationWorkerHookReturn = SimulationWorkerState & {
+    runSimulation: (players: Creature[], timeline: TimelineEvent[], maxK?: number, seed?: number) => void;
+    autoAdjustEncounter: (players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => void;
+    clearOptimizedResult: () => void;
+    terminateAndRestart: () => Worker;
+};
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -76,7 +84,7 @@ describe('Simulation Component', () => {
             autoAdjustEncounter: vi.fn(),
             clearOptimizedResult: vi.fn(),
             terminateAndRestart: vi.fn(),
-        } as unknown);
+        } as any);
 
         render(<Simulation />);
         
@@ -114,7 +122,7 @@ describe('Simulation Component', () => {
             autoAdjustEncounter: vi.fn(),
             clearOptimizedResult: vi.fn(),
             terminateAndRestart: vi.fn(),
-        } as unknown);
+        } as any);
 
         render(<Simulation />);
 
@@ -148,7 +156,7 @@ describe('Simulation Component', () => {
             optimizedResult: mockOptimizedResult,
             clearOptimizedResult,
             autoAdjustEncounter: vi.fn(),
-        } as unknown);
+        } as any);
 
         render(<Simulation />);
         

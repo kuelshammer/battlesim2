@@ -17,7 +17,7 @@ describe('calculatePacingData', () => {
             { type: 'combat', id: 'enc2', monsters: [], targetRole: 'Standard' }
         ];
 
-        const analysis: Record<string, unknown> = {
+        const analysis = {
             overall: {
                 tdnw: 100,
                 globalMedian: {
@@ -27,7 +27,7 @@ describe('calculatePacingData', () => {
                     powerTimeline: [100, 50, 50, 10]
                 }
             }
-        };
+        } as any;
 
         const encounterWeights = [2, 2];
 
@@ -82,7 +82,7 @@ describe('calculatePacingData', () => {
             { type: 'shortRest', id: 'rest1' }
         ];
 
-        const analysis: Record<string, unknown> = {
+        const analysis = {
             overall: {
                 tdnw: 100,
                 globalMedian: {
@@ -90,7 +90,7 @@ describe('calculatePacingData', () => {
                     resourceTimeline: [50, 20, 100]
                 }
             }
-        };
+        } as any;
 
         const result = calculatePacingData(timeline, analysis, [1]);
 

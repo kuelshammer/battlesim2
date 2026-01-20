@@ -57,7 +57,7 @@ export function sharedStateGenerator(componentName: string) {
             await setState(sharedState)
         }
 
-        const existingValue = state.get(mapKey)?.value
+        const existingValue = (state.get(mapKey) as {value?: T} | undefined)?.value
         const value: T = (existingValue === undefined) ? initialValue : existingValue
     
         return [ value, setter ] as const
