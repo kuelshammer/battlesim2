@@ -1,5 +1,5 @@
 import { FC, useState, memo, useMemo } from "react"
-import { Combattant, EncounterResult as EncounterResultType, AggregateOutput } from "@/model/model"
+import { Combattant, EncounterResult as EncounterResultType, AggregateOutput, FullAnalysisOutput } from "@/model/model"
 import ResourcePanel from "./ResourcePanel"
 import ActionEconomyDisplay from "./ActionEconomyDisplay"
 import styles from './encounterResult.module.scss'
@@ -155,9 +155,9 @@ const EncounterResult: FC<PropType> = memo(({ value, analysis, fullAnalysis, pla
                             <h3>Final State</h3>
                             <ActionEconomyDisplay round={lastRound} />
                             <div className={styles.lifebars} data-testid="final-state-lifebars">
-                                <TeamResults round={lastRound} team={lastRound.team1} stats={value.stats} />
+                                <TeamResults round={lastRound} team={lastRound.team1} />
                                 <hr />
-                                <TeamResults round={lastRound} team={lastRound.team2} stats={value.stats} />
+                                <TeamResults round={lastRound} team={lastRound.team2} />
                             </div>
                         </div>
                     </div>

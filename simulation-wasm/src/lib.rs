@@ -47,8 +47,7 @@ pub mod display_manager; // Display mode management
 pub mod progress_ui; // Progress UI components
 pub mod user_interaction; // User interaction flows
 pub mod config; // Configuration system
-pub mod storage; // Stub storage module
-pub mod storage_manager; // Stub storage manager module
+
 pub mod cache;
 pub mod log_reproduction_test;
 pub mod utils; // Utility functions for simulation results

@@ -120,6 +120,28 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
     }, [data, config]);
 
     /**
+     * Handle mouse move for hover interactions
+     */
+    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        // const y = e.clientY - rect.top; // Reserved for future vertical interactions
+
+        // Basic bucket calculation - assumes buckets are evenly distributed
+        const bucketWidth = config.width! / data.buckets.length;
+        const bucketIndex = Math.floor(x / bucketWidth) + 1; // 1-based indexing
+
+        // For now, don't calculate character hover in base component
+        interactionRef.current = {
+            hoveredBucket: bucketIndex >= 1 && bucketIndex <= data.buckets.length ? bucketIndex : null,
+            hoveredCharacter: null,
+        };
+
+        onHover?.(interactionRef.current);
+        requestAnimationFrame(render);
+    }, [data.buckets.length, config.width, onHover, render]);
+
+    /**
      * Handle mouse leave
      */
     const handleMouseLeave = useCallback(() => {

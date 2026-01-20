@@ -47,7 +47,7 @@ const ResourcePanel: FC<ResourcePanelProps> = memo(({ combatant }) => {
         return { type: 'Other', label: key, icon: faDiceD6, color: '#aaa' };
     };
 
-    const groups: Record<string, Array<{ key: string; value: number; max: number; type: string; label: string; icon: unknown; color: string; sort?: number }>> = {
+    const groups: Record<string, Array<{ key: string; value: number; max: number; type: string; label: string; icon: any; color: string; sort?: number }>> = {
         'Main': [],
         'SpellSlot': [],
         'ClassResource': [],

@@ -12,6 +12,13 @@ pub struct ScenarioParameters {
     pub timeline: Vec<TimelineStep>,
     pub iterations: usize,
 }
+
+/// Slot selection for storage (stub since storage is removed)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SlotSelection {
+    Primary,
+    Secondary,
+}
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -32,7 +39,7 @@ pub enum UserEvent {
     SetDisplayMode(DisplayMode),
     /// User selected a specific slot
     SelectSlot {
-        slot_selection: crate::storage::SlotSelection,
+        slot_selection: SlotSelection,
     },
     /// User cancelled a simulation
     CancelSimulation {
@@ -457,7 +464,7 @@ impl UserInteractionManager {
     }
 
     /// Handle slot selection
-    fn handle_select_slot(&self, slot_selection: crate::storage::SlotSelection) -> UserEventResult {
+    fn handle_select_slot(&self, slot_selection: SlotSelection) -> UserEventResult {
         let mut messages = Vec::new();
 
         let display_result = {

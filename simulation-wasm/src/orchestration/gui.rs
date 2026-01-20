@@ -11,12 +11,10 @@ use crate::progress_ui::{ProgressUIManager, ProgressUIConfig};
 use crate::user_interaction::{UserInteractionManager, UserEvent, UserInteractionConfig};
 use crate::queue_manager::{QueueManager, QueueManagerConfig};
 use crate::model::{Creature, TimelineStep};
-use crate::storage::SlotSelection;
+use crate::user_interaction::SlotSelection;
 #[cfg(not(target_arch = "wasm32"))]
 use crate::background_simulation::BackgroundSimulationEngine;
 use crate::background_simulation::{BackgroundSimulationId, SimulationPriority};
-
-use super::state::get_storage_manager;
 
 /// Combined GUI integration system
 pub struct GuiIntegration {
@@ -31,14 +29,9 @@ static GUI_INTEGRATION: OnceLock<Mutex<GuiIntegration>> = OnceLock::new();
 /// Initialize the GUI integration system
 pub fn initialize_gui() -> Result<(), String> {
     GUI_INTEGRATION.get_or_init(|| {
-        let storage_copy = get_storage_manager()
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .clone();
-
         // Create display manager
         let display_config = DisplayConfig::default();
-        let display_manager = DisplayManager::new(storage_copy.clone(), display_config);
+        let display_manager = DisplayManager::new(display_config);
         let display_manager_arc = Arc::new(Mutex::new(display_manager));
 
         // Create queue manager

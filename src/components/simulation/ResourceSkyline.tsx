@@ -17,6 +17,7 @@ import {
     DEFAULT_SKYLINE_COLORS,
     SkylineInteractionState,
     ColorScale,
+    valueToColor,
 } from '@/model/skylineTypes';
 import { PercentileBucket } from '@/model/model';
 
