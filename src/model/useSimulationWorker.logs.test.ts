@@ -9,7 +9,7 @@ const mockWorkerInstance = {
   terminate: vi.fn(),
 };
 
-global.Worker = vi.fn().mockImplementation(function() { return mockWorkerInstance; }) as unknown;
+global.Worker = vi.fn().mockImplementation(function() { return mockWorkerInstance; }) as any;
 
 describe('useSimulationWorker Logs', () => {
   beforeEach(() => {

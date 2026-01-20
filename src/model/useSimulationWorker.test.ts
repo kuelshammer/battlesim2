@@ -7,9 +7,13 @@ class MockWorker {
   onmessage: ((e: MessageEvent) => void) | null = null;
   postMessage = vi.fn();
   terminate = vi.fn();
+
+  constructor() {
+    // Mock constructor
+  }
 }
 
-global.Worker = MockWorker as unknown;
+global.Worker = MockWorker as any;
 
 describe('useSimulationWorker', () => {
   beforeEach(() => {

@@ -1,5 +1,6 @@
 import { FC, useRef, useEffect } from 'react'
 import { SkylineAnalysis, Combattant } from '@/model/model'
+import { CharacterBucketData } from '@/model/skylineTypes'
 import styles from './SkylineHeatmap.module.scss'
 
 interface SkylineHeatmapProps {
@@ -89,7 +90,7 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
             ctx.fillText('50%', offsetX - 5, axisY + 53) // Resources middle
             ctx.fillText('100%', offsetX - 5, offsetY + 200) // Resources bottom
 
-            player.data.forEach((charData: { hpPercent: number; resourcePercent: number; deathRound?: number | null; isDead: boolean; name: string; id: string; maxHp: number }, bucketIdx: number) => {
+            player.data.forEach((charData: CharacterBucketData | undefined, bucketIdx: number) => {
                 if (!charData) return
 
                 const x = offsetX + bucketIdx * effectiveBucketWidth
@@ -132,7 +133,7 @@ const SkylineHeatmap: FC<SkylineHeatmapProps> = ({ skyline, players }) => {
         })
 
         // Draw legend
-        const legendY = height - 15
+        const legendY = canvasHeight - 15
         const legendItems = [
             { color: colors.green, label: 'HP (remaining)' },
             { color: colors.red, label: 'Damage taken' },

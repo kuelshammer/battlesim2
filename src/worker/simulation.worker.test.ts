@@ -28,7 +28,7 @@ const postMessageMock = vi.fn();
 global.self = {
   postMessage: postMessageMock,
   onmessage: null
-} as { postMessage: typeof postMessageMock; onmessage: null };
+} as any;
 
 // Mock setTimeout to execute once to avoid infinite recursion in tests
 let timeoutCount = 0;

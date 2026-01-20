@@ -49,6 +49,13 @@ export default [
       "@typescript-eslint/no-empty-object-type": "warn",
     },
   },
+  // Test files - allow any types for mocks
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   // CommonJS config files (next.config.js, vitest configs, etc.)
   {
     files: ["next.config.js", "vitest.config.ts", "**/*.config.js", "**/*.config.ts", "simulation-wasm/**/*.js", "scripts/**/*.js"],

@@ -81,7 +81,7 @@ export const ActionTemplates = {
             concentration: true,
         },
     }),
-    'Hunter\'s Mark': createTemplate({
+     'Hunter\'s Mark': createTemplate({
         actionSlot: ActionSlots['Bonus Action'], // Keep for backward compatibility, but define new costs
         cost: [
             { type: 'Discrete', resourceType: 'BonusAction', amount: 1 },
@@ -91,7 +91,7 @@ export const ActionTemplates = {
         tags: ['Spell', 'Concentration', 'Buff', 'Damage'],
         type: 'buff',
         targets: 1,
-        target: 'enemy with least HP', // Mark the priority target
+        target: 'self', // Buffs the caster with extra damage against marked target
         buff: {
             displayName: 'Hunter\'s Mark',
             duration: 'entire encounter', // Simplified from 1 hour
@@ -300,5 +300,5 @@ export function getFinalAction(action: Action): FinalAction {
         if (action.templateOptions.amount !== undefined) result.amount = action.templateOptions.amount
     }
 
-    return result
+    return result as FinalAction
 }
