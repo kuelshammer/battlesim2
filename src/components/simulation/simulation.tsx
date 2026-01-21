@@ -1,662 +1,164 @@
-import React, { FC, useEffect, useState, useRef, memo, useMemo } from "react"
-import { z } from "zod"
-import { Creature, CreatureSchema, Encounter, TimelineEvent, TimelineEventSchema, EncounterResult as EncounterResultType } from "@/model/model"
-import { SimulationEvent } from "@/model/events"
-import { clone, useStoredState } from "@/model/utils"
+import React, { FC, useState, Suspense, memo } from "react"
+import { clone } from "@/model/utils"
 import styles from './simulation.module.scss'
-import EncounterForm from "./encounterForm"
-import EncounterResult from "./encounterResult"
-import EventLog from "../combat/EventLog"
 import OnboardingTour from "./OnboardingTour"
 import PerformanceDashboard from "../debug/PerformanceDashboard"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFolder, faPlus, faSave, faTrash, faEye, faTimes, faChartLine, faBed, faBolt, faQuestionCircle, faTachometerAlt } from "@fortawesome/free-solid-svg-icons"
-import { v4 as uuid } from 'uuid'
 import { semiPersistentContext } from "@/model/semiPersistentContext"
 import AdventuringDayForm from "./adventuringDayForm"
 import { UIToggleProvider } from "@/model/uiToggleState"
-import { useSimulationWorker } from "@/model/useSimulationWorker"
-import AdjustmentPreview from "./AdjustmentPreview"
-import AssistantSummary from "./AssistantSummary"
-import { VitalsDashboard, ValidationNotice } from "./AnalysisComponents"
-import { calculatePacingData } from "./pacingUtils"
-import PartyOverview from "./PartyOverview"
-import PlayerGraphs from "./PlayerGraphs"
-import HeartbeatGraph from "./HeartbeatGraph"
-import { SkylineAnalysis, PlayerSlot } from "@/model/model"
 import { CrosshairProvider } from "./CrosshairContext"
 import { CrosshairTooltip } from "./CrosshairLine"
 
+// New hooks
+import { useSimulationSession } from "./hooks/useSimulationSession"
+import { useAutoSimulation } from "./hooks/useAutoSimulation"
 
+// New components
+import { SimulationHeader } from "./components/SimulationHeader"
+import { BackendStatusPanel } from "./components/BackendStatusPanel"
+import { PlayerFormSection } from "./components/PlayerFormSection"
+import { TimelineItem } from "./components/TimelineItem"
+import { AddTimelineButtons } from "./components/AddTimelineButtons"
+import { OverallSummary } from "./components/OverallSummary"
+import { SimulationModals } from "./components/SimulationModals"
 
 type PropType = object
 
-const emptyCombat: TimelineEvent = {
-    type: 'combat',
-    id: uuid(),
-    monsters: [],
-    monstersSurprised: false,
-    playersSurprised: false,
-    targetRole: 'Standard',
-}
-
-// Sanitization helper: Fix duplicate IDs in players array
-const sanitizePlayersParser = (parser: (data: unknown) => Creature[]) => (data: unknown) => {
-    const parsed = parser(data);
-    if (!parsed) return null;
-
-    const playerIds = new Set<string>();
-    const sanitized = parsed.map(p => {
-        if (playerIds.has(p.id)) {
-            return { ...p, id: uuid() }; // Generate new ID for duplicate
-        }
-        playerIds.add(p.id);
-        return p;
-    });
-
-    return sanitized;
-};
-
-// Sanitization helper: Fix duplicate IDs in timeline monsters
-const sanitizeTimelineParser = (parser: (data: unknown) => TimelineEvent[]) => (data: unknown) => {
-    const parsed = parser(data);
-    if (!parsed) return null;
-
-    return parsed.map(item => {
-        if (item.type !== 'combat') return item;
-
-        const monsterIds = new Set<string>();
-        const sanitizedMonsters = item.monsters.map(m => {
-            if (monsterIds.has(m.id)) {
-                return { ...m, id: uuid() }; // Generate new ID for duplicate
-            }
-            monsterIds.add(m.id);
-            return m;
-        });
-
-        return { ...item, monsters: sanitizedMonsters };
-    });
-};
-
 const Simulation: FC<PropType> = memo(() => {
-    const [players, setPlayers, isPlayersLoaded] = useStoredState<Creature[]>('players', [], sanitizePlayersParser(z.array(CreatureSchema).parse))
-    const [timeline, setTimeline, isTimelineLoaded] = useStoredState<TimelineEvent[]>('timeline', [emptyCombat], sanitizeTimelineParser(z.array(TimelineEventSchema).parse))
-    const [simulationResults, setSimulationResults] = useState<EncounterResultType[]>([])
+    // UI state
     const [state, setState] = useState(new Map<string, unknown>())
-    const [simulationEvents, setSimulationEvents] = useState<SimulationEvent[]>([])
-
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [isEditing, setIsEditing] = useState(false)
     const [showLogModal, setShowLogModal] = useState(false)
     const [selectedEncounterIndex, setSelectedEncounterIndex] = useState<number | null>(null)
     const [selectedDecileIndex, setSelectedDecileIndex] = useState<number>(5) // Default to 50% Median
     const [runTour, setRunTour] = useState(false)
     const [showPerformanceDashboard, setShowPerformanceDashboard] = useState(false)
 
-    // Web Worker Simulation
-    const worker = useSimulationWorker();
-    const [needsResimulation, setNeedsResimulation] = useState(false);
-    const [isStale, setIsStale] = useState(false);
-    const [highPrecision, setHighPrecision, isHighPrecisionLoaded] = useStoredState<boolean>('highPrecision', false, z.boolean().parse);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Expose for E2E tests
-    useEffect(() => {
-        if (isPlayersLoaded && isTimelineLoaded && isHighPrecisionLoaded) {
-            (window as Window & { simulationWasm?: boolean; storageLoaded?: boolean }).simulationWasm = true;
-            (window as Window & { simulationWasm?: boolean; storageLoaded?: boolean }).storageLoaded = true;
-        }
-    }, [isPlayersLoaded, isTimelineLoaded, isHighPrecisionLoaded]);
-
-    // Memoize expensive computations
-    const isEmptyResult = useMemo(() => {
-        const hasPlayers = !!players.length
-        const hasMonsters = !!timeline.find(item => item.type === 'combat' && !!item.monsters.length)
-        return !hasPlayers && !hasMonsters
-    }, [players.length, timeline])
-
-    // Memoize combatant names map
-    const combatantNames = useMemo(() => {
-        const names = new Map<string, string>()
-        
-        // Add players - IDs are prefixed with 'p-' and numbered if count > 1
-        players.forEach((p, group_idx) => {
-            for (let i = 0; i < (p.count || 1); i++) {
-                const id = `p-${group_idx}-${i}-${p.id}`
-                const name = (p.count || 1) > 1 ? `${p.name} ${i + 1}` : p.name
-                names.set(id, name)
-            }
-            // Fallback for base ID - VERY IMPORTANT for resolving WASM partySlots
-            names.set(p.id, p.name)
-        })
-
-        // Add monsters - IDs include encounter index and are numbered if count > 1
-        timeline.forEach((item, step_idx) => {
-            if (item.type === 'combat') {
-                item.monsters.forEach((m, group_idx) => {
-                    for (let i = 0; i < (m.count || 1); i++) {
-                        const id = `step${step_idx}-m-${group_idx}-${i}-${m.id}`
-                        const name = (m.count || 1) > 1 ? `${m.name} ${i + 1}` : m.name
-                        names.set(id, name)
-                    }
-                    // Fallback for base ID
-                    names.set(m.id, m.name)
-                })
-            }
-        })
-        
-        return names
-    }, [players, timeline])
-
-    const [canSave, setCanSave] = useState(false)
-    
-    const encounterWeights = useMemo(() => {
-        const weights: number[] = [];
-        timeline.forEach(item => {
-            if (item.type === 'combat') {
-                const role = item.targetRole || 'Standard';
-                const weight = role === 'Skirmish' ? 1 : role === 'Standard' ? 2 : role === 'Elite' ? 3 : 4;
-                weights.push(weight);
-            }
-        });
-        return weights;
-    }, [timeline]);
-
-    const pacingData = useMemo(() => {
-        return calculatePacingData(timeline, worker.analysis, encounterWeights);
-    }, [worker.analysis, timeline, encounterWeights]);
-
-    useEffect(() => {
-        setCanSave(!isEmptyResult)
-    }, [isEmptyResult])
-
-    // Detect changes that need resimulation with debounce
-    useEffect(() => {
-        // Clear previous timer
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        
-        // Set new timer (500ms delay)
-        debounceTimerRef.current = setTimeout(() => {
-            setNeedsResimulation(true);
-            setIsStale(true);
-        }, 500);
-        
-        return () => {
-            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-        };
-    }, [players, timeline, highPrecision]);
-
-    // Trigger simulation when not editing and needs resimulation
-    useEffect(() => {
-        if (!isEditing && !saving && !loading && needsResimulation) {
-            if (Array.isArray(timeline) && timeline.length > 0) {
-                worker.runSimulation(players, timeline, highPrecision ? 51 : 3);
-                setNeedsResimulation(false);
-            }
-        }
-    }, [isEditing, saving, loading, needsResimulation, players, timeline, worker, highPrecision]);
-
-    // Update display results when worker finishes
-    useEffect(() => {
-        if (!worker.results || worker.results.length === 0) return;
-
-        const results = worker.results;
-        // [Disaster, Struggle, Typical, Heroic, Legend]
-        const index = results.length >= 3 ? 2 : 0;
-        const selectedRun = results[index];
-
-        setSimulationResults(selectedRun.encounters);
-
-        // Update events from the first run returned by the worker
-        if (worker.events) {
-            // events in worker are already structured objects, not strings
-            // But let's check if they need parsing
-            setSimulationEvents(worker.events as SimulationEvent[]);
-        }
-
-        // Clear stale state when new results are available
-        setIsStale(false);
-    }, [worker.results, worker.events]);
-
-    function createCombat() {
-        setTimeline([...timeline, {
-            type: 'combat',
-            id: uuid(), // Ensure new items have a unique ID
-            monsters: [],
-            monstersSurprised: false,
-            playersSurprised: false,
-            targetRole: 'Standard',
-        }])
-    }
-
-    function createShortRest() {
-        setTimeline([...timeline, {
-            type: 'shortRest',
-            id: uuid(),
-        }])
-    }
-
-    function updateTimelineItem(index: number, newValue: TimelineEvent) {
-        const timelineClone = clone(timeline)
-        timelineClone[index] = newValue
-        setTimeline(timelineClone)
-    }
-
-    function deleteTimelineItem(index: number) {
-        if (timeline.length <= 1) return // Must have at least one item
-        const timelineClone = clone(timeline)
-        timelineClone.splice(index, 1)
-        setTimeline(timelineClone)
-    }
-
-    function swapTimelineItems(index1: number, index2: number) {
-        const timelineClone = clone(timeline)
-        const tmp = timelineClone[index1]
-        timelineClone[index1] = timelineClone[index2]
-        timelineClone[index2] = tmp
-        setTimeline(timelineClone)
-    }
+    // Use the new hooks
+    const session = useSimulationSession()
+    const simulation = useAutoSimulation(
+        session.players,
+        session.timeline,
+        session.isPlayersLoaded,
+        session.isTimelineLoaded
+    )
 
     function applyOptimizedResult() {
-        if (selectedEncounterIndex === null || !worker.optimizedResult) return;
-        
-        const timelineClone = clone(timeline);
+        if (selectedEncounterIndex === null || !simulation.worker.optimizedResult) return;
+
+        const timelineClone = clone(session.timeline);
         const item = timelineClone[selectedEncounterIndex];
-        
+
         if (item.type === 'combat') {
-            item.monsters = worker.optimizedResult.monsters;
-            setTimeline(timelineClone);
+            item.monsters = simulation.worker.optimizedResult.monsters;
+            session.setTimeline(timelineClone);
         }
-        
-        worker.clearOptimizedResult();
+
+        simulation.worker.clearOptimizedResult();
         setSelectedEncounterIndex(null);
     }
-
-    // Memoize action names map
-    const actionNames = useMemo(() => {
-        const names = new Map<string, string>()
-        players.forEach(p => p.actions.forEach(a => {
-            const name = a.type === 'template' ? a.templateOptions.templateName : a.name
-            names.set(a.id, name)
-        }))
-        timeline.forEach(item => {
-            if (item.type === 'combat') {
-                item.monsters.forEach(m => m.actions.forEach(a => {
-                    const name = a.type === 'template' ? a.templateOptions.templateName : a.name
-                    names.set(a.id, name)
-                }))
-            }
-        })
-        return names
-    }, [players, timeline])
 
     return (
         <UIToggleProvider>
             <div className={styles.simulation}>
                 <semiPersistentContext.Provider value={{ state, setState }}>
-                    <div className={styles.header}>
-                        <h1>BattleSim</h1>
-                        <div className={styles.headerButtons}>
-                            <button
-                                className={styles.helpButton}
-                                onClick={() => setRunTour(true)}
-                                title="Start guided tour"
-                                aria-label="Start guided tour"
-                                data-testid="help-btn"
-                            >
-                                <FontAwesomeIcon icon={faQuestionCircle} />
-                                Help
-                            </button>
-                            <button
-                                className={styles.helpButton}
-                                onClick={() => setShowPerformanceDashboard(!showPerformanceDashboard)}
-                                title="Toggle performance dashboard"
-                                aria-label={`${showPerformanceDashboard ? 'Hide' : 'Show'} performance dashboard`}
-                                data-testid="perf-btn"
-                            >
-                                <FontAwesomeIcon icon={faTachometerAlt} />
-                                {showPerformanceDashboard ? 'Hide' : 'Perf'}
-                            </button>
-                        </div>
-                    </div>
-
-                    
-                    {/* Backend Features Status Panel */}
-                    <div className={`${styles.backendStatus} simulation-controls`} role="region" aria-label="Simulation Status" data-testid="simulation-status">
-                        <h4>🔧 Event-Driven Backend {worker.isRunning ? '(Processing...)' : 'Active'}</h4>
-                        <div className={styles.statusItems} aria-live="polite" role="status" data-testid="backend-status-items">
-                            <span data-testid="status-action-engine">✅ ActionResolution Engine</span>
-                            <span data-testid="status-event-system">✅ Event System</span>
-                            <span data-testid="status-reaction-processing">✅ Reaction Processing</span>
-                            <span data-testid="status-effect-tracking">✅ Effect Tracking</span>
-                            <span data-testid="event-count">📊 Events: {simulationEvents.length}</span>
-                        </div>
-                        {worker.isRunning && (
-                            <div 
-                                className={styles.progressBar}
-                                role="progressbar"
-                                aria-valuenow={Math.round(worker.progress)}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                                aria-label="Simulation progress"
-                                data-testid="simulation-loading"
-                            >
-                                <div 
-                                    className={styles.progressFill} 
-                                    style={{ width: `${worker.progress}%` }}
-                                />
-                                <span className={styles.progressText}>
-                                    Refining Accuracy (K={worker.kFactor}/{highPrecision ? 51 : 3})
-                                </span>
-                            </div>
-                        )}
-                        <div className={styles.autoSimulateToggle}>
-                            <label className={styles.toggleLabel} data-testid="high-precision-toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={highPrecision}
-                                    onChange={(e) => setHighPrecision(e.target.checked)}
-                                    className={styles.toggleInput}
-                                />
-                                <span className={styles.toggleSwitch}></span>
-                                <span className={styles.toggleText}>
-                                    High Precision Mode
-                                </span>
-                            </label>
-                        </div>
-
-                        {worker.analysis && !worker.isRunning && worker.kFactor < (highPrecision ? 51 : 3) && (
-                            <div className={styles.simulationMode}>
-                                <div className={styles.pausedIndicator}>
-                                    <FontAwesomeIcon icon={faBolt} /> Refinement Paused
-                                </div>
-                                <button
-                                    className={styles.preciseButton}
-                                    onClick={() => worker.runSimulation(players, timeline, highPrecision ? 51 : 3)}
-                                >
-                                    Resume Refinement
-                                </button>
-                            </div>
-                        )}
-
-                        {isEditing && <div className={styles.editingNotice}>⚠️ Simulation paused while editing</div>}
-                        {worker.error && <div className={styles.errorNotice}>❌ Simulation Error: {worker.error}</div>}
-                    </div>
-
-                    <div className="encounter-builder-section player-form-section" data-testid="player-section">
-                        <EncounterForm
-                            mode='player'
-                            encounter={{ id: 'players', monsters: players, type: 'combat', targetRole: 'Standard' }}
-                            onUpdate={(newValue) => setPlayers(newValue.monsters)}
-                            onEditingChange={setIsEditing}>
-                            <>
-                                {!isEmptyResult ? (
-                                    <button onClick={() => { setPlayers([]); setTimeline([emptyCombat]) }} data-testid="clear-all-btn">
-                                        <FontAwesomeIcon icon={faTrash} />
-                                        Clear Adventuring Day
-                                    </button>
-                                ) : null}
-                                {canSave ? (
-                                    <button onClick={() => setSaving(true)} data-testid="save-day-btn">
-                                        <FontAwesomeIcon icon={faSave} />
-                                        Save Adventuring Day
-                                    </button>
-                                ) : null}
-                                <button onClick={() => setLoading(true)} data-testid="load-day-btn">
-                                    <FontAwesomeIcon icon={faFolder} />
-                                    Load Adventuring Day
-                                </button>
-
-
-                            </>
-                        </EncounterForm>
-                    </div>
-
-                    <CrosshairProvider>
-                        {timeline.map((item, index) => {
-                            // Find index within combat-only array for pacingData
-                            const combatIndex = timeline.slice(0, index).filter(i => i.type === 'combat').length;
-                            const totalWeight = encounterWeights.reduce((a, b) => a + b, 0);
-                            const targetPercent = (encounterWeights[combatIndex] / totalWeight) * 100;
-                            const actualPercent = pacingData?.actualCosts[combatIndex];
-                            const cumulativeDrift = pacingData?.cumulativeDrifts[combatIndex];
-
-                            return (
-                                <div className={item.type === 'combat' ? styles.encounter : styles.rest} key={index} data-testid={item.type === 'combat' ? `encounter-${index}` : `short-rest-${index}`}>
-                                    {item.type === 'combat' ? (
-                                        <div className="monster-form-section" data-testid="monster-section">
-                                            <EncounterForm
-                                            mode='monster'
-                                            encounter={item}
-                                            onUpdate={(newValue) => updateTimelineItem(index, newValue)}
-                                            onDelete={(index > 0) ? () => deleteTimelineItem(index) : undefined}
-                                            onMoveUp={(!!timeline.length && !!index) ? () => swapTimelineItems(index, index - 1) : undefined}
-                                            onMoveDown={(!!timeline.length && (index < timeline.length - 1)) ? () => swapTimelineItems(index, index + 1) : undefined}
-                                            onEditingChange={setIsEditing}
-                                            onAutoAdjust={() => {
-                                                setSelectedEncounterIndex(index);
-                                                worker.autoAdjustEncounter(players, item.monsters, timeline, index);
-                                            }}
-                                            autoAdjustDisabled={worker.isRunning}
-                                        />
-                                        </div>
-                                ) : (
-                                    <div className={styles.restCard} data-testid="short-rest-card">
-                                        <div className={styles.restHeader}>
-                                            <h3><FontAwesomeIcon icon={faBed} /> Short Rest</h3>
-                                            <div className={styles.restControls} data-testid="rest-controls">
-                                                <button onClick={() => swapTimelineItems(index, index - 1)} disabled={index === 0} data-testid="move-rest-up-btn">↑</button>
-                                                <button onClick={() => swapTimelineItems(index, index + 1)} disabled={index === timeline.length - 1} data-testid="move-rest-down-btn">↓</button>
-                                                <button onClick={() => deleteTimelineItem(index)} className={styles.deleteBtn} data-testid="delete-rest-btn"><FontAwesomeIcon icon={faTrash} /></button>
-                                            </div>
-                                        </div>
-                                        <div className={styles.restBody}>
-                                            Characters spend Hit Dice to recover HP and reset "Short Rest" resources.
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {(worker.analysis?.encounters?.[index] ? (
-                                    <EncounterResult
-                                        value={worker.analysis.encounters[index].globalMedian?.medianRunData || worker.analysis.encounters[index].deciles?.[4]?.medianRunData || simulationResults[index]}
-                                        analysis={worker.analysis.encounters[index]}
-                                        fullAnalysis={worker.analysis} 
-                                        playerNames={combatantNames}
-                                        isStale={isStale}
-                                        isPreliminary={worker.isRunning && worker.progress < 100}
-                                        targetPercent={item.type === 'combat' ? targetPercent : undefined}
-                                        actualPercent={item.type === 'combat' ? actualPercent : undefined}
-                                                                                                cumulativeDrift={item.type === 'combat' ? cumulativeDrift : undefined}
-                                                                                                isShortRest={item.type === 'shortRest'}
-                                                                                                targetRole={item.type === 'combat' ? item.targetRole : undefined}
-                                                                                            />                                                    ) : (item.type === 'combat' && simulationResults[index] ? (
-                                    <EncounterResult
-                                        value={simulationResults[index]}
-                                        analysis={null}
-                                        fullAnalysis={worker.analysis} 
-                                        playerNames={combatantNames}
-                                        isStale={isStale}
-                                        isPreliminary={worker.isRunning && worker.progress < 100}
-                                        targetPercent={targetPercent}
-                                                                                                actualPercent={actualPercent}
-                                                                                                cumulativeDrift={cumulativeDrift}
-                                                                                                targetRole={item.targetRole}
-                                                                                            />                                                    ) : null))}
-                                
-                                {item.type === 'combat' && (
-                                    <div className={styles.buttonGroup}>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedEncounterIndex(index);
-                                                setSelectedDecileIndex(5); // Reset to Median
-                                                setShowLogModal(true);
-                                            }}
-                                            className={styles.showLogButton}
-                                            data-testid="show-log-btn"
-                                        >
-                                            <FontAwesomeIcon icon={faEye} />
-                                            Show Log
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-
-                    <div className={styles.addButtons} data-testid="add-timeline-buttons">
-                        <button
-                            onClick={createCombat}
-                            className={styles.addEncounterBtn}
-                            data-testid="add-combat-btn"
-                        >
-                            <FontAwesomeIcon icon={faPlus} />
-                            Add Combat
-                        </button>
-                        <button
-                            onClick={createShortRest}
-                            className={`${styles.addEncounterBtn} ${styles.restBtn}`}
-                            data-testid="add-rest-btn"
-                        >
-                            <FontAwesomeIcon icon={faBed} />
-                            Add Short Rest
-                        </button>
-                    </div>
-
-                    {/* Overall Day Summary - Moved to bottom and labeled */}
-                    {worker.analysis?.overall?.skyline && worker.analysis?.partySlots && pacingData && (
-                        <div className={styles.overallSummary} data-testid="overall-summary">
-                            <div className={styles.summaryDivider} data-testid="summary-divider">
-                                <div className={styles.dividerLine} />
-                                <h3 className={styles.summaryTitle} data-testid="summary-title">
-                                    <FontAwesomeIcon icon={faChartLine} /> Projected Day Outcome Summary
-                                </h3>
-                                <div className={styles.dividerLine} />
-                            </div>
-
-                            <VitalsDashboard analysis={worker.analysis.overall} isPreliminary={worker.isRunning} />
-                                
-                            <ValidationNotice analysis={worker.analysis.overall} isDaySummary={true} />
-
-                            <AssistantSummary 
-                                pacingData={pacingData} 
-                            />
-
-                            {worker.analysis.overall.pacing && (
-                                <div className={styles.pacingHeader} data-testid="pacing-header">
-                                    <div className={styles.archetypeBadge} data-testid="pacing-archetype">
-                                        {worker.analysis.overall.pacing.archetype}
-                                    </div>
-                                    <div className={styles.directorScore} data-testid="director-score">
-                                        DIRECTOR'S SCORE: {Math.round(worker.analysis.overall.pacing.directorScore)}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className={styles.summaryGrid} data-testid="summary-grid">
-                                <HeartbeatGraph 
-                                    encounters={worker.analysis.encounters} 
-                                    className={styles.tensionArc} 
-                                />
-                                
-                                <PartyOverview
-                                    skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                    partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                    playerNames={combatantNames}
-                                    className="overall-party-overview"
-                                />
-                            </div>
-
-                            <PlayerGraphs
-                                skyline={worker.analysis.overall.skyline as SkylineAnalysis}
-                                partySlots={worker.analysis.partySlots as PlayerSlot[]}
-                                playerNames={combatantNames}
-                            />
-                        </div>
-                    )}
-
-                    <CrosshairTooltip />
-                </CrosshairProvider>
-
-                    {/* Event Log Modal */}
-                    {showLogModal && selectedEncounterIndex !== null && (
-                        <div className={`${styles.logModalOverlay} event-log-section`} data-testid="log-modal">
-                            <div className={styles.logModal}>
-                                <div className={styles.modalHeader}>
-                                    <div className={styles.modalHeaderTitle}>
-                                        <h3>Combat Log - Encounter {selectedEncounterIndex + 1}</h3>
-                                        <div className={styles.decileNav} data-testid="decile-nav">
-                                            <button 
-                                                disabled={selectedDecileIndex === 0}
-                                                onClick={() => setSelectedDecileIndex(selectedDecileIndex - 1)}
-                                                className={styles.navBtn}
-                                                data-testid="worse-run-btn"
-                                            >
-                                                &larr; Worse Run
-                                            </button>
-                                            <span className={styles.percentileLabel} data-testid="percentile-label">
-                                                {selectedDecileIndex === 5 ? "50% (Median)" : `${selectedDecileIndex * 10 + (selectedDecileIndex < 5 ? 5 : -5)}% Run`}
-                                            </span>
-                                            <button 
-                                                disabled={selectedDecileIndex === 10}
-                                                onClick={() => setSelectedDecileIndex(selectedDecileIndex + 1)}
-                                                className={styles.navBtn}
-                                                data-testid="better-run-btn"
-                                            >
-                                                Better Run &rarr;
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => setShowLogModal(false)}
-                                        className={styles.closeButton}
-                                        data-testid="close-log-btn"
-                                    >
-                                        <FontAwesomeIcon icon={faTimes} />
-                                    </button>
-                                </div>
-                                <div className={styles.logBody} data-testid="log-body">
-                                    <EventLog
-                                        events={worker.analysis?.encounters[selectedEncounterIndex]?.decileLogs?.[selectedDecileIndex] || []}
-                                        combatantNames={Object.fromEntries(combatantNames)}
-                                        actionNames={Object.fromEntries(actionNames)}
-                                        isModal={true}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Adventuring Day Editor (Save/Load) */}
-                    {(saving || loading) && (
-                        <AdventuringDayForm
-                            currentPlayers={players}
-                            currentTimeline={timeline}
-                            onCancel={() => { setSaving(false); setLoading(false); }}
-                            onApplyChanges={(newPlayers, newTimeline) => {
-                                setPlayers(newPlayers);
-                                setTimeline(newTimeline);
-                                setSaving(false);
-                                setLoading(false);
-                            }}
-                            onEditingChange={setIsEditing}
+                    <Suspense fallback={<div>Loading...</div>}>
+                        <SimulationHeader
+                            runTour={runTour}
+                            setRunTour={setRunTour}
+                            showPerformanceDashboard={showPerformanceDashboard}
+                            setShowPerformanceDashboard={setShowPerformanceDashboard}
                         />
-                    )}
 
-                    {/* Adjustment Preview Modal */}
-                    {worker.optimizedResult && selectedEncounterIndex !== null && timeline[selectedEncounterIndex].type === 'combat' && (
-                        <div className="auto-balancer-section">
-                            <AdjustmentPreview
-                                originalMonsters={(timeline[selectedEncounterIndex] as Encounter).monsters}
-                                adjustmentResult={worker.optimizedResult}
-                                onApply={applyOptimizedResult}
-                                onCancel={() => {
-                                    worker.clearOptimizedResult();
-                                    setSelectedEncounterIndex(null);
-                                }}
+                        <BackendStatusPanel
+                            worker={simulation.worker}
+                            highPrecision={simulation.highPrecision}
+                            setHighPrecision={simulation.setHighPrecision}
+                            isEditing={simulation.isEditing}
+                            simulationEvents={simulation.simulationEvents}
+                            players={session.players}
+                            timeline={session.timeline}
+                        />
+
+                        <PlayerFormSection
+                            players={session.players}
+                            setPlayers={session.setPlayers}
+                            isEmptyResult={session.isEmptyResult}
+                            canSave={simulation.canSave}
+                            setSaving={simulation.setSaving}
+                            setLoading={simulation.setLoading}
+                            setIsEditing={simulation.setIsEditing}
+                        />
+
+                        <CrosshairProvider>
+                            {session.timeline.map((item, index) => (
+                                <TimelineItem
+                                    key={index}
+                                    item={item}
+                                    index={index}
+                                    timeline={session.timeline}
+                                    players={session.players}
+                                    combatantNames={session.combatantNames}
+                                    isStale={simulation.isStale}
+                                    encounterWeights={session.encounterWeights}
+                                    worker={simulation.worker}
+                                    simulationResults={simulation.simulationResults}
+                                    setIsEditing={simulation.setIsEditing}
+                                    updateTimelineItem={session.updateTimelineItem}
+                                    deleteTimelineItem={session.deleteTimelineItem}
+                                    swapTimelineItems={session.swapTimelineItems}
+                                    setSelectedEncounterIndex={setSelectedEncounterIndex}
+                                    setSelectedDecileIndex={setSelectedDecileIndex}
+                                    setShowLogModal={setShowLogModal}
+                                />
+                            ))}
+
+                            <AddTimelineButtons
+                                createCombat={session.createCombat}
+                                createShortRest={session.createShortRest}
                             />
-                        </div>
-                    )}
+
+                            <OverallSummary
+                                worker={simulation.worker}
+                                timeline={session.timeline}
+                                encounterWeights={session.encounterWeights}
+                                combatantNames={session.combatantNames}
+                            />
+
+                            <CrosshairTooltip />
+                        </CrosshairProvider>
+
+                        <SimulationModals
+                            showLogModal={showLogModal}
+                            selectedEncounterIndex={selectedEncounterIndex}
+                            selectedDecileIndex={selectedDecileIndex}
+                            setSelectedDecileIndex={setSelectedDecileIndex}
+                            setShowLogModal={setShowLogModal}
+                            setSelectedEncounterIndex={setSelectedEncounterIndex}
+                            worker={simulation.worker}
+                            combatantNames={session.combatantNames}
+                            actionNames={session.actionNames}
+                            timeline={session.timeline}
+                            applyOptimizedResult={applyOptimizedResult}
+                        />
+
+                        {/* Adventuring Day Editor (Save/Load) */}
+                        {(saving || loading) && (
+                            <AdventuringDayForm
+                                currentPlayers={session.players}
+                                currentTimeline={session.timeline}
+                                onCancel={() => { simulation.setSaving(false); simulation.setLoading(false); }}
+                                onApplyChanges={(newPlayers, newTimeline) => {
+                                    session.setPlayers(newPlayers);
+                                    session.setTimeline(newTimeline);
+                                    simulation.setSaving(false);
+                                    simulation.setLoading(false);
+                                }}
+                                onEditingChange={simulation.setIsEditing}
+                            />
+                        )}
+                    </Suspense>
                 </semiPersistentContext.Provider>
 
                 {/* Onboarding Tour */}
