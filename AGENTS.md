@@ -76,9 +76,9 @@
 
 ---
 
-## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS (BEADS)
+## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS (OH-MY-OPENCODE)
 
-> **Context Recovery**: Run `bd prime` after compaction, clear, or new session.
+> **Context Recovery**: Check GitHub Issues for available work.
 
 ### 🚨 SESSION CLOSE PROTOCOL 🚨
 
@@ -86,53 +86,45 @@
 
 1.  **Check status:** `git status` (check what changed)
 2.  **Stage changes:** `git add <files>`
-3.  **Sync beads:** `bd sync` (commit beads changes)
-4.  **Commit code:** `git commit -m "..."`
-5.  **Sync again:** `bd sync` (commit any new beads changes)
-6.  **Push:** `git push`
+3.  **Commit code:** `git commit -m "..."`
+4.  **Push:** `git push`
+5.  **Close issue:** `gh issue close <number> --comment "Completed"`
 
 **NEVER skip this.** Work is not done until pushed.
 
 ### Core Rules
-- **Source of Truth:** Track strategic work in beads (multi-session, dependencies, discovered work).
-- **Persistence:** Use `bd create` for issues. When in doubt, prefer bd—persistence you don't need beats lost context.
-- **Git workflow:** Hooks auto-sync, but explicitly run `bd sync` at session end.
-- **Session management:** Check `bd ready` for available work.
+- Work within git worktrees created by oh-my-opencode.
+- Use GitHub Issues for task tracking and progress updates.
+- Always read the issue body for context and update with progress comments.
 
 ### Essential Commands
 
 **Finding Work:**
-- `bd ready` - Show issues ready to work (no blockers)
-- `bd list --status=open` - All open issues
-- `bd list --status=in_progress` - Your active work
-- `bd show <id>` - Detailed issue view with dependencies
+- `gh issue list --state open` - Show open issues
 
-**Creating & Updating:**
-- `bd create --title="..." --type=task|bug|feature --priority=2` - New issue (Priority 0=critical, 2=medium, 4=backlog)
-- `bd update <id> --status=in_progress` - Claim work
-- `bd close <id>` - Mark complete
-- `bd close <id1> <id2> ...` - Close multiple issues at once
-- **Tip**: When creating multiple issues/tasks/epics, use parallel subagents for efficiency.
+**Claiming Work:**
+- `gh issue edit <number> --add-assignee @you` - Assign yourself to an issue
 
-**Dependencies:**
-- `bd dep add <issue> <depends-on>` - Add dependency (issue depends on depends-on)
-- `bd blocked` - Show all blocked issues
+**Updating Progress:**
+- `gh issue comment <number> "Implemented X"` - Add progress comment to issue
 
-**Sync & Collaboration:**
-- `bd sync` - Sync with git remote (run at session end)
-- `bd stats` - Project statistics
+**Closing Work:**
+- `gh issue close <number> --comment "Completed"` - Close issue when done
 
 ### Common Workflows
 
 **Starting work:**
 ```bash
-bd ready           # Find available work
-bd show <id>       # Review issue details
-bd update <id> --status=in_progress  # Claim it
+gh issue list --state open  # Find available work
+gh issue show <number>     # Review issue details
+gh issue edit <number> --add-assignee @you  # Claim it
 ```
 
 **Completing work:**
 ```bash
-bd close <id1> <id2> ...    # Close all completed issues at once
-bd sync                     # Push to remote
+git status
+git add <files>
+git commit -m "..."
+git push
+gh issue close <number> --comment "Completed"
 ```

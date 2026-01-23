@@ -1,7 +1,6 @@
 # BattleSim
 
 <!-- AI AGENT INSTRUCTION: BEFORE STARTING WORK, YOU MUST READ AGENTS.md FOR BEHAVIORAL PROTOCOLS AND TASK MANAGEMENT RULES. -->
-<!-- THIS REPO USES THE BEADS ISSUE TRACKER (bd command) FOR TASK MANAGEMENT. -->
 
 This is a **Narrative-First** 5e encounter simulator. It goes beyond simple win/loss probabilities to analyze the *dramatic structure* of your battles.
 

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { SimulationResult, FullAnalysisOutput, Creature, TimelineEvent, AutoAdjustmentResult } from '@/model/model';
 import { getFinalAction } from "@/data/actions";
 import { SimulationEvent } from '@/model/events';
+import { SimulationWorkerController } from '@/worker/simulation.worker.controller';
 
 export interface SimulationWorkerState {
     isRunning: boolean;
@@ -14,6 +15,7 @@ export interface SimulationWorkerState {
     error: string | null;
     optimizedResult: AutoAdjustmentResult | null;
     genId: number;
+    isCancelled: boolean;
 }
 
 export function useSimulationWorker() {
@@ -27,90 +29,89 @@ export function useSimulationWorker() {
         events: null,
         error: null,
         optimizedResult: null,
-        genId: 0
+        genId: 0,
+        isCancelled: false
     });
 
-    const workerRef = useRef<Worker | null>(null);
+    const controllerRef = useRef<SimulationWorkerController | null>(null);
     const currentGenIdRef = useRef(0);
 
-    const setupWorkerListener = useCallback((worker: Worker) => {
-        worker.onmessage = (e) => {
-            const { type, genId, results, analysis, events, error, result, kFactor, isFinal } = e.data;
+    const handleStructuredResult = useCallback((result: any) => {
+        // Discard messages from old generations
+        if (result.genId !== undefined && result.genId < currentGenIdRef.current) return;
 
-            // Discard messages from old generations
-            if (genId !== undefined && genId < currentGenIdRef.current) return;
-
-            switch (type) {
-                case 'SIMULATION_UPDATE':
-                    setState(prev => ({
-                        ...prev,
-                        isRunning: !isFinal,
-                        progress: (kFactor / prev.maxK) * 100,
-                        kFactor,
-                        results,
-                        analysis,
-                        events: events || prev.events,
-                        error: null
-                    }));
-                    break;
-                case 'AUTO_ADJUST_COMPLETE':
+        switch (result.type) {
+            case 'completed':
+                if (result.result !== undefined) {
+                    // Auto-adjust result
                     setState(prev => ({
                         ...prev,
                         isRunning: false,
                         progress: 100,
-                        optimizedResult: result,
-                        error: null
+                        optimizedResult: result.result,
+                        error: null,
+                        isCancelled: false
                     }));
-                    break;
-                case 'SIMULATION_ERROR':
+                } else {
+                    // Simulation update
                     setState(prev => ({
                         ...prev,
-                        isRunning: false,
-                        error
+                        isRunning: !result.isFinal,
+                        progress: (result.kFactor / prev.maxK) * 100,
+                        kFactor: result.kFactor,
+                        results: result.results,
+                        analysis: result.analysis,
+                        events: result.events || prev.events,
+                        error: null,
+                        isCancelled: false
                     }));
-                    break;
-            }
-        };
+                }
+                break;
+            case 'cancelled':
+                setState(prev => ({
+                    ...prev,
+                    isRunning: false,
+                    isCancelled: true
+                }));
+                break;
+            case 'errored':
+                setState(prev => ({
+                    ...prev,
+                    isRunning: false,
+                    error: result.error,
+                    isCancelled: false
+                }));
+                break;
+        }
     }, []);
 
     useEffect(() => {
-        // Initialize worker
-        const worker = new Worker(new URL('../worker/simulation.worker.ts', import.meta.url));
-        setupWorkerListener(worker);
-        workerRef.current = worker;
+        // Initialize controller with centralized worker creation
+        controllerRef.current = new SimulationWorkerController();
 
         return () => {
-            worker.terminate();
+            controllerRef.current?.terminate();
         };
-    }, [setupWorkerListener]);
+    }, []);
 
     const terminateAndRestart = useCallback(() => {
-        if (workerRef.current) {
-            workerRef.current.terminate();
-            workerRef.current = null;
-        }
-        
-        // Re-initialize worker
-        const worker = new Worker(new URL('../worker/simulation.worker.ts', import.meta.url));
-        setupWorkerListener(worker);
-        workerRef.current = worker;
-        
-        return worker;
-    }, [setupWorkerListener]);
+        controllerRef.current?.terminate();
+        controllerRef.current = new SimulationWorkerController();
+        return controllerRef.current;
+    }, []);
 
     const runSimulation = useCallback((players: Creature[], timeline: TimelineEvent[], maxK: number = 51, seed?: number) => {
+        // Cancel any existing simulation first
+        controllerRef.current?.cancel();
+
         // Increment Generation ID
         currentGenIdRef.current += 1;
         const genId = currentGenIdRef.current;
 
-        // Note: We DON'T necessarily need to terminate and restart if the worker is responsive.
-        // But for safety against overlapping loops from the same worker (if any survived), 
-        // we can still restart or just rely on the genId check in the worker refinement loop.
-        // Given the instructions, we'll keep the worker alive but the refinement loop will stop itself.
-        if (!workerRef.current) {
+        // Ensure controller exists
+        if (!controllerRef.current) {
             terminateAndRestart();
         }
-        const worker = workerRef.current!;
 
         setState(prev => ({
             ...prev,
@@ -120,6 +121,7 @@ export function useSimulationWorker() {
             maxK,
             error: null,
             optimizedResult: null,
+            isCancelled: false,
             genId
         }));
 
@@ -155,23 +157,21 @@ export function useSimulationWorker() {
             return event;
         });
 
-        worker.postMessage({
-            type: 'START_SIMULATION',
-            players: cleanPlayers,
-            timeline: cleanTimeline,
-            genId,
-            seed,
-            maxK
-        });
-    }, [terminateAndRestart]);
+        controllerRef.current?.startSimulation(cleanPlayers, cleanTimeline, genId, maxK, seed, handleStructuredResult);
+    }, [terminateAndRestart, handleStructuredResult]);
 
     const autoAdjustEncounter = useCallback((players: Creature[], monsters: Creature[], timeline: TimelineEvent[], encounterIndex: number) => {
+        // Cancel any existing simulation first
+        controllerRef.current?.cancel();
+
         // Increment Generation ID to stop any pending simulation updates
         currentGenIdRef.current += 1;
         const genId = currentGenIdRef.current;
 
-        // Always terminate and restart to clear worker state
-        const worker = terminateAndRestart();
+        // Ensure controller exists
+        if (!controllerRef.current) {
+            terminateAndRestart();
+        }
 
         setState(prev => ({
             ...prev,
@@ -181,6 +181,7 @@ export function useSimulationWorker() {
             maxK: 1, // Auto-adjust is a single step
             error: null,
             optimizedResult: null,
+            isCancelled: false,
             genId
         }));
 
@@ -227,18 +228,20 @@ export function useSimulationWorker() {
             return event;
         });
 
-        worker.postMessage({
-            type: 'AUTO_ADJUST_ENCOUNTER',
-            players: cleanPlayers,
-            monsters: cleanMonsters,
-            timeline: cleanTimeline,
-            encounterIndex,
-            genId
-        });
-    }, [terminateAndRestart]);
+        controllerRef.current?.autoAdjustEncounter(cleanPlayers, cleanMonsters, cleanTimeline, encounterIndex, genId, handleStructuredResult);
+    }, [terminateAndRestart, handleStructuredResult]);
 
     const clearOptimizedResult = useCallback(() => {
         setState(prev => ({ ...prev, optimizedResult: null }));
+    }, []);
+
+    const cancel = useCallback(() => {
+        controllerRef.current?.cancel();
+        setState(prev => ({
+            ...prev,
+            isRunning: false,
+            isCancelled: true
+        }));
     }, []);
 
     return {
@@ -246,6 +249,7 @@ export function useSimulationWorker() {
         runSimulation,
         autoAdjustEncounter,
         clearOptimizedResult,
-        terminateAndRestart
+        terminateAndRestart,
+        cancel
     };
 }
