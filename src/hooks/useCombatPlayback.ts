@@ -1,5 +1,12 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect, useReducer } from 'react'
 import type { Replay, ReplayAction } from '@/model/replayTypes'
+import {
+  getActionByFlatIndex,
+  getNextAction,
+  getPrevAction,
+  getFirstActionIndexForRound,
+  flatIndexToIndices
+} from '@/model/replaySelectors'
 
 export interface FlattenedAction {
   /** Flattened index across all actions in the replay */
@@ -14,6 +21,68 @@ export interface FlattenedAction {
   turnIndex: number
   /** Action data */
   action: ReplayAction
+}
+
+// Playback state managed by reducer
+interface PlaybackState {
+  currentFlatIndex: number
+  isPlaying: boolean
+}
+
+type PlaybackAction =
+  | { type: 'SEEK'; flatIndex: number }
+  | { type: 'NEXT' }
+  | { type: 'PREV' }
+  | { type: 'PLAY' }
+  | { type: 'PAUSE' }
+  | { type: 'TOGGLE_PLAY' }
+  | { type: 'SEEK_TO_START' }
+  | { type: 'SEEK_TO_END' }
+  | { type: 'SEEK_TO_ROUND'; roundIndex: number }
+
+function playbackReducer(state: PlaybackState, action: PlaybackAction, replay: Replay | null): PlaybackState {
+  const totalActions = replay?.metadata.totalActions ?? 0
+
+  switch (action.type) {
+    case 'SEEK':
+      return {
+        ...state,
+        currentFlatIndex: Math.max(0, Math.min(action.flatIndex, totalActions - 1))
+      }
+
+    case 'NEXT':
+      const nextIndex = Math.min(state.currentFlatIndex + 1, totalActions - 1)
+      return { ...state, currentFlatIndex: nextIndex }
+
+    case 'PREV':
+      const prevIndex = Math.max(state.currentFlatIndex - 1, 0)
+      return { ...state, currentFlatIndex: prevIndex }
+
+    case 'PLAY':
+      return { ...state, isPlaying: true }
+
+    case 'PAUSE':
+      return { ...state, isPlaying: false }
+
+    case 'TOGGLE_PLAY':
+      return { ...state, isPlaying: !state.isPlaying }
+
+    case 'SEEK_TO_START':
+      return { ...state, currentFlatIndex: 0 }
+
+    case 'SEEK_TO_END':
+      return { ...state, currentFlatIndex: Math.max(0, totalActions - 1) }
+
+    case 'SEEK_TO_ROUND':
+      const roundStartIndex = getFirstActionIndexForRound(replay!, action.roundIndex)
+      if (roundStartIndex >= 0) {
+        return { ...state, currentFlatIndex: roundStartIndex }
+      }
+      return state
+
+    default:
+      return state
+  }
 }
 
 export interface UseCombatPlaybackOptions {
@@ -68,11 +137,11 @@ export function useCombatPlayback(
     onActionChange
   } = options
 
-  // State
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0)
-  const [currentTurnIndex, setCurrentTurnIndex] = useState(0)
-  const [currentActionIndex, setCurrentActionIndex] = useState(0)
-  const [isPlaying, setIsPlaying] = useState(false)
+  // Use reducer for playback state
+  const [state, dispatch] = useReducer(
+    (state: PlaybackState, action: PlaybackAction) => playbackReducer(state, action, replay),
+    { currentFlatIndex: 0, isPlaying: false }
+  )
 
   // Refs for interval tracking
   const intervalRef = useRef<number | null>(null)
@@ -83,129 +152,59 @@ export function useCombatPlayback(
     onActionChangeRef.current = onActionChange
   }, [onActionChange])
 
-  // Flatten all actions into a chronological list
-  const actions: FlattenedAction[] = useMemo(() => {
-    if (!replay) return []
-
-    const flattened: FlattenedAction[] = []
-    let globalIndex = 0
-
-    for (let rIndex = 0; rIndex < replay.rounds.length; rIndex++) {
-      const round = replay.rounds[rIndex]
-      for (let tIndex = 0; tIndex < round.turns.length; tIndex++) {
-        const turn = round.turns[tIndex]
-        for (let aIndex = 0; aIndex < turn.actions.length; aIndex++) {
-          const action = turn.actions[aIndex]
-          flattened.push({
-            index: globalIndex++,
-            roundNumber: round.roundNumber,
-            roundIndex: rIndex,
-            unitId: turn.unitId,
-            turnIndex: tIndex,
-            action
-          })
-        }
-      }
-    }
-
-    return flattened
-  }, [replay])
-
-  const totalActions = actions.length
+  // Get total counts from metadata
+  const totalActions = replay?.metadata.totalActions ?? 0
   const totalRounds = replay?.rounds.length || 0
 
-  // Get current action based on indices
-  const currentAction: FlattenedAction | null = useMemo(() => {
-    if (!replay || actions.length === 0) return null
+  // Memoize flattened actions list using selectors for O(1) access
+  const actions: FlattenedAction[] = useMemo(() => {
+    if (!replay || totalActions === 0) return []
 
-    // Find the action at the current position
-    // We need to rebuild the path from indices to find the correct action
-    const round = replay.rounds[currentRoundIndex]
-    if (!round) {
-      // If round index is out of bounds, use the last action
-      return actions[actions.length - 1]
-    }
-
-    const turn = round.turns[currentTurnIndex]
-    if (!turn) {
-      // If turn index is out of bounds, find the last action in this round
-      const lastActionInRound = actions.filter(a => a.roundIndex === currentRoundIndex).pop()
-      return lastActionInRound || null
-    }
-
-    const action = turn.actions[currentActionIndex]
-    if (!action) {
-      // If action index is out of bounds, find the last action in this turn
-      const lastActionInTurn = actions.find(
-        a => a.roundIndex === currentRoundIndex && a.turnIndex === currentTurnIndex
-      )
-      // If not found, find the last action before this position
-      if (!lastActionInTurn) {
-        const candidates = actions.filter(
-          a => a.roundIndex < currentRoundIndex ||
-          (a.roundIndex === currentRoundIndex && a.turnIndex < currentTurnIndex)
-        )
-        return candidates[candidates.length - 1] || null
+    const flattened: FlattenedAction[] = []
+    for (let i = 0; i < totalActions; i++) {
+      const action = getActionByFlatIndex(replay, i)
+      if (action) {
+        flattened.push(action)
       }
-      return lastActionInTurn
     }
+    return flattened
+  }, [replay, totalActions])
 
-    // Find the matching flattened action
-    return actions.find(
-      a => a.roundIndex === currentRoundIndex &&
-          a.turnIndex === currentTurnIndex &&
-          a.action === action
-    ) || null
-  }, [replay, actions, currentRoundIndex, currentTurnIndex, currentActionIndex])
+  // Get current action using O(1) selector
+  const currentAction: FlattenedAction | null = useMemo(() => {
+    if (!replay || totalActions === 0) return null
+    return getActionByFlatIndex(replay, state.currentFlatIndex)
+  }, [replay, state.currentFlatIndex, totalActions])
+
+  // Derive round/turn/action indices from flat index
+  const currentIndices = useMemo(() => {
+    if (!replay) return { roundIndex: 0, turnIndex: 0, actionIndex: 0 }
+    const indices = flatIndexToIndices(replay, state.currentFlatIndex)
+    return indices || { roundIndex: 0, turnIndex: 0, actionIndex: 0 }
+  }, [replay, state.currentFlatIndex])
 
   // Navigation controls
   const nextAction = useCallback(() => {
-    const currentFlatIndex = currentAction?.index ?? -1
-    if (currentFlatIndex < totalActions - 1) {
-      const next = actions[currentFlatIndex + 1]
-      if (next) {
-        setCurrentRoundIndex(next.roundIndex)
-        setCurrentTurnIndex(next.turnIndex)
-        // Calculate action index within the turn
-        const turn = replay?.rounds[next.roundIndex]?.turns[next.turnIndex]
-        if (turn) {
-          const actionInTurnIndex = turn.actions.findIndex(a => a === next.action)
-          setCurrentActionIndex(actionInTurnIndex >= 0 ? actionInTurnIndex : 0)
-        }
-      }
-    }
-  }, [currentAction, actions, totalActions, replay])
+    dispatch({ type: 'NEXT' })
+  }, [])
 
   const prevAction = useCallback(() => {
-    const currentFlatIndex = currentAction?.index ?? 0
-    if (currentFlatIndex > 0) {
-      const prev = actions[currentFlatIndex - 1]
-      if (prev) {
-        setCurrentRoundIndex(prev.roundIndex)
-        setCurrentTurnIndex(prev.turnIndex)
-        const turn = replay?.rounds[prev.roundIndex]?.turns[prev.turnIndex]
-        if (turn) {
-          const actionInTurnIndex = turn.actions.findIndex(a => a === prev.action)
-          setCurrentActionIndex(actionInTurnIndex >= 0 ? actionInTurnIndex : 0)
-        }
-      }
-    }
-  }, [currentAction, actions, replay])
+    dispatch({ type: 'PREV' })
+  }, [])
 
   // Auto-play logic
   useEffect(() => {
-    if (isPlaying && intervalRef.current === null) {
+    if (state.isPlaying && intervalRef.current === null) {
       intervalRef.current = window.setInterval(() => {
-        const currentFlatIndex = currentAction?.index ?? -1
-        if (currentFlatIndex >= totalActions - 1) {
+        if (state.currentFlatIndex >= totalActions - 1) {
           // Reached the end, pause
-          setIsPlaying(false)
+          dispatch({ type: 'PAUSE' })
           return
         }
-        // Call nextAction to handle round/turn boundaries properly
-        nextAction()
+        // Advance to next action
+        dispatch({ type: 'NEXT' })
       }, autoAdvanceInterval)
-    } else if (!isPlaying && intervalRef.current !== null) {
+    } else if (!state.isPlaying && intervalRef.current !== null) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
@@ -216,7 +215,7 @@ export function useCombatPlayback(
         intervalRef.current = null
       }
     }
-  }, [isPlaying, autoAdvanceInterval, currentAction, totalActions, nextAction])
+  }, [state.isPlaying, state.currentFlatIndex, autoAdvanceInterval, totalActions, dispatch])
 
   // Trigger callback when action changes
   useEffect(() => {
@@ -232,61 +231,39 @@ export function useCombatPlayback(
   }, [currentAction, totalActions])
 
   const play = useCallback(() => {
-    setIsPlaying(true)
+    dispatch({ type: 'PLAY' })
   }, [])
 
   const pause = useCallback(() => {
-    setIsPlaying(false)
+    dispatch({ type: 'PAUSE' })
   }, [])
 
   const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev)
+    dispatch({ type: 'TOGGLE_PLAY' })
   }, [])
 
   const seek = useCallback((actionIndex: number) => {
-    const target = actions[actionIndex]
-    if (target) {
-      setCurrentRoundIndex(target.roundIndex)
-      setCurrentTurnIndex(target.turnIndex)
-      const turn = replay?.rounds[target.roundIndex]?.turns[target.turnIndex]
-      if (turn) {
-        const actionInTurnIndex = turn.actions.findIndex(a => a === target.action)
-        setCurrentActionIndex(actionInTurnIndex >= 0 ? actionInTurnIndex : 0)
-      }
-    }
-  }, [actions, replay])
+    dispatch({ type: 'SEEK', flatIndex: actionIndex })
+  }, [])
 
   const seekToStart = useCallback(() => {
-    setCurrentRoundIndex(0)
-    setCurrentTurnIndex(0)
-    setCurrentActionIndex(0)
+    dispatch({ type: 'SEEK_TO_START' })
   }, [])
 
   const seekToEnd = useCallback(() => {
-    const last = actions[actions.length - 1]
-    if (last) {
-      setCurrentRoundIndex(last.roundIndex)
-      setCurrentTurnIndex(last.turnIndex)
-      const turn = replay?.rounds[last.roundIndex]?.turns[last.turnIndex]
-      if (turn) {
-        setCurrentActionIndex(turn.actions.length - 1)
-      }
-    }
-  }, [actions, replay])
+    dispatch({ type: 'SEEK_TO_END' })
+  }, [])
 
   const seekToRound = useCallback((roundIndex: number) => {
-    const firstActionInRound = actions.find(a => a.roundIndex === roundIndex)
-    if (firstActionInRound) {
-      seek(firstActionInRound.index)
-    }
-  }, [actions, seek])
+    dispatch({ type: 'SEEK_TO_ROUND', roundIndex })
+  }, [])
 
   return {
-    currentRoundIndex,
-    currentTurnIndex,
-    currentActionIndex,
+    currentRoundIndex: currentIndices.roundIndex,
+    currentTurnIndex: currentIndices.turnIndex,
+    currentActionIndex: currentIndices.actionIndex,
     currentAction,
-    isPlaying,
+    isPlaying: state.isPlaying,
     actions,
     totalActions,
     totalRounds,
