@@ -102,7 +102,7 @@
 
 ---
 
-## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS (OH-MY-OPENCODE)
+## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS
 
 > **Context Recovery**: Check GitHub Issues for available work.
 
@@ -119,7 +119,6 @@
 **NEVER skip this.** Work is not done until pushed.
 
 ### Core Rules
-- Work within git worktrees created by oh-my-opencode.
 - Use GitHub Issues for task tracking and progress updates.
 - Always read the issue body for context and update with progress comments.
 
