@@ -15,6 +15,13 @@ import {
     DEFAULT_SKYLINE_COLORS,
     SkylineInteractionState,
 } from '@/model/skylineTypes';
+import {
+    setupCanvas,
+    clearCanvas,
+    drawPlaceholder,
+    generateAnalysisAriaLabel,
+    DEFAULT_BACKGROUND_COLOR,
+} from '@/components/utils/skylineCanvasUtils';
 
 const DEFAULT_CONFIG: SkylineCanvasProps['config'] = {
     width: 800,
@@ -28,47 +35,6 @@ const DEFAULT_CONFIG: SkylineCanvasProps['config'] = {
         crosshair: 'rgba(212, 175, 55, 0.8)',
     },
 };
-
-/**
- * Get high-DPI scaled canvas dimensions
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in other components
-function getCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
-    const dpr = window.devicePixelRatio || 1;
-
-    return {
-        // Display size (CSS pixels)
-        displayWidth: width,
-        displayHeight: height,
-        // Actual canvas size (scaled for DPI)
-        canvasWidth: width * dpr,
-        canvasHeight: height * dpr,
-        pixelRatio: dpr,
-    };
-}
-
-/**
- * Setup canvas with high-DPI scaling
- */
-function setupCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
-    const dpr = window.devicePixelRatio || 1;
-
-    // Set display size (CSS pixels)
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-
-    // Set actual canvas size (scaled)
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-
-    // Normalize coordinate system
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-        ctx.scale(dpr, dpr);
-    }
-
-    return ctx;
-}
 
 const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
     data,
@@ -95,12 +61,8 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
         const ctx = setupCanvas(canvas, config.width!, config.height!);
         if (!ctx) return;
 
-        // Clear canvas
-        ctx.clearRect(0, 0, config.width!, config.height!);
-
-        // Draw background
-        ctx.fillStyle = 'rgba(26, 26, 26, 0.95)';
-        ctx.fillRect(0, 0, config.width!, config.height!);
+        // Clear canvas with background
+        clearCanvas(ctx, config.width!, config.height!, DEFAULT_BACKGROUND_COLOR);
 
         // TODO: Render implementation will be added by dependent components:
         // - HP Skyline (2xt)
@@ -109,13 +71,11 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
         // - Crosshair interaction (pd0)
 
         // For now, draw placeholder text
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.5)';
-        ctx.font = '14px Courier New';
-        ctx.textAlign = 'center';
-        ctx.fillText(
-            `Skyline Canvas Base - ${data.buckets.length} buckets, ${data.partySize} characters`,
-            config.width! / 2,
-            config.height! / 2
+        drawPlaceholder(
+            ctx,
+            config.width!,
+            config.height!,
+            `Skyline Canvas Base - ${data.buckets.length} buckets, ${data.partySize} characters`
         );
     }, [data, config]);
 
@@ -189,7 +149,7 @@ const SkylineCanvas: React.FC<SkylineCanvasProps> = memo(({
                 onMouseLeave={handleMouseLeave}
                 onClick={handleClick}
                 role="img"
-                aria-label={`Skyline Spectrogram showing ${data.totalRuns} simulation runs across ${data.buckets.length} percentile buckets`}
+                aria-label={generateAnalysisAriaLabel('Skyline Spectrogram', data.totalRuns, data.buckets.length)}
             />
         </div>
     );

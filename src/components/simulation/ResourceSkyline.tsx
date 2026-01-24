@@ -20,6 +20,25 @@ import {
     valueToColor,
 } from '@/model/skylineTypes';
 import { PercentileBucket } from '@/model/model';
+import {
+    setupCanvas,
+    getChartDimensions,
+    clearCanvas,
+    drawGridLines,
+    drawXAxisLabels,
+    drawCrosshair,
+    drawAreaFill,
+    drawVerticalBars,
+    drawBucketHighlight,
+    createMouseMoveHandler,
+    createMouseLeaveHandler,
+    generateAriaLabel,
+    easeOutQuad,
+    lerp,
+    DEFAULT_PADDING,
+    DEFAULT_BACKGROUND_COLOR,
+    type ChartDimensions,
+} from '@/components/utils/skylineCanvasUtils';
 
 export interface ResourceSkylineProps {
     /** Full analysis data or single character bucket data */
@@ -77,14 +96,14 @@ export const SingleCharacterResourceSkyline: React.FC<SingleCharacterResourceSky
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const ease = progress * (2 - progress);
+            const easedProgress = easeOutQuad(progress);
 
             if (progress < 1) {
                 const interpolated = targetData.map((target, i) => {
                     const start = startData[i];
                     return {
                         ...target,
-                        resourcePercent: start.resourcePercent + (target.resourcePercent - start.resourcePercent) * ease
+                        resourcePercent: lerp(start.resourcePercent, target.resourcePercent, easedProgress)
                     };
                 });
                 setDisplayData(interpolated);
@@ -107,111 +126,56 @@ export const SingleCharacterResourceSkyline: React.FC<SingleCharacterResourceSky
         const ctx = setupCanvas(canvas, width, height);
         if (!ctx) return;
 
-        const padding = { top: 20, right: 10, bottom: 30, left: 40 };
-        const chartWidth = width - padding.left - padding.right;
-        const chartHeight = height - padding.top - padding.bottom;
+        const dims: ChartDimensions = getChartDimensions(width, height, DEFAULT_PADDING);
 
-        // Clear canvas with dark background
-        ctx.fillStyle = 'rgba(26, 26, 26, 0.95)';
-        ctx.fillRect(0, 0, width, height);
+        // Clear canvas with background
+        clearCanvas(ctx, width, height, DEFAULT_BACKGROUND_COLOR);
 
         // Draw grid lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 1;
-        [0, 25, 50, 75, 100].forEach(pct => {
-            const y = padding.top + chartHeight - (pct / 100) * chartHeight;
-            ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
-            ctx.stroke();
+        drawGridLines(ctx, dims);
 
-            // Y-axis labels
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.font = '10px Courier New';
-            ctx.textAlign = 'right';
-            ctx.fillText(`${pct}%`, padding.left - 5, y + 3);
-        });
-
-        // Draw resource area chart using vertical segments
-        const bucketWidth = chartWidth / displayData.length;
-
-        // Create path for area fill
-        ctx.beginPath();
-        ctx.moveTo(padding.left, padding.top + chartHeight);
-
-        displayData.forEach((bucket, i) => {
-            const x = padding.left + i * bucketWidth;
-            const resourceHeight = (bucket.resourcePercent / 100) * chartHeight;
-            const y = padding.top + chartHeight - resourceHeight;
-
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        // Complete area and fill
-        const lastX = padding.left + (displayData.length - 1) * bucketWidth;
-        ctx.lineTo(lastX, padding.top + chartHeight);
-        ctx.closePath();
-
+        // Calculate average resource for area fill color
         const avgResource = displayData.reduce((sum, b) => sum + b.resourcePercent, 0) / displayData.length;
         const baseColor = valueToColor(avgResource, colors.resources);
 
-        ctx.fillStyle = baseColor + '40';
-        ctx.fill();
+        // Draw area fill
+        drawAreaFill(ctx, dims, displayData.map(d => d.resourcePercent), baseColor + '40');
 
-        // Draw each bucket segment
-        displayData.forEach((bucket, i) => {
-            const x = padding.left + i * bucketWidth;
-            const resourceHeight = (bucket.resourcePercent / 100) * chartHeight;
-            const y = padding.top + chartHeight - resourceHeight;
+        // Draw vertical bars with per-bucket colors
+        drawVerticalBars(ctx, dims, displayData.map(d => d.resourcePercent), colors.resources);
 
-            const color = valueToColor(bucket.resourcePercent, colors.resources);
-
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, bucketWidth - 1, resourceHeight);
-
-            if (hoveredBucket === i + 1) {
-                ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, bucketWidth - 1, resourceHeight);
-            }
-        });
-
-        // Crosshair
+        // Draw highlights for hovered bucket
         if (hoveredBucket && hoveredBucket >= 1 && hoveredBucket <= displayData.length) {
-            const i = hoveredBucket - 1;
-            const x = padding.left + i * bucketWidth + bucketWidth / 2;
-
-            ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(x, padding.top);
-            ctx.lineTo(x, height - padding.bottom);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            const idx = hoveredBucket - 1;
+            drawBucketHighlight(
+                ctx,
+                dims,
+                hoveredBucket,
+                displayData.length,
+                displayData[idx].resourcePercent
+            );
+            drawCrosshair(ctx, dims, hoveredBucket, displayData.length);
         }
 
-        // X-axis labels
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'center';
-
-        [1, 50, 100].forEach(pct => {
-            const idx = pct - 1;
-            if (idx < displayData.length) {
-                const x = padding.left + idx * bucketWidth + bucketWidth / 2;
-                ctx.fillText(`${pct}%`, x, height - padding.bottom + 15);
-            }
-        });
+        // Draw X-axis labels
+        drawXAxisLabels(ctx, dims, displayData.length);
     }, [displayData, width, height, colors, hoveredBucket]);
 
     React.useEffect(() => {
         render();
     }, [render]);
+
+    // Create mouse handlers using shared utilities
+    const handleMouseMove = createMouseMoveHandler(
+        { width, padding: DEFAULT_PADDING, bucketCount: characterData.length },
+        (bucket) => {
+            if (bucket !== null && bucket >= 1 && bucket <= characterData.length) {
+                onHover?.(bucket);
+            }
+        }
+    );
+
+    const handleMouseLeave = createMouseLeaveHandler(onHover);
 
     return (
         <div className={styles.characterCard}>
@@ -221,39 +185,16 @@ export const SingleCharacterResourceSkyline: React.FC<SingleCharacterResourceSky
                 width={width}
                 height={height}
                 className={styles.skylineCanvas}
-                onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const padding = { left: 40, right: 10 };
-                    const chartWidth = width - padding.left - padding.right;
-                    const bucketWidth = chartWidth / characterData.length;
-                    const bucket = Math.floor((x - padding.left) / bucketWidth) + 1;
-                    if (bucket >= 1 && bucket <= characterData.length) {
-                        onHover?.(bucket);
-                    }
-                }}
-                onMouseLeave={() => onHover?.(null)}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
                 role="img"
-                aria-label={`${characterName} Resource skyline across ${characterData.length} percentile buckets`}
+                aria-label={generateAriaLabel('Resource', characterData.length, characterName)}
             />
         </div>
     );
 });
 
 SingleCharacterResourceSkyline.displayName = 'SingleCharacterResourceSkyline';
-
-function setupCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-        ctx.scale(dpr, dpr);
-    }
-    return ctx;
-}
 
 /**
  * Main ResourceSkyline component
