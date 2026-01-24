@@ -95,6 +95,7 @@ fn test_black_dragon_auto_balance() {
                     target: None,
                     save_dc: Some(18.0),
                     amount: Some(DiceFormula::Value(54.0)), // 12d8
+                    overrides: vec![],
                 },
             }),
             Action::Atk(AtkAction {

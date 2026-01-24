@@ -99,6 +99,7 @@ fn test_counterspell_interrupt_flow() {
                     target: None,
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: Some(4),

@@ -126,6 +126,7 @@ fn test_shield_spell_reaction() {
                 target: Some(simulation_wasm::enums::TargetType::Ally(AllyTarget::Self_)),
                 save_dc: None,
                 amount: None,
+                overrides: vec![],
             },
         }),
         cost: Some(4), // Reaction slot
@@ -177,6 +178,7 @@ fn test_bless_buff_accuracy() {
             target: Some(simulation_wasm::enums::TargetType::Ally(AllyTarget::Self_)),
             save_dc: None,
             amount: None,
+            overrides: vec![],
         },
     });
 

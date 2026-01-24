@@ -79,6 +79,7 @@ mod tests {
                 target: None,
                 save_dc: Some(18.0),
                 amount: Some(DiceFormula::Value(54.0)),
+                overrides: vec![],
             },
         }));
 
@@ -117,6 +118,7 @@ mod tests {
                 target: None,
                 save_dc: Some(18.0),
                 amount: Some(DiceFormula::Value(54.0)),
+                overrides: vec![],
             },
         }));
 

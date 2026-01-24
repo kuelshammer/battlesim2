@@ -360,6 +360,7 @@ mod tests {
                     )), // Add a default target
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![ActionCost::Discrete {
@@ -406,6 +407,7 @@ mod tests {
                     )), // Add a default target
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![],
@@ -449,6 +451,7 @@ mod tests {
                     )),
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![ActionCost::Discrete {
@@ -499,6 +502,7 @@ mod tests {
                     )),
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![],
@@ -550,6 +554,7 @@ mod tests {
                     )),
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![],
@@ -595,6 +600,7 @@ mod tests {
                     )),
                     save_dc: None,
                     amount: None,
+                    overrides: vec![],
                 },
             }),
             cost: vec![ActionCost::Discrete {

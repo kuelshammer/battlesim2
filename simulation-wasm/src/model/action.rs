@@ -312,6 +312,9 @@ pub struct TemplateOptions {
     #[serde(rename = "saveDC")]
     pub save_dc: Option<f64>,
     pub amount: Option<DiceFormula>,
+    /// List of template overrides that customize the template behavior
+    #[serde(default)]
+    pub overrides: Vec<TemplateOverride>,
 }
 
 impl Hash for TemplateOptions {
@@ -320,6 +323,8 @@ impl Hash for TemplateOptions {
         self.target.hash(state);
         crate::utils::hash_opt_f64(self.save_dc, state);
         self.amount.hash(state);
+        // Hash overrides for deterministic cache keys
+        self.overrides.hash(state);
     }
 }
 
@@ -392,5 +397,51 @@ impl Hash for ActionTrigger {
         }
         self.action.hash(state);
         self.cost.hash(state);
+    }
+}
+
+/// Template override types that can customize template behavior
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum TemplateOverride {
+    SaveDC(f64),
+    Amount(DiceFormula),
+    Target(TargetType),
+}
+
+impl Eq for TemplateOverride {}
+
+impl Hash for TemplateOverride {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::mem::discriminant(self).hash(state);
+        match self {
+            TemplateOverride::SaveDC(dc) => crate::utils::hash_f64(*dc, state),
+            TemplateOverride::Amount(formula) => formula.hash(state),
+            TemplateOverride::Target(target) => target.hash(state),
+        }
+    }
+}
+
+/// Resolved action - the result of template resolution
+/// This is an immutable action that has all template logic resolved
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash)]
+pub enum ResolvedAction {
+    #[serde(rename = "atk")]
+    Atk(AtkAction),
+    #[serde(rename = "heal")]
+    Heal(HealAction),
+    #[serde(rename = "buff")]
+    Buff(BuffAction),
+    #[serde(rename = "debuff")]
+    Debuff(DebuffAction),
+}
+
+impl ResolvedAction {
+    pub fn base(&self) -> ActionBase {
+        match self {
+            ResolvedAction::Atk(a) => a.base(),
+            ResolvedAction::Heal(a) => a.base(),
+            ResolvedAction::Buff(a) => a.base(),
+            ResolvedAction::Debuff(a) => a.base(),
+        }
     }
 }
