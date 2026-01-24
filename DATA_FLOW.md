@@ -8,13 +8,15 @@
 
 1. [Simulation Request Flow](#simulation-request-flow)
 2. [Auto-Balance Request Flow](#auto-balance-request-flow)
-3. [State Management Architecture](#state-management-architecture)
-4. [Event Flow](#event-flow)
-5. [Replay System](#replay-system)
-6. [State Transition Diagrams](#state-transition-diagrams)
-7. [Type Coercion & Validation](#type-coercion--validation)
-8. [Error Handling Flow](#error-handling-flow)
-9. [Performance Optimization Points](#performance-optimization-points)
+3. [Progress Communication Flow](#progress-communication-flow)
+4. [State Management Architecture](#state-management-architecture)
+5. [Event Flow](#event-flow)
+6. [Replay System](#replay-system)
+7. [State Transition Diagrams](#state-transition-diagrams)
+8. [Type Coercion & Validation](#type-coercion--validation)
+9. [Error Handling Flow](#error-handling-flow)
+10. [Monitoring Flow](#monitoring-flow)
+11. [Performance Optimization Points](#performance-optimization-points)
 
 ---
 
@@ -205,6 +207,110 @@ User Click → useSimulationWorker.autoAdjustEncounter() → Worker → WASM →
 │  Frontend:                                                          │
 │  - Updates timeline item with new monsters                         │
 │  - Triggers re-simulation with adjusted encounter                  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Progress Communication Flow
+
+### Overview Diagram
+
+```
+Backend Simulation → Progress Reporter → Worker → Frontend → Progress UI
+```
+
+### Backend Progress Reporting
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    WASM Backend Simulation                          │
+│  run_simulation_with_three_tier()                                   │
+│    ├── Creates ProgressReporter(total: 10,100)                      │
+│    ├── Phase 1: Reports progress per iteration                      │
+│    │         progress_communication.report_progress(&mut reporter, n)│
+│    │                                                                │
+│    ├── Phase 2: Reports during seed selection                        │
+│    │         progress_communication.report_progress(&mut reporter, n)│
+│    │                                                                │
+│    └── Phase 3: Reports during deep dive                            │
+│              progress_communication.report_progress(&mut reporter, n)│
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Progress Communication Layer                            │
+│  progress_communication.rs                                          │
+│    - Formats progress messages                                       │
+│    - Calculates ETA from elapsed time                               │
+│    - Sends progress updates via callback                             │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Worker Response (Streaming)                            │
+│  { type: 'SIMULATION_UPDATE',                                       │
+│    genId, kFactor: current_iteration }                              │
+│                                                                     │
+│  Sent incrementally as simulation progresses                        │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼ postMessage
+┌─────────────────────────────────────────────────────────────────────┐
+│              Frontend State Update                                 │
+│  useSimulationWorker                                                │
+│    - Receives progress update                                        │
+│    - Updates progress state: kFactor / maxK                          │
+│    - Triggers UI re-render                                           │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Progress UI Components                                 │
+│  ProgressVisualizer                                                  │
+│    - Renders stage-by-stage progress bar                             │
+│    - Shows percentage completion                                     │
+│    - Displays ETA                                                   │
+│                                                                     │
+│  ProgressUI                                                          │
+│    - Shows linear progress bar                                       │
+│    - Displays current/total counts                                   │
+│    - Shows progress message                                          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Progress Stages
+
+**Stage 1: Lightweight Survey (Phase 1)**
+- Iterations: 10,100
+- Progress: 0-10%
+- No event collection (fast)
+
+**Stage 2: Seed Selection (Phase 2)**
+- Seeds: ~170
+- Progress: 10-20%
+- Median calculation
+
+**Stage 3: Deep Dive (Phase 3)**
+- Re-simulation of selected seeds
+- Progress: 20-100%
+- Full event collection
+
+### Display Mode Management
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              Display Manager (display_manager.rs)                   │
+│                                                                     │
+│  Display Modes:                                                     │
+│  - Full: Full event logging (all events)                            │
+│  - Lean: Minimal event logging (round summaries)                    │
+│  - None: No event logging (results only)                            │
+│                                                                     │
+│  Mode Selection:                                                    │
+│  - Tier A seeds (11): Full events                                   │
+│  - Tier B seeds (100): Lean events                                  │
+│  - Tier C seeds (59): No events                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -611,6 +717,127 @@ Error Path:
 │  - Keep original monsters (no changes applied)                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+### Error Recovery Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              Error Detection                                       │
+│  - Simulation error detected                                       │
+│  - Error type classified (recoverable/non-recoverable)              │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Error Handling (error_handling.rs)                     │
+│  error_handling::log_error(error)                                   │
+│  error_handling::is_recoverable(error)                              │
+│  error_handling::get_error_context(error)                           │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Recovery Attempt (if recoverable)                      │
+│  recovery::attempt_recovery(error, context)                         │
+│    ├── Create checkpoint before retry                               │
+│    ├── Attempt recovery strategy                                    │
+│    └── Restore from checkpoint if needed                            │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Recovery Strategies                                    │
+│  - Rollback to safe state                                           │
+│  - Retry with modified parameters                                   │
+│  - Graceful degradation                                             │
+│  - Abort and report                                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Error Types
+
+| Error Type | Recoverable | Recovery Strategy |
+|------------|-------------|-------------------|
+| `SimulationError` | Yes | Rollback, retry |
+| `ValidationError` | No | Abort, report to user |
+| `ExecutionError` | Sometimes | Skip iteration, continue |
+| `RecoveryError` | No | Abort, report to user |
+
+---
+
+## Monitoring Flow
+
+### Overview Diagram
+
+```
+Simulation Execution → Monitoring → Metrics Collection → Analysis → Dashboard
+```
+
+### Metrics Collection
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│              Simulation Execution                                   │
+│  ActionExecutionEngine::execute_encounter()                         │
+│    ├── monitoring::start_timer("encounter")                         │
+│    ├── ... combat execution ...                                      │
+│    └── monitoring::stop_timer("encounter")                          │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Monitoring Module (monitoring.rs)                      │
+│                                                                     │
+│  Success Metrics:                                                   │
+│  - calculate_success_rate(results)                                  │
+│  - calculate_tpk_rate(results)                                      │
+│  - calculate_avg_deaths(results)                                     │
+│                                                                     │
+│  Performance Metrics:                                               │
+│  - start_timer(label) → stop_timer(label)                           │
+│  - log_metric(name, value)                                          │
+│  - get_all_metrics() → HashMap<String, f64>                         │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Metrics Transmission                                   │
+│  { type: 'METRICS_UPDATE',                                          │
+│    metrics: { success_rate, tpk_rate, avg_deaths, ... } }          │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              Frontend Metrics Display                               │
+│  PerformanceDashboard                                                │
+│    - Success rate visualization                                     │
+│    - TPK rate gauge                                                │
+│    - Average deaths display                                         │
+│    - Performance timing breakdown                                   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Success Metrics
+
+| Metric | Calculation | Purpose |
+|--------|-------------|---------|
+| **Success Rate** | `wins / total_iterations` | Overall win percentage |
+| **TPK Rate** | `tpks / total_iterations` | Total party kill percentage |
+| **Avg Deaths** | `total_deaths / total_iterations` | Average deaths per encounter |
+| **Lethality** | `deaths / (party_size * iterations)` | Per-combatant death risk |
+| **Volatility** | `stddev(deaths) / mean(deaths)` | Result consistency |
+
+### Performance Timers
+
+| Timer | Description |
+|-------|-------------|
+| `encounter` | Total encounter execution time |
+| `phase1_survey` | Lightweight survey phase |
+| `seed_selection` | 1% bucket selection |
+| `phase3_deep_dive` | Re-simulation phase |
+| `analysis` | Statistics and visualization |
 
 ---
 

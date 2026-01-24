@@ -118,6 +118,12 @@ simulation-wasm/src/
 │   ├── buff.rs              # Buff application
 │   ├── debuff.rs            # Debuff application
 │   └── template.rs          # Template action resolution
+├── analysis/                 # Analysis module (refactored from decile_analysis.rs)
+│   ├── mod.rs               # Public API, re-exports
+│   ├── types.rs             # Core types, GameBalance config
+│   ├── narrative.rs         # "Director" logic (scoring, pacing, labels)
+│   ├── statistics.rs        # "Mathematician" logic (percentiles)
+│   └── visualization.rs     # "Presenter" logic (frontend mapping)
 ├── action_resolver.rs        # Action→Event conversion dispatcher
 ├── action_cache.rs           # Template resolution caching (1000 entries LRU)
 ├── context.rs                # TurnContext (Single Source of Truth)
@@ -125,14 +131,38 @@ simulation-wasm/src/
 ├── reactions.rs              # Reaction system (triggers, effects)
 ├── targeting.rs              # Target selection strategies
 ├── validation.rs             # Action requirements validation
+├── enhanced_validation.rs    # Comprehensive validation
 ├── two_pass.rs               # Two-pass simulation orchestration
 ├── seed_selection.rs         # 1% bucket seed selection algorithm
 ├── auto_balancer.rs          # Encounter difficulty auto-adjustment
 ├── memory_guardrails.rs      # Memory safety for large runs
 ├── background_simulation.rs  # Background job queue
-├── queue_manager.rs          # Queue management
+├── queue_manager.rs          # Queue management system
 ├── rng.rs                    # RNG management
 ├── dice.rs                   # Dice rolling
+├── dice_reconstruction.rs    # Dice reconstruction utilities
+├── sorting.rs                # Sorting utilities
+├── cleanup.rs                # Cleanup utilities
+├── config.rs                 # Configuration system
+├── combat_stats.rs           # Combat statistics caching
+├── cache.rs                  # General caching utilities
+├── aggregation.rs            # Aggregation utilities
+├── safe_aggregation.rs       # Safe aggregation functions
+├── resources.rs              # Resource management
+├── actions.rs                # Action utilities
+├── utils.rs                  # General utilities
+├── percentile_analysis.rs    # Percentile analysis
+├── intensity_calculation.rs  # Intensity calculation
+├── strategic_assessment.rs   # Strategic assessment
+├── creature_adjustment.rs    # Creature adjustment for auto-balancing
+├── encounter_balancer.rs     # Encounter tier classification
+├── display_manager.rs        # Display mode management
+├── progress_communication.rs # Progress communication protocol
+├── progress_ui.rs            # Progress UI component functions
+├── monitoring.rs             # Success metrics and monitoring
+├── user_interaction.rs       # User interaction flows
+├── error_handling.rs         # Enhanced error handling
+├── recovery.rs               # Error recovery mechanisms
 └── lib.rs                    # Module exports
 ```
 
@@ -436,20 +466,28 @@ src/
 │   │   ├── creatureForm.tsx      # Main form container
 │   │   ├── playerForm.tsx        # Player-specific fields
 │   │   ├── monsterForm.tsx       # Monster-specific fields
+│   │   ├── customForm.tsx        # Custom creature fields
 │   │   ├── actionForm.tsx        # Action definition
 │   │   ├── actionCostEditor.tsx  # Action cost editing
+│   │   ├── ActionRequirementEditor.tsx # Action requirement editing
 │   │   ├── buffEditor.tsx        # Buff editing
 │   │   ├── resourceEditor.tsx    # Resource editing
 │   │   ├── importModal.tsx       # Import from 5etools
-│   │   └── saveBonusModal.tsx    # Save bonus editing
+│   │   ├── importButton.tsx      # Import trigger button
+│   │   ├── saveBonusModal.tsx    # Save bonus editing
+│   │   ├── strategyBuilder.tsx   # Strategy building UI
+│   │   ├── tagSelector.tsx       # Tag selection UI
+│   │   └── loadCreatureForm.tsx  # Creature form loading
 │   ├── simulation/               # Main simulation UI (70+ components)
 │   │   ├── simulation.tsx        # Main container
-│   │   ├── simulationHeader.tsx  # Header controls
-│   │   ├── playerFormSection.tsx # Player forms section
-│   │   ├── timelineItem.tsx      # Single timeline event editor
-│   │   ├── addTimelineButtons.tsx # Add combat/rest buttons
-│   │   ├── overallSummary.tsx    # Overall statistics summary
-│   │   ├── backendStatusPanel.tsx # Backend status display
+│   │   ├── components/           # Sub-components directory
+│   │   │   ├── simulationHeader.tsx  # Header controls
+│   │   │   ├── playerFormSection.tsx # Player forms section
+│   │   │   ├── timelineItem.tsx      # Single timeline event editor
+│   │   │   ├── addTimelineButtons.tsx # Add combat/rest buttons
+│   │   │   ├── overallSummary.tsx    # Overall statistics summary
+│   │   │   ├── backendStatusPanel.tsx # Backend status display
+│   │   │   └── simulationModals/     # Modal dialogs
 │   │   ├── analysisComponents/   # Analysis visualizations
 │   │   │   ├── assistantSummary.tsx
 │   │   │   ├── encounterResult.tsx
@@ -462,10 +500,33 @@ src/
 │   │   │   ├── skylineCanvas.tsx # Unified canvas rendering
 │   │   │   ├── decileAnalysis.tsx
 │   │   │   └── playerGraphs.tsx
-│   │   ├── simulationModals/     # Modal dialogs
-│   │   └── hooks/                # Simulation-specific hooks
-│   │       ├── useAutoSimulation.ts
-│   │       └── useSimulationSession.ts
+│   │   ├── accessibility/        # Accessibility components
+│   │   │   ├── accessibilityToggle.tsx
+│   │   │   └── accessibilityContext.tsx
+│   │   ├── hooks/                # Simulation-specific hooks
+│   │   │   ├── useAutoSimulation.ts
+│   │   │   └── useSimulationSession.ts
+│   │   ├── actionEconomyDisplay.tsx   # Action economy visualization
+│   │   ├── balancerBandOverlay.tsx    # Balancer overlay
+│   │   ├── partyOverview.tsx          # Party status overview
+│   │   ├── resourcePanel.tsx          # Resource display
+│   │   ├── adventuringDayForm.tsx     # Day configuration
+│   │   ├── battleCard.tsx             # Battle card display
+│   │   ├── deltaBadge.tsx             # Delta display badge
+│   │   ├── fuelGauge.tsx              # Fuel/resource gauge
+│   │   ├── crosshairContext.tsx       # Crosshair state
+│   │   ├── crosshairLine.tsx          # Crosshair visualization
+│   │   ├── onboardingTour.tsx         # New user tour
+│   │   ├── deathBar.tsx               # Death visualization
+│   │   ├── adjustmentPreview.tsx      # Adjustment preview
+│   │   ├── encounterForm.tsx          # Encounter form
+│   │   ├── descentGraph.tsx           # HP descent graph
+│   │   ├── heartbeatGraph.tsx         # Damage rhythm graph
+│   │   ├── eventLog.tsx               # Event log
+│   │   ├── assistantSummary.tsx       # AI summary
+│   │   ├── encounterResult.tsx        # Encounter result
+│   │   ├── decileAnalysis.tsx         # Decile analysis (root level)
+│   │   └── combatReplayModal.tsx      # Combat replay modal
 │   └── utils/                    # Reusable components
 │       ├── loadingSpinner.tsx
 │       ├── loadingOverlay.tsx
@@ -473,7 +534,18 @@ src/
 │       ├── modal.tsx
 │       ├── select.tsx
 │       ├── toggle.tsx
-│       └── rangeInput.tsx
+│       ├── rangeInput.tsx
+│       ├── progressUI.tsx         # Progress display UI
+│       ├── progressVisualizer.tsx # Progress visualization
+│       ├── checkbox.tsx
+│       ├── decimalInput.tsx
+│       ├── diceFormulaInput.tsx
+│       ├── rgpd.tsx
+│       ├── footer.tsx
+│       ├── logo.tsx
+│       ├── sortTable.tsx
+│       ├── uiTogglePanel.tsx
+│       └── loadingExample.tsx
 ├── hooks/                        # Global custom hooks
 │   └── useCombatPlayback.ts      # Combat replay state
 ├── pages/                        # Next.js pages

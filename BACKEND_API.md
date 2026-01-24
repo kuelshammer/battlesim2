@@ -16,9 +16,13 @@
 8. [Reaction System](#reaction-system)
 9. [Caching Layer](#caching-layer)
 10. [Analysis Module](#analysis-module)
-11. [Type Definitions](#type-definitions)
-12. [Utility Functions](#utility-functions)
-13. [When to Modify What](#when-to-modify-what)
+11. [Display/Progress System](#displayprogress-system)
+12. [Monitoring System](#monitoring-system)
+13. [Error Handling](#error-handling)
+14. [Configuration](#configuration)
+15. [Type Definitions](#type-definitions)
+16. [Utility Functions](#utility-functions)
+17. [When to Modify What](#when-to-modify-what)
 
 ---
 
@@ -323,7 +327,19 @@
 
 ## Analysis Module
 
-**Files**: `simulation-wasm/src/analysis/statistics.rs`, `visualization.rs`, `narrative.rs`
+**Files**: `simulation-wasm/src/analysis/mod.rs`, `types.rs`, `statistics.rs`, `narrative.rs`, `visualization.rs`
+
+> **Note**: The analysis module was refactored from the monolithic `decile_analysis.rs` (~1,050 LOC) into a clean modular structure.
+
+### Module Structure
+
+| File | Responsibility |
+|------|---------------|
+| `mod.rs` | Public API, re-exports for clean interface |
+| `types.rs` | Core types, GameBalance config, Vitals, Archetypes, Tiers |
+| `narrative.rs` | "Director" logic - scoring, pacing, labeling |
+| `statistics.rs` | "Mathematician" logic - percentiles, aggregation |
+| `visualization.rs` | "Presenter" logic - frontend data mapping |
 
 ### Statistics
 
@@ -347,6 +363,120 @@
 |----------|------|---------|------------|---------|
 | `generate_encounter_summary()` | `narrative.rs` | Generate encounter summary | `output: &AggregateOutput` | `String` |
 | `generate_tpk_explanation()` | `narrative.rs` | Generate TPK explanation | `output: &AggregateOutput` | `String` |
+
+---
+
+## Display/Progress System
+
+**Files**: `simulation-wasm/src/display_manager.rs`, `progress_communication.rs`, `progress_ui.rs`
+
+### Display Manager (`display_manager.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `DisplayMode::from_str()` | Parse display mode from string | `s: &str` | `Option<DisplayMode>` |
+| `DisplayMode::as_str()` | Convert display mode to string | `&self` | `&'static str` |
+
+**Display Modes:**
+- `Full`: Full event logging
+- `Lean`: Minimal event logging
+- `None`: No event logging
+
+### Progress Communication (`progress_communication.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `ProgressReporter::new()` | Create new progress reporter | `total: usize` | `ProgressReporter` |
+| `report_progress()` | Report progress update | `&mut self`, `current: usize` | `()` |
+| `get_progress_percent()` | Get progress as percentage | `&self` | `f64` |
+| `is_complete()` | Check if progress is complete | `&self` | `bool` |
+
+### Progress UI (`progress_ui.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `format_progress_message()` | Format progress message | `current: usize`, `total: usize` | `String` |
+| `estimated_time_remaining()` | Calculate ETA | `elapsed: Duration`, `progress: f64` | `Duration` |
+
+---
+
+## Monitoring System
+
+**File**: `simulation-wasm/src/monitoring.rs`
+
+### Success Metrics
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `calculate_success_rate()` | Calculate win rate | `results: &Vec<SimulationResult>` | `f64` |
+| `calculate_tpk_rate()` | Calculate TPK rate | `results: &Vec<SimulationResult>` | `f64` |
+| `calculate_avg_deaths()` | Calculate average deaths | `results: &Vec<SimulationResult>` | `f64` |
+| `track_performance_metric()` | Track custom metric | `name: &str`, `value: f64` | `()` |
+| `get_all_metrics()` | Get all tracked metrics | None | `HashMap<String, f64>` |
+
+### Monitoring Functions
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `start_timer()` | Start performance timer | `label: &str` | `()` |
+| `stop_timer()` | Stop timer and log duration | `label: &str` | `Duration` |
+| `log_metric()` | Log a metric value | `name: &str`, `value: f64` | `()` |
+
+---
+
+## Error Handling
+
+**Files**: `simulation-wasm/src/error_handling.rs`, `recovery.rs`
+
+### Error Types (`error_handling.rs`)
+
+| Type | Description |
+|------|-------------|
+| `SimulationError` | Main simulation error enum |
+| `ValidationError` | Input validation error |
+| `ExecutionError` | Execution failure error |
+| `RecoveryError` | Recovery operation error |
+
+### Error Handling Functions
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `log_error()` | Log error context | `error: &SimulationError` | `()` |
+| `error_to_string()` | Convert error to string | `error: &SimulationError` | `String` |
+| `is_recoverable()` | Check if error is recoverable | `error: &SimulationError` | `bool` |
+| `get_error_context()` | Get error context data | `error: &SimulationError` | `Option<&ErrorContext>` |
+
+### Recovery Mechanisms (`recovery.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `attempt_recovery()` | Attempt error recovery | `error: &SimulationError`, `context: &TurnContext` | `Result<(), RecoveryError>` |
+| `rollback_to_safe_state()` | Rollback to last safe state | `context: &mut TurnContext` | `()` |
+| `create_checkpoint()` | Create state checkpoint | `context: &TurnContext` | `Checkpoint` |
+| `restore_from_checkpoint()` | Restore from checkpoint | `context: &mut TurnContext`, `checkpoint: Checkpoint` | `Result<(), RecoveryError>` |
+
+---
+
+## Configuration
+
+**File**: `simulation-wasm/src/config.rs`
+
+### Configuration Types
+
+| Type | Description |
+|------|-------------|
+| `SimulationConfig` | Main simulation configuration |
+| `MemoryConfig` | Memory management settings |
+| `ProgressConfig` | Progress reporting settings |
+
+### Configuration Functions
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `default_config()` | Get default configuration | None | `SimulationConfig` |
+| `config_from_env()` | Load config from environment | None | `SimulationConfig` |
+| `merge_configs()` | Merge two configs | `base: &SimulationConfig`, `override: &PartialConfig` | `SimulationConfig` |
+| `validate_config()` | Validate configuration | `config: &SimulationConfig` | `Result<(), ConfigError>` |
 
 ---
 
@@ -378,6 +508,57 @@
 ---
 
 ## Utility Functions
+
+### Cleanup (`simulation-wasm/src/cleanup.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `cleanup_events()` | Clean up event history | `events: &mut Vec<SimulationEvent>` | `()` |
+| `cleanup_dead_combatants()` | Remove dead combatants | `context: &mut TurnContext` | `()` |
+| `cleanup_expired_effects()` | Remove expired effects | `context: &mut TurnContext` | `()` |
+
+### Dice Reconstruction (`simulation-wasm/src/dice_reconstruction.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `reconstruct_dice_roll()` | Reconstruct dice from event | `event: &SimulationEvent` | `Option<DiceRoll>` |
+| `reconstruct_damage_dice()` | Reconstruct damage dice | `damage: u32`, `count: u32` | `String` |
+
+### Sorting (`simulation-wasm/src/sorting.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `sort_by_initiative()` | Sort combatants by initiative | `combatants: &mut Vec<Combattant>` | `()` |
+| `sort_by_dpr()` | sort by damage per round | `combatants: &mut Vec<Combattant>` | `()` |
+
+### Additional Analysis Utilities
+
+**Intensity Calculation (`intensity_calculation.rs`):**
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `calculate_encounter_intensity()` | Calculate encounter intensity | `events: &Vec<SimulationEvent>` | `IntensityScore` |
+| `calculate_rolling_intensity()` | Calculate rolling intensity | `events: &Vec<SimulationEvent>`, `window: usize` | `Vec<IntensityScore>` |
+
+**Strategic Assessment (`strategic_assessment.rs`):**
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `assess_party_strategy()` | Assess party strategy effectiveness | `results: &Vec<SimulationResult>` | `StrategyRating` |
+| `assess_resource_efficiency()` | Assess resource usage efficiency | `events: &Vec<SimulationEvent>` | `EfficiencyScore` |
+
+**Safe Aggregation (`safe_aggregation.rs`):**
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `safe_mean()` | Calculate mean with overflow protection | `values: &[u64]` | `Option<f64>` |
+| `safe_sum()` | Calculate sum with overflow protection | `values: &[u64]` | `Option<u64>` |
+| `safe_percentile()` | Calculate percentile safely | `values: &mut [f64]`, `p: f64` | `Option<f64>` |
+
+### Creature Adjustment (`creature_adjustment.rs`)
+
+| Function | Purpose | Parameters | Returns |
+|----------|---------|------------|---------|
+| `adjust_creature_count()` | Adjust creature count | `creature: &Creature`, `factor: f64` | `Creature` |
+| `adjust_creature_cr()` | Adjust creature CR | `creature: &Creature`, `target_tier: EncounterTier` | `Creature` |
+| `scale_creature_stats()` | Scale creature stats | `creature: &Creature`, `scale: f64` | `Creature` |
 
 ### Dice Rolling (`simulation-wasm/src/dice.rs`)
 
@@ -468,6 +649,45 @@
 2. **Two-Pass** (`two_pass.rs`):
    - Modify seed selection algorithm
    - Adjust tier definitions
+
+### Modifying Progress Reporting
+
+1. **Progress Communication** (`progress_communication.rs`):
+   - Modify `ProgressReporter` for new progress types
+   - Add custom progress callbacks
+
+2. **Progress UI** (`progress_ui.rs`):
+   - Modify message formatting
+   - Add ETA calculation improvements
+
+3. **Display Manager** (`display_manager.rs`):
+   - Add new display modes
+   - Modify display mode logic
+
+### Modifying Monitoring
+
+1. **Monitoring** (`monitoring.rs`):
+   - Add new success metrics
+   - Modify performance tracking
+   - Add custom timers/metrics
+
+### Modifying Error Handling
+
+1. **Error Handling** (`error_handling.rs`):
+   - Add new error types
+   - Modify error logging
+   - Add error context
+
+2. **Recovery** (`recovery.rs`):
+   - Add new recovery strategies
+   - Modify checkpoint/restore logic
+
+### Modifying Configuration
+
+1. **Configuration** (`config.rs`):
+   - Add new configuration options
+   - Modify default values
+   - Add validation rules
 
 ---
 

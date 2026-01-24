@@ -12,11 +12,12 @@
 4. [Combat Event Components](#combat-event-components)
 5. [Skyline Visualization Components](#skyline-visualization-components)
 6. [Analysis Components](#analysis-components)
-7. [UI Components (Radix UI)](#ui-components-radix-ui)
-8. [Model Layer](#model-layer)
-9. [Worker Communication](#worker-communication)
-10. [Data Import](#data-import)
-11. [When to Modify What](#when-to-modify-what)
+7. [Accessibility Components](#accessibility-components)
+8. [UI Components (Radix UI)](#ui-components-radix-ui)
+9. [Model Layer](#model-layer)
+10. [Worker Communication](#worker-communication)
+11. [Data Import](#data-import)
+12. [When to Modify What](#when-to-modify-what)
 
 ---
 
@@ -336,6 +337,276 @@
 
 ---
 
+### New Simulation Components
+
+#### `ActionEconomyDisplay` (`components/simulation/ActionEconomyDisplay.tsx`)
+
+**Purpose**: Action economy visualization
+
+**Props**:
+```typescript
+{
+    events: SimulationEvent[]
+    combatants: Combattant[]
+}
+```
+
+**Features**:
+- Displays action economy per round
+- Shows action, bonus action, and reaction usage
+- Visualizes action efficiency
+
+**File**: `src/components/simulation/ActionEconomyDisplay.tsx`
+
+---
+
+#### `BalancerBandOverlay` (`components/simulation/BalancerBandOverlay.tsx`)
+
+**Purpose**: Balancer overlay for encounter difficulty
+
+**Props**:
+```typescript
+{
+    tier: EncounterTier
+    targetTier?: EncounterTier
+    position?: { x: number, y: number }
+}
+```
+
+**Features**:
+- Visual overlay showing encounter difficulty
+- Color-coded bands (Trivial to Failed)
+- Target tier indicator
+
+**File**: `src/components/simulation/BalancerBandOverlay.tsx`
+
+---
+
+#### `PartyOverview` (`components/simulation/PartyOverview.tsx`)
+
+**Purpose**: Party status overview
+
+**Props**:
+```typescript
+{
+    players: Creature[]
+    results?: SimulationResult[]
+}
+```
+
+**Features**:
+- Party composition summary
+- Total level display
+- Resource status overview
+
+**File**: `src/components/simulation/PartyOverview.tsx`
+
+---
+
+#### `ResourcePanel` (`components/simulation/ResourcePanel.tsx`)
+
+**Purpose**: Resource display panel
+
+**Props**:
+```typescript
+{
+    combatant: CombattantState
+    resources: HashMap<string, number>
+}
+```
+
+**Features**:
+- Spell slot display
+- Class resource tracking (Ki, Sorcery Points, etc.)
+- Resource usage visualization
+
+**File**: `src/components/simulation/ResourcePanel.tsx`
+
+---
+
+#### `adventuringDayForm` (`components/simulation/adventuringDayForm.tsx`)
+
+**Purpose**: Day configuration form
+
+**Props**:
+```typescript
+{
+    dayConfig: AdventuringDayConfig
+    onChange: (config: AdventuringDayConfig) => void
+}
+```
+
+**Features**:
+- Configure adventuring day parameters
+- Set resource thresholds
+- Encounter pacing options
+
+**File**: `src/components/simulation/adventuringDayForm.tsx`
+
+---
+
+#### `battleCard` (`components/simulation/battleCard.tsx`)
+
+**Purpose**: Battle card display
+
+**Props**:
+```typescript
+{
+    encounter: Encounter
+    result?: EncounterResultType
+    index: number
+}
+```
+
+**Features**:
+- Compact encounter card view
+- Result summary
+- Quick stats display
+
+**File**: `src/components/simulation/battleCard.tsx`
+
+---
+
+#### `DeltaBadge` (`components/simulation/DeltaBadge.tsx`)
+
+**Purpose**: Delta display badge
+
+**Props**:
+```typescript
+{
+    value: number
+    label?: string
+    format?: 'percent' | 'absolute' | 'change'
+}
+```
+
+**Features**:
+- Visual delta indicator
+- Color-coded (green for positive, red for negative)
+- Compact badge format
+
+**File**: `src/components/simulation/DeltaBadge.tsx`
+
+---
+
+#### `FuelGauge` (`components/simulation/FuelGauge.tsx`)
+
+**Purpose**: Fuel/resource gauge
+
+**Props**:
+```typescript
+{
+    current: number
+    max: number
+    label?: string
+    color?: string
+}
+```
+
+**Features**:
+- Visual gauge for resources
+- Percentage display
+- Customizable colors
+
+**File**: `src/components/simulation/FuelGauge.tsx`
+
+---
+
+#### `CrosshairContext` (`components/simulation/CrosshairContext.tsx`)
+
+**Purpose**: Crosshair state provider
+
+**State**:
+```typescript
+{
+    crosshairPosition: { x: number, y: number } | null
+    setCrosshairPosition: (pos: { x: number, y: number } | null) => void
+}
+```
+
+**File**: `src/components/simulation/CrosshairContext.tsx`
+
+---
+
+#### `CrosshairLine` (`components/simulation/CrosshairLine.tsx`)
+
+**Purpose**: Crosshair visualization
+
+**Props**:
+```typescript
+{
+    position: { x: number, y: number }
+    target?: { x: number, y: number }
+}
+```
+
+**File**: `src/components/simulation/CrosshairLine.tsx`
+
+---
+
+#### `OnboardingTour` (`components/simulation/OnboardingTour.tsx`)
+
+**Purpose**: New user onboarding tour
+
+**Features**:
+- Step-by-step introduction
+- Feature highlights
+- Interactive tutorials
+
+**File**: `src/components/simulation/OnboardingTour.tsx`
+
+---
+
+#### `DeathBar` (`components/simulation/DeathBar.tsx`)
+
+**Purpose**: Death visualization bar
+
+**Props**:
+```typescript
+{
+    deaths: number
+    total: number
+    encounters: number
+}
+```
+
+**File**: `src/components/simulation/DeathBar.tsx`
+
+---
+
+#### `AdjustmentPreview` (`components/simulation/AdjustmentPreview.tsx`)
+
+**Purpose**: Auto-balance adjustment preview
+
+**Props**:
+```typescript
+{
+    original: Creature[]
+    adjusted: Creature[]
+    tier: EncounterTier
+}
+```
+
+**File**: `src/components/simulation/AdjustmentPreview.tsx`
+
+---
+
+#### `encounterForm` (`components/simulation/encounterForm.tsx`)
+
+**Purpose**: Encounter configuration form
+
+**Props**:
+```typescript
+{
+    encounter: Encounter
+    onChange: (encounter: Encounter) => void
+}
+```
+
+**File**: `src/components/simulation/encounterForm.tsx`
+
+---
+
 ### Modals
 
 #### `SimulationModals` (`components/simulation/simulationModals/index.tsx`)
@@ -636,6 +907,74 @@
 
 ---
 
+### Strategy & Tag Components
+
+#### `StrategyBuilder` (`components/creatureForm/StrategyBuilder.tsx`)
+
+**Purpose**: Strategy building UI
+
+**Props**:
+```typescript
+{
+    actions: Action[]
+    onChange: (actions: Action[]) => void
+    availableActions?: Action[]
+}
+```
+
+**Features**:
+- Build action strategies
+- Drag-and-drop ordering
+- Priority configuration
+
+**File**: `src/components/creatureForm/StrategyBuilder.tsx`
+
+---
+
+#### `TagSelector` (`components/creatureForm/TagSelector.tsx`)
+
+**Purpose**: Tag selection UI
+
+**Props**:
+```typescript
+{
+    tags: string[]
+    onChange: (tags: string[]) => void
+    availableTags?: string[]
+}
+```
+
+**Features**:
+- Multi-tag selection
+- Custom tag creation
+- Tag suggestions
+
+**File**: `src/components/creatureForm/TagSelector.tsx`
+
+---
+
+#### `loadCreatureForm` (`components/creatureForm/loadCreatureForm.tsx`)
+
+**Purpose**: Creature form loading utility
+
+**Props**:
+```typescript
+{
+    creatureId: string
+    onLoad: (creature: Creature) => void
+    onError?: (error: string) => void
+}
+```
+
+**Features**:
+- Load creature from storage
+- Form data restoration
+- Error handling
+
+**File**: `src/components/creatureForm/loadCreatureForm.tsx`
+
+---
+
 ## Combat Event Components
 
 #### `EventLog` (`components/combat/eventLog.tsx`)
@@ -865,6 +1204,57 @@
 
 ---
 
+## Accessibility Components
+
+#### `AccessibilityToggle` (`components/simulation/AccessibilityToggle.tsx`)
+
+**Purpose**: Accessibility features toggle
+
+**Props**:
+```typescript
+{
+    settings: AccessibilitySettings
+    onChange: (settings: AccessibilitySettings) => void
+}
+```
+
+**Features**:
+- High contrast mode toggle
+- Reduced motion toggle
+- Screen reader optimizations
+- Keyboard navigation enhancements
+
+**File**: `src/components/simulation/AccessibilityToggle.tsx`
+
+---
+
+#### `AccessibilityContext` (`components/simulation/AccessibilityContext.tsx`)
+
+**Purpose**: Accessibility state provider
+
+**State**:
+```typescript
+{
+    settings: AccessibilitySettings
+    updateSettings: (settings: Partial<AccessibilitySettings>) => void
+}
+```
+
+**Settings**:
+```typescript
+type AccessibilitySettings = {
+    highContrast: boolean
+    reducedMotion: boolean
+    screenReader: boolean
+    keyboardNavigation: boolean
+    fontSize: 'small' | 'medium' | 'large'
+}
+```
+
+**File**: `src/components/simulation/AccessibilityContext.tsx`
+
+---
+
 ## UI Components (Radix UI)
 
 ### Modals
@@ -990,6 +1380,110 @@
 ```
 
 **File**: `src/components/utils/loadingSkeleton.tsx`
+
+---
+
+### Progress Components
+
+#### `ProgressUI` (`components/utils/ProgressUI.tsx`)
+
+**Purpose**: Progress display UI
+
+**Props**:
+```typescript
+{
+    progress: number
+    message?: string
+    total?: number
+    showPercentage?: boolean
+}
+```
+
+**Features**:
+- Visual progress bar
+- Percentage display
+- Optional message
+- Total/Current display
+
+**File**: `src/components/utils/ProgressUI.tsx`
+
+---
+
+#### `ProgressVisualizer` (`components/utils/ProgressVisualizer.tsx`)
+
+**Purpose**: Progress visualization component
+
+**Props**:
+```typescript
+{
+    stages: ProgressStage[]
+    currentStage: number
+    onStageClick?: (stage: number) => void
+}
+```
+
+**Features**:
+- Stage-by-stage progress visualization
+- Interactive stage indicators
+- Status indicators (pending, active, complete)
+- Estimated time per stage
+
+**File**: `src/components/utils/ProgressVisualizer.tsx`
+
+---
+
+### Additional UI Components
+
+#### `DecimalInput` (`components/utils/DecimalInput.tsx`)
+
+**Purpose**: Decimal number input
+
+**Props**:
+```typescript
+{
+    value: number
+    onChange: (value: number) => void
+    min?: number
+    max?: number
+    step?: number
+}
+```
+
+**File**: `src/components/utils/DecimalInput.tsx`
+
+---
+
+#### `DiceFormulaInput` (`components/utils/diceFormulaInput.tsx`)
+
+**Purpose**: Dice formula input with validation
+
+**Props**:
+```typescript
+{
+    value: string
+    onChange: (value: string) => void
+    onError?: (error: string) => void
+}
+```
+
+**File**: `src/components/utils/diceFormulaInput.tsx`
+
+---
+
+#### `UiTogglePanel` (`components/utils/UiTogglePanel.tsx`)
+
+**Purpose**: UI toggle panel for settings
+
+**Props**:
+```typescript
+{
+    isOpen: boolean
+    onClose: () => void
+    children: React.ReactNode
+}
+```
+
+**File**: `src/components/utils/UiTogglePanel.tsx`
 
 ---
 
