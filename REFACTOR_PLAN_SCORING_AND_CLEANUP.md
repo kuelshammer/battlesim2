@@ -21,11 +21,6 @@ This document outlines the architectural cleanup required following the implemen
 
 **Status:** ✅ **COMPLETE** - File has been removed. No `resolution.rs` files exist in the codebase.
 
-### Bead Task
-```bash
-bd create --title="Remove deprecated resolution.rs" --type=task --priority=3 --description="Remove the 1500 LOC deprecated file 'resolution.rs' and unlink it from lib.rs. Verify with cargo check."
-```
-
 ---
 
 ## 2. Modularization (`decile_analysis.rs`) ✅ COMPLETE
@@ -64,11 +59,6 @@ simulation-wasm/src/analysis/
 4. **Update Imports:** Fix `lib.rs`, `api/wasm.rs`, and `auto_balancer.rs`.
 
 **Status:** ✅ **COMPLETE** - Refactored into modular structure. All imports updated.
-
-### Bead Task
-```bash
-bd create --title="Refactor decile_analysis.rs into modular analysis package" --type=task --priority=3 --description="Split the 1000+ LOC decile_analysis.rs into analysis/types.rs, narrative.rs, statistics.rs, and visualization.rs to separate concerns."
-```
 
 ---
 
