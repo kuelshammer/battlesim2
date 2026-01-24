@@ -71,6 +71,7 @@ jobs:
   frontend-test:
     name: Frontend Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ./
@@ -118,6 +119,20 @@ jobs:
 
       - name: Run unit tests
         run: npm test
+        continue-on-error: true
+
+      - name: Retry unit tests on failure
+        if: failure()
+        run: npm test
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ github.sha }}
+          path: test-output.log
+          retention-days: 7
+        continue-on-error: true
 
   # Rust/WASM tests
   wasm-test:

@@ -1,25 +1,24 @@
 import { renderHook, act } from '@testing-library/react';
 import { useSimulationWorker } from './useSimulationWorker';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { SimulationWorkerController } from '@/worker/simulation.worker.controller';
 
-// Mock the SimulationWorkerController
-const mockController = {
-  startSimulation: vi.fn(),
-  autoAdjustEncounter: vi.fn(),
-  cancel: vi.fn(),
-  restart: vi.fn(),
-  terminate: vi.fn()
-};
+// Mock the SimulationWorkerController using vi.hoisted to avoid TDZ issues
+const { startSimulationMock, autoAdjustEncounterMock, cancelMock, restartMock, terminateMock } = vi.hoisted(() => ({
+  startSimulationMock: vi.fn(),
+  autoAdjustEncounterMock: vi.fn(),
+  cancelMock: vi.fn(),
+  restartMock: vi.fn(),
+  terminateMock: vi.fn(),
+}));
 
 vi.mock('@/worker/simulation.worker.controller', () => {
   return {
     SimulationWorkerController: class {
-      startSimulation = mockController.startSimulation;
-      autoAdjustEncounter = mockController.autoAdjustEncounter;
-      cancel = mockController.cancel;
-      restart = mockController.restart;
-      terminate = mockController.terminate;
+      startSimulation = startSimulationMock;
+      autoAdjustEncounter = autoAdjustEncounterMock;
+      cancel = cancelMock;
+      restart = restartMock;
+      terminate = terminateMock;
     }
   };
 });
@@ -60,7 +59,7 @@ describe('useSimulationWorker', () => {
       result.current.runSimulation([], []);
     });
 
-    expect(mockController.startSimulation).toHaveBeenCalledWith(
+    expect(startSimulationMock).toHaveBeenCalledWith(
       [],
       [],
       1,
@@ -75,7 +74,7 @@ describe('useSimulationWorker', () => {
     });
 
     // Should have canceled first
-    expect(mockController.cancel).toHaveBeenCalled();
+    expect(cancelMock).toHaveBeenCalled();
   });
 
   it('should handle cancellation messages', () => {
@@ -87,7 +86,7 @@ describe('useSimulationWorker', () => {
 
     act(() => {
       // Simulate cancellation from controller
-      const onResult = mockController.startSimulation.mock.calls[0][5];
+      const onResult = startSimulationMock.mock.calls[0][5];
       onResult({
         type: 'cancelled',
         genId: 1
@@ -109,7 +108,7 @@ describe('useSimulationWorker', () => {
       result.current.cancel();
     });
 
-    expect(mockController.cancel).toHaveBeenCalled();
+    expect(cancelMock).toHaveBeenCalled();
     expect(result.current.isRunning).toBe(false);
     expect(result.current.isCancelled).toBe(true);
   });
@@ -125,7 +124,7 @@ describe('useSimulationWorker', () => {
       result.current.cancel();
     });
 
-    expect(mockController.cancel).toHaveBeenCalled();
+    expect(cancelMock).toHaveBeenCalled();
   });
 
   it('should handle abort signals properly in simulation', () => {
@@ -137,7 +136,7 @@ describe('useSimulationWorker', () => {
 
     // Simulate abort signal triggering cancellation
     act(() => {
-      const onResult = mockController.startSimulation.mock.calls[0][5];
+      const onResult = startSimulationMock.mock.calls[0][5];
       onResult({
         type: 'cancelled',
         genId: 1
@@ -156,7 +155,7 @@ describe('useSimulationWorker', () => {
     });
 
     act(() => {
-      const onResult = mockController.startSimulation.mock.calls[0][5];
+      const onResult = startSimulationMock.mock.calls[0][5];
       onResult({
         type: 'errored',
         genId: 1,
@@ -175,7 +174,7 @@ describe('useSimulationWorker', () => {
       result.current.terminateAndRestart();
     });
 
-    expect(mockController.terminate).toHaveBeenCalled();
+    expect(terminateMock).toHaveBeenCalled();
   });
 
   it('should terminate controller on unmount', () => {
@@ -183,7 +182,7 @@ describe('useSimulationWorker', () => {
 
     unmount();
 
-    expect(mockController.terminate).toHaveBeenCalled();
+    expect(terminateMock).toHaveBeenCalled();
   });
 
   it('should handle rapid consecutive simulation starts (abort/restart sequence)', () => {
@@ -200,8 +199,8 @@ describe('useSimulationWorker', () => {
     });
 
     // Should have canceled twice (once for each runSimulation call) and started twice
-    expect(mockController.cancel).toHaveBeenCalledTimes(2);
-    expect(mockController.startSimulation).toHaveBeenCalledTimes(2);
+    expect(cancelMock).toHaveBeenCalledTimes(2);
+    expect(startSimulationMock).toHaveBeenCalledTimes(2);
   });
 
   it('should handle restart after cancellation', () => {
@@ -223,8 +222,8 @@ describe('useSimulationWorker', () => {
     });
 
     // cancel called: once by runSimulation (first), once by cancel(), once by runSimulation (second) = 3 times
-    expect(mockController.cancel).toHaveBeenCalledTimes(3);
-    expect(mockController.startSimulation).toHaveBeenCalledTimes(2);
+    expect(cancelMock).toHaveBeenCalledTimes(3);
+    expect(startSimulationMock).toHaveBeenCalledTimes(2);
     expect(result.current.isRunning).toBe(true);
     expect(result.current.isCancelled).toBe(false);
   });
@@ -238,7 +237,7 @@ describe('useSimulationWorker', () => {
       resolveFirstSimulation = resolve;
     });
 
-    mockController.startSimulation.mockImplementationOnce((players, timeline, genId, maxK, seed, onResult) => {
+    startSimulationMock.mockImplementationOnce((players, timeline, genId, maxK, seed, onResult) => {
       // Simulate async operation that takes time
       firstSimulationPromise.then(() => {
         onResult({
@@ -264,7 +263,7 @@ describe('useSimulationWorker', () => {
     });
 
     // cancel called: once by first runSimulation, once by second runSimulation = 2 times
-    expect(mockController.cancel).toHaveBeenCalledTimes(2);
+    expect(cancelMock).toHaveBeenCalledTimes(2);
 
     // Resolve the first simulation
     act(() => {
@@ -286,7 +285,7 @@ describe('useSimulationWorker', () => {
 
     // Simulate error
     act(() => {
-      const onResult = mockController.startSimulation.mock.calls[0][5];
+      const onResult = startSimulationMock.mock.calls[0][5];
       onResult({
         type: 'errored',
         genId: 1,

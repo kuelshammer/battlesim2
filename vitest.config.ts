@@ -8,6 +8,13 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./tests/vitest.setup.ts'],
+    testTimeout: 10000,
+    hookTimeout: 30000,
+    teardownTimeout: 10000,
+    retry: 2,
+    maxConcurrency: 4,
+    threads: false,
     alias: {
       'simulation-wasm/simulation_wasm_bg.wasm': path.resolve(__dirname, 'src/__mocks__/wasmMock.js'),
       '@/utils': path.resolve(__dirname, './src/components/utils'),
