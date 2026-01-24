@@ -132,7 +132,7 @@ User Action → Frontend State → WebWorker → WASM Backend → Simulation →
 │  - OverallSummary shows final statistics                           │
 │  - EventLog renders first run events                               │
 │  - Skyline visualizations render full data                         │
-│  - CombatReplayModal can be opened                                 │
+│  - CombatReplayModal can be opened (src/components/simulation/CombatReplayModal.tsx)                                 │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -494,8 +494,13 @@ EventLog renders events
                              ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │              CombatReplayModal Opens                               │
-│  - Receives events prop                                            │
+│  - File: src/components/simulation/CombatReplayModal.tsx           │
+│  - Receives replay prop (Replay | null)                            │
 │  - Initializes useCombatPlayback hook                              │
+│  - Renders modular components:                                     │
+│    • SyncLogPanel - turn-by-turn combat log                        │
+│    • Focus Stage - actor vs target visualization                   │
+│    • Timeline scrubber with playback controls                      │
 └────────────────────────────┬────────────────────────────────────────┘
                              │
 ```

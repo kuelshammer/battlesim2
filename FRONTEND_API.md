@@ -623,26 +623,39 @@
 
 ---
 
-#### `CombatReplayModal` (`components/combat/combatReplayModal.tsx`)
+#### `CombatReplayModal` (`components/simulation/CombatReplayModal.tsx`)
 
-**Purpose**: Replay combat with detailed events
+**Purpose**: "Chronomancer's Table" - Modal for visualizing and navigating through combat replays
 
 **Props**:
 ```typescript
 {
-    events: SimulationEvent[]
-    isOpen: boolean
-    onClose: () => void
+    replay: Replay | null
+    open: boolean
+    onOpenChange: (open: boolean) => void
 }
 ```
 
 **Features**:
-- Event-by-event playback
-- Play/pause/skip controls
-- Event filtering
-- Turn/round navigation
+- Timeline scrubber with playback controls
+- Sync Log Panel (turn-by-turn combat log)
+- Focus Stage (actor vs target visualization)
+- Sub-Events Timeline
+- Round Navigator
 
-**File**: `src/components/combat/combatReplayModal.tsx`
+**Module Structure** (refactored 2025-01):
+```
+src/components/simulation/combatReplay/
+├── combatReplayTypes.ts    - Type definitions and type guards
+├── combatReplayUtils.ts    - Utility functions (stats, factions, icons)
+├── ActionCard.tsx           - Individual action within a turn
+├── SubEventCard.tsx        - Individual sub-event visualization
+├── TurnCard.tsx            - Collapsible turn card with stats
+├── SyncLogPanel.tsx        - Card-based combat log panel
+└── index.ts                 - Barrel exports
+```
+
+**File**: `src/components/simulation/CombatReplayModal.tsx`
 
 ---
 
