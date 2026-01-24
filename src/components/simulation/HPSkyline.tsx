@@ -19,6 +19,25 @@ import {
     ColorScale,
 } from '@/model/skylineTypes';
 import { PercentileBucket } from '@/model/model';
+import {
+    setupCanvas,
+    getChartDimensions,
+    clearCanvas,
+    drawGridLines,
+    drawXAxisLabels,
+    drawCrosshair,
+    drawAreaFill,
+    drawVerticalBars,
+    drawBucketHighlight,
+    createMouseMoveHandler,
+    createMouseLeaveHandler,
+    generateAriaLabel,
+    easeOutQuad,
+    lerp,
+    DEFAULT_PADDING,
+    DEFAULT_BACKGROUND_COLOR,
+    type ChartDimensions,
+} from '@/components/utils/skylineCanvasUtils';
 
 export interface HPSkylineProps {
     /** Full analysis data or single character bucket data */
@@ -79,14 +98,14 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            const ease = progress * (2 - progress);
+            const easedProgress = easeOutQuad(progress);
 
             if (progress < 1) {
                 const interpolated = targetData.map((target, i) => {
                     const start = startData[i];
                     return {
                         ...target,
-                        hpPercent: start.hpPercent + (target.hpPercent - start.hpPercent) * ease
+                        hpPercent: lerp(start.hpPercent, target.hpPercent, easedProgress)
                     };
                 });
                 setDisplayData(interpolated);
@@ -109,116 +128,57 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
         const ctx = setupCanvas(canvas, width, height);
         if (!ctx) return;
 
-        const padding = { top: 20, right: 10, bottom: 30, left: 40 };
-        const chartWidth = width - padding.left - padding.right;
-        const chartHeight = height - padding.top - padding.bottom;
+        const dims: ChartDimensions = getChartDimensions(width, height, DEFAULT_PADDING);
 
-        // Clear canvas with dark background
-        ctx.fillStyle = 'rgba(26, 26, 26, 0.95)';
-        ctx.fillRect(0, 0, width, height);
+        // Clear canvas with background
+        clearCanvas(ctx, width, height, DEFAULT_BACKGROUND_COLOR);
 
-        // Draw grid lines (horizontal at 0%, 25%, 50%, 75%, 100%)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 1;
-        [0, 25, 50, 75, 100].forEach(pct => {
-            const y = padding.top + chartHeight - (pct / 100) * chartHeight;
-            ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
-            ctx.stroke();
+        // Draw grid lines
+        drawGridLines(ctx, dims);
 
-            // Y-axis labels
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.font = '10px Courier New';
-            ctx.textAlign = 'right';
-            ctx.fillText(`${pct}%`, padding.left - 5, y + 3);
-        });
-
-        // Draw HP area chart using vertical segments
-        const bucketWidth = chartWidth / displayData.length;
-
-        // Create path for area fill
-        ctx.beginPath();
-        ctx.moveTo(padding.left, padding.top + chartHeight); // Start at bottom-left
-
-        displayData.forEach((bucket, i) => {
-            const x = padding.left + i * bucketWidth;
-            const hpHeight = (bucket.hpPercent / 100) * chartHeight;
-            const y = padding.top + chartHeight - hpHeight;
-
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        // Complete the area path
-        const lastX = padding.left + (displayData.length - 1) * bucketWidth;
-        ctx.lineTo(lastX, padding.top + chartHeight);
-        ctx.closePath();
-
-        // Fill area with gradient (based on overall HP trend)
+        // Calculate average HP for area fill color
         const avgHp = displayData.reduce((sum, b) => sum + b.hpPercent, 0) / displayData.length;
         const baseColor = valueToColor(avgHp, colors.hp);
 
-        ctx.fillStyle = baseColor + '40'; // 25% opacity
-        ctx.fill();
+        // Draw area fill
+        drawAreaFill(ctx, dims, displayData.map(d => d.hpPercent), baseColor + '40');
 
-        // Draw each bucket segment with its own color
-        displayData.forEach((bucket, i) => {
-            const x = padding.left + i * bucketWidth;
-            const hpHeight = (bucket.hpPercent / 100) * chartHeight;
-            const y = padding.top + chartHeight - hpHeight;
+        // Draw vertical bars with per-bucket colors
+        drawVerticalBars(ctx, dims, displayData.map(d => d.hpPercent), colors.hp);
 
-            // Get color for this bucket's HP value
-            const color = valueToColor(bucket.hpPercent, colors.hp);
-
-            // Draw vertical bar
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y, bucketWidth - 1, hpHeight);
-
-            // Highlight hovered bucket
-            if (hoveredBucket === i + 1) {
-                ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, bucketWidth - 1, hpHeight);
-            }
-        });
-
-        // Draw crosshair line if hovering
+        // Draw highlights for hovered bucket
         if (hoveredBucket && hoveredBucket >= 1 && hoveredBucket <= displayData.length) {
-            const i = hoveredBucket - 1;
-            const x = padding.left + i * bucketWidth + bucketWidth / 2;
-
-            ctx.strokeStyle = 'rgba(212, 175, 55, 0.8)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(x, padding.top);
-            ctx.lineTo(x, height - padding.bottom);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            const idx = hoveredBucket - 1;
+            drawBucketHighlight(
+                ctx,
+                dims,
+                hoveredBucket,
+                displayData.length,
+                displayData[idx].hpPercent
+            );
+            drawCrosshair(ctx, dims, hoveredBucket, displayData.length);
         }
 
-        // X-axis labels (percentiles at 1%, 50%, 100%)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.font = '10px Courier New';
-        ctx.textAlign = 'center';
-
-        [1, 50, 100].forEach(pct => {
-            const idx = pct - 1;
-            if (idx < displayData.length) {
-                const x = padding.left + idx * bucketWidth + bucketWidth / 2;
-                ctx.fillText(`${pct}%`, x, height - padding.bottom + 15);
-            }
-        });
+        // Draw X-axis labels
+        drawXAxisLabels(ctx, dims, displayData.length);
     }, [displayData, width, height, colors, hoveredBucket]);
 
     // Re-render on data/hover change
     React.useEffect(() => {
         render();
     }, [render]);
+
+    // Create mouse handlers using shared utilities
+    const handleMouseMove = createMouseMoveHandler(
+        { width, padding: DEFAULT_PADDING, bucketCount: characterData.length },
+        (bucket) => {
+            if (bucket !== null && bucket >= 1 && bucket <= characterData.length) {
+                onHover?.(bucket);
+            }
+        }
+    );
+
+    const handleMouseLeave = createMouseLeaveHandler(onHover);
 
     return (
         <div className={styles.characterCard}>
@@ -228,42 +188,16 @@ export const SingleCharacterSkyline: React.FC<SingleCharacterSkylineProps> = mem
                 width={width}
                 height={height}
                 className={styles.skylineCanvas}
-                onMouseMove={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const padding = { left: 40, right: 10 };
-                    const chartWidth = width - padding.left - padding.right;
-                    const bucketWidth = chartWidth / characterData.length;
-                    const bucket = Math.floor((x - padding.left) / bucketWidth) + 1;
-                    if (bucket >= 1 && bucket <= characterData.length) {
-                        onHover?.(bucket);
-                    }
-                }}
-                onMouseLeave={() => onHover?.(null)}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
                 role="img"
-                aria-label={`${characterName} HP skyline across ${characterData.length} percentile buckets`}
+                aria-label={generateAriaLabel('HP', characterData.length, characterName)}
             />
         </div>
     );
 });
 
 SingleCharacterSkyline.displayName = 'SingleCharacterSkyline';
-
-/**
- * Setup canvas with high-DPI scaling (copied from base component)
- */
-function setupCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-        ctx.scale(dpr, dpr);
-    }
-    return ctx;
-}
 
 /**
  * Main HPSkyline component
