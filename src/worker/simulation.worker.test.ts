@@ -9,21 +9,6 @@ class MockWorker {
 
 global.Worker = vi.fn().mockImplementation(() => new MockWorker());
 
-// Mock the controller to avoid Worker creation
-const mockController = {
-  startSimulation: vi.fn(),
-  autoAdjustEncounter: vi.fn(),
-  cancel: vi.fn()
-};
-
-vi.mock('./simulation.worker.controller', () => ({
-  SimulationWorkerController: class MockSimulationWorkerController {
-    startSimulation = mockController.startSimulation;
-    autoAdjustEncounter = mockController.autoAdjustEncounter;
-    cancel = mockController.cancel;
-  }
-}));
-
 // Mock setTimeout to execute once to avoid infinite recursion in tests
 let timeoutCount = 0;
 vi.stubGlobal('setTimeout', (fn: () => void) => {
@@ -39,6 +24,22 @@ global.self = {
   onmessage: null
 } as any;
 
+// Create mock functions and hoist them with the mock
+const { startSimulationMock, autoAdjustEncounterMock, cancelMock } = vi.hoisted(() => ({
+  startSimulationMock: vi.fn(),
+  autoAdjustEncounterMock: vi.fn(),
+  cancelMock: vi.fn(),
+}));
+
+// Mock the controller - the class methods will reference the hoisted mocks
+vi.mock('./simulation.worker.controller', () => ({
+  SimulationWorkerController: class {
+    startSimulation = startSimulationMock;
+    autoAdjustEncounter = autoAdjustEncounterMock;
+    cancel = cancelMock;
+  }
+}));
+
 // Import after mocks are set up
 import { handleMessage } from './simulation.worker';
 
@@ -49,7 +50,7 @@ describe('SimulationWorker', () => {
   });
 
   it('should call startSimulation for simulation requests', async () => {
-    mockController.startSimulation = vi.fn().mockImplementation((players, timeline, genId, maxK, seed, onResult) => {
+    startSimulationMock.mockImplementation((players, timeline, genId, maxK, seed, onResult) => {
       onResult({
         type: 'completed',
         genId,
@@ -72,7 +73,7 @@ describe('SimulationWorker', () => {
 
     await handleMessage(event);
 
-    expect(mockController.startSimulation).toHaveBeenCalledWith(
+    expect(startSimulationMock).toHaveBeenCalledWith(
       [],
       [],
       1,
@@ -92,8 +93,6 @@ describe('SimulationWorker', () => {
   });
 
   it('should handle simulation cancellation', async () => {
-    mockController.cancel = vi.fn();
-
     const event = {
       data: {
         type: 'CANCEL_SIMULATION'
@@ -102,11 +101,11 @@ describe('SimulationWorker', () => {
 
     await handleMessage(event);
 
-    expect(mockController.cancel).toHaveBeenCalled();
+    expect(cancelMock).toHaveBeenCalled();
   });
 
   it('should handle auto-adjust encounter', async () => {
-    mockController.autoAdjustEncounter = vi.fn().mockImplementation((players, monsters, timeline, encounterIndex, genId, onResult) => {
+    autoAdjustEncounterMock.mockImplementation((players, monsters, timeline, encounterIndex, genId, onResult) => {
       onResult({
         type: 'completed',
         genId,
@@ -127,7 +126,7 @@ describe('SimulationWorker', () => {
 
     await handleMessage(event);
 
-    expect(mockController.autoAdjustEncounter).toHaveBeenCalledWith(
+    expect(autoAdjustEncounterMock).toHaveBeenCalledWith(
       [],
       [],
       [],
@@ -146,7 +145,7 @@ describe('SimulationWorker', () => {
   });
 
   it('should handle simulation errors', async () => {
-    mockController.startSimulation = vi.fn().mockImplementation((players, timeline, genId, maxK, seed, onResult) => {
+    startSimulationMock.mockImplementation((players, timeline, genId, maxK, seed, onResult) => {
       onResult({
         type: 'errored',
         genId,

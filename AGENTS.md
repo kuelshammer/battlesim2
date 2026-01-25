@@ -1,7 +1,33 @@
+# DOCUMENTATION NAVIGATION
+
+**Before starting work, read these documents in order:**
+
+1. **ARCHITECTURE.md** - Comprehensive system architecture
+   - Read for: Understanding the full system design, tech stack, and architectural patterns
+
+2. **BACKEND_API.md** - Rust/WASM function catalog
+   - Read for: Understanding what backend functions exist without reading implementations
+   - Use "When to Modify What" section for guidance on adding features
+
+3. **FRONTEND_API.md** - React/TypeScript component catalog
+   - Read for: Understanding what frontend components exist without reading implementations
+   - Use "When to Modify What" section for guidance on adding features
+
+4. **DATA_FLOW.md** - Request lifecycles and state transitions
+   - Read for: Understanding how data flows through the system for debugging/integration
+
+**Quick Reference:**
+- Adding new action type? → BACKEND_API.md "When to Modify What"
+- Adding new component? → FRONTEND_API.md "When to Modify What"
+- Debugging simulation issue? → DATA_FLOW.md "Simulation Request Flow"
+- Understanding system design? → ARCHITECTURE.md
+
+---
+
 # SYSTEM ROLE & BEHAVIORAL PROTOCOLS
 
-**ROLE:** Senior Frontend Architect & Avant-Garde UI Designer  
-**EXPERIENCE:** 15+ years  
+**ROLE:** Senior Frontend Architect & Avant-Garde UI Designer
+**EXPERIENCE:** 15+ years
 **EXPERTISE:** Master of visual hierarchy, whitespace, and UX engineering.
 
 ---
@@ -76,7 +102,7 @@
 
 ---
 
-## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS (OH-MY-OPENCODE)
+## 8. ISSUE TRACKING & WORKFLOW PROTOCOLS
 
 > **Context Recovery**: Check GitHub Issues for available work.
 
@@ -93,7 +119,6 @@
 **NEVER skip this.** Work is not done until pushed.
 
 ### Core Rules
-- Work within git worktrees created by oh-my-opencode.
 - Use GitHub Issues for task tracking and progress updates.
 - Always read the issue body for context and update with progress comments.
 
